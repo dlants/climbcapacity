@@ -1,6 +1,6 @@
 import React from "react";
 import type { Snapshot } from "../../iso/protocol";
-import { Update, Thunk, View } from "../tea";
+import { Update, Thunk, View, Dispatch } from "../tea";
 import { RequestStatus } from "../utils";
 
 export type Model = {
@@ -22,6 +22,22 @@ export type Msg =
       type: "NEW_SNAPSHOT";
     };
 
+async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
+  const response = await fetch("/snapshots", { method: "POST" });
+  if (response.ok) {
+    const snapshots = (await response.json()) as Snapshot[];
+    dispatch({
+      type: "SNAPSHOT_RESPONSE",
+      request: { status: "loaded", response: snapshots },
+    });
+  } else {
+    dispatch({
+      type: "SNAPSHOT_RESPONSE",
+      request: { status: "error", error: response.statusText },
+    });
+  }
+}
+
 export function initModel(userId: string): [Model, Thunk<Msg>] {
   return [
     {
@@ -29,21 +45,7 @@ export function initModel(userId: string): [Model, Thunk<Msg>] {
       snapshotRequest: { status: "loading" },
       newSnapshotRequest: undefined,
     },
-    async (dispatch) => {
-      const response = await fetch("/snapshots", { method: "POST" });
-      if (response.ok) {
-        const snapshots = (await response.json()) as Snapshot[];
-        dispatch({
-          type: "SNAPSHOT_RESPONSE",
-          request: { status: "loaded", response: snapshots },
-        });
-      } else {
-        dispatch({
-          type: "SNAPSHOT_RESPONSE",
-          request: { status: "error", error: response.statusText },
-        });
-      }
-    },
+    fetchSnapshotsThunk,
   ];
 }
 
@@ -65,6 +67,14 @@ export const update: Update<Msg, Model> = (msg, model) => {
               type: "NEW_SNAPSHOT_RESPONSE",
               request: { status: "loaded", response: snapshot },
             });
+
+            // re-fetch snapshots
+            dispatch({
+              type: "SNAPSHOT_RESPONSE",
+              request: { status: "loading" },
+            });
+
+            await fetchSnapshotsThunk(dispatch);
           } else {
             dispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
@@ -81,19 +91,25 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
 export const view: View<Msg, Model> = (model, dispatch) => {
   const NewSnapshot = () => {
+    const NewSnapshotButton = () => (
+      <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>
+        Create New Snapshot
+      </button>
+    );
+
     if (!model.newSnapshotRequest) {
-      return (
-        <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>
-          Create New Snapshot
-        </button>
-      );
+      return <NewSnapshotButton />;
     }
 
     switch (model.newSnapshotRequest.status) {
       case "loading":
         return <div>Creating new snapshot...</div>;
       case "loaded":
-        return <div>created new snapshot</div>;
+        return (
+          <div>
+            created new snapshot <NewSnapshotButton />
+          </div>
+        );
       case "error":
         return (
           <div>
