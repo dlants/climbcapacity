@@ -1,5 +1,4 @@
-import { VNode } from "snabbdom";
-import { patch } from "./snabbdom-init";
+import { Root, createRoot } from "react-dom/client";
 
 export type Update<Msg, Model> = (
   msg: Msg,
@@ -8,14 +7,14 @@ export type Update<Msg, Model> = (
 export type View<Msg, Model> = (
   model: Model,
   dispatch: (msg: Msg) => void,
-) => VNode;
+) => JSX.Element;
 export type Dispatch<Msg> = (msg: Msg) => void;
 
 export class App<Model, Msg> {
   private model: Model;
-  private vnode: VNode;
   private update: Update<Msg, Model>;
   private view: View<Msg, Model>;
+  private root: Root;
 
   constructor({
     initialModel,
@@ -31,16 +30,14 @@ export class App<Model, Msg> {
     this.update = update;
     this.model = initialModel;
     this.view = view;
-    this.vnode = view(this.model, this.dispatch.bind(this));
-    patch(element, this.vnode);
+    this.root = createRoot(element);
+    this.root.render(view(this.model, this.dispatch.bind(this)));
   }
 
   dispatch(msg: Msg) {
     const [model, thunk] = this.update(msg, this.model);
     this.model = model;
-
-    const newVnode = this.view(this.model, this.dispatch.bind(this));
-    this.vnode = patch(this.vnode, newVnode);
+    this.root.render(this.view(this.model, this.dispatch.bind(this)));
 
     if (thunk) {
       // purposefully do not await.

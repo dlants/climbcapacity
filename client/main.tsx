@@ -1,4 +1,4 @@
-import { h } from "snabbdom";
+import React from 'react';
 import { App, wrapThunk, Update, View } from "./tea";
 import {
   Model as SendLinkModel,
@@ -115,7 +115,7 @@ const view: View<Msg, Model> = (model, dispatch) => {
       );
 
     case "loading":
-      return h("div", {}, "Loading...");
+      return <div>Loading...</div>;
 
     default:
       model satisfies never;

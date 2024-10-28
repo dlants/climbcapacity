@@ -1,7 +1,7 @@
-import { h } from "snabbdom";
+import React from "react";
 import type { Snapshot } from "../../iso/protocol";
 import { Update, Thunk, View } from "../tea";
-import { assertUnreachable, RequestStatus } from "../utils";
+import { RequestStatus } from "../utils";
 
 export type Model = {
   userId: string;
@@ -80,67 +80,57 @@ export const update: Update<Msg, Model> = (msg, model) => {
 };
 
 export const view: View<Msg, Model> = (model, dispatch) => {
-  return h("div", [
-    h("h2", "Your Snapshots"),
+  const NewSnapshot = () => {
+    if (!model.newSnapshotRequest) {
+      return (
+        <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>
+          Create New Snapshot
+        </button>
+      );
+    }
 
-    h(
-      "div.new-snapshot",
-      (() => {
-        if (!model.newSnapshotRequest) {
-          return h(
-            "button",
-            {
-              on: {
-                click: () => {
-                  dispatch({ type: "NEW_SNAPSHOT" });
-                },
-              },
-            },
-            "Create New Snapshot",
-          );
-        }
+    switch (model.newSnapshotRequest.status) {
+      case "loading":
+        return <div>Creating new snapshot...</div>;
+      case "loaded":
+        return <div>created new snapshot</div>;
+      case "error":
+        return (
+          <div>
+            error when creating new snapshot: {model.newSnapshotRequest.error}
+          </div>
+        );
+    }
+  };
 
-        switch (model.newSnapshotRequest.status) {
-          case "loading":
-            return h("div", "Creating new snapshot...");
+  const SnapshotList = () => {
+    switch (model.snapshotRequest.status) {
+      case "loading":
+        return <div>Loading...</div>;
+      case "error":
+        return <div className="error">{model.snapshotRequest.error}</div>;
+      case "loaded":
+        return (
+          <div className="loaded">
+            {model.snapshotRequest.response.map((snapshot) => (
+              <div key={snapshot._id}>
+                <pre>{JSON.stringify(snapshot)}</pre>
+              </div>
+            ))}
+          </div>
+        );
+    }
+  };
 
-          case "loaded":
-            return h("div", "created new snapshot");
-
-          case "error":
-            return h(
-              "div",
-              `error when creating new snapshot: ${model.newSnapshotRequest.error}`,
-            );
-
-          default:
-            return assertUnreachable(model.newSnapshotRequest);
-        }
-      })(),
-    ),
-    h(
-      "div.list-snapshots",
-      (() => {
-        switch (model.snapshotRequest.status) {
-          case "loading":
-            return h("div", "Loading...");
-          case "error":
-            return h("div.error", model.snapshotRequest.error);
-          case "loaded":
-            return h(
-              "div.loaded",
-              model.snapshotRequest.response.map((snapshot) =>
-                h(
-                  "div",
-
-                  h("pre", JSON.stringify(snapshot)),
-                ),
-              ),
-            );
-          default:
-            return assertUnreachable(model.snapshotRequest);
-        }
-      })(),
-    ),
-  ]);
+  return (
+    <div>
+      <h2>Your Snapshots</h2>
+      <div className="new-snapshot">
+        <NewSnapshot />
+      </div>
+      <div className="list-snapshots">
+        <SnapshotList />
+      </div>
+    </div>
+  );
 };

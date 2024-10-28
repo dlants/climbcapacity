@@ -24,7 +24,6 @@
     // Include browser APIs and modern JS features
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
 
-    // If using JSX/TSX, preserve it for esbuild to handle
-    "jsx": "preserve"
+    "jsx": "react"
   }
 }

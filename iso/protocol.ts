@@ -1,5 +1,5 @@
 export type Snapshot = {
-  id: string;
+  _id: string;
   date: string;
   weight: number;
   bodyFat?: number;

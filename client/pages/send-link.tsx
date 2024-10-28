@@ -1,5 +1,5 @@
-import { VNode, h } from "snabbdom";
-import { Dispatch, Update } from "../tea";
+import React from "react";
+import { Dispatch, Update, View } from "../tea";
 
 export type Model = {
   email: string;
@@ -35,7 +35,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                email: model.email
+                email: model.email,
               }),
             });
             dispatch({
@@ -65,27 +65,29 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export function view(model: Model, dispatch: (msg: Msg) => void): VNode {
-  return h("div", [
-    h("input", {
-      props: { type: "email", value: model.email },
-      on: {
-        input: (e) =>
+export const view: View<Msg, Model> = (model, dispatch) => {
+  return (
+    <div>
+      <input
+        type="email"
+        value={model.email}
+        onChange={(e) =>
           dispatch({
             type: "SET_EMAIL",
-            email: (e.target as HTMLInputElement).value,
-          }),
-      },
-    }),
-    h(
-      "button",
-      {
-        props: { disabled: model.signinStatus.status == "loading" },
-        on: { click: () => dispatch({ type: "SEND_MAGIC_LINK" }) },
-      },
-      "Send Magic Link",
-    ),
-    model.signinStatus.status == "success" ? h("p", "Check your email!") : undefined,
-    model.signinStatus.status == "error" ? h("p", model.signinStatus.error): undefined,
-  ]);
-}
+            email: e.target.value,
+          })
+        }
+      />
+      <button
+        disabled={model.signinStatus.status === "loading"}
+        onClick={() => dispatch({ type: "SEND_MAGIC_LINK" })}
+      >
+        Send Magic Link
+      </button>
+      {model.signinStatus.status === "success" && <p>Check your email!</p>}
+      {model.signinStatus.status === "error" && (
+        <p>{model.signinStatus.error}</p>
+      )}
+    </div>
+  );
+};

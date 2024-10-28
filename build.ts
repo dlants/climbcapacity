@@ -3,7 +3,7 @@ import * as esbuild from "esbuild";
 const watch = process.argv.includes("--watch");
 
 const config: esbuild.BuildOptions = {
-  entryPoints: ["client/main.ts"],
+  entryPoints: ["client/main.tsx"],
   bundle: true,
   outfile: "dist/js/main.js",
   platform: "browser",
