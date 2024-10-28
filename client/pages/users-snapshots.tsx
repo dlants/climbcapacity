@@ -1,5 +1,5 @@
 import React from "react";
-import type { Snapshot } from "../../iso/protocol";
+import type { Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch } from "../tea";
 import { RequestStatus } from "../utils";
 
@@ -20,6 +20,10 @@ export type Msg =
     }
   | {
       type: "NEW_SNAPSHOT";
+    }
+  | {
+      type: "SELECT_SNAPSHOT";
+      snapshot: Snapshot;
     };
 
 async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
@@ -83,6 +87,11 @@ export const update: Update<Msg, Model> = (msg, model) => {
           }
         },
       ];
+
+    case "SELECT_SNAPSHOT":
+      // will be intercepted by parent view
+      return [model];
+
     default:
       msg satisfies never;
       return msg;
@@ -129,7 +138,10 @@ export const view: View<Msg, Model> = (model, dispatch) => {
         return (
           <div className="loaded">
             {model.snapshotRequest.response.map((snapshot) => (
-              <div key={snapshot._id}>
+              <div
+                key={snapshot._id}
+                onClick={() => dispatch({ type: "SELECT_SNAPSHOT", snapshot })}
+              >
                 <pre>{JSON.stringify(snapshot)}</pre>
               </div>
             ))}

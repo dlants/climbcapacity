@@ -1,23 +1,24 @@
 import mongodb from "mongodb";
-import { ProtocolId } from "./protocols.js";
+import { MeasureId } from "../../iso/protocol.js";
 import { User } from "lucia";
 
 export type SnapshotDoc = {
+  _id: mongodb.ObjectId;
   userId: string;
-  measurements: {
-    [protocolId: ProtocolId]: number;
+  measures: {
+    [measureId: MeasureId]: number;
   };
   createdAt: Date;
   lastUpdated: Date;
 };
 
 export type Measurement = {
-  protocolId: ProtocolId;
+  protocolId: MeasureId;
   value: number;
 };
 
 export type MeasurementQuery = {
-  [protocolId: ProtocolId]: {
+  [protocolId: MeasureId]: {
     min?: number;
     max?: number;
   };
@@ -31,9 +32,13 @@ export class SnapshotsModel {
   }
 
   async newSnapshot(user: User): Promise<void> {
-    await this.snapshotCollection.insertOne({
+    await (
+      this.snapshotCollection as unknown as mongodb.Collection<
+        Omit<SnapshotDoc, "_id">
+      >
+    ).insertOne({
       userId: user.id,
-      measurements: {},
+      measures: {},
       createdAt: new Date(),
       lastUpdated: new Date(),
     });
@@ -44,7 +49,7 @@ export class SnapshotsModel {
       { _id: snapshotId },
       {
         $set: {
-          [`measurements.${measurement.protocolId}`]: measurement.value,
+          [`measures.${measurement.protocolId}`]: measurement.value,
         },
       },
     );
@@ -64,9 +69,9 @@ export class SnapshotsModel {
   async querySnapshots(query: MeasurementQuery): Promise<SnapshotDoc[]> {
     const findQuery: mongodb.Filter<SnapshotDoc> = {};
     for (const protocolId in query) {
-      const queryParams = query[protocolId as ProtocolId];
+      const queryParams = query[protocolId as MeasureId];
       if (queryParams.min == undefined && queryParams.max == undefined) {
-        findQuery[`measurements.${protocolId}`] = { $exists: true };
+        findQuery[`measures.${protocolId}`] = { $exists: true };
       } else {
         const minMaxQuery: mongodb.FilterOperations<number> = {};
         if (queryParams.min) {
@@ -77,7 +82,7 @@ export class SnapshotsModel {
           minMaxQuery[`$lte`] = queryParams.min;
         }
 
-        findQuery[`measurements.${protocolId}`] = minMaxQuery;
+        findQuery[`measures.${protocolId}`] = minMaxQuery;
       }
     }
 

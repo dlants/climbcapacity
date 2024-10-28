@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 import { SnapshotsModel } from "./models/snapshots.js";
+import { Snapshot } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,7 +42,7 @@ async function run() {
 
   app.post("/snapshots", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
-    const snapshots = await snapshotModel.getUsersSnapshots(user.id);
+    const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(user.id);
     res.json(snapshots);
     return;
   });

@@ -1,28 +1,22 @@
-import React from 'react';
+import React from "react";
 import { App, wrapThunk, Update, View } from "./tea";
-import {
-  Model as SendLinkModel,
-  Msg as SendLinkMsg,
-  update as sendLinkUpdate,
-  view as sendLinkView,
-} from "./pages/send-link";
-
-import {
-  initModel as userSnapshotsInitModel,
-  Model as UserSnapshotsModel,
-  Msg as UserSnapshotsMsg,
-  update as userSnapshotsUpdate,
-  view as userUpdateView,
-} from "./pages/users-snapshots";
+import * as SendLinkPage from "./pages/send-link";
+import * as UserSnapshotsPage from "./pages/users-snapshots";
+import * as SnapshotPage from "./pages/snapshot";
+import { assertUnreachable } from "./utils";
 
 type Model =
   | {
       state: "send-link";
-      sendLinkModel: SendLinkModel;
+      sendLinkModel: SendLinkPage.Model;
     }
   | {
       state: "user-snapshots";
-      userSnapshotsModel: UserSnapshotsModel;
+      userSnapshotsModel: UserSnapshotsPage.Model;
+    }
+  | {
+      state: "snapshot";
+      snapshotModel: SnapshotPage.Model;
     }
   | {
       state: "loading";
@@ -35,20 +29,23 @@ type Msg =
     }
   | {
       type: "SEND_LINK_MSG";
-      msg: SendLinkMsg;
+      msg: SendLinkPage.Msg;
     }
   | {
       type: "USER_SNAPSHOTS_MSG";
-      msg: UserSnapshotsMsg;
+      msg: UserSnapshotsPage.Msg;
+    }
+  | {
+      type: "SNAPSHOT_MSG";
+      msg: SnapshotPage.Msg;
     };
 
 const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "AUTH_RESOLVED": {
       if (msg.status.status == "logged in") {
-        const [userSnapshotsModel, userSnapshotsThunk] = userSnapshotsInitModel(
-          msg.status.user.id,
-        );
+        const [userSnapshotsModel, userSnapshotsThunk] =
+          UserSnapshotsPage.initModel(msg.status.user.id);
         return [
           { state: "user-snapshots", userSnapshotsModel },
           wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
@@ -69,7 +66,7 @@ const update: Update<Msg, Model> = (msg, model) => {
         );
         return [model];
       }
-      const [sendLinkModel, sendLinkThunk] = sendLinkUpdate(
+      const [sendLinkModel, sendLinkThunk] = SendLinkPage.update(
         msg.msg,
         model.sendLinkModel,
       );
@@ -86,7 +83,20 @@ const update: Update<Msg, Model> = (msg, model) => {
         );
         return [model];
       }
-      const [userSnapshotsModel, userSnapshotsThunk] = userSnapshotsUpdate(
+
+      if (msg.msg.type == "SELECT_SNAPSHOT") {
+        return [
+          {
+            state: "snapshot",
+            snapshotModel: {
+              userId: model.userSnapshotsModel.userId,
+              snapshot: msg.msg.snapshot,
+            },
+          },
+        ];
+      }
+
+      const [userSnapshotsModel, userSnapshotsThunk] = UserSnapshotsPage.update(
         msg.msg,
         model.userSnapshotsModel,
       );
@@ -96,22 +106,43 @@ const update: Update<Msg, Model> = (msg, model) => {
       ];
     }
 
+    case "SNAPSHOT_MSG": {
+      if (model.state != "snapshot") {
+        console.warn(
+          `Got unexpected ${msg.type} msg when model is in ${model.state} state. Ingoring.`,
+        );
+        return [model];
+      }
+      const [snapshotModel, snapshotThunk] = SnapshotPage.update(
+        msg.msg,
+        model.snapshotModel,
+      );
+      return [
+        { ...model, snapshotModel },
+        wrapThunk("SNAPSHOT_MSG", snapshotThunk),
+      ];
+    }
+
     default:
-      msg satisfies never;
-      throw new Error(`Missed exhaustive switch`);
+      return assertUnreachable(msg);
   }
 };
 
 const view: View<Msg, Model> = (model, dispatch) => {
   switch (model.state) {
     case "send-link":
-      return sendLinkView(model.sendLinkModel, (msg) =>
+      return SendLinkPage.view(model.sendLinkModel, (msg) =>
         dispatch({ type: "SEND_LINK_MSG", msg }),
       );
 
     case "user-snapshots":
-      return userUpdateView(model.userSnapshotsModel, (msg) =>
+      return UserSnapshotsPage.view(model.userSnapshotsModel, (msg) =>
         dispatch({ type: "USER_SNAPSHOTS_MSG", msg }),
+      );
+
+    case "snapshot":
+      return SnapshotPage.view(model.snapshotModel, (msg) =>
+        dispatch({ type: "SNAPSHOT_MSG", msg }),
       );
 
     case "loading":
