@@ -1,55 +1,102 @@
-import { init, VNode, h } from 'snabbdom';
+import { VNode, h } from "snabbdom";
+import { App, Dispatch, Update } from "./tea";
 
-// Patches
-const patch = init([]);
-
-// Model
 type Model = {
-  count: number;
-}
+  email: string;
+  signinStatus:
+    | { status: "pending" }
+    | {
+        status: "loading";
+      }
+    | {
+        status: "success";
+      }
+    | {
+        status: "error";
+        error: string;
+      };
+};
 
-// Msg
 type Msg =
-  | { type: 'INCREMENT' }
-  | { type: 'DECREMENT' };
+  | { type: "SET_EMAIL"; email: string }
+  | { type: "SEND_MAGIC_LINK" }
+  | { type: "UPDATE_STATUS"; status: Model["signinStatus"] };
 
-// Update
-function update(msg: Msg, model: Model): Model {
+const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
-    case 'INCREMENT':
-      return { ...model, count: model.count + 1 };
-    case 'DECREMENT':
-      return { ...model, count: model.count - 1 };
-  }
-}
+    case "SET_EMAIL":
+      return [{ ...model, email: msg.email }, undefined];
+    case "SEND_MAGIC_LINK":
+      return [
+        { ...model, signinStatus: { status: "loading" } },
+        async (dispatch: Dispatch<Msg>) => {
+          try {
+            await fetch("/send-login-link", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: model.email
+              }),
+            });
+            dispatch({
+              type: "UPDATE_STATUS",
+              status: { status: "success" },
+            });
+          } catch (e) {
+            dispatch({
+              type: "UPDATE_STATUS",
+              status: {
+                status: "error",
+                error: (e as any).message
+                  ? (e as any).message
+                  : "Unexpected error.",
+              },
+            });
+          }
+        },
+      ];
 
-// View
+    case "UPDATE_STATUS":
+      return [{ ...model, signinStatus: msg.status }, undefined];
+
+    default:
+      msg satisfies never;
+      return msg;
+  }
+};
+
 function view(model: Model, dispatch: (msg: Msg) => void): VNode {
-  return h('div', [
-    h('button', { on: { click: () => dispatch({ type: 'DECREMENT' }) } }, '-'),
-    h('span', ` ${model.count} `),
-    h('button', { on: { click: () => dispatch({ type: 'INCREMENT' }) } }, '+'),
+  return h("div", [
+    h("input", {
+      props: { type: "email", value: model.email },
+      on: {
+        input: (e) =>
+          dispatch({
+            type: "SET_EMAIL",
+            email: (e.target as HTMLInputElement).value,
+          }),
+      },
+    }),
+    h(
+      "button",
+      {
+        props: { disabled: model.signinStatus.status == "loading" },
+        on: { click: () => dispatch({ type: "SEND_MAGIC_LINK" }) },
+      },
+      "Send Magic Link",
+    ),
+    model.signinStatus.status == "success" ? h("p", "Check your email!") : undefined,
+    model.signinStatus.status == "error" ? h("p", model.signinStatus.error): undefined,
   ]);
 }
 
-// App
-class App {
-  private model: Model = { count: 0 };
-  private element: Element;
-  private vnode: VNode;
-
-  constructor(element: Element) {
-    this.element = element;
-    this.vnode = view(this.model, this.dispatch.bind(this));
-    patch(element, this.vnode);
-  }
-
-  private dispatch(msg: Msg) {
-    this.model = update(msg, this.model);
-    const newVnode = view(this.model, this.dispatch.bind(this));
-    this.vnode = patch(this.vnode, newVnode);
-  }
-}
-
 // Mount
-new App(document.getElementById('app')!);
+new App<Model, Msg>({
+  initialModel: {
+    email: "",
+    signinStatus: { status: "pending" },
+  },
+  update,
+  view,
+  element: document.getElementById("app")!,
+});

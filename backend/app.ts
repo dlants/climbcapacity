@@ -1,7 +1,7 @@
 import express from "express";
 import { connect } from "./db/connect.js";
 import { readEnv } from "./env.js";
-import { Auth } from "./auth.js";
+import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
@@ -17,8 +17,10 @@ async function run() {
   const { db, client } = await connect(env.MONGODB_URL);
 
   const app = express();
+  app.use(express.json());
 
-  new Auth({ app, client });
+
+  new Auth({ app, client, env });
   const staticDir = path.join(__dirname, "../../dist/js");
   console.log(`Serving files from ${staticDir}`);
   app.use("/js", express.static(staticDir));

@@ -9,8 +9,6 @@
   "author": "Denis Lantsman <dlantsman@amplify.com>",
   "license": "ISC",
   "dependencies": {
-    "kysely": "^0.27.4",
-    "snabbdom": "^3.6.2",
     "typescript": "^5.6.3"
   },
   "devDependencies": {

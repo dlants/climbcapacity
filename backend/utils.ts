@@ -6,3 +6,11 @@ export function assertEnv(varName: string) {
 
   return value;
 }
+
+export class HandledError extends Error {
+  status: number;
+  constructor(opts: { status: number; message: string }) {
+    super(opts.message);
+    this.status = opts.status;
+  }
+}
