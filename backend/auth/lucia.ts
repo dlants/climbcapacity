@@ -92,6 +92,19 @@ export class Auth {
 
       return;
     });
+
+    app.post("/auth", async (req, res) => {
+      try {
+        const user = await this.assertLoggedIn(req, res);
+        res.json({
+          status: "logged in",
+          user,
+        });
+      } catch (e) {
+        console.error(e);
+        res.status(401).json({ status: "logged out" });
+      }
+    });
   }
 
   async assertLoggedIn(req: express.Request, res: express.Response) {
@@ -104,6 +117,13 @@ export class Auth {
     }
 
     const { session, user } = await this.lucia.validateSession(sessionId);
+
+    if (!user) {
+      throw new HandledError({
+        status: 401,
+        message: "Session validation failed",
+      });
+    }
 
     if (session && session.fresh) {
       res.appendHeader(

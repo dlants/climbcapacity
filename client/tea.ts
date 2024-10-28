@@ -4,7 +4,7 @@ import { patch } from "./snabbdom-init";
 export type Update<Msg, Model> = (
   msg: Msg,
   model: Model,
-) => [Model, Thunk<Msg> | undefined];
+) => [Model] | [Model, Thunk<Msg> | undefined];
 export type View<Msg, Model> = (
   model: Model,
   dispatch: (msg: Msg) => void,
@@ -35,7 +35,7 @@ export class App<Model, Msg> {
     patch(element, this.vnode);
   }
 
-  private dispatch(msg: Msg) {
+  dispatch(msg: Msg) {
     const [model, thunk] = this.update(msg, this.model);
     this.model = model;
 
@@ -50,3 +50,11 @@ export class App<Model, Msg> {
 }
 
 export type Thunk<Msg> = (dispatch: Dispatch<Msg>) => Promise<void>;
+
+export function wrapThunk<MsgType extends string, InnerMsg>(
+  msgType: MsgType,
+  thunk: Thunk<InnerMsg>,
+): Thunk<{type: MsgType, msg: InnerMsg}> {
+  return (dispatch: Dispatch<{ type: MsgType; msg: InnerMsg }>) =>
+    thunk((msg: InnerMsg) => dispatch({ type: msgType, msg }));
+}

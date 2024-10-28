@@ -1,102 +1,115 @@
-import { VNode, h } from "snabbdom";
-import { App, Dispatch, Update } from "./tea";
+import { h } from "snabbdom";
+import { App, wrapThunk, Update, View } from "./tea";
+import {
+  Model as SendLinkModel,
+  Msg as SendLinkMsg,
+  update as sendLinkUpdate,
+  view as sendLinkView,
+} from "./send-link";
 
-type Model = {
-  email: string;
-  signinStatus:
-    | { status: "pending" }
-    | {
-        status: "loading";
-      }
-    | {
-        status: "success";
-      }
-    | {
-        status: "error";
-        error: string;
-      };
-};
+type Model =
+  | {
+      state: "send-link";
+      sendLinkModel: SendLinkModel;
+    }
+  | {
+      state: "logged-in";
+      userId: string;
+    }
+  | {
+      state: "loading";
+    };
 
 type Msg =
-  | { type: "SET_EMAIL"; email: string }
-  | { type: "SEND_MAGIC_LINK" }
-  | { type: "UPDATE_STATUS"; status: Model["signinStatus"] };
+  | {
+      type: "AUTH_RESOLVED";
+      status: AuthStatus;
+    }
+  | {
+      type: "SEND_LINK_MSG";
+      msg: SendLinkMsg;
+    };
 
 const update: Update<Msg, Model> = (msg, model) => {
+  console.log(`msg: `, JSON.stringify(msg))
   switch (msg.type) {
-    case "SET_EMAIL":
-      return [{ ...model, email: msg.email }, undefined];
-    case "SEND_MAGIC_LINK":
-      return [
-        { ...model, signinStatus: { status: "loading" } },
-        async (dispatch: Dispatch<Msg>) => {
-          try {
-            await fetch("/send-login-link", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: model.email
-              }),
-            });
-            dispatch({
-              type: "UPDATE_STATUS",
-              status: { status: "success" },
-            });
-          } catch (e) {
-            dispatch({
-              type: "UPDATE_STATUS",
-              status: {
-                status: "error",
-                error: (e as any).message
-                  ? (e as any).message
-                  : "Unexpected error.",
-              },
-            });
-          }
-        },
-      ];
-
-    case "UPDATE_STATUS":
-      return [{ ...model, signinStatus: msg.status }, undefined];
+    case "AUTH_RESOLVED":
+      if (msg.status.status == "logged in") {
+        return [{ state: "logged-in", userId: msg.status.user.id }];
+      } else {
+        return [
+          {
+            state: "send-link",
+            sendLinkModel: { email: "", signinStatus: { status: "pending" } },
+          },
+        ];
+      }
+    case "SEND_LINK_MSG":
+      if (model.state != "send-link") {
+        console.warn(
+          `Got unexpected ${msg.type} msg when model is in ${model.state} state. Ingoring.`,
+        );
+        return [model];
+      }
+      const [sendLinkModel, sendLinkThunk] = sendLinkUpdate(
+        msg.msg,
+        model.sendLinkModel,
+      );
+      let outThunk;
+      if (sendLinkThunk) {
+        outThunk = wrapThunk("SEND_LINK_MSG", sendLinkThunk);
+      }
+      return [{ ...model, sendLinkModel }, outThunk];
 
     default:
       msg satisfies never;
-      return msg;
+      throw new Error(`Missed exhaustive switch`);
   }
 };
 
-function view(model: Model, dispatch: (msg: Msg) => void): VNode {
-  return h("div", [
-    h("input", {
-      props: { type: "email", value: model.email },
-      on: {
-        input: (e) =>
-          dispatch({
-            type: "SET_EMAIL",
-            email: (e.target as HTMLInputElement).value,
-          }),
-      },
-    }),
-    h(
-      "button",
-      {
-        props: { disabled: model.signinStatus.status == "loading" },
-        on: { click: () => dispatch({ type: "SEND_MAGIC_LINK" }) },
-      },
-      "Send Magic Link",
-    ),
-    model.signinStatus.status == "success" ? h("p", "Check your email!") : undefined,
-    model.signinStatus.status == "error" ? h("p", model.signinStatus.error): undefined,
-  ]);
+const view: View<Msg, Model> = (model, dispatch) => {
+  switch (model.state) {
+    case "send-link":
+      return sendLinkView(model.sendLinkModel, (msg) =>
+        dispatch({ type: "SEND_LINK_MSG", msg }),
+      );
+
+    case "logged-in":
+      return h("div", {}, model.userId);
+
+    case "loading":
+      return h("div", {}, "Loading...");
+
+    default:
+      model satisfies never;
+      throw new Error(`Missed exhaustive switch`);
+  }
+};
+
+type AuthStatus =
+  | { status: "logged out" }
+  | { status: "logged in"; user: { id: string } };
+
+async function run() {
+  const app = new App<Model, Msg>({
+    initialModel: {
+      state: "loading",
+    },
+    update,
+    view,
+    element: document.getElementById("app")!,
+  });
+
+  const response = await fetch("/auth", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const status = (await response.json()) as AuthStatus;
+  app.dispatch({ type: "AUTH_RESOLVED", status });
 }
 
-// Mount
-new App<Model, Msg>({
-  initialModel: {
-    email: "",
-    signinStatus: { status: "pending" },
-  },
-  update,
-  view,
-  element: document.getElementById("app")!,
+run().catch((err) => {
+  console.error(err);
 });
