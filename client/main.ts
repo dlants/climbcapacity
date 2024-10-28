@@ -5,7 +5,15 @@ import {
   Msg as SendLinkMsg,
   update as sendLinkUpdate,
   view as sendLinkView,
-} from "./send-link";
+} from "./pages/send-link";
+
+import {
+  initModel as userSnapshotsInitModel,
+  Model as UserSnapshotsModel,
+  Msg as UserSnapshotsMsg,
+  update as userSnapshotsUpdate,
+  view as userUpdateView,
+} from "./pages/users-snapshots";
 
 type Model =
   | {
@@ -13,8 +21,8 @@ type Model =
       sendLinkModel: SendLinkModel;
     }
   | {
-      state: "logged-in";
-      userId: string;
+      state: "user-snapshots";
+      userSnapshotsModel: UserSnapshotsModel;
     }
   | {
       state: "loading";
@@ -28,14 +36,23 @@ type Msg =
   | {
       type: "SEND_LINK_MSG";
       msg: SendLinkMsg;
+    }
+  | {
+      type: "USER_SNAPSHOTS_MSG";
+      msg: UserSnapshotsMsg;
     };
 
 const update: Update<Msg, Model> = (msg, model) => {
-  console.log(`msg: `, JSON.stringify(msg))
   switch (msg.type) {
-    case "AUTH_RESOLVED":
+    case "AUTH_RESOLVED": {
       if (msg.status.status == "logged in") {
-        return [{ state: "logged-in", userId: msg.status.user.id }];
+        const [userSnapshotsModel, userSnapshotsThunk] = userSnapshotsInitModel(
+          msg.status.user.id,
+        );
+        return [
+          { state: "user-snapshots", userSnapshotsModel },
+          wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
+        ];
       } else {
         return [
           {
@@ -44,7 +61,8 @@ const update: Update<Msg, Model> = (msg, model) => {
           },
         ];
       }
-    case "SEND_LINK_MSG":
+    }
+    case "SEND_LINK_MSG": {
       if (model.state != "send-link") {
         console.warn(
           `Got unexpected ${msg.type} msg when model is in ${model.state} state. Ingoring.`,
@@ -55,11 +73,28 @@ const update: Update<Msg, Model> = (msg, model) => {
         msg.msg,
         model.sendLinkModel,
       );
-      let outThunk;
-      if (sendLinkThunk) {
-        outThunk = wrapThunk("SEND_LINK_MSG", sendLinkThunk);
+      return [
+        { ...model, sendLinkModel },
+        wrapThunk("SEND_LINK_MSG", sendLinkThunk),
+      ];
+    }
+
+    case "USER_SNAPSHOTS_MSG": {
+      if (model.state != "user-snapshots") {
+        console.warn(
+          `Got unexpected ${msg.type} msg when model is in ${model.state} state. Ingoring.`,
+        );
+        return [model];
       }
-      return [{ ...model, sendLinkModel }, outThunk];
+      const [userSnapshotsModel, userSnapshotsThunk] = userSnapshotsUpdate(
+        msg.msg,
+        model.userSnapshotsModel,
+      );
+      return [
+        { ...model, userSnapshotsModel },
+        wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
+      ];
+    }
 
     default:
       msg satisfies never;
@@ -74,8 +109,10 @@ const view: View<Msg, Model> = (model, dispatch) => {
         dispatch({ type: "SEND_LINK_MSG", msg }),
       );
 
-    case "logged-in":
-      return h("div", {}, model.userId);
+    case "user-snapshots":
+      return userUpdateView(model.userSnapshotsModel, (msg) =>
+        dispatch({ type: "USER_SNAPSHOTS_MSG", msg }),
+      );
 
     case "loading":
       return h("div", {}, "Loading...");

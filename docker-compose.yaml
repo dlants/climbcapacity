@@ -6,6 +6,7 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    command: mongod --noauth
 
 volumes:
   mongodb_data:

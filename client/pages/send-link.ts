@@ -1,5 +1,5 @@
 import { VNode, h } from "snabbdom";
-import { Dispatch, Update } from "./tea";
+import { Dispatch, Update } from "../tea";
 
 export type Model = {
   email: string;

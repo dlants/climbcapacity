@@ -53,8 +53,11 @@ export type Thunk<Msg> = (dispatch: Dispatch<Msg>) => Promise<void>;
 
 export function wrapThunk<MsgType extends string, InnerMsg>(
   msgType: MsgType,
-  thunk: Thunk<InnerMsg>,
-): Thunk<{type: MsgType, msg: InnerMsg}> {
+  thunk: Thunk<InnerMsg> | undefined,
+): Thunk<{ type: MsgType; msg: InnerMsg }> | undefined {
+  if (!thunk) {
+    return undefined;
+  }
   return (dispatch: Dispatch<{ type: MsgType; msg: InnerMsg }>) =>
     thunk((msg: InnerMsg) => dispatch({ type: msgType, msg }));
 }
