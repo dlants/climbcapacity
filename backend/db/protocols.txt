@@ -1,0 +1,23 @@
+weight
+  units: lbs
+  value: number
+
+height:
+  units: feetinches
+  value: number
+
+apeindex:
+  units: inches
+  value: number
+
+20mm hang, 7s, full crimp:
+  units: weight
+  value: number
+
+20mm hang, 7s, half crimp:
+  units: weight
+  value: number
+
+20mm hang, 7s, 4 finger drag:
+  units: weight
+  value: number

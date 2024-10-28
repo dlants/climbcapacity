@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "esnext",
+    "outDir": "./dist",            // Compiled JS goes here
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node"    // Helps with module resolution
+  },
+  "exclude": ["node_modules"]      // Don't compile node_modules
+}

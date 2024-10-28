@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    // Modern JS features, good browser support
+    "target": "ES2020",
+
+    // Use modern JS modules, esbuild will handle bundling
+    "module": "ESNext",
+
+    // Enables all strict type checking, catches more bugs
+    "strict": true,
+
+    // Better import compatibility with CommonJS modules
+    "esModuleInterop": true,
+
+    // Faster builds, skip type checking of node_modules
+    "skipLibCheck": true,
+
+    // Prevents cross-platform path issues
+    "forceConsistentCasingInFileNames": true,
+
+    // Required for modern package resolution
+    "moduleResolution": "node",
+
+    // Include browser APIs and modern JS features
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+
+    // If using JSX/TSX, preserve it for esbuild to handle
+    "jsx": "preserve"
+  }
+}
