@@ -1,5 +1,8 @@
 export type RequestStatus<T> =
   | {
+      status: "not-sent";
+    }
+  | {
       status: "loading";
     }
   | {

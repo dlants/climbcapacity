@@ -8,7 +8,7 @@ import { RequestStatus } from "../utils";
 type MeasureUpdate = {
   measureId: MeasureId;
   value: number;
-  request: RequestStatus<void> | undefined;
+  request: RequestStatus<void>;
 };
 
 export type Model = {

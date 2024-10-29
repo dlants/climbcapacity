@@ -1,12 +1,12 @@
 import React from "react";
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch } from "../tea";
-import { RequestStatus } from "../utils";
+import { assertUnreachable, RequestStatus } from "../utils";
 
 export type Model = {
   userId: string;
   snapshotRequest: RequestStatus<Snapshot[]>;
-  newSnapshotRequest: RequestStatus<Snapshot> | undefined;
+  newSnapshotRequest: RequestStatus<Snapshot>;
 };
 
 export type Msg =
@@ -47,7 +47,7 @@ export function initModel(userId: string): [Model, Thunk<Msg>] {
     {
       userId,
       snapshotRequest: { status: "loading" },
-      newSnapshotRequest: undefined,
+      newSnapshotRequest: { status: "not-sent" },
     },
     fetchSnapshotsThunk,
   ];
@@ -111,6 +111,8 @@ export const view: View<Msg, Model> = (model, dispatch) => {
     }
 
     switch (model.newSnapshotRequest.status) {
+      case "not-sent":
+        return <div/>;
       case "loading":
         return <div>Creating new snapshot...</div>;
       case "loaded":
@@ -125,11 +127,15 @@ export const view: View<Msg, Model> = (model, dispatch) => {
             error when creating new snapshot: {model.newSnapshotRequest.error}
           </div>
         );
+      default:
+        assertUnreachable(model.newSnapshotRequest)
     }
   };
 
   const SnapshotList = () => {
     switch (model.snapshotRequest.status) {
+      case "not-sent":
+        return <div/>;
       case "loading":
         return <div>Loading...</div>;
       case "error":
@@ -147,6 +153,8 @@ export const view: View<Msg, Model> = (model, dispatch) => {
             ))}
           </div>
         );
+      default:
+        assertUnreachable(model.snapshotRequest)
     }
   };
 
