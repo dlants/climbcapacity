@@ -106,13 +106,11 @@ export const view: View<Msg, Model> = (model, dispatch) => {
       </button>
     );
 
-    if (!model.newSnapshotRequest) {
+    if (model.newSnapshotRequest.status == 'not-sent') {
       return <NewSnapshotButton />;
     }
 
     switch (model.newSnapshotRequest.status) {
-      case "not-sent":
-        return <div/>;
       case "loading":
         return <div>Creating new snapshot...</div>;
       case "loaded":

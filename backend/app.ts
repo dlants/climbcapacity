@@ -9,6 +9,8 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures.js";
+import { MeasureId } from "../iso/protocol.js";
+import mongodb from "mongodb";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -60,13 +62,13 @@ async function run() {
 
   app.post("/snapshots/update", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
-    const snapshotId = req.body.snapshotId;
+    const snapshotId: string = req.body.snapshotId;
     assert.equal(
       typeof snapshotId,
       "string",
       "Must provide snapshotId of type string",
     );
-    const measureId = req.body.measureId;
+    const measureId: MeasureId = req.body.measureId;
     assert.equal(
       typeof measureId,
       "string",
@@ -78,23 +80,28 @@ async function run() {
       `Measure had invalid id ${measureId}`,
     );
 
-    const value = req.body.value;
+    const value: number = req.body.value;
     assert.equal(
       typeof value,
       "number",
       "Must provide value which is a number",
     );
 
-    await snapshotModel.updateMeasure({
+    const numUpdated = await snapshotModel.updateMeasure({
       userId: user.id,
-      snapshotId: snapshotId,
+      snapshotId: new mongodb.ObjectId(snapshotId),
       measure: {
         measureId,
         value,
       },
     });
-    res.json("OK");
-    return;
+
+    if (numUpdated  == 1) {
+      res.json("OK");
+      return;
+    } else {
+      res.status(400).json("Unable to update snapshot.")
+    }
   });
 
   app.listen(80, () => {

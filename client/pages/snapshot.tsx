@@ -49,6 +49,11 @@ export type Msg =
       value: number;
     }
   | {
+      type: "SUBMIT_MEASURE_UPDATE";
+      measureId: MeasureId;
+      value: number;
+    }
+  | {
       type: "MEASURE_REQUEST_UPDATE";
       measureId: MeasureId;
       value: number;
@@ -79,18 +84,49 @@ export const update: Update<Msg, Model> = (msg, model) => {
       ];
 
     case "MEASURE_REQUEST_UPDATE":
+      if (msg.request.status == "loaded") {
+        const nextSnapshot: Snapshot = {
+          ...model.snapshot,
+        };
+
+        nextSnapshot.measures[msg.measureId] = msg.value;
+
+        const nextMeasureUpdates = {
+          ...model.measureUpdates
+        }
+        delete nextMeasureUpdates[msg.measureId]
+
+        return [{
+          ...model,
+          snapshot: nextSnapshot,
+          measureUpdates: nextMeasureUpdates
+        }]
+      } else {
+        return [
+          {
+            ...model,
+            measureUpdates: measureUpdate(model.measureUpdates, {
+              measureId: msg.measureId,
+              value: msg.value,
+              request: msg.request,
+            }),
+          },
+        ];
+      }
+
+    case "UPDATE_MEASURE":
       return [
         {
           ...model,
           measureUpdates: measureUpdate(model.measureUpdates, {
             measureId: msg.measureId,
             value: msg.value,
-            request: msg.request,
+            request: { status: "not-sent" },
           }),
         },
       ];
 
-    case "UPDATE_MEASURE":
+    case "SUBMIT_MEASURE_UPDATE":
       return [
         {
           ...model,
@@ -157,6 +193,10 @@ export const view: View<Msg, Model> = (model, dispatch) => {
           const measureValue =
             (measureUpdate && measureUpdate.value) ||
             model.snapshot.measures[measure.id];
+
+          const measureUpdatePending =
+            measureValue != model.snapshot.measures[measure.id];
+
           return (
             <div
               key={measure.id}
@@ -176,6 +216,18 @@ export const view: View<Msg, Model> = (model, dispatch) => {
                 disabled={measureLoading}
               />
               <span>{measure.unit}</span>
+              <button
+                onClick={() =>
+                  dispatch({
+                    type: "SUBMIT_MEASURE_UPDATE",
+                    measureId: measure.id,
+                    value: measureValue,
+                  })
+                }
+                disabled={!measureUpdatePending && measureLoading}
+              >
+                Submit
+              </button>
             </div>
           );
         })}
