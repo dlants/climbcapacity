@@ -1,5 +1,5 @@
 import mongodb from "mongodb";
-import { MeasureId } from "../../iso/protocol.js";
+import { Filter, MeasureId } from "../../iso/protocol.js";
 import { User } from "lucia";
 
 export type SnapshotDoc = {
@@ -18,10 +18,7 @@ export type Measure = {
 };
 
 export type MeasurementQuery = {
-  [protocolId: MeasureId]: {
-    min?: number;
-    max?: number;
-  };
+  [measureId: MeasureId]: Filter;
 };
 
 export class SnapshotsModel {

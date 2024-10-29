@@ -9,7 +9,7 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures.js";
-import { MeasureId } from "../iso/protocol.js";
+import { Filter, MeasureId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +49,42 @@ async function run() {
     const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
       user.id,
     );
+    res.json(snapshots);
+    return;
+  });
+
+  app.post("/snapshots/query", async (req, res) => {
+    const query: { [measureId: MeasureId]: Filter } = req.body.query;
+
+    assert.equal(typeof query, "object", "filter must be an object");
+    for (const key in query) {
+      assert.ok(
+        MEASURES.findIndex((m) => m.id == key) > -1,
+        `Measure has invalid id ${key}`,
+      );
+
+      const val = query[key];
+      assert.equal(
+        typeof val,
+        "object",
+        `query measure ${key} must be an object.`,
+      );
+
+      for (const valKey in val) {
+        assert.ok(
+          ["min", "max"].indexOf(valKey) > -1,
+          `query ${key} can only define min and max but it defined ${valKey}`,
+        );
+
+        assert.equal(
+          typeof val[valKey],
+          "number",
+          `query ${key}:${valKey} must be a number`,
+        );
+      }
+    }
+
+    const snapshots: Snapshot[] = await snapshotModel.querySnapshots(query);
     res.json(snapshots);
     return;
   });
@@ -96,11 +132,11 @@ async function run() {
       },
     });
 
-    if (numUpdated  == 1) {
+    if (numUpdated == 1) {
       res.json("OK");
       return;
     } else {
-      res.status(400).json("Unable to update snapshot.")
+      res.status(400).json("Unable to update snapshot.");
     }
   });
 

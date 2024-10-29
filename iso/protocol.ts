@@ -9,6 +9,7 @@ export type Snapshot = {
 };
 
 export type MeasureId = string & { __brand: "measureId" };
+export type SnapshotId = string & { __brand: "SnapshotId" };
 
 export type Protocol = {
   title: string;
@@ -48,4 +49,7 @@ export class ProtocolDate {
   }
 }
 
-
+export type Filter = {
+  min?: number;
+  max?: number;
+};

@@ -1,26 +1,20 @@
 import React from "react";
-import { Dispatch, Update, View } from "../tea";
+import { Update, View } from "../tea";
+import { createRequestThunk, RequestStatus } from "../utils";
 
 export type Model = {
   email: string;
-  signinStatus:
-    | { status: "pending" }
-    | {
-        status: "loading";
-      }
-    | {
-        status: "success";
-      }
-    | {
-        status: "error";
-        error: string;
-      };
+  signinRequest: RequestStatus<void>;
 };
+
+export function initModel(): Model {
+  return { email: "", signinRequest: { status: "not-sent" } };
+}
 
 export type Msg =
   | { type: "SET_EMAIL"; email: string }
   | { type: "SEND_MAGIC_LINK" }
-  | { type: "UPDATE_STATUS"; status: Model["signinStatus"] };
+  | { type: "UPDATE_STATUS"; request: RequestStatus<void> };
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
@@ -28,36 +22,16 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [{ ...model, email: msg.email }, undefined];
     case "SEND_MAGIC_LINK":
       return [
-        { ...model, signinStatus: { status: "loading" } },
-        async (dispatch: Dispatch<Msg>) => {
-          try {
-            await fetch("/send-login-link", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: model.email,
-              }),
-            });
-            dispatch({
-              type: "UPDATE_STATUS",
-              status: { status: "success" },
-            });
-          } catch (e) {
-            dispatch({
-              type: "UPDATE_STATUS",
-              status: {
-                status: "error",
-                error: (e as any).message
-                  ? (e as any).message
-                  : "Unexpected error.",
-              },
-            });
-          }
-        },
+        { ...model, signinRequest: { status: "loading" } },
+        createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
+          url: "/send-login-link",
+          body: { email: model.email },
+          msgType: "UPDATE_STATUS",
+        }),
       ];
 
     case "UPDATE_STATUS":
-      return [{ ...model, signinStatus: msg.status }, undefined];
+      return [{ ...model, signinRequest: msg.request }, undefined];
 
     default:
       msg satisfies never;
@@ -79,14 +53,14 @@ export const view: View<Msg, Model> = (model, dispatch) => {
         }
       />
       <button
-        disabled={model.signinStatus.status === "loading"}
+        disabled={model.signinRequest.status === "loading"}
         onClick={() => dispatch({ type: "SEND_MAGIC_LINK" })}
       >
         Send Magic Link
       </button>
-      {model.signinStatus.status === "success" && <p>Check your email!</p>}
-      {model.signinStatus.status === "error" && (
-        <p>{model.signinStatus.error}</p>
+      {model.signinRequest.status === "loaded" && <p>Check your email!</p>}
+      {model.signinRequest.status === "error" && (
+        <p>{model.signinRequest.error}</p>
       )}
     </div>
   );

@@ -12,7 +12,6 @@ type MeasureUpdate = {
 };
 
 export type Model = {
-  userId: string;
   snapshot: Snapshot;
   measureFilter: { query: string; measures: Measure[] };
   measureUpdates: {
@@ -21,14 +20,11 @@ export type Model = {
 };
 
 export function initModel({
-  userId,
   snapshot,
 }: {
-  userId: string;
   snapshot: Snapshot;
 }): Model {
   return {
-    userId,
     snapshot,
     measureFilter: {
       query: "",
