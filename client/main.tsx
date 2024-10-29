@@ -88,10 +88,10 @@ const update: Update<Msg, Model> = (msg, model) => {
         return [
           {
             state: "snapshot",
-            snapshotModel: {
+            snapshotModel: SnapshotPage.initModel({
               userId: model.userSnapshotsModel.userId,
               snapshot: msg.msg.snapshot,
-            },
+            }),
           },
         ];
       }

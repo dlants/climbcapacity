@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
+import assert from "assert";
+import { MEASURES } from "../iso/measures.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,7 +26,7 @@ async function run() {
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
 
-  const staticDir = path.join(__dirname, "../../dist/js");
+  const staticDir = path.join(__dirname, "../../../dist/js");
   console.log(`Serving files from ${staticDir}`);
   app.use("/js", express.static(staticDir));
 
@@ -42,7 +44,9 @@ async function run() {
 
   app.post("/snapshots", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
-    const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(user.id);
+    const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
+      user.id,
+    );
     res.json(snapshots);
     return;
   });
@@ -50,10 +54,48 @@ async function run() {
   app.post("/snapshots/new", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     await snapshotModel.newSnapshot(user);
-    res.json('OK');
+    res.json("OK");
     return;
   });
 
+  app.post("/snapshots/update", async (req, res) => {
+    const user = await auth.assertLoggedIn(req, res);
+    const snapshotId = req.body.snapshotId;
+    assert.equal(
+      typeof snapshotId,
+      "string",
+      "Must provide snapshotId of type string",
+    );
+    const measureId = req.body.measureId;
+    assert.equal(
+      typeof measureId,
+      "string",
+      "Must provide measureId which is a string",
+    );
+
+    assert.ok(
+      MEASURES.findIndex((m) => m.id == measureId) > -1,
+      `Measure had invalid id ${measureId}`,
+    );
+
+    const value = req.body.value;
+    assert.equal(
+      typeof value,
+      "number",
+      "Must provide value which is a number",
+    );
+
+    await snapshotModel.updateMeasure({
+      userId: user.id,
+      snapshotId: snapshotId,
+      measure: {
+        measureId,
+        value,
+      },
+    });
+    res.json("OK");
+    return;
+  });
 
   app.listen(80, () => {
     console.log("Server running on port 80");

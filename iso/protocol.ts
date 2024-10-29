@@ -16,7 +16,7 @@ export type Protocol = {
   unit: Unit;
 }
 
-export type Unit = "m" | "s" | "kg" | "count" | "percent";
+export type Unit = "m" | "s" | "kg" | "count" | "percent" | "category";
 
 export class ProtocolTimestamp {
   __brand: "ProtocolObjectTimestamp";

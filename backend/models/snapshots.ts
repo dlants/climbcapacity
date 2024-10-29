@@ -12,8 +12,8 @@ export type SnapshotDoc = {
   lastUpdated: Date;
 };
 
-export type Measurement = {
-  protocolId: MeasureId;
+export type Measure = {
+  measureId: MeasureId;
   value: number;
 };
 
@@ -44,12 +44,20 @@ export class SnapshotsModel {
     });
   }
 
-  async addMeasurement(snapshotId: mongodb.ObjectId, measurement: Measurement) {
+  async updateMeasure({
+    snapshotId,
+    userId,
+    measure,
+  }: {
+    snapshotId: mongodb.ObjectId;
+    userId: string;
+    measure: Measure;
+  }) {
     const res = await this.snapshotCollection.updateOne(
-      { _id: snapshotId },
+      { _id: snapshotId, userId },
       {
         $set: {
-          [`measures.${measurement.protocolId}`]: measurement.value,
+          [`measures.${measure.measureId}`]: measure.value,
         },
       },
     );
