@@ -39,7 +39,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = (model, dispatch) => {
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       <input

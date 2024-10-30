@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Thunk } from "./tea";
+import * as immer from "immer";
 
 export type RequestStatus<T> =
   | {
@@ -16,6 +17,13 @@ export type RequestStatus<T> =
       status: "error";
       error: string;
     };
+
+export function assertLoaded<T>(request: RequestStatus<T>): T {
+  if (request.status != "loaded") {
+    throw new Error(`Expected request to be loaded.`);
+  }
+  return request.response;
+}
 
 export function RequestStatusView<T>({
   request,

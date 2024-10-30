@@ -4,10 +4,13 @@ export type Update<Msg, Model> = (
   msg: Msg,
   model: Model,
 ) => [Model] | [Model, Thunk<Msg> | undefined];
-export type View<Msg, Model> = (
-  model: Model,
-  dispatch: (msg: Msg) => void,
-) => JSX.Element;
+export type View<Msg, Model> = ({
+  model,
+  dispatch,
+}: {
+  model: Model;
+  dispatch: (msg: Msg) => void;
+}) => JSX.Element;
 export type Dispatch<Msg> = (msg: Msg) => void;
 
 export interface Subscription<SubscriptionType extends string> {
@@ -61,7 +64,9 @@ export class App<Model, Msg, SubscriptionType extends string> {
     this.updateSubscriptions();
     this.view = view;
     this.root = createRoot(element);
-    this.root.render(view(this.model, this.dispatch.bind(this)));
+    this.root.render(
+      view({ model: this.model, dispatch: this.dispatch.bind(this) }),
+    );
   }
 
   updateSubscriptions() {
@@ -93,7 +98,9 @@ export class App<Model, Msg, SubscriptionType extends string> {
   dispatch(msg: Msg) {
     const [model, thunk] = this.update(msg, this.model);
     this.model = model;
-    this.root.render(this.view(this.model, this.dispatch.bind(this)));
+    this.root.render(
+      this.view({ model: this.model, dispatch: this.dispatch.bind(this) }),
+    );
 
     this.updateSubscriptions();
 

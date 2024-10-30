@@ -1,15 +1,26 @@
 import React from "react";
 import type { Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch } from "../tea";
-import { assertUnreachable, RequestStatus } from "../utils";
+import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
+import {
+  assertLoaded,
+  assertUnreachable,
+  RequestStatus,
+  RequestStatusView,
+} from "../utils";
 import { MeasureId, Filter } from "../../iso/protocol";
+import * as PlotWithControls from "../views/plot-with-controls";
+import * as immer from "immer";
+const produce = immer.produce
 
-export type Model = {
+export type Model = immer.Immutable<{
   query: {
     [measureId: MeasureId]: Filter;
   };
-  dataRequest: RequestStatus<Snapshot[]>;
-};
+  dataRequest: RequestStatus<{
+    snapshots: Snapshot[];
+    plotModel: PlotWithControls.Model;
+  }>;
+}>;
 
 export type Msg =
   | {
@@ -21,6 +32,10 @@ export type Msg =
   | {
       type: "SNAPSHOT_RESPONSE";
       request: RequestStatus<Snapshot[]>;
+    }
+  | {
+      type: "PLOT_MSG";
+      msg: PlotWithControls.Msg;
     };
 
 function generateFetchThunk(model: Model) {
@@ -60,59 +75,87 @@ export function initModel(): [Model] | [Model, Thunk<Msg> | undefined] {
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
-    case "SNAPSHOT_RESPONSE":
-      return [{ ...model, dataRequest: msg.request }];
+    case "SNAPSHOT_RESPONSE": {
+      const nextModel: Model = produce(model, (draft) => {
+        switch (msg.request.status) {
+          case "not-sent":
+          case "loading":
+          case "error":
+            draft.dataRequest = msg.request;
+            return;
+          case "loaded":
+            const plotModel = PlotWithControls.initModel(msg.request.response);
+            draft.dataRequest = {
+              status: "loaded",
+              response: {
+                snapshots: msg.request.response,
+                plotModel: immer.castDraft(plotModel),
+              },
+            };
+            return;
+          default:
+            assertUnreachable(msg.request);
+        }
+      });
+      return [nextModel];
+    }
 
     case "UPDATE_QUERY":
-      return [{ ...model }];
+      return [model];
 
     case "REQUEST_DATA":
+      const nextModel: Model = produce(model, (draft) => {
+        draft.dataRequest = { status: "loading" };
+      });
+      return [nextModel, generateFetchThunk(model)];
+
+    case "PLOT_MSG":
+      if (model.dataRequest.status != "loaded") {
+        console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
+        return [model];
+      }
+      const [nextPlotModel, thunk] = PlotWithControls.update(
+        msg.msg,
+        model.dataRequest.response.plotModel,
+      );
+
       return [
-        { ...model, dataRequest: { status: "loading" } },
-        generateFetchThunk(model),
+        produce(model, (draft) => {
+          const response = assertLoaded(draft.dataRequest);
+          response.plotModel = immer.castDraft(nextPlotModel);
+        }),
+        wrapThunk("PLOT_MSG", thunk),
       ];
 
     default:
-      msg satisfies never;
-      return msg;
+      assertUnreachable(msg);
   }
 };
 
-export const view: View<Msg, Model> = (model, dispatch) => {
-  const FetchButton = () => {
-    const FetchButton = () => (
-      <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>
-        Fetch Data
-      </button>
-    );
-
-    if (model.dataRequest.status == "not-sent") {
-      return <FetchButton />;
-    }
-
-    switch (model.dataRequest.status) {
-      case "loading":
-        return <div>Fetching...</div>;
-      case "loaded":
-        return (
-          <div>
-            {model.dataRequest.response.length} snapshots loaded.{" "}
-            <FetchButton />
-          </div>
-        );
-      case "error":
-        return <div>error when fetching data: {model.dataRequest.error}</div>;
-      default:
-        assertUnreachable(model.dataRequest);
-    }
-  };
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
+  const FetchButton = () => (
+    <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>
+      Fetch Data
+    </button>
+  );
 
   return (
-    <div>
-      <h2>Your Snapshots</h2>
-      <div className="new-snapshot">
-        <FetchButton />
-      </div>
-    </div>
+    <RequestStatusView
+      request={model.dataRequest}
+      viewMap={{
+        "not-sent": () => <FetchButton />,
+        loading: () => <div>Fetching...</div>,
+        error: ({ error }) => <div>error when fetching data: {error}</div>,
+        loaded: ({ response }) => (
+          <div>
+            {response.snapshots.length} snapshots loaded. <FetchButton />
+            <PlotWithControls.view
+              model={response.plotModel}
+              dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
+            />
+          </div>
+        ),
+      }}
+    />
   );
 };

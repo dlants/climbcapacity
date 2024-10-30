@@ -261,27 +261,39 @@ const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-const view: View<Msg, Model> = (model, dispatch) => {
+const view: View<Msg, Model> = ({ model, dispatch }) => {
   function Page() {
     switch (model.page.route) {
       case "/send-link":
-        return SendLinkPage.view(model.page.sendLinkModel, (msg) =>
-          dispatch({ type: "SEND_LINK_MSG", msg }),
+        return (
+          <SendLinkPage.view
+            model={model.page.sendLinkModel}
+            dispatch={(msg) => dispatch({ type: "SEND_LINK_MSG", msg })}
+          />
         );
 
       case "/snapshots":
-        return UserSnapshotsPage.view(model.page.userSnapshotsModel, (msg) =>
-          dispatch({ type: "USER_SNAPSHOTS_MSG", msg }),
+        return (
+          <UserSnapshotsPage.view
+            model={model.page.userSnapshotsModel}
+            dispatch={(msg) => dispatch({ type: "USER_SNAPSHOTS_MSG", msg })}
+          />
         );
 
       case "/snapshot":
-        return SnapshotPage.view(model.page.snapshotModel, (msg) =>
-          dispatch({ type: "SNAPSHOT_MSG", msg }),
+        return (
+          <SnapshotPage.view
+            model={model.page.snapshotModel}
+            dispatch={(msg) => dispatch({ type: "SNAPSHOT_MSG", msg })}
+          />
         );
 
       case "/explore":
-        return ExplorePage.view(model.page.exploreModel, (msg) =>
-          dispatch({ type: "EXPLORE_MSG", msg }),
+        return (
+          <ExplorePage.view
+            model={model.page.exploreModel}
+            dispatch={(msg) => dispatch({ type: "EXPLORE_MSG", msg })}
+          />
         );
 
       case "/":

@@ -1,4 +1,7 @@
 import React from "react";
+import * as immer from "immer";
+const produce = immer.produce;
+
 import type { Snapshot } from "../types";
 import { Update, View } from "../tea";
 import { Measure, MEASURES } from "../../iso/measures";
@@ -11,24 +14,20 @@ type MeasureUpdate = {
   request: RequestStatus<void>;
 };
 
-export type Model = {
+export type Model = immer.Immutable<{
   snapshot: Snapshot;
   measureFilter: { query: string; measures: Measure[] };
   measureUpdates: {
     [measureId: MeasureId]: MeasureUpdate;
   };
-};
+}>;
 
-export function initModel({
-  snapshot,
-}: {
-  snapshot: Snapshot;
-}): Model {
+export function initModel({ snapshot }: { snapshot: Snapshot }): Model {
   return {
     snapshot,
     measureFilter: {
       query: "",
-      measures: [],
+      measures: MEASURES,
     },
     measureUpdates: {},
   };
@@ -70,68 +69,62 @@ export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SET_MEASURE_FILTER":
       return [
-        {
-          ...model,
-          measureFilter: {
+        produce(model, (draft) => {
+          draft.measureFilter = {
             query: msg.query,
             measures: MEASURES.filter((m) => m.name.indexOf(msg.query) > -1),
-          },
-        },
+          };
+        }),
       ];
 
     case "MEASURE_REQUEST_UPDATE":
       if (msg.request.status == "loaded") {
-        const nextSnapshot: Snapshot = {
-          ...model.snapshot,
-        };
+        const nextSnapshot: Snapshot = produce(model.snapshot, (draft) => {
+          draft.measures[msg.measureId] = msg.value;
+        });
 
-        nextSnapshot.measures[msg.measureId] = msg.value;
+        const nextMeasureUpdates = produce(model.measureUpdates, (draft) => {
+          delete draft[msg.measureId];
+        });
 
-        const nextMeasureUpdates = {
-          ...model.measureUpdates
-        }
-        delete nextMeasureUpdates[msg.measureId]
-
-        return [{
-          ...model,
-          snapshot: nextSnapshot,
-          measureUpdates: nextMeasureUpdates
-        }]
+        return [
+          produce(model, (draft) => {
+            draft.snapshot = nextSnapshot;
+            draft.measureUpdates = nextMeasureUpdates;
+          }),
+        ];
       } else {
         return [
-          {
-            ...model,
-            measureUpdates: measureUpdate(model.measureUpdates, {
+          produce(model, (draft) => {
+            draft.measureUpdates = measureUpdate(model.measureUpdates, {
               measureId: msg.measureId,
               value: msg.value,
               request: msg.request,
-            }),
-          },
+            });
+          }),
         ];
       }
 
     case "UPDATE_MEASURE":
       return [
-        {
-          ...model,
-          measureUpdates: measureUpdate(model.measureUpdates, {
+        produce(model, (draft) => {
+          draft.measureUpdates = measureUpdate(model.measureUpdates, {
             measureId: msg.measureId,
             value: msg.value,
             request: { status: "not-sent" },
-          }),
-        },
+          });
+        }),
       ];
 
     case "SUBMIT_MEASURE_UPDATE":
       return [
-        {
-          ...model,
-          measureUpdates: measureUpdate(model.measureUpdates, {
+        produce(model, (draft) => {
+          draft.measureUpdates = measureUpdate(model.measureUpdates, {
             measureId: msg.measureId,
             value: msg.value,
             request: { status: "loading" },
-          }),
-        },
+          });
+        }),
         async (dispatch) => {
           const response = await fetch("/snapshots/update", {
             method: "POST",
@@ -168,7 +161,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = (model, dispatch) => {
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className="snapshot-view">
       <input

@@ -98,7 +98,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = (model, dispatch) => {
+export const view: View<Msg, Model> = ({model, dispatch}) => {
   const NewSnapshot = () => {
     const NewSnapshotButton = () => (
       <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>

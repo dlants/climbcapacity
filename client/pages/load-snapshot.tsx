@@ -1,14 +1,16 @@
 import React from "react";
+import * as immer from "immer";
+const produce = immer.produce
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, wrapThunk } from "../tea";
 import * as LoadedSnapshot from "../views/snapshot";
-import { assertUnreachable, RequestStatus, RequestStatusView } from "../utils";
+import { assertUnreachable,  RequestStatus, RequestStatusView } from "../utils";
 import { SnapshotId } from "../../iso/protocol";
 
-export type Model = {
+export type Model = immer.Immutable<{
   snapshotId: SnapshotId;
   snapshotRequest: RequestStatus<LoadedSnapshot.Model>;
-};
+}>;
 
 export type Msg =
   | {
@@ -58,7 +60,11 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SNAPSHOT_RESPONSE":
-      return [{ ...model, snapshotRequest: msg.request }];
+      return [
+        produce(model, (draft) => {
+          draft.snapshotRequest = immer.castDraft(msg.request);
+        }),
+      ];
     case "LOADED_SNAPSHOT_MSG":
       if (model.snapshotRequest.status == "loaded") {
         const [nextModel, thunk] = LoadedSnapshot.update(
@@ -83,7 +89,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = (model, dispatch) => {
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <RequestStatusView
       request={model.snapshotRequest}
@@ -91,10 +97,12 @@ export const view: View<Msg, Model> = (model, dispatch) => {
         "not-sent": () => <div />,
         loading: () => <div>Loading...</div>,
         error: ({ error }) => <div>Error loading snapshot: {error}</div>,
-        loaded: ({ response }) =>
-          LoadedSnapshot.view(response, (msg) =>
-            dispatch({ type: "LOADED_SNAPSHOT_MSG", msg }),
-          ),
+        loaded: ({ response }) => (
+          <LoadedSnapshot.view
+            model={response}
+            dispatch={(msg) => dispatch({ type: "LOADED_SNAPSHOT_MSG", msg })}
+          />
+        ),
       }}
     />
   );
