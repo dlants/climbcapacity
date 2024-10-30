@@ -126,7 +126,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           });
         }),
         async (dispatch) => {
-          const response = await fetch("/snapshots/update", {
+          const response = await fetch("/api/snapshots/update", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

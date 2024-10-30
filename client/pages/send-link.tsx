@@ -32,7 +32,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.signinRequest = { status: "loading" };
         }),
         createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
-          url: "/send-login-link",
+          url: "/api/send-login-link",
           body: { email: model.email },
           msgType: "UPDATE_STATUS",
         }),

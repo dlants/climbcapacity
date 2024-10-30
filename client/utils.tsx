@@ -26,17 +26,19 @@ export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {
   return request;
 }
 
+export type RequestStatusViewMap<T> = {
+  "not-sent": () => JSX.Element;
+  loading: () => JSX.Element;
+  loaded: ({ response }: { response: T }) => JSX.Element;
+  error: ({ error }: { error: string }) => JSX.Element;
+};
+
 export function RequestStatusView<T>({
   request,
   viewMap,
 }: {
   request: RequestStatus<T>;
-  viewMap: {
-    "not-sent": () => JSX.Element;
-    loading: () => JSX.Element;
-    loaded: ({ response }: { response: T }) => JSX.Element;
-    error: ({ error }: { error: string }) => JSX.Element;
-  };
+  viewMap: RequestStatusViewMap<T>;
 }): JSX.Element {
   switch (request.status) {
     case "not-sent": {

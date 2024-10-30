@@ -40,7 +40,7 @@ export type Msg =
 
 function generateFetchThunk(model: Model) {
   return async (dispatch: Dispatch<Msg>) => {
-    const response = await fetch("/snapshots/query", {
+    const response = await fetch("/api/snapshots/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -9,6 +9,7 @@ import {
   RequestStatus,
   RequestStatusView,
   assertLoaded,
+  RequestStatusViewMap,
 } from "../utils";
 import { SnapshotId } from "../../iso/protocol";
 
@@ -35,7 +36,7 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
     },
 
     async (dispatch) => {
-      const response = await fetch("/snapshot", {
+      const response = await fetch("/api/snapshot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,21 +92,23 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
+const snapshotReuestViewMap: RequestStatusViewMap<LoadedSnapshot.Model> = {
+  "not-sent": () => <div />,
+  loading: () => <div>Loading...</div>,
+  error: ({ error }) => <div>Error loading snapshot: {error}</div>,
+  loaded: ({ response, dispatch }) => (
+    <LoadedSnapshot.view
+      model={response}
+      dispatch={(msg) => dispatch({ type: "LOADED_SNAPSHOT_MSG", msg })}
+    />
+  ),
+};
+
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <RequestStatusView
       request={model.snapshotRequest}
-      viewMap={{
-        "not-sent": () => <div />,
-        loading: () => <div>Loading...</div>,
-        error: ({ error }) => <div>Error loading snapshot: {error}</div>,
-        loaded: ({ response }) => (
-          <LoadedSnapshot.view
-            model={response}
-            dispatch={(msg) => dispatch({ type: "LOADED_SNAPSHOT_MSG", msg })}
-          />
-        ),
-      }}
+      viewMap={snapshotReuestViewMap}
     />
   );
 };

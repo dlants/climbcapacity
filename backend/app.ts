@@ -3,8 +3,6 @@ import { connect } from "./db/connect.js";
 import { readEnv } from "./env.js";
 import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import path, { dirname } from "path";
 import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
@@ -13,20 +11,7 @@ import { Filter, MeasureId, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 dotenv.config();
-
-const MAIN_HTML = `
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <div id="app"></div>
-        <script src="/js/main.js"></script>
-      </body>
-    </html>
-  `;
 
 async function run() {
   console.log("Starting up...");
@@ -39,24 +24,7 @@ async function run() {
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
 
-  const staticDir = path.join(__dirname, "../../../dist/js");
-  console.log(`Serving files from ${staticDir}`);
-  app.use("/js", express.static(staticDir));
-
-  app.get("/", (_req, res) => {
-    res.send(MAIN_HTML);
-  });
-  app.get("/snapshots", (_req, res) => {
-    res.send(MAIN_HTML);
-  });
-  app.get("/snapshot/:snapshotId", (_req, res) => {
-    res.send(MAIN_HTML);
-  });
-  app.get("/explore", (_req, res) => {
-    res.send(MAIN_HTML);
-  });
-
-  app.post("/snapshot", async (req, res) => {
+  app.post("/api/snapshot", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     const snapshotId: SnapshotId = req.body.snapshotId;
     assert.equal(
@@ -85,7 +53,7 @@ async function run() {
     return;
   });
 
-  app.post("/snapshots", async (req, res) => {
+  app.post("/api/snapshots", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
       user.id,
@@ -94,7 +62,7 @@ async function run() {
     return;
   });
 
-  app.post("/snapshots/query", async (req, res) => {
+  app.post("/api/snapshots/query", async (req, res) => {
     const query: { [measureId: MeasureId]: Filter } = req.body.query;
 
     assert.equal(typeof query, "object", "filter must be an object");
@@ -130,14 +98,14 @@ async function run() {
     return;
   });
 
-  app.post("/snapshots/new", async (req, res) => {
+  app.post("/api/snapshots/new", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     await snapshotModel.newSnapshot(user);
     res.json("OK");
     return;
   });
 
-  app.post("/snapshots/update", async (req, res) => {
+  app.post("/api/snapshots/update", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     const snapshotId: string = req.body.snapshotId;
     assert.equal(
@@ -181,8 +149,8 @@ async function run() {
     }
   });
 
-  app.listen(80, () => {
-    console.log("Server running on port 80");
+  app.listen(3000, () => {
+    console.log("Server running on port 3000");
   });
 }
 

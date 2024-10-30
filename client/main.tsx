@@ -6,6 +6,7 @@ import {
   View,
   SubscriptionManager,
   chainThunks,
+  Dispatch,
 } from "./tea";
 import * as SendLinkPage from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
@@ -302,53 +303,53 @@ const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-const view: View<Msg, Model> = ({ model, dispatch }) => {
-  function Page() {
-    switch (model.page.route) {
-      case "/send-link":
-        return (
-          <SendLinkPage.view
-            model={model.page.sendLinkModel}
-            dispatch={(msg) => dispatch({ type: "SEND_LINK_MSG", msg })}
-          />
-        );
+function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
+  switch (model.page.route) {
+    case "/send-link":
+      return (
+        <SendLinkPage.view
+          model={model.page.sendLinkModel}
+          dispatch={(msg) => dispatch({ type: "SEND_LINK_MSG", msg })}
+        />
+      );
 
-      case "/snapshots":
-        return (
-          <UserSnapshotsPage.view
-            model={model.page.userSnapshotsModel}
-            dispatch={(msg) => dispatch({ type: "USER_SNAPSHOTS_MSG", msg })}
-          />
-        );
+    case "/snapshots":
+      return (
+        <UserSnapshotsPage.view
+          model={model.page.userSnapshotsModel}
+          dispatch={(msg) => dispatch({ type: "USER_SNAPSHOTS_MSG", msg })}
+        />
+      );
 
-      case "/snapshot":
-        return (
-          <SnapshotPage.view
-            model={model.page.snapshotModel}
-            dispatch={(msg) => dispatch({ type: "SNAPSHOT_MSG", msg })}
-          />
-        );
+    case "/snapshot":
+      return (
+        <SnapshotPage.view
+          model={model.page.snapshotModel}
+          dispatch={(msg) => dispatch({ type: "SNAPSHOT_MSG", msg })}
+        />
+      );
 
-      case "/explore":
-        return (
-          <ExplorePage.view
-            model={model.page.exploreModel}
-            dispatch={(msg) => dispatch({ type: "EXPLORE_MSG", msg })}
-          />
-        );
+    case "/explore":
+      return (
+        <ExplorePage.view
+          model={model.page.exploreModel}
+          dispatch={(msg) => dispatch({ type: "EXPLORE_MSG", msg })}
+        />
+      );
 
-      case "/":
-        return <div>TODO: add homepage content</div>;
+    case "/":
+      return <div>TODO: add homepage content</div>;
 
-      default:
-        assertUnreachable(model.page);
-    }
+    default:
+      assertUnreachable(model.page);
   }
+}
 
+const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       <Nav />
-      <Page />
+      <Page model={model} dispatch={dispatch} />
     </div>
   );
 };
@@ -388,15 +389,22 @@ async function run() {
   const subscriptionManager: SubscriptionManager<"router", Msg> = {
     router: router,
   };
-  const response = await fetch("/auth", {
+  const response = await fetch("/api/auth", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
   });
-  const status = (await response.json()) as AuthStatus;
+  let auth: Model["auth"] = { status: "loading" };
+  if (response.ok) {
+    const status = (await response.json()) as AuthStatus;
+    auth = { status: "loaded", response: status };
+  } else {
+    auth = { status: "error", error: response.statusText };
+  }
+
   let initialModel: Model = {
-    auth: { status: "loaded", response: status },
+    auth,
     page: {
       route: "/",
     },

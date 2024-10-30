@@ -23,5 +23,8 @@
       "../dist"
     ],
     "ext": "*"
+  },
+  "scripts": {
+    "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js"
   }
 }

@@ -29,7 +29,7 @@ export type Msg =
     };
 
 async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
-  const response = await fetch("/snapshots", { method: "POST" });
+  const response = await fetch("/api/snapshots", { method: "POST" });
   if (response.ok) {
     const snapshots = (await response.json()) as Snapshot[];
     dispatch({
@@ -76,7 +76,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.newSnapshotRequest = { status: "loading" };
         }),
         async (dispatch) => {
-          const response = await fetch("/snapshots/new", { method: "POST" });
+          const response = await fetch("/api/snapshots/new", { method: "POST" });
           if (response.ok) {
             const snapshot = (await response.json()) as Snapshot;
             dispatch({
