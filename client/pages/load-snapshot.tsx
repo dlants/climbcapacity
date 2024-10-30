@@ -1,7 +1,7 @@
 import React from "react";
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, wrapThunk } from "../tea";
-import * as LoadedSnapshot from "./snapshot";
+import * as LoadedSnapshot from "../views/snapshot";
 import { assertUnreachable, RequestStatus, RequestStatusView } from "../utils";
 import { SnapshotId } from "../../iso/protocol";
 
