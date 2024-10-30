@@ -10,7 +10,7 @@ import {
 import { MeasureId, Filter } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as immer from "immer";
-const produce = immer.produce
+const produce = immer.produce;
 
 export type Model = immer.Immutable<{
   query: {
@@ -121,8 +121,8 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
       return [
         produce(model, (draft) => {
-          const response = assertLoaded(draft.dataRequest);
-          response.plotModel = immer.castDraft(nextPlotModel);
+          const request = assertLoaded(draft.dataRequest);
+          request.response.plotModel = immer.castDraft(nextPlotModel);
         }),
         wrapThunk("PLOT_MSG", thunk),
       ];

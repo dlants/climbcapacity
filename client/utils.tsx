@@ -1,6 +1,10 @@
 import * as React from "react";
 import { Thunk } from "./tea";
-import * as immer from "immer";
+
+export type LoadedRequest<T> = {
+  status: "loaded";
+  response: T;
+};
 
 export type RequestStatus<T> =
   | {
@@ -9,20 +13,17 @@ export type RequestStatus<T> =
   | {
       status: "loading";
     }
-  | {
-      status: "loaded";
-      response: T;
-    }
+  | LoadedRequest<T>
   | {
       status: "error";
       error: string;
     };
 
-export function assertLoaded<T>(request: RequestStatus<T>): T {
+export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {
   if (request.status != "loaded") {
     throw new Error(`Expected request to be loaded.`);
   }
-  return request.response;
+  return request;
 }
 
 export function RequestStatusView<T>({
@@ -98,3 +99,9 @@ export function createRequestThunk<T, Body, MsgType extends string>({
     }
   };
 }
+
+export type ExtractFromDisjointUnion<
+  T,
+  K extends keyof T,
+  V extends T[K],
+> = T extends { [key in K]: V } ? T : never;

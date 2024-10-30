@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  App,
+  createApp,
   wrapThunk,
   Update,
   View,
@@ -11,10 +11,16 @@ import * as SendLinkPage from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
 import * as SnapshotPage from "./pages/load-snapshot";
 import * as ExplorePage from "./pages/explore";
-import { assertUnreachable, RequestStatus } from "./utils";
+import {
+  assertUnreachable,
+  ExtractFromDisjointUnion,
+  RequestStatus,
+} from "./utils";
 import { NavigateMsg, parseRoute, Router } from "./router";
 import { SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
+import * as immer from "immer";
+const produce = immer.produce;
 
 export type Model = {
   auth: RequestStatus<AuthStatus>;
@@ -75,19 +81,26 @@ const navigate: Update<Msg, Model> = (msg, model) => {
 
   switch (msg.target.route) {
     case "/":
-      return [{ ...model, page: { route: "/" } }];
+      return [
+        produce(model, (draft) => {
+          draft.page = { route: "/" };
+        }),
+      ];
     case "/send-link":
       if (user) {
-        return [{ ...model, page: { route: "/" } }];
+        return [
+          produce(model, (draft) => {
+            draft.page = { route: "/" };
+          }),
+        ];
       } else {
         return [
-          {
-            ...model,
-            page: {
+          produce(model, (draft) => {
+            draft.page = {
               route: "/send-link",
               sendLinkModel: SendLinkPage.initModel(),
-            },
-          },
+            };
+          }),
         ];
       }
     case "/snapshots":
@@ -95,18 +108,22 @@ const navigate: Update<Msg, Model> = (msg, model) => {
         const [userSnapshotsModel, userSnapshotsThunk] =
           UserSnapshotsPage.initModel(user.id);
         return [
-          { ...model, page: { route: "/snapshots", userSnapshotsModel } },
+          produce(model, (draft) => {
+            draft.page = {
+              route: "/snapshots",
+              userSnapshotsModel: immer.castDraft(userSnapshotsModel),
+            };
+          }),
           wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
         ];
       } else {
         return [
-          {
-            ...model,
-            page: {
+          produce(model, (draft) => {
+            draft.page = {
               route: "/send-link",
               sendLinkModel: SendLinkPage.initModel(),
-            },
-          },
+            };
+          }),
         ];
       }
     case "/snapshot":
@@ -115,23 +132,34 @@ const navigate: Update<Msg, Model> = (msg, model) => {
           msg.target.snapshotId,
         );
         return [
-          { ...model, page: { route: "/snapshot", snapshotModel } },
+          produce(model, (draft) => {
+            draft.page = {
+              route: "/snapshot",
+              snapshotModel: immer.castDraft(snapshotModel),
+            };
+          }),
           wrapThunk("SNAPSHOT_MSG", snapshotThunk),
         ];
       } else {
         return [
-          {
-            ...model,
-            page: {
+          produce(model, (draft) => {
+            draft.page = {
               route: "/send-link",
               sendLinkModel: SendLinkPage.initModel(),
-            },
-          },
+            };
+          }),
         ];
       }
     case "/explore":
       const [exploreModel] = ExplorePage.initModel();
-      return [{ ...model, page: { route: "/explore", exploreModel } }];
+      return [
+        produce(model, (draft) => {
+          draft.page = {
+            route: "/explore",
+            exploreModel: immer.castDraft(exploreModel),
+          };
+        }),
+      ];
     default:
       assertUnreachable(msg.target);
   }
@@ -146,10 +174,9 @@ const update: Update<Msg, Model> = (msg, model) => {
 
     case "AUTH_RESOLVED": {
       return [
-        {
-          ...model,
-          auth: { status: "loaded", response: msg.status },
-        },
+        produce(model, (draft) => {
+          draft.auth = { status: "loaded", response: msg.status };
+        }),
       ];
     }
 
@@ -165,13 +192,15 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.sendLinkModel,
       );
       return [
-        {
-          ...model,
-          page: {
-            ...model.page,
-            sendLinkModel,
-          },
-        },
+        produce(model, (draft) => {
+          (
+            draft.page as ExtractFromDisjointUnion<
+              Model["page"],
+              "route",
+              "/send-link"
+            >
+          ).sendLinkModel = immer.castDraft(sendLinkModel);
+        }),
         wrapThunk("SEND_LINK_MSG", sendLinkThunk),
       ];
     }
@@ -205,13 +234,15 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.userSnapshotsModel,
       );
       return [
-        {
-          ...model,
-          page: {
-            ...model.page,
-            userSnapshotsModel,
-          },
-        },
+        produce(model, (draft) => {
+          (
+            draft.page as ExtractFromDisjointUnion<
+              Model["page"],
+              "route",
+              "/snapshots"
+            >
+          ).userSnapshotsModel = immer.castDraft(userSnapshotsModel);
+        }),
         wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
       ];
     }
@@ -228,13 +259,15 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.snapshotModel,
       );
       return [
-        {
-          ...model,
-          page: {
-            ...model.page,
-            snapshotModel,
-          },
-        },
+        produce(model, (draft) => {
+          (
+            draft.page as ExtractFromDisjointUnion<
+              Model["page"],
+              "route",
+              "/snapshot"
+            >
+          ).snapshotModel = immer.castDraft(snapshotModel);
+        }),
         wrapThunk("SNAPSHOT_MSG", snapshotThunk),
       ];
     }
@@ -251,7 +284,15 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.exploreModel,
       );
       return [
-        { ...model, page: { ...model.page, exploreModel } },
+        produce(model, (draft) => {
+          (
+            draft.page as ExtractFromDisjointUnion<
+              Model["page"],
+              "route",
+              "/explore"
+            >
+          ).exploreModel = immer.castDraft(exploreModel);
+        }),
         wrapThunk("EXPLORE_MSG", exploreThunk),
       ];
     }
@@ -347,23 +388,6 @@ async function run() {
   const subscriptionManager: SubscriptionManager<"router", Msg> = {
     router: router,
   };
-
-  const app = new App<Model, Msg, "router">({
-    initialModel: {
-      auth: { status: "loading" },
-      page: {
-        route: "/",
-      },
-    },
-    update,
-    view,
-    element: document.getElementById("app")!,
-    sub: {
-      subscriptions: () => [{ id: "router" }],
-      subscriptionManager,
-    },
-  });
-
   const response = await fetch("/auth", {
     method: "POST",
     headers: {
@@ -371,11 +395,27 @@ async function run() {
     },
   });
   const status = (await response.json()) as AuthStatus;
-  app.dispatch({ type: "AUTH_RESOLVED", status });
+  let initialModel: Model = {
+    auth: { status: "loaded", response: status },
+    page: {
+      route: "/",
+    },
+  };
+
+  const app = createApp<Model, Msg, "router">({
+    initialModel,
+    update,
+    view,
+    sub: {
+      subscriptions: () => [{ id: "router" }],
+      subscriptionManager,
+    },
+  });
+  const { dispatchRef } = app.mount(document.getElementById("app")!);
 
   const navMsg = parseRoute(window.location.pathname);
   if (navMsg) {
-    app.dispatch(navMsg);
+    dispatchRef.current!(navMsg);
   }
 }
 

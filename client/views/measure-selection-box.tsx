@@ -1,20 +1,24 @@
 import React from "react";
-import * as immer from 'immer';
+import * as immer from "immer";
 import { Update, View } from "../tea";
-import { Measure, MEASURES } from "../../iso/measures";
+import { Measure } from "../../iso/measures";
+import { MEASURES } from "../constants";
 import { MeasureId } from "../../iso/protocol";
 import { assertUnreachable } from "../utils";
 
 export type Model = immer.Immutable<
   | {
+      id: string;
       state: "typing";
       query: string;
       measures: Measure[];
     }
   | {
+      id: string;
       state: "selected";
       measureId: MeasureId;
-    }>;
+    }
+>;
 
 export type Msg =
   | {
@@ -26,11 +30,21 @@ export type Msg =
       measureId: MeasureId;
     };
 
-export const update: Update<Msg, Model> = (msg) => {
+export function initModel(id: string): Model {
+  return {
+    id,
+    state: "typing",
+    query: "",
+    measures: [],
+  };
+}
+
+export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "TYPE_QUERY":
       return [
         {
+          id: model.id,
           state: "typing",
           query: msg.query,
           measures: MEASURES.filter((m) => m.id.indexOf(msg.query) > -1),
@@ -40,6 +54,7 @@ export const update: Update<Msg, Model> = (msg) => {
     case "SELECT_MEASURE":
       return [
         {
+          id: model.id,
           state: "selected",
           measureId: msg.measureId,
         },
@@ -50,11 +65,12 @@ export const update: Update<Msg, Model> = (msg) => {
   }
 };
 
-export const view: View<Msg, Model> = ({model, dispatch}) => {
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   if (model.state == "typing") {
     return (
       <div className="measure-selection-box">
         <input
+          //key={`measure-selection-input-${model.id}`}
           type="text"
           value={model.query}
           onChange={(e) =>

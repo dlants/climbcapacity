@@ -4,7 +4,8 @@ const produce = immer.produce;
 
 import type { Snapshot } from "../types";
 import { Update, View } from "../tea";
-import { Measure, MEASURES } from "../../iso/measures";
+import { Measure } from "../../iso/measures";
+import { MEASURES } from "../constants";
 import { MeasureId } from "../../iso/protocol";
 import { RequestStatus } from "../utils";
 
@@ -27,7 +28,7 @@ export function initModel({ snapshot }: { snapshot: Snapshot }): Model {
     snapshot,
     measureFilter: {
       query: "",
-      measures: MEASURES,
+      measures: produce(MEASURES, (d) => d),
     },
     measureUpdates: {},
   };
@@ -59,10 +60,9 @@ function measureUpdate(
   measureUpdates: Model["measureUpdates"],
   update: MeasureUpdate,
 ): Model["measureUpdates"] {
-  return {
-    ...measureUpdates,
-    [update.measureId]: update,
-  };
+  return produce(measureUpdates, (draft) => {
+    draft[update.measureId] = update;
+  });
 }
 
 export const update: Update<Msg, Model> = (msg, model) => {
@@ -161,12 +161,27 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
+const FilterInput = React.memo(
+  ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <input
+      type="text"
+      placeholder="Filter measures..."
+      value={value}
+      onChange={onChange}
+    />
+  ),
+);
+
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className="snapshot-view">
-      <input
-        type="text"
-        placeholder="Filter measures..."
+      <FilterInput
         value={model.measureFilter.query}
         onChange={(e) =>
           dispatch({ type: "SET_MEASURE_FILTER", query: e.target.value })

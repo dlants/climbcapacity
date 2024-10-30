@@ -125,4 +125,13 @@ export function parseRoute(pathname: string): NavigateMsg | undefined {
       },
     };
   }
+
+  if (pathname == "/send-link") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/send-link",
+      },
+    };
+  }
 }

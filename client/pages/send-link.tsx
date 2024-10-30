@@ -1,11 +1,13 @@
 import React from "react";
 import { Update, View } from "../tea";
 import { createRequestThunk, RequestStatus } from "../utils";
+import * as immer from "immer";
+const produce = immer.produce;
 
-export type Model = {
+export type Model = immer.Immutable<{
   email: string;
   signinRequest: RequestStatus<void>;
-};
+}>;
 
 export function initModel(): Model {
   return { email: "", signinRequest: { status: "not-sent" } };
@@ -19,10 +21,16 @@ export type Msg =
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SET_EMAIL":
-      return [{ ...model, email: msg.email }, undefined];
+      return [
+        produce(model, (draft) => {
+          draft.email = msg.email;
+        }),
+      ];
     case "SEND_MAGIC_LINK":
       return [
-        { ...model, signinRequest: { status: "loading" } },
+        produce(model, (draft) => {
+          draft.signinRequest = { status: "loading" };
+        }),
         createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
           url: "/send-login-link",
           body: { email: model.email },
@@ -31,7 +39,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
       ];
 
     case "UPDATE_STATUS":
-      return [{ ...model, signinRequest: msg.request }, undefined];
+      return [
+        produce(model, (draft) => {
+          draft.signinRequest = msg.request;
+        }),
+        undefined,
+      ];
 
     default:
       msg satisfies never;
@@ -43,6 +56,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       <input
+        key="email"
         type="email"
         value={model.email}
         onChange={(e) =>

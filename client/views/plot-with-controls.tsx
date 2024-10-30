@@ -4,8 +4,8 @@ import * as Plot from "./plot";
 import { Snapshot } from "../types";
 import { Update, View } from "../tea";
 import { assertUnreachable } from "../utils";
-import * as immer  from "immer";
-const produce = immer.produce
+import * as immer from "immer";
+const produce = immer.produce;
 
 export type Model = immer.Immutable<{
   snapshots: Snapshot[];
@@ -27,17 +27,8 @@ export type Msg =
 export function initModel(snapshots: Snapshot[]): Model {
   const model: Model = {
     snapshots,
-    xAxis: {
-      state: "typing",
-      query: "",
-      measures: [],
-    },
-    yAxis: {
-      state: "typing",
-      query: "",
-      measures: [],
-    },
-
+    xAxis: MeasureSelectionBox.initModel("xAxis"),
+    yAxis: MeasureSelectionBox.initModel("yAxis"),
     plot: undefined,
   };
   return produce(model, (draft) => {

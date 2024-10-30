@@ -2,12 +2,14 @@ import React from "react";
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch } from "../tea";
 import { assertUnreachable, RequestStatus } from "../utils";
+import * as immer from "immer";
+const produce = immer.produce;
 
-export type Model = {
+export type Model = immer.Immutable<{
   userId: string;
   snapshotRequest: RequestStatus<Snapshot[]>;
   newSnapshotRequest: RequestStatus<Snapshot>;
-};
+}>;
 
 export type Msg =
   | {
@@ -56,13 +58,23 @@ export function initModel(userId: string): [Model, Thunk<Msg>] {
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SNAPSHOT_RESPONSE":
-      return [{ ...model, snapshotRequest: msg.request }];
+      return [
+        produce(model, (draft) => {
+          draft.snapshotRequest = msg.request;
+        }),
+      ];
     case "NEW_SNAPSHOT_RESPONSE":
-      return [{ ...model, newSnapshotRequest: msg.request }];
+      return [
+        produce(model, (draft) => {
+          draft.newSnapshotRequest = msg.request;
+        }),
+      ];
 
     case "NEW_SNAPSHOT":
       return [
-        { ...model, newSnapshotRequest: { status: "loading" } },
+        produce(model, (draft) => {
+          draft.newSnapshotRequest = { status: "loading" };
+        }),
         async (dispatch) => {
           const response = await fetch("/snapshots/new", { method: "POST" });
           if (response.ok) {
@@ -98,7 +110,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = ({model, dispatch}) => {
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   const NewSnapshot = () => {
     const NewSnapshotButton = () => (
       <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>
@@ -106,7 +118,7 @@ export const view: View<Msg, Model> = ({model, dispatch}) => {
       </button>
     );
 
-    if (model.newSnapshotRequest.status == 'not-sent') {
+    if (model.newSnapshotRequest.status == "not-sent") {
       return <NewSnapshotButton />;
     }
 
@@ -126,14 +138,14 @@ export const view: View<Msg, Model> = ({model, dispatch}) => {
           </div>
         );
       default:
-        assertUnreachable(model.newSnapshotRequest)
+        assertUnreachable(model.newSnapshotRequest);
     }
   };
 
   const SnapshotList = () => {
     switch (model.snapshotRequest.status) {
       case "not-sent":
-        return <div/>;
+        return <div />;
       case "loading":
         return <div>Loading...</div>;
       case "error":
@@ -152,7 +164,7 @@ export const view: View<Msg, Model> = ({model, dispatch}) => {
           </div>
         );
       default:
-        assertUnreachable(model.snapshotRequest)
+        assertUnreachable(model.snapshotRequest);
     }
   };
 

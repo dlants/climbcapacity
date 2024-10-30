@@ -1,10 +1,15 @@
 import React from "react";
 import * as immer from "immer";
-const produce = immer.produce
+const produce = immer.produce;
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, wrapThunk } from "../tea";
 import * as LoadedSnapshot from "../views/snapshot";
-import { assertUnreachable,  RequestStatus, RequestStatusView } from "../utils";
+import {
+  assertUnreachable,
+  RequestStatus,
+  RequestStatusView,
+  assertLoaded,
+} from "../utils";
 import { SnapshotId } from "../../iso/protocol";
 
 export type Model = immer.Immutable<{
@@ -72,13 +77,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
           model.snapshotRequest.response,
         );
         return [
-          {
-            ...model,
-            snapshotRequest: {
-              ...model.snapshotRequest,
-              response: nextModel,
-            },
-          },
+          produce(model, (draft) => {
+            assertLoaded(draft.snapshotRequest).response =
+              immer.castDraft(nextModel);
+          }),
           wrapThunk("LOADED_SNAPSHOT_MSG", thunk),
         ];
       } else {
