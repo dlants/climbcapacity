@@ -9,13 +9,24 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures.js";
-import { Filter, MeasureId } from "../iso/protocol.js";
+import { Filter, MeasureId, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
+import { HandledError } from "./utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 dotenv.config();
+
+const MAIN_HTML = `
+    <!DOCTYPE html>
+    <html>
+      <body>
+        <div id="app"></div>
+        <script src="/js/main.js"></script>
+      </body>
+    </html>
+  `;
 
 async function run() {
   console.log("Starting up...");
@@ -33,15 +44,45 @@ async function run() {
   app.use("/js", express.static(staticDir));
 
   app.get("/", (_req, res) => {
-    res.send(`
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <div id="app"></div>
-        <script src="/js/main.js"></script>
-      </body>
-    </html>
-  `);
+    res.send(MAIN_HTML);
+  });
+  app.get("/snapshots", (_req, res) => {
+    res.send(MAIN_HTML);
+  });
+  app.get("/snapshot/:snapshotId", (_req, res) => {
+    res.send(MAIN_HTML);
+  });
+  app.get("/explore", (_req, res) => {
+    res.send(MAIN_HTML);
+  });
+
+  app.post("/snapshot", async (req, res) => {
+    const user = await auth.assertLoggedIn(req, res);
+    const snapshotId: SnapshotId = req.body.snapshotId;
+    assert.equal(
+      typeof snapshotId,
+      "string",
+      "Must provide snapshotId in body",
+    );
+    const snapshot: Snapshot | null = await snapshotModel.getSnapshot(
+      new mongodb.ObjectId(snapshotId),
+    );
+
+    if (!snapshot) {
+      throw new HandledError({
+        status: 404,
+        message: `Snapshot not found`,
+      });
+    }
+
+    if (snapshot.userId != user.id) {
+      throw new HandledError({
+        status: 403,
+        message: `You can only look at your own snapshots`,
+      });
+    }
+    res.json(snapshot);
+    return;
   });
 
   app.post("/snapshots", async (req, res) => {
@@ -63,7 +104,7 @@ async function run() {
         `Measure has invalid id ${key}`,
       );
 
-      const val = query[key];
+      const val = query[key as MeasureId];
       assert.equal(
         typeof val,
         "object",
@@ -77,7 +118,7 @@ async function run() {
         );
 
         assert.equal(
-          typeof val[valKey],
+          typeof val[valKey as "min" | "max"],
           "number",
           `query ${key}:${valKey} must be a number`,
         );

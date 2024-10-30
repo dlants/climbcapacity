@@ -67,6 +67,10 @@ export class SnapshotsModel {
     return result.deletedCount;
   }
 
+  async getSnapshot(snapshotId: mongodb.ObjectId): Promise<SnapshotDoc | null> {
+    return this.snapshotCollection.findOne({ _id: snapshotId });
+  }
+
   async getUsersSnapshots(userId: string): Promise<SnapshotDoc[]> {
     return this.snapshotCollection.find({ userId }).toArray();
   }

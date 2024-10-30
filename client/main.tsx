@@ -12,7 +12,7 @@ import * as UserSnapshotsPage from "./pages/users-snapshots";
 import * as SnapshotPage from "./pages/load-snapshot";
 import * as ExplorePage from "./pages/explore";
 import { assertUnreachable, RequestStatus } from "./utils";
-import { NavigateMsg, Router } from "./router";
+import { NavigateMsg, parseRoute, Router } from "./router";
 import { SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 
@@ -150,9 +150,6 @@ const update: Update<Msg, Model> = (msg, model) => {
           ...model,
           auth: { status: "loaded", response: msg.status },
         },
-        async (dispatch) => {
-          dispatch({ type: "NAVIGATE", target: { route: "/snapshots" } });
-        },
       ];
     }
 
@@ -231,7 +228,13 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.snapshotModel,
       );
       return [
-        { ...model, snapshotModel },
+        {
+          ...model,
+          page: {
+            ...model.page,
+            snapshotModel,
+          },
+        },
         wrapThunk("SNAPSHOT_MSG", snapshotThunk),
       ];
     }
@@ -248,7 +251,7 @@ const update: Update<Msg, Model> = (msg, model) => {
         model.page.exploreModel,
       );
       return [
-        { ...model, exploreModel },
+        { ...model, page: { ...model.page, exploreModel } },
         wrapThunk("EXPLORE_MSG", exploreThunk),
       ];
     }
@@ -282,7 +285,7 @@ const view: View<Msg, Model> = (model, dispatch) => {
         );
 
       case "/":
-        return <div>Loading...</div>;
+        return <div>TODO: add homepage content</div>;
 
       default:
         assertUnreachable(model.page);
@@ -312,7 +315,7 @@ function navigationThunk(model: Model) {
         newUrl = "/snapshots";
         break;
       case "/snapshot":
-        newUrl = "/snapshot";
+        newUrl = `/snapshot/${model.page.snapshotModel.snapshotId}`;
         break;
       case "/explore":
         newUrl = "/explore";
@@ -357,6 +360,11 @@ async function run() {
   });
   const status = (await response.json()) as AuthStatus;
   app.dispatch({ type: "AUTH_RESOLVED", status });
+
+  const navMsg = parseRoute(window.location.pathname);
+  if (navMsg) {
+    app.dispatch(navMsg);
+  }
 }
 
 run().catch((err) => {

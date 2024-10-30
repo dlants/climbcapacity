@@ -1,6 +1,5 @@
 import { Dispatch } from "react";
 import { SnapshotId } from "../iso/protocol";
-import { assertUnreachable } from "./utils";
 
 export type NavigateMsg = {
   type: "NAVIGATE";
@@ -73,36 +72,57 @@ export class Router {
     pathname: string,
     dispatch: Dispatch<NavigateMsg>,
   ): boolean {
-    if (pathname == "/send-link") {
-      dispatch({
+    const msg = parseRoute(pathname);
+    if (msg) {
+      dispatch(msg);
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
+export function parseRoute(pathname: string): NavigateMsg | undefined {
+  if (pathname == "/send-link") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/send-link",
+      },
+    };
+  }
+
+  if (pathname == "/snapshots") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/snapshots",
+      },
+    };
+  }
+
+  {
+    const regex = /^\/snapshot\/([a-zA-Z0-9]+)$/;
+    const match = pathname.match(regex);
+
+    if (match) {
+      const snapshotId = match[1] as SnapshotId;
+      return {
         type: "NAVIGATE",
         target: {
-          route: "/send-link",
+          route: "/snapshot",
+          snapshotId,
         },
-      });
-      return true;
+      };
     }
+  }
 
-    if (pathname == "/snapshots") {
-      dispatch({
-        type: "NAVIGATE",
-        target: {
-          route: "/snapshots",
-        },
-      });
-      return true;
-    }
-
-    if (pathname == "/explore") {
-      dispatch({
-        type: "NAVIGATE",
-        target: {
-          route: "/explore",
-        },
-      });
-      return true;
-    }
-
-    return false;
+  if (pathname == "/explore") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/explore",
+      },
+    };
   }
 }

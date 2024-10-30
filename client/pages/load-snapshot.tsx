@@ -85,7 +85,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
 export const view: View<Msg, Model> = (model, dispatch) => {
   return (
-    <RequestStatusView<LoadedSnapshot.Model>
+    <RequestStatusView
       request={model.snapshotRequest}
       viewMap={{
         "not-sent": () => <div />,
