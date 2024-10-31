@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Thunk } from "./tea";
+import { Dispatch, Thunk } from "./tea";
 
 export type LoadedRequest<T> = {
   status: "loaded";
@@ -26,36 +26,44 @@ export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {
   return request;
 }
 
-export type RequestStatusViewMap<T> = {
-  "not-sent": () => JSX.Element;
-  loading: () => JSX.Element;
-  loaded: ({ response }: { response: T }) => JSX.Element;
-  error: ({ error }: { error: string }) => JSX.Element;
+export type RequestStatusViewMap<T, Msg = never> = {
+  "not-sent": (props: { dispatch: Dispatch<Msg> }) => JSX.Element;
+  loading: (props: { dispatch: Dispatch<Msg> }) => JSX.Element;
+  loaded: ({
+    response,
+    dispatch,
+  }: {
+    response: T;
+    dispatch: Dispatch<Msg>;
+  }) => JSX.Element;
+  error: (props: { error: string; dispatch: Dispatch<Msg> }) => JSX.Element;
 };
 
-export function RequestStatusView<T>({
+export function RequestStatusView<T, Msg = never>({
   request,
+  dispatch,
   viewMap,
 }: {
   request: RequestStatus<T>;
-  viewMap: RequestStatusViewMap<T>;
+  dispatch: Dispatch<Msg>;
+  viewMap: RequestStatusViewMap<T, Msg>;
 }): JSX.Element {
   switch (request.status) {
     case "not-sent": {
       const View = viewMap["not-sent"];
-      return <View />;
+      return <View dispatch={dispatch} />;
     }
     case "loading": {
       const View = viewMap["loading"];
-      return <View />;
+      return <View dispatch={dispatch} />;
     }
     case "error": {
       const View = viewMap["error"];
-      return <View error={request.error} />;
+      return <View dispatch={dispatch} error={request.error} />;
     }
     case "loaded":
       const View = viewMap["loaded"];
-      return <View response={request.response} />;
+      return <View response={request.response} dispatch={dispatch} />;
     default:
       assertUnreachable(request);
   }

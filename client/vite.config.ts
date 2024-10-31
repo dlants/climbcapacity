@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  appType: 'spa',
-  base: '/',
+  appType: "spa",
+  base: "/",
   // Most esbuild options map directly
   build: {
     target: "esnext",
@@ -10,11 +10,14 @@ export default defineConfig({
     minify: true,
   },
   server: {
-    host: 'localhost',
+    host: "localhost",
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:3000'
-    }
+      "/api": {
+        target: "http://localhost:3000",
+        secure: false,
+      },
+    },
   },
-  root: '.'
+  root: ".",
 });

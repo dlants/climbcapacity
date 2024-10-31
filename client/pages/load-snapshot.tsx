@@ -92,7 +92,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-const snapshotReuestViewMap: RequestStatusViewMap<LoadedSnapshot.Model> = {
+const snapshotReuestViewMap: RequestStatusViewMap<LoadedSnapshot.Model, Msg> = {
   "not-sent": () => <div />,
   loading: () => <div>Loading...</div>,
   error: ({ error }) => <div>Error loading snapshot: {error}</div>,
@@ -107,6 +107,7 @@ const snapshotReuestViewMap: RequestStatusViewMap<LoadedSnapshot.Model> = {
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <RequestStatusView
+      dispatch={dispatch}
       request={model.snapshotRequest}
       viewMap={snapshotReuestViewMap}
     />

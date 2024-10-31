@@ -6,6 +6,7 @@ import {
   assertUnreachable,
   RequestStatus,
   RequestStatusView,
+  RequestStatusViewMap,
 } from "../utils";
 import { MeasureId, Filter } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
@@ -132,30 +133,35 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  const FetchButton = () => (
-    <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>
-      Fetch Data
-    </button>
-  );
+const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
+  <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
+);
 
+const viewMap: RequestStatusViewMap<
+  Model['dataRequest'],
+  Msg
+> = {
+  "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
+  loading: () => <div>Fetching...</div>,
+  error: ({ error }) => <div>error when fetching data: {error}</div>,
+  loaded: ({ response, dispatch }) => (
+    <div>
+      {response.snapshots.length} snapshots loaded.{" "}
+      <FetchButton dispatch={dispatch} />
+      <PlotWithControls.view
+        model={response.plotModel}
+        dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
+      />
+    </div>
+  ),
+};
+
+export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <RequestStatusView
+      dispatch={dispatch}
       request={model.dataRequest}
-      viewMap={{
-        "not-sent": () => <FetchButton />,
-        loading: () => <div>Fetching...</div>,
-        error: ({ error }) => <div>error when fetching data: {error}</div>,
-        loaded: ({ response }) => (
-          <div>
-            {response.snapshots.length} snapshots loaded. <FetchButton />
-            <PlotWithControls.view
-              model={response.plotModel}
-              dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
-            />
-          </div>
-        ),
-      }}
+      viewMap={viewMap}
     />
   );
 };

@@ -58,7 +58,7 @@ export class Auth {
       return next();
     });
 
-    app.post("/send-login-link", async (req, res) => {
+    app.post("/api/send-login-link", async (req, res) => {
       const email: string = req.body.email;
       assert.equal(typeof email, "string");
 
@@ -72,7 +72,7 @@ export class Auth {
       return;
     });
 
-    app.get("/login", async (req, res) => {
+    app.get("/api/login", async (req, res) => {
       const code = req.query.code;
       if (typeof code !== "string") {
         throw new HandledError({ status: 401, message: `No token provided` });
@@ -93,7 +93,7 @@ export class Auth {
       return;
     });
 
-    app.post("/auth", async (req, res) => {
+    app.post("/api/auth", async (req, res) => {
       try {
         const user = await this.assertLoggedIn(req, res);
         res.json({
