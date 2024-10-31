@@ -53,3 +53,5 @@ export type Filter = {
   min?: number;
   max?: number;
 };
+
+export type FilterQuery = { [measureId: MeasureId]: Filter }

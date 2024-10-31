@@ -66,3 +66,49 @@
 
 
 7:42:35 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:34:59 AM - File change detected. Starting incremental compilation...
+
+
+8:34:59 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:35:01 AM - File change detected. Starting incremental compilation...
+
+
+8:35:01 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:35:05 AM - File change detected. Starting incremental compilation...
+
+app.ts(66,18): error TS2304: Cannot find name 'FilterQuery'.
+
+8:35:05 AM - Found 1 error. Watching for file changes.
+[2J[3J[H8:35:10 AM - File change detected. Starting incremental compilation...
+
+
+8:35:10 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:35:15 AM - File change detected. Starting incremental compilation...
+
+
+8:35:15 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:38:37 AM - File change detected. Starting incremental compilation...
+
+
+8:38:37 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:38:54 AM - File change detected. Starting incremental compilation...
+
+
+8:38:54 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:41:37 AM - File change detected. Starting incremental compilation...
+
+app.ts(97,5): error TS2552: Cannot find name 'cnosole'. Did you mean 'console'?
+
+8:41:37 AM - Found 1 error. Watching for file changes.
+[2J[3J[H8:41:45 AM - File change detected. Starting incremental compilation...
+
+
+8:41:45 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:42:42 AM - File change detected. Starting incremental compilation...
+
+
+8:42:42 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H8:43:04 AM - File change detected. Starting incremental compilation...
+
+
+8:43:04 AM - Found 0 errors. Watching for file changes.

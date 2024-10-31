@@ -7,7 +7,7 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures.js";
-import { Filter, MeasureId, SnapshotId } from "../iso/protocol.js";
+import { FilterQuery, MeasureId, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 
@@ -63,7 +63,7 @@ async function run() {
   });
 
   app.post("/api/snapshots/query", async (req, res) => {
-    const query: { [measureId: MeasureId]: Filter } = req.body.query;
+    const query: FilterQuery = req.body.query;
 
     assert.equal(typeof query, "object", "filter must be an object");
     for (const key in query) {
@@ -94,6 +94,7 @@ async function run() {
     }
 
     const snapshots: Snapshot[] = await snapshotModel.querySnapshots(query);
+    console.log(`snapshots: ${JSON.stringify(snapshots)}`)
     res.json(snapshots);
     return;
   });

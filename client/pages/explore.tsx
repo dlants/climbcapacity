@@ -4,16 +4,19 @@ import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
 import {
   assertLoaded,
   assertUnreachable,
+  GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
   RequestStatusView,
   RequestStatusViewMap,
 } from "../utils";
-import { MeasureId, Filter } from "../../iso/protocol";
+import { MeasureId, Filter, FilterQuery } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
+import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
+  filtersModel: SelectFilters.Model;
   query: {
     [measureId: MeasureId]: Filter;
   };
@@ -37,17 +40,22 @@ export type Msg =
   | {
       type: "PLOT_MSG";
       msg: PlotWithControls.Msg;
+    }
+  | {
+      type: "FILTERS_MSG";
+      msg: SelectFilters.Msg;
     };
 
 function generateFetchThunk(model: Model) {
   return async (dispatch: Dispatch<Msg>) => {
+    const query: FilterQuery = model.query;
     const response = await fetch("/api/snapshots/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: model.query,
+        query,
       }),
     });
     if (response.ok) {
@@ -68,12 +76,12 @@ function generateFetchThunk(model: Model) {
 export function initModel(): [Model] | [Model, Thunk<Msg> | undefined] {
   return [
     {
+      filtersModel: SelectFilters.initModel(),
       query: {},
       dataRequest: { status: "not-sent" },
     },
   ];
 }
-
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SNAPSHOT_RESPONSE": {
@@ -85,7 +93,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            const plotModel = PlotWithControls.initModel(msg.request.response);
+            const plotModel = PlotWithControls.initModel({
+              snapshots: msg.request.response,
+              filterMapping: SelectFilters.generateFiltersMap(
+                draft.filtersModel,
+              ),
+            });
             draft.dataRequest = {
               status: "loaded",
               response: {
@@ -128,6 +141,28 @@ export const update: Update<Msg, Model> = (msg, model) => {
         wrapThunk("PLOT_MSG", thunk),
       ];
 
+    case "FILTERS_MSG": {
+      const [nextFiltersModel] = SelectFilters.update(
+        msg.msg,
+        model.filtersModel,
+      );
+      return [
+        produce(model, (draft) => {
+          draft.filtersModel = immer.castDraft(nextFiltersModel);
+          // Convert filters to query format
+          draft.query = {};
+          nextFiltersModel.filters.forEach((filter) => {
+            if (filter.measureSelector.state === "selected") {
+              draft.query[filter.measureSelector.measureId] = {
+                min: filter.min,
+                max: filter.max,
+              };
+            }
+          });
+        }),
+      ];
+    }
+
     default:
       assertUnreachable(msg);
   }
@@ -138,7 +173,7 @@ const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
 );
 
 const viewMap: RequestStatusViewMap<
-  Model['dataRequest'],
+  GetLoadedRequestType<Model["dataRequest"]>["response"],
   Msg
 > = {
   "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
@@ -158,10 +193,16 @@ const viewMap: RequestStatusViewMap<
 
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <RequestStatusView
-      dispatch={dispatch}
-      request={model.dataRequest}
-      viewMap={viewMap}
-    />
+    <div>
+      <SelectFilters.view
+        model={model.filtersModel}
+        dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
+      />
+      <RequestStatusView
+        dispatch={dispatch}
+        request={model.dataRequest}
+        viewMap={viewMap}
+      />
+    </div>
   );
 };

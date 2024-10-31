@@ -19,6 +19,9 @@ export type RequestStatus<T> =
       error: string;
     };
 
+export type GetLoadedRequest<T extends RequestStatus<any>> =
+  T extends LoadedRequest<infer U> ? LoadedRequest<U> : never;
+
 export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {
   if (request.status != "loaded") {
     throw new Error(`Expected request to be loaded.`);

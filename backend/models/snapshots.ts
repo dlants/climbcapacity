@@ -95,6 +95,7 @@ export class SnapshotsModel {
       }
     }
 
-    return this.snapshotCollection.find(query).toArray();
+    console.log(`findQuery: ${JSON.stringify(findQuery)}`)
+    return this.snapshotCollection.find(findQuery).toArray();
   }
 }
