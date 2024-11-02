@@ -18,6 +18,7 @@ const produce = immer.produce;
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
+  userId: string | undefined;
   query: FilterQuery;
   dataRequest: RequestStatus<{
     snapshots: HydratedSnapshot[];
@@ -72,10 +73,11 @@ function generateFetchThunk(model: Model) {
   };
 }
 
-export function initModel(): [Model] | [Model, Thunk<Msg> | undefined] {
+export function initModel({userId}: {userId: string | undefined}): [Model] | [Model, Thunk<Msg> | undefined] {
   return [
     {
       filtersModel: SelectFilters.initModel(),
+      userId,
       query: {},
       dataRequest: { status: "not-sent" },
     },
@@ -94,6 +96,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           case "loaded":
             const plotModel = PlotWithControls.initModel({
               snapshots: msg.request.response,
+              userId: model.userId,
               filterMapping: SelectFilters.generateFiltersMap(
                 draft.filtersModel,
               ),

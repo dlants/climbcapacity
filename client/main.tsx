@@ -152,7 +152,12 @@ const navigate: Update<Msg, Model> = (msg, model) => {
         ];
       }
     case "/explore":
-      const [exploreModel] = ExplorePage.initModel();
+      const [exploreModel] = ExplorePage.initModel({
+        userId:
+          model.auth.status == "loaded" &&
+          model.auth.response.status == "logged in" &&
+          model.auth.response.user.id || undefined,
+      });
       return [
         produce(model, (draft) => {
           draft.page = {

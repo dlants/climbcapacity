@@ -11,6 +11,7 @@ const produce = immer.produce;
 
 export type Model = immer.Immutable<{
   snapshots: HydratedSnapshot[];
+  userId: string | undefined;
   filterMapping: FilterMapping;
   xAxis: MeasureExpressionBox.Model;
   yAxis: MeasureExpressionBox.Model;
@@ -29,15 +30,18 @@ export type Msg =
 
 export function initModel({
   filterMapping,
+  userId,
   snapshots,
 }: {
   filterMapping: FilterMapping;
+  userId: string | undefined;
   snapshots: HydratedSnapshot[];
 }): Model {
   const ids = Object.keys(filterMapping).sort();
   const model: Model = {
     filterMapping,
     snapshots,
+    userId,
     xAxis: MeasureExpressionBox.initModel(ids[0] || ""),
     yAxis: MeasureExpressionBox.initModel(ids[1] || ""),
     plot: undefined,
@@ -81,24 +85,38 @@ function updatePlot(model: Model): Plot.Model | undefined {
       idValues[id as Identifier] =
         s.normalizedMeasures[model.filterMapping[id as Identifier]];
     }
-    return idValues;
+    return { userId: s.userId, idValues };
   });
 
   if (xAxisValid) {
     const evalX = model.xAxis.evalResult.fn;
-    const xData = snapshotDataById.map(evalX);
+    const xData = snapshotDataById.map(({ userId, idValues }) => ({
+      userId,
+      x: evalX(idValues),
+    }));
 
     if (yAxisValid) {
       const evalY = model.yAxis.evalResult.fn;
-      const yData = snapshotDataById.map(evalY);
+      const yData = snapshotDataById.map(({ userId, idValues }) => ({
+        userId,
+        y: evalY(idValues),
+      }));
 
       const data = [];
+      let myData;
       for (let i = 0; i < xData.length; i += 1) {
-        if (xData[i] && yData[i]) {
+        if (xData[i].x && yData[i].y) {
           data.push({
-            x: xData[i],
-            y: yData[i],
+            x: xData[i].x,
+            y: yData[i].y,
           });
+
+          if (xData[i].userId == model.userId) {
+            myData = {
+              x: xData[i].x,
+              y: yData[i].y,
+            };
+          }
         }
       }
 
@@ -106,6 +124,7 @@ function updatePlot(model: Model): Plot.Model | undefined {
         return {
           style: "dotplot",
           data,
+          myData,
           xLabel: model.xAxis.expression,
           yLabel: model.yAxis.expression,
         };
@@ -113,6 +132,7 @@ function updatePlot(model: Model): Plot.Model | undefined {
         return {
           style: "heatmap",
           data,
+          myData,
           xLabel: model.xAxis.expression,
           yLabel: model.yAxis.expression,
         };
@@ -120,7 +140,8 @@ function updatePlot(model: Model): Plot.Model | undefined {
     } else {
       return {
         style: "histogram",
-        data: xData.filter((val) => val != undefined),
+        data: xData.map((data) => data.x).filter((val) => val != undefined),
+        myData: xData.find((val) => val.userId == model.userId)?.x,
         xLabel: model.xAxis.expression,
       };
     }
