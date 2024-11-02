@@ -1,4 +1,5 @@
 import * as Protocol from "../iso/protocol";
+import { MeasureId } from "../iso/units";
 type FrontendObject<T> = { [K in keyof T]: Frontend<T[K]> };
 
 export type Frontend<T> = T extends Protocol.ProtocolObjectId
@@ -14,3 +15,11 @@ export type Frontend<T> = T extends Protocol.ProtocolObjectId
           : T;
 
 export type Snapshot = Frontend<Protocol.Snapshot>;
+
+export type HydratedSnapshot = Snapshot & {
+  /** When we load a snapshot, populate these with the appropriate values in default units
+   */
+  normalizedMeasures: {
+    [measureId: MeasureId]: number;
+  };
+};

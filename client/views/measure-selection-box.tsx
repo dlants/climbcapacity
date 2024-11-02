@@ -2,7 +2,7 @@ import React from "react";
 import * as immer from "immer";
 import { Update, View } from "../tea";
 import { MEASURES } from "../constants";
-import { assertUnreachable } from "../util/utils";
+import { assertUnreachable, filterMeasures } from "../util/utils";
 import { MeasureId, MeasureSpec } from "../../iso/units";
 
 export type Model = immer.Immutable<
@@ -46,7 +46,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           id: model.id,
           state: "typing",
           query: msg.query,
-          measures: MEASURES.filter((m) => m.id.indexOf(msg.query) > -1),
+          measures: filterMeasures(MEASURES, msg.query),
         },
       ];
 
@@ -69,7 +69,6 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     return (
       <div className="measure-selection-box">
         <input
-          //key={`measure-selection-input-${model.id}`}
           type="text"
           value={model.query}
           onChange={(e) =>

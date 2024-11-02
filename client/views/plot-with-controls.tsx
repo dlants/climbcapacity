@@ -1,7 +1,7 @@
 import React from "react";
 import * as MeasureExpressionBox from "./measure-expression-box";
 import * as Plot from "./plot";
-import { Snapshot } from "../types";
+import { HydratedSnapshot } from "../types";
 import { Update, View } from "../tea";
 import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
@@ -10,7 +10,7 @@ import { FilterMapping } from "./select-filters";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
-  snapshots: Snapshot[];
+  snapshots: HydratedSnapshot[];
   filterMapping: FilterMapping;
   xAxis: MeasureExpressionBox.Model;
   yAxis: MeasureExpressionBox.Model;
@@ -32,7 +32,7 @@ export function initModel({
   snapshots,
 }: {
   filterMapping: FilterMapping;
-  snapshots: Snapshot[];
+  snapshots: HydratedSnapshot[];
 }): Model {
   const ids = Object.keys(filterMapping).sort();
   const model: Model = {
@@ -79,7 +79,7 @@ function updatePlot(model: Model): Plot.Model | undefined {
     const idValues: { [id: Identifier]: number } = {};
     for (const id in model.filterMapping) {
       idValues[id as Identifier] =
-        s.measures[model.filterMapping[id as Identifier]];
+        s.normalizedMeasures[model.filterMapping[id as Identifier]];
     }
     return idValues;
   });

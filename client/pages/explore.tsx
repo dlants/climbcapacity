@@ -1,5 +1,5 @@
 import React from "react";
-import type { Snapshot } from "../types";
+import type { HydratedSnapshot, Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
 import {
   assertLoaded,
@@ -14,6 +14,7 @@ import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
 import { MeasureId } from "../../iso/units";
+import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
@@ -22,7 +23,7 @@ export type Model = immer.Immutable<{
     [measureId: MeasureId]: Filter;
   };
   dataRequest: RequestStatus<{
-    snapshots: Snapshot[];
+    snapshots: HydratedSnapshot[];
     plotModel: PlotWithControls.Model;
   }>;
 }>;
@@ -36,7 +37,7 @@ export type Msg =
     }
   | {
       type: "SNAPSHOT_RESPONSE";
-      request: RequestStatus<Snapshot[]>;
+      request: RequestStatus<HydratedSnapshot[]>;
     }
   | {
       type: "PLOT_MSG";
@@ -63,7 +64,7 @@ function generateFetchThunk(model: Model) {
       const snapshots = (await response.json()) as Snapshot[];
       dispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "loaded", response: snapshots },
+        request: { status: "loaded", response: snapshots.map(hydrateSnapshot) },
       });
     } else {
       dispatch({

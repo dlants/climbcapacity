@@ -2,16 +2,17 @@ import React from "react";
 import * as immer from "immer";
 const produce = immer.produce;
 
-import type { Snapshot } from "../types";
+import type { HydratedSnapshot } from "../types";
 import { Update, View, Dispatch } from "../tea";
 import {
+  convertToStandardUnit,
   MeasureId,
   MeasureSpec,
   UnitValue,
   unitValueToString,
 } from "../../iso/units";
 import { MEASURES } from "../constants";
-import { RequestStatus } from "../util/utils";
+import { filterMeasures, RequestStatus } from "../util/utils";
 import { Result, Success } from "../../iso/utils";
 import * as UnitInput from "./unit-input";
 
@@ -40,14 +41,14 @@ function hasParseResult(
 }
 
 export type Model = immer.Immutable<{
-  snapshot: Snapshot;
+  snapshot: HydratedSnapshot;
   measureFilter: { query: string; measures: MeasureSpec[] };
   measureUpdates: {
     [measureId: MeasureId]: MeasureUpdate;
   };
 }>;
 
-export function initModel({ snapshot }: { snapshot: Snapshot }): Model {
+export function initModel({ snapshot }: { snapshot: HydratedSnapshot }): Model {
   return {
     snapshot,
     measureFilter: {
@@ -88,7 +89,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         produce(model, (draft) => {
           draft.measureFilter = {
             query: msg.query,
-            measures: MEASURES.filter((m) => m.name.indexOf(msg.query) > -1),
+            measures: filterMeasures(MEASURES, msg.query)
           };
         }),
       ];
@@ -125,8 +126,14 @@ export const update: Update<Msg, Model> = (msg, model) => {
       const measureValue = measureUpdate.parseResult.value;
 
       if (msg.request.status == "loaded") {
-        const nextSnapshot: Snapshot = produce(model.snapshot, (draft) => {
+        const nextSnapshot: HydratedSnapshot = produce(model.snapshot, (draft) => {
           draft.measures[msg.measureId] = immer.castDraft(measureValue.value);
+          draft.normalizedMeasures[msg.measureId] = immer.castDraft(
+            convertToStandardUnit({
+              id: msg.measureId,
+              value: measureValue.value
+            }),
+          );
         });
 
         const nextMeasureUpdates = produce(model.measureUpdates, (draft) => {

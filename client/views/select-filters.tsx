@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
@@ -15,7 +15,7 @@ export type Filter = {
 };
 
 export type FilterMapping = {
-  [id: Identifier]: MeasureId
+  [id: Identifier]: MeasureId;
 };
 
 export type Model = immer.Immutable<{
@@ -135,58 +135,64 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
       </button>
 
       {model.filters.map((filter) => (
-        <div
-          key={filter.id}
-          style={{
-            margin: "10px 0",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <strong>[{filter.id}]</strong>{" "}
-          <MeasureSelectionBox.view
-            model={filter.measureSelector}
-            dispatch={(msg) =>
-              dispatch({ type: "MEASURE_SELECTOR_MSG", id: filter.id, msg })
-            }
-          />{" "}
-          min:{" "}
-          <input
-            type="number"
-            value={filter.minStr}
-            onChange={(e) =>
-              dispatch({
-                type: "UPDATE_MIN",
-                id: filter.id,
-                value: e.target.value,
-              })
-            }
-          />{" "}
-          max:{" "}
-          <input
-            type="number"
-            value={filter.maxStr}
-            onChange={(e) =>
-              dispatch({
-                type: "UPDATE_MAX",
-                id: filter.id,
-                value: e.target.value,
-              })
-            }
-          />{" "}
-          <button
-            onClick={() =>
-              dispatch({
-                type: "REMOVE_FILTER",
-                id: filter.id,
-              })
-            }
-          >
-            Remove
-          </button>
-        </div>
+        <FilterView filter={filter} dispatch={dispatch}/>
       ))}
+    </div>
+  );
+};
+
+const FilterView = ({ filter, dispatch }: { filter: Filter, dispatch: Dispatch<Msg> }) => {
+  return (
+    <div
+      key={filter.id}
+      style={{
+        margin: "10px 0",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      <strong>[{filter.id}]</strong>{" "}
+      <MeasureSelectionBox.view
+        model={filter.measureSelector}
+        dispatch={(msg) =>
+          dispatch({ type: "MEASURE_SELECTOR_MSG", id: filter.id, msg })
+        }
+      />{" "}
+      min:{" "}
+      <input
+        type="number"
+        value={filter.minStr}
+        onChange={(e) =>
+          dispatch({
+            type: "UPDATE_MIN",
+            id: filter.id,
+            value: e.target.value,
+          })
+        }
+      />{" "}
+      max:{" "}
+      <input
+        type="number"
+        value={filter.maxStr}
+        onChange={(e) =>
+          dispatch({
+            type: "UPDATE_MAX",
+            id: filter.id,
+            value: e.target.value,
+          })
+        }
+      />{" "}
+      <button
+        onClick={() =>
+          dispatch({
+            type: "REMOVE_FILTER",
+            id: filter.id,
+          })
+        }
+      >
+        Remove
+      </button>
     </div>
   );
 };

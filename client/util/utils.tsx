@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Dispatch, Thunk } from "../tea";
+import { MeasureSpec } from "../../iso/units";
 
 export type LoadedRequest<T> = {
   status: "loaded";
@@ -118,3 +119,11 @@ export type ExtractFromDisjointUnion<
   K extends keyof T,
   V extends T[K],
 > = T extends { [key in K]: V } ? T : never;
+
+export function filterMeasures(measures: MeasureSpec[], query: string) {
+  return measures.filter(
+    (m) =>
+      m.id.toLowerCase().includes(query.toLowerCase()) ||
+      m.name.toLowerCase().includes(query.toLowerCase()),
+  );
+}

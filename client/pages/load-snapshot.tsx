@@ -12,6 +12,7 @@ import {
   RequestStatusViewMap,
 } from "../util/utils";
 import { SnapshotId } from "../../iso/protocol";
+import { hydrateSnapshot } from "../util/snapshot";
 
 export type Model = immer.Immutable<{
   snapshotId: SnapshotId;
@@ -48,7 +49,7 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
 
       if (response.ok) {
         const snapshot = (await response.json()) as Snapshot;
-        const model = LoadedSnapshot.initModel({ snapshot });
+        const model = LoadedSnapshot.initModel({ snapshot: hydrateSnapshot(snapshot) });
         dispatch({
           type: "SNAPSHOT_RESPONSE",
           request: { status: "loaded", response: model },

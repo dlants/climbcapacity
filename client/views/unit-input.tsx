@@ -46,10 +46,11 @@ export type Model = immer.Immutable<{
   parseResult: Result<UnitValue>;
 }>;
 
-export type HasParseResultModel =  immer.Immutable<Omit<Model, 'parseResult'> & {
-  parseResult: Success<UnitValue>
-}>
-
+export type HasParseResultModel = immer.Immutable<
+  Omit<Model, "parseResult"> & {
+    parseResult: Success<UnitValue>;
+  }
+>;
 
 export function initModel(measureId: MeasureId): Model {
   const measureSpec = MEASURE_MAP[measureId];
@@ -122,6 +123,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       );
       return [
         produce(model, (draft) => {
+          draft.unitInput = msg.unitInput;
           draft.parseResult = parseResult;
         }),
       ];
