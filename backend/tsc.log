@@ -4488,3 +4488,31 @@ models/snapshots.spec.ts(279,42): error TS2345: Argument of type '{ [x: string]:
 
 
 1:21:44 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:25:37 PM - File change detected. Starting incremental compilation...
+
+
+1:25:37 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:25:46 PM - File change detected. Starting incremental compilation...
+
+
+1:25:46 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:25:56 PM - File change detected. Starting incremental compilation...
+
+
+1:25:56 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:27:56 PM - File change detected. Starting incremental compilation...
+
+
+1:27:56 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:28:05 PM - File change detected. Starting incremental compilation...
+
+
+1:28:06 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:30:02 PM - File change detected. Starting incremental compilation...
+
+
+1:30:02 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:31:21 PM - File change detected. Starting incremental compilation...
+
+
+1:31:21 PM - Found 0 errors. Watching for file changes.

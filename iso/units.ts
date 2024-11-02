@@ -19,7 +19,7 @@ export type MeasureId = string & { __brand: "measureId" };
  *
  * to construct one we take the
  */
-export type MeasureStr = string & { __brand: "MeasureStr" };
+export type NormedMeasure = { measureId: MeasureId; value: number };
 
 export type MeasureSpec = {
   id: MeasureId;
@@ -33,12 +33,9 @@ export type MeasureValue = {
   value: UnitValue;
 };
 
-export function encodeMeasureValue(measure: MeasureValue): MeasureStr {
+export function encodeMeasureValue(measure: MeasureValue): NormedMeasure {
   const standardValue = convertToStandardUnit(measure);
-
-  return (measure.id +
-    ":" +
-    standardValue.toString().padStart(8, "0")) as MeasureStr;
+  return { measureId: measure.id, value: standardValue }
 }
 
 export function convertToStandardUnit(measure: MeasureValue): number {
@@ -83,12 +80,12 @@ export function convertToStandardUnit(measure: MeasureValue): number {
         case "male":
           return 1;
         default:
-          assertUnreachable(measure.value);
+          assertUnreachable(measure.value, 'sex-at-birth');
       }
     case "count":
       return measure.value.value;
     default:
-      assertUnreachable(measure.value);
+      assertUnreachable(measure.value, 'measure.value');
   }
 }
 

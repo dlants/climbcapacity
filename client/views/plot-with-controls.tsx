@@ -102,12 +102,21 @@ function updatePlot(model: Model): Plot.Model | undefined {
         }
       }
 
-      return {
-        style: "dotplot",
-        data,
-        xLabel: model.xAxis.expression,
-        yLabel: model.yAxis.expression,
-      };
+      if (data.length < 100) {
+        return {
+          style: "dotplot",
+          data,
+          xLabel: model.xAxis.expression,
+          yLabel: model.yAxis.expression,
+        };
+      } else {
+        return {
+          style: "heatmap",
+          data,
+          xLabel: model.xAxis.expression,
+          yLabel: model.yAxis.expression,
+        };
+      }
     } else {
       return {
         style: "histogram",

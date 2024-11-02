@@ -135,6 +135,7 @@ export class SnapshotsModel {
       $and: findQueryClauses,
     };
 
+    console.log(`findQuery: `, JSON.stringify(findQuery, null, 2))
     return this.snapshotCollection.find(findQuery).toArray();
   }
 }

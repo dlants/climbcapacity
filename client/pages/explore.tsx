@@ -9,19 +9,16 @@ import {
   RequestStatusView,
   RequestStatusViewMap,
 } from "../util/utils";
-import { Filter, FilterQuery } from "../../iso/protocol";
+import { FilterQuery } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
-import { MeasureId, convertToStandardUnit } from "../../iso/units";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
-  query: {
-    [measureId: MeasureId]: Filter;
-  };
+  query: FilterQuery;
   dataRequest: RequestStatus<{
     snapshots: HydratedSnapshot[];
     plotModel: PlotWithControls.Model;
@@ -160,13 +157,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
               draft.query[filter.state.measureId] = {
                 min:
-                  minResult.status == "success"
-                    ? convertToStandardUnit({id: filter.state.measureId, value: minResult.value})
-                    : undefined,
+                  minResult.status == "success" ? minResult.value : undefined,
                 max:
-                  maxResult.status == "success"
-                    ? convertToStandardUnit({id: filter.state.measureId, value: maxResult.value})
-                    : undefined,
+                  maxResult.status == "success" ? maxResult.value : undefined,
               };
             }
           });

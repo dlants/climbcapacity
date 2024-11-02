@@ -1,5 +1,5 @@
-export function assertUnreachable(val: never): never {
-  throw new Error(`Unreachable case of val ${val} detected.`);
+export function assertUnreachable(val: never, message?: string): never {
+  throw new Error(`Unreachable case of val ${val} detected. ${message}`);
 }
 
 export type Success<T> = {

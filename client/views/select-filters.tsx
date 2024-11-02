@@ -190,13 +190,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
-      <button onClick={() => dispatch({ type: "ADD_FILTER" })}>
-        Add Filter
-      </button>
-
       {model.filters.map((filter) => (
         <FilterView filter={filter} dispatch={dispatch} />
       ))}
+      <button onClick={() => dispatch({ type: "ADD_FILTER" })}>
+        Add Filter
+      </button>
     </div>
   );
 };

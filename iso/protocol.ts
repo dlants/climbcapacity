@@ -47,8 +47,8 @@ export class ProtocolDate {
 }
 
 export type Filter = {
-  min?: number;
-  max?: number;
+  min?: UnitValue;
+  max?: UnitValue;
 };
 
 export type FilterQuery = { [measureId: MeasureId]: Filter };

@@ -2,7 +2,7 @@ import React from "react";
 import * as immer from "immer";
 const produce = immer.produce;
 import {
-    EWBANK,
+  EWBANK,
   EwbankGrade,
   FONT,
   Font,
@@ -75,7 +75,7 @@ export function initModel(measureId: MeasureId): Model {
     case "font":
     case "frenchsport":
     case "yds":
-    case 'ewbank':
+    case "ewbank":
     case "ircra":
     case "count":
       initialInput = "";
@@ -150,6 +150,22 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       case "mm":
       case "inches":
       case "count": {
+        if (
+          !(
+            input as UnitInputMap[
+              | "second"
+              | "year"
+              | "lb"
+              | "kg"
+              | "m"
+              | "cm"
+              | "mm"
+              | "inches"
+              | "count"]
+          ).length
+        ) {
+          return { status: "fail", error: "Nothing provided" };
+        }
         const num = Number(input);
         if (isNaN(num)) return { status: "fail", error: "Invalid number" };
         return {
@@ -202,7 +218,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         }
         return {
           status: "success",
-          value: { unit, value: Number(input) as EwbankGrade} as Extract<
+          value: { unit, value: Number(input) as EwbankGrade } as Extract<
             UnitValue,
             { unit: UnitName }
           >,
@@ -465,7 +481,6 @@ export const view: View<Msg, Model> = ({
           ))}
         </select>
       );
-
 
     case "font":
       return (

@@ -67,29 +67,29 @@ async function run() {
     const query: FilterQuery = req.body.query;
 
     assert.equal(typeof query, "object", "filter must be an object");
-    for (const key in query) {
+    for (const measureId in query) {
       assert.ok(
-        MEASURES.findIndex((m) => m.id == key) > -1,
-        `Measure has invalid id ${key}`,
+        MEASURES.findIndex((m) => m.id == measureId) > -1,
+        `Measure has invalid id ${measureId}`,
       );
 
-      const val = query[key as MeasureId];
+      const val = query[measureId as MeasureId];
       assert.equal(
         typeof val,
         "object",
-        `query measure ${key} must be an object.`,
+        `query measure ${measureId} must be an object.`,
       );
 
       for (const valKey in val) {
         assert.ok(
           ["min", "max"].indexOf(valKey) > -1,
-          `query ${key} can only define min and max but it defined ${valKey}`,
+          `query ${measureId} can only define min and max but it defined ${valKey}`,
         );
 
         assert.equal(
           typeof val[valKey as "min" | "max"],
-          "number",
-          `query ${key}:${valKey} must be a number`,
+          "object",
+          `query ${measureId}:${valKey} must be a UnitValue`,
         );
       }
     }

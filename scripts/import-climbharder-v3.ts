@@ -1,10 +1,12 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from 'url'
 import { SnapshotDoc } from "../backend/models/snapshots";
 import { encodeMeasureValue, MeasureId, UnitValue } from "../iso/units";
-import { VGrade, EWBANK } from "../iso/grade";
+import { VGrade, EWBANK, EwbankGrade } from "../iso/grade";
 import mongodb from "mongodb";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const fileContent = fs.readFileSync(
   path.join(__dirname, "./climbharder.tsv"),
   "utf-8",
@@ -23,7 +25,7 @@ table.slice(1).forEach((row, idx) => {
   const snapshot: Omit<SnapshotDoc, "_id"> = {
     userId: `climbharder-v3-row-${idx}`,
     measures: {},
-    measureStrs: [],
+    normedMeasures: [],
     createdAt: new Date(),
     lastUpdated: new Date(),
     importSource: 'climbharderv3'
@@ -31,7 +33,7 @@ table.slice(1).forEach((row, idx) => {
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
     snapshot.measures[measureId] = value;
-    snapshot.measureStrs.push(encodeMeasureValue({ id: measureId, value }));
+    snapshot.normedMeasures.push(encodeMeasureValue({ id: measureId, value }));
   }
 
   const sexStr = row[1];
@@ -80,12 +82,10 @@ table.slice(1).forEach((row, idx) => {
   const match = climbingAgeStr.match(rangePattern);
   if (match) {
     const [start, end] = [parseFloat(match[1]), parseFloat(match[2])];
-    if (climbingAgeStr.startsWith("0 - .5")) {
-      addMeasure("years-climbing" as MeasureId, {
-        unit: "year",
-        value: start + end / 2,
-      });
-    }
+    addMeasure("years-climbing" as MeasureId, {
+      unit: "year",
+      value: (start + end) / 2,
+    });
   }
 
   if (climbingAgeStr == "More than 15 years") {
@@ -157,8 +157,8 @@ table.slice(1).forEach((row, idx) => {
 
   function parseEwbankGrade(str: string) {
     const grade = parseFloat(str);
-    if (EWBANK[grade]) {
-      return grade;
+    if (EWBANK[grade as EwbankGrade]) {
+      return grade as EwbankGrade;
     }
     throw new Error(`Unexpected EWBANK grade ${str}`);
   }
