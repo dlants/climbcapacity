@@ -1,4 +1,6 @@
 import {
+  EwbankGrade,
+  ewbankToIrcra,
   Font,
   fontToIrcra,
   FrenchSport,
@@ -72,6 +74,8 @@ export function convertToStandardUnit(measure: MeasureValue): number {
       return frenchSportToIrcra(measure.value.value);
     case "yds":
       return ydsToIrcra(measure.value.value);
+    case "ewbank":
+      return ewbankToIrcra(measure.value.value);
     case "sex-at-birth":
       switch (measure.value.value) {
         case "female":
@@ -145,6 +149,10 @@ export type UnitValue =
       value: YDS;
     }
   | {
+      unit: "ewbank";
+      value: EwbankGrade;
+    }
+  | {
       unit: "ircra";
       value: IRCRAGrade;
     }
@@ -194,6 +202,8 @@ export function unitValueToString(unitValue: UnitValue): string {
       return unitValue.value;
     case "yds":
       return unitValue.value;
+    case "ewbank":
+      return unitValue.value.toString();
     case "ircra":
       return unitValue.value.toString();
     case "sex-at-birth":

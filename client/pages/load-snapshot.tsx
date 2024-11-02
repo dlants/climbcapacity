@@ -49,7 +49,9 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
 
       if (response.ok) {
         const snapshot = (await response.json()) as Snapshot;
-        const model = LoadedSnapshot.initModel({ snapshot: hydrateSnapshot(snapshot) });
+        const model = LoadedSnapshot.initModel({
+          snapshot: hydrateSnapshot(snapshot),
+        });
         dispatch({
           type: "SNAPSHOT_RESPONSE",
           request: { status: "loaded", response: model },

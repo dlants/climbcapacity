@@ -2,6 +2,8 @@ import React from "react";
 import * as immer from "immer";
 const produce = immer.produce;
 import {
+    EWBANK,
+  EwbankGrade,
   FONT,
   Font,
   FRENCH_SPORT,
@@ -33,6 +35,7 @@ type UnitInputMap = {
   font: string;
   frenchsport: string;
   yds: string;
+  ewbank: string;
   ircra: string;
   "sex-at-birth": "female" | "male";
   count: string;
@@ -72,6 +75,7 @@ export function initModel(measureId: MeasureId): Model {
     case "font":
     case "frenchsport":
     case "yds":
+    case 'ewbank':
     case "ircra":
     case "count":
       initialInput = "";
@@ -192,6 +196,19 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           >,
         };
       }
+      case "ewbank": {
+        if (!((input as UnitInputMap["ewbank"]) in EWBANK)) {
+          return { status: "fail", error: "Invalid Ewbank grade" };
+        }
+        return {
+          status: "success",
+          value: { unit, value: Number(input) as EwbankGrade} as Extract<
+            UnitValue,
+            { unit: UnitName }
+          >,
+        };
+      }
+
       case "font": {
         if (!((input as UnitInputMap["font"]) in FONT)) {
           return { status: "fail", error: "Invalid Font grade" };
@@ -434,6 +451,21 @@ export const view: View<Msg, Model> = ({
           ))}
         </select>
       );
+
+    case "ewbank":
+      return (
+        <select
+          value={model.unitInput as string}
+          onChange={(e) => handleChange(e.target.value)}
+        >
+          {Object.keys(EWBANK).map((grade) => (
+            <option key={grade} value={grade}>
+              {grade}
+            </option>
+          ))}
+        </select>
+      );
+
 
     case "font":
       return (

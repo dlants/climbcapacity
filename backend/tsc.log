@@ -3402,3 +3402,1089 @@ app.ts(146,9): error TS2367: This comparison appears to be unintentional because
 
 
 9:38:40 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:14:58 AM - File change detected. Starting incremental compilation...
+
+../iso/grade.ts(155,27): error TS2345: Argument of type 'number' is not assignable to parameter of type 'never'.
+
+11:14:58 AM - Found 1 error. Watching for file changes.
+[2J[3J[H11:15:08 AM - File change detected. Starting incremental compilation...
+
+
+11:15:08 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:15:12 AM - File change detected. Starting incremental compilation...
+
+
+11:15:12 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:33:24 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:33:24 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:33:31 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:33:31 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:38:41 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:38:41 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:39:47 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:39:47 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:39:56 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:39:56 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:40:10 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:40:10 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:40:20 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:40:20 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:46:49 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(88,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+../iso/units.ts(209,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:46:49 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:49:27 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(3,3): error TS2305: Module '"./grade.js"' has no exported member 'ewbankToIrcra'.
+../iso/units.ts(212,25): error TS2345: Argument of type '{ unit: "ewbank"; value: EwbankGrade; }' is not assignable to parameter of type 'never'.
+
+11:49:27 AM - Found 3 errors. Watching for file changes.
+[2J[3J[H11:49:48 AM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(2,5): error TS2305: Module '"./grade.js"' has no exported member 'EwbankGrade'.
+../iso/units.ts(3,3): error TS2305: Module '"./grade.js"' has no exported member 'ewbankToIrcra'.
+
+11:49:48 AM - Found 2 errors. Watching for file changes.
+[2J[3J[H11:52:57 AM - Starting compilation in watch mode...
+
+
+11:52:58 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:53:09 AM - File change detected. Starting incremental compilation...
+
+
+11:53:09 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:57:43 AM - File change detected. Starting incremental compilation...
+
+
+11:57:43 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:58:04 AM - File change detected. Starting incremental compilation...
+
+
+11:58:04 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H11:58:47 AM - File change detected. Starting incremental compilation...
+
+
+11:58:47 AM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:07:17 PM - File change detected. Starting incremental compilation...
+
+
+12:07:18 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:09:35 PM - File change detected. Starting incremental compilation...
+
+
+12:09:35 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:10:33 PM - File change detected. Starting incremental compilation...
+
+
+12:10:33 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:10:52 PM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(45,36): error TS2588: Cannot assign to 'i' because it is a constant.
+
+12:10:52 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:11:02 PM - File change detected. Starting incremental compilation...
+
+../iso/units.ts(45,36): error TS2588: Cannot assign to 'i' because it is a constant.
+
+12:11:02 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:11:08 PM - File change detected. Starting incremental compilation...
+
+
+12:11:08 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:11:41 PM - File change detected. Starting incremental compilation...
+
+
+12:11:41 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:12:06 PM - File change detected. Starting incremental compilation...
+
+
+12:12:06 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:12:08 PM - File change detected. Starting incremental compilation...
+
+
+12:12:08 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:15:46 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(119,11): error TS2322: Type 'UnitValue' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+models/snapshots.ts(123,11): error TS2322: Type 'UnitValue | undefined' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+
+12:15:47 PM - Found 2 errors. Watching for file changes.
+[2J[3J[H12:16:42 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(119,11): error TS2322: Type 'UnitValue' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+models/snapshots.ts(123,11): error TS2322: Type 'UnitValue | undefined' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+
+12:16:42 PM - Found 2 errors. Watching for file changes.
+[2J[3J[H12:16:58 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,9): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(119,11): error TS2322: Type 'UnitValue' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+models/snapshots.ts(123,11): error TS2322: Type 'UnitValue | undefined' is not assignable to type 'number | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'number'.
+models/snapshots.ts(126,9): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(130,46): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(131,41): error TS2304: Cannot find name 'findQuery'.
+
+12:16:58 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H12:17:20 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,77): error TS1005: ')' expected.
+
+12:17:20 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:17:36 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,77): error TS1005: ')' expected.
+
+12:17:36 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:17:53 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,77): error TS1005: ')' expected.
+
+12:17:53 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:18:00 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,77): error TS1005: ')' expected.
+
+12:18:00 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:18:08 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(115,77): error TS1005: ')' expected.
+
+12:18:08 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:18:15 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(123,11): error TS2322: Type 'UnitValue | undefined' is not assignable to type 'string | undefined'.
+  Type '{ unit: "second"; value: number; }' is not assignable to type 'string'.
+models/snapshots.ts(126,9): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(130,46): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(131,41): error TS2304: Cannot find name 'findQuery'.
+
+12:18:15 PM - Found 4 errors. Watching for file changes.
+[2J[3J[H12:18:27 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(132,9): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(136,46): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(137,41): error TS2304: Cannot find name 'findQuery'.
+
+12:18:28 PM - Found 3 errors. Watching for file changes.
+[2J[3J[H12:18:43 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(135,46): error TS2304: Cannot find name 'findQuery'.
+models/snapshots.ts(136,41): error TS2304: Cannot find name 'findQuery'.
+
+12:18:43 PM - Found 2 errors. Watching for file changes.
+[2J[3J[H12:20:02 PM - File change detected. Starting incremental compilation...
+
+
+12:20:02 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:20:10 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.ts(135,22): error TS2833: Cannot find namespace 'Mongodb'. Did you mean 'mongodb'?
+
+12:20:11 PM - Found 1 error. Watching for file changes.
+[2J[3J[H12:20:12 PM - File change detected. Starting incremental compilation...
+
+
+12:20:12 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:20:14 PM - File change detected. Starting incremental compilation...
+
+
+12:20:14 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H12:20:50 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(151,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(154,46): error TS2339: Property 'weight' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:20:50 PM - Found 8 errors. Watching for file changes.
+[2J[3J[H12:21:00 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(150,44): error TS2345: Argument of type '{ [x: string]: { min: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(154,46): error TS2339: Property 'weight' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:21:00 PM - Found 8 errors. Watching for file changes.
+[2J[3J[H12:21:15 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(154,46): error TS2339: Property 'weight' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:21:15 PM - Found 7 errors. Watching for file changes.
+[2J[3J[H12:21:27 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:21:27 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H12:21:31 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:21:32 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H12:22:12 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(131,32): error TS2322: Type 'FilterOperators<string>' is not assignable to type 'Condition<MeasureStr[]> | undefined'.
+  Type 'FilterOperators<string>' is not assignable to type 'FilterOperators<RegExp | BSONRegExp | MeasureStr | MeasureStr[]>'.
+    Type 'string' is not assignable to type 'RegExp | BSONRegExp | MeasureStr | MeasureStr[]'.
+
+12:22:12 PM - Found 7 errors. Watching for file changes.
+[2J[3J[H12:24:14 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:24:14 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H12:26:45 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+12:26:45 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H12:57:15 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(7,3): error TS2305: Module '"../../iso/units.js"' has no exported member 'MeasureStr'.
+../iso/units.ts(36,60): error TS2304: Cannot find name 'MeasureStr'.
+../iso/units.ts(53,17): error TS2304: Cannot find name 'MeasureStr'.
+
+12:57:15 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H12:57:18 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(7,3): error TS2305: Module '"../../iso/units.js"' has no exported member 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+../iso/units.ts(53,17): error TS2304: Cannot find name 'MeasureStr'.
+
+12:57:18 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H12:57:38 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(7,3): error TS2305: Module '"../../iso/units.js"' has no exported member 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:57:38 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H12:57:42 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(7,3): error TS2305: Module '"../../iso/units.js"' has no exported member 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:57:42 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H12:57:58 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(24,19): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(50,7): error TS2561: Object literal may only specify known properties, but 'measureStrs' does not exist in type 'OptionalId<Omit<SnapshotDoc, "_id">>'. Did you mean to write 'measures'?
+models/snapshots.ts(88,29): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:57:58 PM - Found 15 errors. Watching for file changes.
+[2J[3J[H12:58:00 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(23,19): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(49,7): error TS2561: Object literal may only specify known properties, but 'measureStrs' does not exist in type 'OptionalId<Omit<SnapshotDoc, "_id">>'. Did you mean to write 'measures'?
+models/snapshots.ts(87,29): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(118,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(125,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:58:00 PM - Found 15 errors. Watching for file changes.
+[2J[3J[H12:58:05 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(50,7): error TS2561: Object literal may only specify known properties, but 'measureStrs' does not exist in type 'OptionalId<Omit<SnapshotDoc, "_id">>'. Did you mean to write 'measures'?
+models/snapshots.ts(88,29): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:58:05 PM - Found 14 errors. Watching for file changes.
+[2J[3J[H12:58:21 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(50,7): error TS2561: Object literal may only specify known properties, but 'measureStrs' does not exist in type 'OptionalId<Omit<SnapshotDoc, "_id">>'. Did you mean to write 'measures'?
+models/snapshots.ts(88,29): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:58:21 PM - Found 14 errors. Watching for file changes.
+[2J[3J[H12:58:26 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(88,29): error TS2304: Cannot find name 'MeasureStr'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:58:26 PM - Found 13 errors. Watching for file changes.
+[2J[3J[H12:58:33 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:58:33 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H12:59:01 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(119,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(126,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:59:01 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H12:59:16 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(116,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+models/snapshots.ts(123,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:59:16 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H12:59:42 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(116,11): error TS2322: Type 'number' is not assignable to type 'string'.
+models/snapshots.ts(123,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'string'.
+
+12:59:42 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H1:00:02 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(115,11): error TS2322: Type 'string' is not assignable to type 'FilterOperators<MeasureId>'.
+models/snapshots.ts(118,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$gte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$gte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+models/snapshots.ts(125,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$lte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$lte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+
+1:00:02 PM - Found 13 errors. Watching for file changes.
+[2J[3J[H1:00:27 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(118,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$gte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$gte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+models/snapshots.ts(125,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$lte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$lte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+
+1:00:27 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H1:00:37 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(119,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$gte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$gte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+models/snapshots.ts(126,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$lte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$lte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+
+1:00:37 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H1:01:47 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(118,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$gte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$gte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+models/snapshots.ts(125,11): error TS7053: Element implicitly has an 'any' type because expression of type '"$lte"' can't be used to index type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+  Property '$lte' does not exist on type '{ measureId?: FilterOperators<MeasureId> | undefined; value?: FilterOperators<number> | undefined; }'.
+
+1:01:47 PM - Found 12 errors. Watching for file changes.
+[2J[3J[H1:02:06 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(118,11): error TS18048: 'minMaxQuery.value' is possibly 'undefined'.
+models/snapshots.ts(125,11): error TS18048: 'minMaxQuery.value' is possibly 'undefined'.
+models/snapshots.ts(125,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'number'.
+
+1:02:06 PM - Found 13 errors. Watching for file changes.
+[2J[3J[H1:02:13 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.ts(127,11): error TS2322: Type 'NormedMeasure' is not assignable to type 'number'.
+
+1:02:13 PM - Found 11 errors. Watching for file changes.
+[2J[3J[H1:02:17 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:02:17 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H1:02:32 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:02:32 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H1:03:06 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(114,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:03:06 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H1:03:22 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,18): error TS2345: Argument of type 'NormedMeasure' is not assignable to parameter of type 'string'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:03:23 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H1:04:12 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,18): error TS2345: Argument of type 'NormedMeasure' is not assignable to parameter of type 'string'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:04:12 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H1:04:17 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(85,33): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(86,27): error TS2551: Property 'measureStrs' does not exist on type 'SnapshotDoc'. Did you mean 'measures'?
+models/snapshots.spec.ts(115,18): error TS2345: Argument of type 'NormedMeasure' is not assignable to parameter of type 'string'.
+models/snapshots.spec.ts(177,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(183,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(240,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(244,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(248,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:04:17 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H1:05:00 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(118,18): error TS2345: Argument of type 'NormedMeasure' is not assignable to parameter of type 'string'.
+models/snapshots.spec.ts(180,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(186,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(192,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(243,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(247,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(251,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:05:00 PM - Found 7 errors. Watching for file changes.
+[2J[3J[H1:05:20 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(184,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(190,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(196,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(247,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(251,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(255,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:05:20 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:05:25 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(183,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(189,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(195,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(246,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(250,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(254,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:05:25 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:06:52 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(139,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(139,17): error TS2451: Cannot redeclare block-scoped variable 'snapshot2'.
+models/snapshots.spec.ts(149,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(149,17): error TS2451: Cannot redeclare block-scoped variable 'snapshot2'.
+models/snapshots.spec.ts(194,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(200,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(206,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(257,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(261,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(265,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:06:52 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H1:06:56 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(139,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(139,17): error TS2451: Cannot redeclare block-scoped variable 'snapshot2'.
+models/snapshots.spec.ts(149,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(149,17): error TS2451: Cannot redeclare block-scoped variable 'snapshot2'.
+models/snapshots.spec.ts(194,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(200,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(206,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(257,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(261,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(265,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:06:56 PM - Found 10 errors. Watching for file changes.
+[2J[3J[H1:07:07 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(139,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(149,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(194,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(200,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(206,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(257,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(261,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(265,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:07:07 PM - Found 8 errors. Watching for file changes.
+[2J[3J[H1:07:19 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(139,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(149,14): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(149,17): error TS2451: Cannot redeclare block-scoped variable '_'.
+models/snapshots.spec.ts(194,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(200,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(206,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(257,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(261,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(265,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:07:19 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H1:07:49 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(193,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(199,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(205,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(256,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(260,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(264,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:07:49 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:07:51 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(192,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(198,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(204,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(255,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(259,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(263,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:07:51 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:08:24 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(192,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(198,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(204,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(255,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(259,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(263,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:08:24 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:08:26 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(197,31): error TS2322: Type '"C"' is not assignable to type '"count" | "second" | "year" | "lb" | "kg" | "m" | "cm" | "mm" | "feetinches" | "inches" | "vermin" | "font" | "frenchsport" | "yds" | "ewbank" | "ircra" | "sex-at-birth"'.
+models/snapshots.spec.ts(203,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(209,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:08:26 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:08:38 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(203,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(209,9): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:08:38 PM - Found 5 errors. Watching for file changes.
+[2J[3J[H1:08:58 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(203,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(209,9): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:08:58 PM - Found 5 errors. Watching for file changes.
+[2J[3J[H1:09:08 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(202,48): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(203,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(208,44): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(209,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:09:08 PM - Found 7 errors. Watching for file changes.
+[2J[3J[H1:09:25 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(202,48): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(208,44): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(209,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:09:25 PM - Found 6 errors. Watching for file changes.
+[2J[3J[H1:09:41 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(203,71): error TS1109: Expression expected.
+models/snapshots.spec.ts(203,73): error TS1136: Property assignment expected.
+models/snapshots.spec.ts(203,97): error TS1005: ',' expected.
+models/snapshots.spec.ts(204,7): error TS1135: Argument expression expected.
+models/snapshots.spec.ts(213,3): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(213,4): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(273,1): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(273,2): error TS1128: Declaration or statement expected.
+
+1:09:41 PM - Found 8 errors. Watching for file changes.
+[2J[3J[H1:10:03 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(208,44): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(209,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:10:03 PM - Found 5 errors. Watching for file changes.
+[2J[3J[H1:10:12 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(208,44): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(209,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(260,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(264,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(268,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:10:12 PM - Found 5 errors. Watching for file changes.
+[2J[3J[H1:10:32 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(209,39): error TS1109: Expression expected.
+models/snapshots.spec.ts(209,41): error TS1136: Property assignment expected.
+models/snapshots.spec.ts(209,70): error TS1005: ',' expected.
+models/snapshots.spec.ts(209,95): error TS1005: ',' expected.
+models/snapshots.spec.ts(210,7): error TS1135: Argument expression expected.
+models/snapshots.spec.ts(213,3): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(213,4): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(273,1): error TS1128: Declaration or statement expected.
+models/snapshots.spec.ts(273,2): error TS1128: Declaration or statement expected.
+
+1:10:32 PM - Found 9 errors. Watching for file changes.
+[2J[3J[H1:10:40 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(212,10): error TS2304: Cannot find name 'weight'.
+models/snapshots.spec.ts(266,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(270,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(274,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:10:40 PM - Found 4 errors. Watching for file changes.
+[2J[3J[H1:10:43 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(266,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+models/snapshots.spec.ts(270,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(274,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:10:43 PM - Found 3 errors. Watching for file changes.
+[2J[3J[H1:11:19 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(265,46): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(270,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(274,7): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'MeasurementQuery'.
+
+1:11:19 PM - Found 3 errors. Watching for file changes.
+[2J[3J[H1:11:31 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(265,46): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(270,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(273,42): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+
+1:11:31 PM - Found 3 errors. Watching for file changes.
+[2J[3J[H1:11:48 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(265,46): error TS2345: Argument of type '{ [x: string]: { min: { unit: "kg"; value: number; }; max: { unit: "kg"; value: number; }; } | { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: { unit: "kg"; value: number; }; max: { unit: "kg"; value: number; }; } | { min: number; max: number; }' is not assignable to type 'Filter'.
+      Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+        Types of property 'min' are incompatible.
+          Type 'number' is not assignable to type 'UnitValue | undefined'.
+models/snapshots.spec.ts(270,44): error TS2339: Property 'height' does not exist on type '{ [measureId: MeasureId]: UnitValue; }'.
+models/snapshots.spec.ts(273,42): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+
+1:11:48 PM - Found 3 errors. Watching for file changes.
+[2J[3J[H1:12:16 PM - File change detected. Starting incremental compilation...
+
+models/snapshots.spec.ts(279,42): error TS2345: Argument of type '{ [x: string]: { min: number; max: number; }; }' is not assignable to parameter of type 'MeasurementQuery'.
+  'string' and 'MeasureId' index signatures are incompatible.
+    Type '{ min: number; max: number; }' is not assignable to type 'Filter'.
+      Types of property 'min' are incompatible.
+        Type 'number' is not assignable to type 'UnitValue | undefined'.
+
+1:12:16 PM - Found 1 error. Watching for file changes.
+[2J[3J[H1:12:56 PM - File change detected. Starting incremental compilation...
+
+
+1:12:56 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:13:44 PM - File change detected. Starting incremental compilation...
+
+
+1:13:44 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:13:57 PM - File change detected. Starting incremental compilation...
+
+
+1:13:57 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:14:38 PM - File change detected. Starting incremental compilation...
+
+
+1:14:38 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:14:41 PM - File change detected. Starting incremental compilation...
+
+
+1:14:41 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:16:54 PM - File change detected. Starting incremental compilation...
+
+
+1:16:54 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:17:57 PM - File change detected. Starting incremental compilation...
+
+
+1:17:57 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:18:16 PM - File change detected. Starting incremental compilation...
+
+
+1:18:16 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:18:25 PM - File change detected. Starting incremental compilation...
+
+
+1:18:25 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:18:29 PM - File change detected. Starting incremental compilation...
+
+
+1:18:30 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:00 PM - File change detected. Starting incremental compilation...
+
+
+1:20:00 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:09 PM - File change detected. Starting incremental compilation...
+
+
+1:20:09 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:14 PM - File change detected. Starting incremental compilation...
+
+
+1:20:14 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:18 PM - File change detected. Starting incremental compilation...
+
+
+1:20:18 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:26 PM - File change detected. Starting incremental compilation...
+
+
+1:20:26 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:40 PM - File change detected. Starting incremental compilation...
+
+
+1:20:40 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:20:59 PM - File change detected. Starting incremental compilation...
+
+
+1:20:59 PM - Found 0 errors. Watching for file changes.
+[2J[3J[H1:21:44 PM - File change detected. Starting incremental compilation...
+
+
+1:21:44 PM - Found 0 errors. Watching for file changes.

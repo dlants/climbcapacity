@@ -46,6 +46,7 @@ export const VGRADE = {
   14: true,
   15: true,
   16: true,
+  17: true,
 } as const;
 
 export type VGrade = keyof typeof VGRADE;
@@ -111,6 +112,48 @@ export const YDS = {
 
 export type YDS = keyof typeof YDS;
 
+export const EWBANK = {
+  1: true,
+  2: true,
+  3: true,
+  4: true,
+  5: true,
+  6: true,
+  7: true,
+  8: true,
+  9: true,
+  10: true,
+  11: true,
+  12: true,
+  13: true,
+  14: true,
+  15: true,
+  16: true,
+  17: true,
+  18: true,
+  19: true,
+  20: true,
+  21: true,
+  22: true,
+  23: true,
+  24: true,
+  25: true,
+  26: true,
+  27: true,
+  28: true,
+  29: true,
+  30: true,
+  31: true,
+  32: true,
+  33: true,
+  34: true,
+  35: true,
+  36: true,
+  37: true,
+  38: true,
+} as const;
+export type EwbankGrade = keyof typeof EWBANK;
+
 export type IRCRAGrade = number & { __brand: "IRCRAGrade" };
 
 export function vGradeToIrcra(grade: VGrade): IRCRAGrade {
@@ -150,6 +193,8 @@ export function vGradeToIrcra(grade: VGrade): IRCRAGrade {
         return 31;
       case 16:
         return 32;
+      case 17:
+        return 33;
       default:
         assertUnreachable(grade);
     }
@@ -439,4 +484,127 @@ export function ircraToYDS(grade: IRCRAGrade): YDS {
     if (grade <= 32) return "5.15c";
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as YDS;
+}
+
+export function ewbankToIrcra(grade: EwbankGrade): IRCRAGrade {
+  return (() => {
+    switch (grade) {
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        return 1;
+      case 5:
+        return 1.5; // interpolated
+      case 6:
+        return 2;
+      case 7:
+        return 2.5; // interpolated
+      case 8:
+        return 3;
+      case 9:
+        return 3.8; // interpolated
+      case 10:
+        return 4.6;
+      case 11:
+        return 5.3; // interpolated
+      case 12:
+        return 6;
+      case 13:
+        return 6.8; // interpolated
+      case 14:
+        return 7.5;
+      case 15:
+        return 8.3; // interpolated
+      case 16:
+        return 9;
+      case 17:
+        return 9.5; // interpolated
+      case 18:
+        return 10;
+      case 19:
+        return 11.5;
+      case 20:
+        return 12.5;
+      case 21:
+        return 14;
+      case 22:
+        return 15.5;
+      case 23:
+        return 17;
+      case 24:
+        return 18;
+      case 25:
+        return 19;
+      case 26:
+        return 20;
+      case 27:
+        return 21;
+      case 28:
+        return 22;
+      case 29:
+        return 23;
+      case 30:
+        return 24;
+      case 31:
+        return 25;
+      case 32:
+        return 26;
+      case 33:
+        return 27;
+      case 34:
+        return 28;
+      case 35:
+        return 29;
+      case 36:
+        return 30;
+      case 37:
+        return 31;
+      case 38:
+        return 32;
+      default:
+        assertUnreachable(grade);
+    }
+  })() as IRCRAGrade;
+}
+
+export function ircraToEwbank(grade: IRCRAGrade): EwbankGrade {
+  return (() => {
+    if (grade < 1.5) return 4;
+    if (grade < 2) return 5;
+    if (grade < 2.5) return 6;
+    if (grade < 3) return 7;
+    if (grade < 3.8) return 8;
+    if (grade < 4.6) return 9;
+    if (grade < 5.3) return 10;
+    if (grade < 6) return 11;
+    if (grade < 6.8) return 12;
+    if (grade < 7.5) return 13;
+    if (grade < 8.3) return 14;
+    if (grade < 9) return 15;
+    if (grade < 9.5) return 16;
+    if (grade < 10) return 17;
+    if (grade < 11.5) return 18;
+    if (grade < 12.5) return 19;
+    if (grade < 14) return 20;
+    if (grade < 15.5) return 21;
+    if (grade < 17) return 22;
+    if (grade < 18) return 23;
+    if (grade < 19) return 24;
+    if (grade < 20) return 25;
+    if (grade < 21) return 26;
+    if (grade < 22) return 27;
+    if (grade < 23) return 28;
+    if (grade < 24) return 29;
+    if (grade < 25) return 30;
+    if (grade < 26) return 31;
+    if (grade < 27) return 32;
+    if (grade < 28) return 33;
+    if (grade < 29) return 34;
+    if (grade < 30) return 35;
+    if (grade < 31) return 36;
+    if (grade < 32) return 37;
+    if (grade <= 32) return 38;
+    throw new Error(`Unexpected IRCRA grade ${grade}`);
+  })() as EwbankGrade;
 }

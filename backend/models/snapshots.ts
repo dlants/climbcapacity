@@ -4,8 +4,8 @@ import { User } from "lucia";
 import {
   encodeMeasureValue,
   MeasureId,
-  MeasureStr,
   MeasureValue,
+  NormedMeasure,
   UnitValue,
 } from "../../iso/units.js";
 
@@ -19,12 +19,13 @@ export type SnapshotDoc = {
     [measureId: MeasureId]: UnitValue;
   };
 
-  /** these are indexed as padded strings to enable filtering / searching.
+  /** these are indexed as an array to allow for index use
    */
-  measureStrs: MeasureStr[];
+  normedMeasures: NormedMeasure[];
 
   createdAt: Date;
   lastUpdated: Date;
+  importSource?: "climbharderv3";
 };
 
 export type MeasurementQuery = {
@@ -46,7 +47,7 @@ export class SnapshotsModel {
     ).insertOne({
       userId: user.id,
       measures: {},
-      measureStrs: [],
+      normedMeasures: [],
       createdAt: new Date(),
       lastUpdated: new Date(),
     });
@@ -67,24 +68,19 @@ export class SnapshotsModel {
         {
           $set: {
             [`measures.${measure.id}`]: measure.value,
-            measureStrs: {
+            normedMeasures: {
               $concatArrays: [
                 {
                   $filter: {
-                    input: "$measureStrs",
+                    input: "$normedMeasures",
                     cond: {
-                      $not: {
-                        $regexMatch: {
-                          input: "$$this",
-                          regex: `^${measure.id}:`,
-                        },
-                      },
+                      $ne: ["$$this.measureId", measure.id],
                     },
                   },
                 },
                 [encodeMeasureValue(measure)],
               ],
-            } as unknown as MeasureStr[],
+            } as unknown as NormedMeasure[],
           },
         },
       ],
@@ -107,26 +103,38 @@ export class SnapshotsModel {
   }
 
   async querySnapshots(query: MeasurementQuery): Promise<SnapshotDoc[]> {
-    const findQuery: mongodb.Filter<SnapshotDoc> = {};
-    for (const protocolId in query) {
-      const queryParams = query[protocolId as MeasureId];
+    const findQueryClauses: mongodb.Filter<SnapshotDoc>[] = [];
+    for (const measureIdStr in query) {
+      const measureId = measureIdStr as MeasureId;
+      const queryParams = query[measureId];
       if (queryParams.min == undefined && queryParams.max == undefined) {
-        findQuery[`measures.${protocolId}`] = { $exists: true };
+        findQueryClauses.push({ [`measures.${measureId}`]: { $exists: true } });
       } else {
-        const minMaxQuery: mongodb.FilterOperations<number> = {};
+        const minMaxQuery: mongodb.FilterOperations<NormedMeasure> = {
+          measureId,
+          value: {},
+        };
         if (queryParams.min) {
-          minMaxQuery[`$gte`] = queryParams.min;
+          minMaxQuery.value![`$gte`] = encodeMeasureValue({
+            id: measureId,
+            value: queryParams.min,
+          }).value;
         }
 
         if (queryParams.max) {
-          minMaxQuery[`$lte`] = queryParams.min;
+          minMaxQuery.value![`$lte`] = encodeMeasureValue({
+            id: measureId as MeasureId,
+            value: queryParams.max,
+          }).value;
         }
-
-        findQuery[`measures.${protocolId}`] = minMaxQuery;
+        findQueryClauses.push({ normedMeasures: { $elemMatch: minMaxQuery } });
       }
     }
 
-    console.log(`findQuery: ${JSON.stringify(findQuery)}`);
+    const findQuery: mongodb.Filter<SnapshotDoc> = {
+      $and: findQueryClauses,
+    };
+
     return this.snapshotCollection.find(findQuery).toArray();
   }
 }

@@ -69,7 +69,7 @@ Record total weight. For example, if you weigh 70kg and had to remove 10kg, reco
     defaultUnit: "kg",
   },
   {
-    id: "max-push-ups" as MeasureId,
+    id: "max-pushup-reps" as MeasureId,
     name: "How many bodyweight pushups can you do?",
     description: `Keep your glutes engaged so your hips don't sag. A successful rep means your chest reaches within a fist of the floor. At the top, elbows should be fully extended.`,
     defaultUnit: "count",
@@ -79,12 +79,6 @@ Record total weight. For example, if you weigh 70kg and had to remove 10kg, reco
     name: "How long can you hold an L sit?",
     description: `Hang from a bar with straight hands. Raise your straight legs to approximately 90 degrees and hold.`,
     defaultUnit: "second",
-  },
-  {
-    id: "min-edge-hang-7s" as MeasureId,
-    name: "What's the smallest edge you can hang bodyweight for 7s?",
-    description: `Use any grip type.`,
-    defaultUnit: "mm",
   },
 ];
 
@@ -121,6 +115,31 @@ for (const edgeSize of [18, 20]) {
     for (const gripType of GRIPS_ARR) {
       MEASURES.push(maxHangMeasure({ edgeSize, duration, gripType }));
     }
+  }
+}
+
+function minEdgeHangMeasure({
+  duration,
+  gripType,
+}: {
+  duration: number;
+  gripType: Grip;
+}): MeasureSpec {
+  return {
+    id: `min-edge-hang-${duration}s-${gripType}` as MeasureId,
+    name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
+    description: `\
+Warm up thoroughly.
+
+Find the smallest edge you can hang your bodyweight for ${duration}s using a ${gripType}.
+`,
+    defaultUnit: "mm",
+  };
+}
+
+for (const duration of [7, 10]) {
+  for (const gripType of GRIPS_ARR) {
+    MEASURES.push(minEdgeHangMeasure({ duration, gripType }));
   }
 }
 
@@ -208,8 +227,8 @@ for (const edgeSize of [5, 6, 7, 8, 9, 10, 14, 18, 20] as const) {
 }
 
 export const MEASURE_MAP: {
-  [measureId: MeasureId]: MeasureSpec
-} = {}
+  [measureId: MeasureId]: MeasureSpec;
+} = {};
 
 for (const measure of MEASURES) {
   MEASURE_MAP[measure.id] = measure;
