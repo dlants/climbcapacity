@@ -3,7 +3,7 @@ import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
 import { Identifier } from "../parser/types";
-import { MeasureId } from "../../iso/protocol";
+import { MeasureId } from "../../iso/units";
 
 export type Filter = {
   id: Identifier;
@@ -15,7 +15,7 @@ export type Filter = {
 };
 
 export type FilterMapping = {
-  [id: Identifier]: MeasureId;
+  [id: Identifier]: MeasureId
 };
 
 export type Model = immer.Immutable<{

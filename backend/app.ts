@@ -7,9 +7,10 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures.js";
-import { FilterQuery, MeasureId, SnapshotId } from "../iso/protocol.js";
+import { FilterQuery, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
+import { MeasureId, UnitValue } from "../iso/units.js";
 
 dotenv.config();
 
@@ -126,23 +127,23 @@ async function run() {
       `Measure had invalid id ${measureId}`,
     );
 
-    const value: number = req.body.value;
+    const value: UnitValue = req.body.value;
     assert.equal(
       typeof value,
-      "number",
-      "Must provide value which is a number",
+      "object",
+      "Must provide valid measure value",
     );
 
-    const numUpdated = await snapshotModel.updateMeasure({
+    const updated = await snapshotModel.updateMeasure({
       userId: user.id,
       snapshotId: new mongodb.ObjectId(snapshotId),
       measure: {
-        measureId,
+        id: measureId,
         value,
       },
     });
 
-    if (numUpdated == 1) {
+    if (updated) {
       res.json("OK");
       return;
     } else {

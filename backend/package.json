@@ -15,7 +15,12 @@
     "oslo": "^1.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "@types/chai": "^5.0.1",
+    "@types/mocha": "^10.0.9",
+    "mocha": "^10.8.2",
+    "mongodb-memory-server": "^10.1.2",
+    "nodemon": "^3.1.7",
+    "tsx": "^4.19.2"
   },
   "nodemonConfig": {
     "watch": [
@@ -25,6 +30,7 @@
     "ext": "*"
   },
   "scripts": {
-    "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js"
+    "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js",
+    "test": "mocha -r tsx './models/**/*.spec.ts'"
   }
 }

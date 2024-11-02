@@ -1,17 +1,16 @@
 import React from "react";
 import * as immer from "immer";
 import { Update, View } from "../tea";
-import { Measure } from "../../iso/measures";
 import { MEASURES } from "../constants";
-import { MeasureId } from "../../iso/protocol";
-import { assertUnreachable } from "../utils";
+import { assertUnreachable } from "../util/utils";
+import { MeasureId, MeasureSpec } from "../../iso/units";
 
 export type Model = immer.Immutable<
   | {
       id: string;
       state: "typing";
       query: string;
-      measures: Measure[];
+      measures: MeasureSpec[];
     }
   | {
       id: string;

@@ -1,7 +1,7 @@
 import React from "react";
 import type { Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch } from "../tea";
-import { assertUnreachable, RequestStatus } from "../utils";
+import { assertUnreachable, RequestStatus } from "../util/utils";
 import * as immer from "immer";
 const produce = immer.produce;
 

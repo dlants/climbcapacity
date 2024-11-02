@@ -3,7 +3,7 @@ import * as MeasureExpressionBox from "./measure-expression-box";
 import * as Plot from "./plot";
 import { Snapshot } from "../types";
 import { Update, View } from "../tea";
-import { assertUnreachable } from "../utils";
+import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
 import { Identifier } from "../parser/types";
 import { FilterMapping } from "./select-filters";

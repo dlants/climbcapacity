@@ -2,7 +2,7 @@ import React from "react";
 import { View } from "../tea";
 import * as Plot from "@observablehq/plot";
 import { useEffect, useRef } from "react";
-import { assertUnreachable } from "../utils";
+import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
 
 export type Model = immer.Immutable<

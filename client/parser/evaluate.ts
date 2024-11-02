@@ -5,7 +5,8 @@ export function evaluate(expr: Expr, ids: Record<Identifier, number>): number {
     case "number":
       return expr.value;
     case "identifier":
-      if (!(expr.name in ids)) throw new Error(`Unknown identifier: ${expr.name}`);
+      if (!(expr.name in ids))
+        throw new Error(`Unknown identifier: ${expr.name}`);
       return ids[expr.name];
     case "binary":
       const left = evaluate(expr.left, ids);

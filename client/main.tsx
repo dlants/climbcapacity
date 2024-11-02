@@ -16,7 +16,7 @@ import {
   assertUnreachable,
   ExtractFromDisjointUnion,
   RequestStatus,
-} from "./utils";
+} from "./util/utils";
 import { NavigateMsg, parseRoute, Router } from "./router";
 import { SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";

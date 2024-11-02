@@ -1,6 +1,6 @@
 import React from "react";
 import { Update, View } from "../tea";
-import { createRequestThunk, RequestStatus } from "../utils";
+import { createRequestThunk, RequestStatus } from "../util/utils";
 import * as immer from "immer";
 const produce = immer.produce;
 

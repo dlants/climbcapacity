@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Dispatch, Thunk } from "./tea";
+import { Dispatch, Thunk } from "../tea";
 
 export type LoadedRequest<T> = {
   status: "loaded";

@@ -1,20 +1,30 @@
 import mongodb from "mongodb";
-import { Filter, MeasureId } from "../../iso/protocol.js";
+import { Filter } from "../../iso/protocol.js";
 import { User } from "lucia";
+import {
+  encodeMeasureValue,
+  MeasureId,
+  MeasureStr,
+  MeasureValue,
+  UnitValue,
+} from "../../iso/units.js";
 
 export type SnapshotDoc = {
   _id: mongodb.ObjectId;
   userId: string;
+
+  /** these are as the user entered them
+   */
   measures: {
-    [measureId: MeasureId]: number;
+    [measureId: MeasureId]: UnitValue;
   };
+
+  /** these are indexed as padded strings to enable filtering / searching.
+   */
+  measureStrs: MeasureStr[];
+
   createdAt: Date;
   lastUpdated: Date;
-};
-
-export type Measure = {
-  measureId: MeasureId;
-  value: number;
 };
 
 export type MeasurementQuery = {
@@ -36,6 +46,7 @@ export class SnapshotsModel {
     ).insertOne({
       userId: user.id,
       measures: {},
+      measureStrs: [],
       createdAt: new Date(),
       lastUpdated: new Date(),
     });
@@ -48,18 +59,38 @@ export class SnapshotsModel {
   }: {
     snapshotId: mongodb.ObjectId;
     userId: string;
-    measure: Measure;
+    measure: MeasureValue;
   }) {
-    const res = await this.snapshotCollection.updateOne(
+    const res = await this.snapshotCollection.findOneAndUpdate(
       { _id: snapshotId, userId },
-      {
-        $set: {
-          [`measures.${measure.measureId}`]: measure.value,
+      [
+        {
+          $set: {
+            [`measures.${measure.id}`]: measure.value,
+            measureStrs: {
+              $concatArrays: [
+                {
+                  $filter: {
+                    input: "$measureStrs",
+                    cond: {
+                      $not: {
+                        $regexMatch: {
+                          input: "$$this",
+                          regex: `^${measure.id}:`,
+                        },
+                      },
+                    },
+                  },
+                },
+                [encodeMeasureValue(measure)],
+              ],
+            } as unknown as MeasureStr[],
+          },
         },
-      },
+      ],
     );
 
-    return res.modifiedCount;
+    return res != null;
   }
 
   async deleteSnapshot(snapshotId: mongodb.ObjectId) {
@@ -95,7 +126,7 @@ export class SnapshotsModel {
       }
     }
 
-    console.log(`findQuery: ${JSON.stringify(findQuery)}`)
+    console.log(`findQuery: ${JSON.stringify(findQuery)}`);
     return this.snapshotCollection.find(findQuery).toArray();
   }
 }

@@ -3,21 +3,45 @@ import * as immer from "immer";
 const produce = immer.produce;
 
 import type { Snapshot } from "../types";
-import { Update, View } from "../tea";
-import { Measure } from "../../iso/measures";
+import { Update, View, Dispatch } from "../tea";
+import {
+  MeasureId,
+  MeasureSpec,
+  UnitValue,
+  unitValueToString,
+} from "../../iso/units";
 import { MEASURES } from "../constants";
-import { MeasureId } from "../../iso/protocol";
-import { RequestStatus } from "../utils";
+import { RequestStatus } from "../util/utils";
+import { Result, Success } from "../../iso/utils";
+import * as UnitInput from "./unit-input";
 
 type MeasureUpdate = {
   measureId: MeasureId;
-  value: number;
-  request: RequestStatus<void>;
+  model: UnitInput.Model;
+  parseResult: Result<{
+    value: UnitValue;
+    writeRequest: RequestStatus<void>;
+  }>;
 };
+
+type ParsedMeasureUpdate = {
+  measureId: MeasureId;
+  model: UnitInput.HasParseResultModel;
+  parseResult: Success<{
+    value: UnitValue;
+    writeRequest: RequestStatus<void>;
+  }>;
+};
+
+function hasParseResult(
+  measureUpdate: MeasureUpdate | undefined,
+): measureUpdate is ParsedMeasureUpdate {
+  return !!(measureUpdate && measureUpdate.parseResult.status == "success");
+}
 
 export type Model = immer.Immutable<{
   snapshot: Snapshot;
-  measureFilter: { query: string; measures: Measure[] };
+  measureFilter: { query: string; measures: MeasureSpec[] };
   measureUpdates: {
     [measureId: MeasureId]: MeasureUpdate;
   };
@@ -40,30 +64,22 @@ export type Msg =
       query: string;
     }
   | {
-      type: "UPDATE_MEASURE";
+      type: "UNIT_INPUT_MSG";
+      msg: UnitInput.Msg;
+    }
+  | {
+      type: "INIT_MEASURE_UPDATE";
       measureId: MeasureId;
-      value: number;
     }
   | {
       type: "SUBMIT_MEASURE_UPDATE";
       measureId: MeasureId;
-      value: number;
     }
   | {
       type: "MEASURE_REQUEST_UPDATE";
       measureId: MeasureId;
-      value: number;
       request: RequestStatus<void>;
     };
-
-function measureUpdate(
-  measureUpdates: Model["measureUpdates"],
-  update: MeasureUpdate,
-): Model["measureUpdates"] {
-  return produce(measureUpdates, (draft) => {
-    draft[update.measureId] = update;
-  });
-}
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
@@ -77,10 +93,40 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
 
-    case "MEASURE_REQUEST_UPDATE":
+    case "INIT_MEASURE_UPDATE":
+      return [
+        produce(model, (draft) => {
+          const model = UnitInput.initModel(msg.measureId);
+          draft.measureUpdates[msg.measureId] = {
+            measureId: msg.measureId,
+            model,
+            parseResult:
+              model.parseResult.status == "success"
+                ? {
+                    status: "success",
+                    value: {
+                      value: model.parseResult.value,
+                      writeRequest: { status: "not-sent" },
+                    },
+                  }
+                : model.parseResult,
+          };
+        }),
+      ];
+
+    case "MEASURE_REQUEST_UPDATE": {
+      const measureUpdate = model.measureUpdates[msg.measureId];
+      if (!hasParseResult(measureUpdate)) {
+        throw new Error(
+          `Unexpected measureUpdate status on request update: ${JSON.stringify(measureUpdate)}`,
+        );
+      }
+
+      const measureValue = measureUpdate.parseResult.value;
+
       if (msg.request.status == "loaded") {
         const nextSnapshot: Snapshot = produce(model.snapshot, (draft) => {
-          draft.measures[msg.measureId] = msg.value;
+          draft.measures[msg.measureId] = immer.castDraft(measureValue.value);
         });
 
         const nextMeasureUpdates = produce(model.measureUpdates, (draft) => {
@@ -96,34 +142,72 @@ export const update: Update<Msg, Model> = (msg, model) => {
       } else {
         return [
           produce(model, (draft) => {
-            draft.measureUpdates = measureUpdate(model.measureUpdates, {
-              measureId: msg.measureId,
-              value: msg.value,
-              request: msg.request,
-            });
+            const measureUpdate = draft.measureUpdates[msg.measureId];
+            if (!hasParseResult(measureUpdate)) {
+              throw new Error(
+                `Unexpected measureUpdate status on request update: ${JSON.stringify(measureUpdate)}`,
+              );
+            }
+
+            measureUpdate.parseResult.value.writeRequest = msg.request;
           }),
         ];
       }
+    }
 
-    case "UPDATE_MEASURE":
+    case "UNIT_INPUT_MSG": {
+      const measureUpdate = model.measureUpdates[msg.msg.measureId];
+      if (!measureUpdate) {
+        throw new Error(
+          `Receivied message for measureId ${msg.msg.measureId} but it was undefined.`,
+        );
+      }
+
+      const [next] = UnitInput.update(msg.msg, measureUpdate.model);
+
       return [
         produce(model, (draft) => {
-          draft.measureUpdates = measureUpdate(model.measureUpdates, {
-            measureId: msg.measureId,
-            value: msg.value,
-            request: { status: "not-sent" },
-          });
+          const measureUpdate = draft.measureUpdates[msg.msg.measureId];
+          if (!measureUpdate) {
+            throw new Error(
+              `Receivied message for measureId ${msg.msg.measureId} but it was undefined.`,
+            );
+          }
+
+          measureUpdate.model = next;
+          if (next.parseResult.status == "success") {
+            measureUpdate.parseResult = {
+              status: "success",
+              value: {
+                value: next.parseResult.value,
+                writeRequest: { status: "not-sent" },
+              },
+            };
+          }
         }),
       ];
+    }
 
-    case "SUBMIT_MEASURE_UPDATE":
+    case "SUBMIT_MEASURE_UPDATE": {
+      const measureUpdate = model.measureUpdates[msg.measureId];
+      if (!hasParseResult(measureUpdate)) {
+        throw new Error(
+          `Unexpected state for measureUpdate upon submit ${JSON.stringify(measureUpdate)}`,
+        );
+      }
+
+      const value = measureUpdate.parseResult.value.value;
+
       return [
         produce(model, (draft) => {
-          draft.measureUpdates = measureUpdate(model.measureUpdates, {
-            measureId: msg.measureId,
-            value: msg.value,
-            request: { status: "loading" },
-          });
+          const measureUpdate = draft.measureUpdates[msg.measureId];
+          if (!hasParseResult(measureUpdate)) {
+            throw new Error(
+              `Unexpected state for measureUpdate upon submit ${JSON.stringify(measureUpdate)}`,
+            );
+          }
+
+          measureUpdate.parseResult.value.writeRequest = { status: "loading" };
         }),
         async (dispatch) => {
           const response = await fetch("/api/snapshots/update", {
@@ -134,7 +218,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             body: JSON.stringify({
               snapshotId: model.snapshot._id,
               measureId: msg.measureId,
-              value: msg.value,
+              value,
             }),
           });
 
@@ -142,7 +226,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "MEASURE_REQUEST_UPDATE",
               measureId: msg.measureId,
-              value: msg.value,
               request: {
                 status: "loaded",
                 response: void 0,
@@ -152,12 +235,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "MEASURE_REQUEST_UPDATE",
               measureId: msg.measureId,
-              value: msg.value,
               request: { status: "error", error: response.statusText },
             });
           }
         },
       ];
+    }
   }
 };
 
@@ -189,55 +272,97 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
       />
 
       <div className="measures-list">
-        {model.measureFilter.measures.map((measure) => {
-          const measureUpdate = model.measureUpdates[measure.id];
-          const measureLoading =
-            measureUpdate && measureUpdate.request?.status == "loading";
-
-          const measureValue =
-            (measureUpdate && measureUpdate.value) ||
-            model.snapshot.measures[measure.id];
-
-          const measureUpdatePending =
-            measureValue != model.snapshot.measures[measure.id];
-
-          return (
-            <div
-              key={measure.id}
-              className={`measure-item ${measureLoading ? "measure-loading" : ""}`}
-            >
-              <label>{measure.name}</label>
-              <input
-                type="number"
-                value={measureValue || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "UPDATE_MEASURE",
-                    measureId: measure.id,
-                    value: parseFloat(e.target.value),
-                  })
-                }
-                disabled={measureLoading}
-              />
-              <span>{measure.unit}</span>
-              <button
-                onClick={() =>
-                  dispatch({
-                    type: "SUBMIT_MEASURE_UPDATE",
-                    measureId: measure.id,
-                    value: measureValue,
-                  })
-                }
-                disabled={!measureUpdatePending && measureLoading}
-              >
-                Submit
-              </button>
-            </div>
-          );
-        })}
+        {model.measureFilter.measures.map((measure) =>
+          model.measureUpdates[measure.id] ? (
+            <EditMeasureView
+              measure={measure}
+              dispatch={dispatch}
+              model={model}
+            />
+          ) : (
+            <MeasureView measure={measure} dispatch={dispatch} model={model} />
+          ),
+        )}
       </div>
 
       <pre>{JSON.stringify(model.snapshot, null, 2)}</pre>
+    </div>
+  );
+};
+
+const MeasureView = ({
+  model,
+  dispatch,
+  measure,
+}: {
+  model: Model;
+  dispatch: Dispatch<Msg>;
+  measure: MeasureSpec;
+}) => {
+  const unitValue = model.snapshot.measures[measure.id];
+  return (
+    <div key={measure.id} className="measure-item">
+      <label>{measure.name}</label>{" "}
+      {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+      <button
+        onClick={() => {
+          dispatch({
+            type: "INIT_MEASURE_UPDATE",
+            measureId: measure.id,
+          });
+        }}
+      >
+        Edit
+      </button>
+    </div>
+  );
+};
+
+const EditMeasureView = ({
+  model,
+  dispatch,
+  measure,
+}: {
+  model: Model;
+  dispatch: Dispatch<Msg>;
+  measure: MeasureSpec;
+}) => {
+  const measureUpdate = model.measureUpdates[measure.id];
+  const measureValid = hasParseResult(measureUpdate);
+  const measureLoading =
+    measureValid &&
+    measureUpdate.parseResult.value.writeRequest.status == "loading";
+
+  return (
+    <div
+      key={measure.id}
+      className={`measure-item ${measureLoading ? "measure-loading" : ""}`}
+    >
+      <label>{measure.name}</label>
+
+      <UnitInput.view
+        model={measureUpdate.model}
+        dispatch={(msg) => {
+          dispatch({
+            type: "UNIT_INPUT_MSG",
+            msg,
+          });
+        }}
+      />
+
+      <button
+        onClick={() => {
+          if (measureValid) {
+            dispatch({
+              type: "SUBMIT_MEASURE_UPDATE",
+              measureId: measure.id,
+            });
+          }
+        }}
+        disabled={!(measureValid && !measureLoading)}
+      >
+        Submit
+      </button>
     </div>
   );
 };

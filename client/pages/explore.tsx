@@ -8,11 +8,12 @@ import {
   RequestStatus,
   RequestStatusView,
   RequestStatusViewMap,
-} from "../utils";
-import { MeasureId, Filter, FilterQuery } from "../../iso/protocol";
+} from "../util/utils";
+import { Filter, FilterQuery } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
+import { MeasureId } from "../../iso/units";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{

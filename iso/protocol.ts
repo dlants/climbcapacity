@@ -1,23 +1,20 @@
+import type { MeasureId, UnitValue } from "./units.js";
+
 export type Snapshot = {
   _id: ProtocolObjectId;
   userId: string;
+
+  /** these are as the user entered them
+   */
   measures: {
-    [measureId: MeasureId]: number;
+    [measureId: MeasureId]: UnitValue;
   };
+
   createdAt: ProtocolDate;
   lastUpdated: ProtocolDate;
 };
 
-export type MeasureId = string & { __brand: "measureId" };
 export type SnapshotId = string & { __brand: "SnapshotId" };
-
-export type Protocol = {
-  title: string;
-  description: string;
-  unit: Unit;
-}
-
-export type Unit = "m" | "s" | "kg" | "count" | "percent" | "category";
 
 export class ProtocolTimestamp {
   __brand: "ProtocolObjectTimestamp";
@@ -54,4 +51,4 @@ export type Filter = {
   max?: number;
 };
 
-export type FilterQuery = { [measureId: MeasureId]: Filter }
+export type FilterQuery = { [measureId: MeasureId]: Filter };

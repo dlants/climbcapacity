@@ -10,7 +10,7 @@ import {
   RequestStatusView,
   assertLoaded,
   RequestStatusViewMap,
-} from "../utils";
+} from "../util/utils";
 import { SnapshotId } from "../../iso/protocol";
 
 export type Model = immer.Immutable<{
