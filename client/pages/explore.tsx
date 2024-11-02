@@ -13,7 +13,7 @@ import { Filter, FilterQuery } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
-import { MeasureId } from "../../iso/units";
+import { MeasureId, convertToStandardUnit } from "../../iso/units";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 
@@ -154,10 +154,19 @@ export const update: Update<Msg, Model> = (msg, model) => {
           // Convert filters to query format
           draft.query = {};
           nextFiltersModel.filters.forEach((filter) => {
-            if (filter.measureSelector.state === "selected") {
-              draft.query[filter.measureSelector.measureId] = {
-                min: filter.min,
-                max: filter.max,
+            if (filter.state.state === "selected") {
+              const minResult = filter.state.minInput.parseResult;
+              const maxResult = filter.state.maxInput.parseResult;
+
+              draft.query[filter.state.measureId] = {
+                min:
+                  minResult.status == "success"
+                    ? convertToStandardUnit({id: filter.state.measureId, value: minResult.value})
+                    : undefined,
+                max:
+                  maxResult.status == "success"
+                    ? convertToStandardUnit({id: filter.state.measureId, value: maxResult.value})
+                    : undefined,
               };
             }
           });

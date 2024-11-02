@@ -2,17 +2,25 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
+import * as UnitInput from "./unit-input";
 import { Identifier } from "../parser/types";
-import { MeasureId } from "../../iso/units";
+import { MeasureId, MeasureSpec } from "../../iso/units";
 
-export type Filter = {
+export type Filter = immer.Immutable<{
   id: Identifier;
-  measureSelector: MeasureSelectionBox.Model;
-  minStr: string;
-  min: number | undefined;
-  maxStr: string;
-  max: number | undefined;
-};
+  state:
+    | {
+        state: "typing";
+        query: string;
+        measures: MeasureSpec[];
+      }
+    | {
+        state: "selected";
+        measureId: MeasureId;
+        minInput: UnitInput.Model;
+        maxInput: UnitInput.Model;
+      };
+}>;
 
 export type FilterMapping = {
   [id: Identifier]: MeasureId;
@@ -22,12 +30,33 @@ export type Model = immer.Immutable<{
   filters: Filter[];
 }>;
 
+function castToSelectionModel(
+  filter: immer.Immutable<Filter>,
+): MeasureSelectionBox.Model {
+  return filter.state.state == "typing"
+    ? {
+        id: filter.id,
+        state: "typing",
+        query: filter.state.query,
+        measures: filter.state.measures,
+      }
+    : {
+        id: filter.id,
+        state: "selected",
+        measureId: filter.state.measureId,
+      };
+}
+
 export type Msg =
   | { type: "ADD_FILTER" }
-  | { type: "REMOVE_FILTER"; id: string }
-  | { type: "MEASURE_SELECTOR_MSG"; id: string; msg: MeasureSelectionBox.Msg }
-  | { type: "UPDATE_MIN"; id: string; value: string }
-  | { type: "UPDATE_MAX"; id: string; value: string };
+  | { type: "REMOVE_FILTER"; id: Identifier }
+  | {
+      type: "MEASURE_SELECTOR_MSG";
+      id: Identifier;
+      msg: MeasureSelectionBox.Msg;
+    }
+  | { type: "MAX_INPUT_MSG"; id: Identifier; msg: UnitInput.Msg }
+  | { type: "MIN_INPUT_MSG"; id: Identifier; msg: UnitInput.Msg };
 
 export function initModel(): Model {
   return { filters: [] };
@@ -36,8 +65,8 @@ export function initModel(): Model {
 export function generateFiltersMap(model: Model): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of model.filters) {
-    if (filter.measureSelector.state == "selected") {
-      filterMapping[filter.id] = filter.measureSelector.measureId;
+    if (filter.state.state == "selected") {
+      filterMapping[filter.id] = filter.state.measureId;
     }
   }
   return filterMapping;
@@ -71,13 +100,23 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         immer.produce(model, (draft) => {
           const id = getNextId(draft);
+          const measureModel = MeasureSelectionBox.initModel(id);
           draft.filters.push({
             id,
-            measureSelector: immer.castDraft(MeasureSelectionBox.initModel(id)),
-            minStr: "",
-            min: undefined,
-            maxStr: "",
-            max: undefined,
+            state: immer.castDraft(
+              measureModel.state == "typing"
+                ? {
+                    state: "typing",
+                    query: measureModel.query,
+                    measures: measureModel.measures,
+                  }
+                : {
+                    state: "selected",
+                    measureId: measureModel.measureId,
+                    minInput: UnitInput.initModel(measureModel.measureId),
+                    maxInput: UnitInput.initModel(measureModel.measureId),
+                  },
+            ),
           });
         }),
       ];
@@ -96,32 +135,53 @@ export const update: Update<Msg, Model> = (msg, model) => {
           if (filter) {
             const [newModel] = MeasureSelectionBox.update(
               msg.msg,
-              filter.measureSelector,
+              castToSelectionModel(filter),
             );
-            filter.measureSelector = immer.castDraft(newModel);
+            filter.state = immer.castDraft(
+              newModel.state == "typing"
+                ? {
+                    state: "typing",
+                    query: newModel.query,
+                    measures: newModel.measures,
+                  }
+                : {
+                    state: "selected",
+                    measureId: newModel.measureId,
+                    minInput: UnitInput.initModel(newModel.measureId),
+                    maxInput: UnitInput.initModel(newModel.measureId),
+                  },
+            );
           }
         }),
       ];
 
-    case "UPDATE_MIN":
+    case "MIN_INPUT_MSG":
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find((f) => f.id === msg.id);
-          if (filter) {
-            filter.minStr = msg.value;
-            filter.min = msg.value.length ? Number(msg.value) : undefined;
+          if (!(filter && filter.state.state == "selected")) {
+            throw new Error(
+              `Unexpected filter state when handling input msg ${filter?.state.state}`,
+            );
           }
+
+          const [newModel] = UnitInput.update(msg.msg, filter.state.minInput);
+          filter.state.minInput = immer.castDraft(newModel);
         }),
       ];
 
-    case "UPDATE_MAX":
+    case "MAX_INPUT_MSG":
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find((f) => f.id === msg.id);
-          if (filter) {
-            filter.maxStr = msg.value;
-            filter.max = msg.value.length ? Number(msg.value) : undefined;
+          if (!(filter && filter.state.state == "selected")) {
+            throw new Error(
+              `Unexpected filter state when handling input msg ${filter?.state.state}`,
+            );
           }
+
+          const [newModel] = UnitInput.update(msg.msg, filter.state.maxInput);
+          filter.state.maxInput = immer.castDraft(newModel);
         }),
       ];
   }
@@ -135,13 +195,19 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
       </button>
 
       {model.filters.map((filter) => (
-        <FilterView filter={filter} dispatch={dispatch}/>
+        <FilterView filter={filter} dispatch={dispatch} />
       ))}
     </div>
   );
 };
 
-const FilterView = ({ filter, dispatch }: { filter: Filter, dispatch: Dispatch<Msg> }) => {
+const FilterView = ({
+  filter,
+  dispatch,
+}: {
+  filter: Filter;
+  dispatch: Dispatch<Msg>;
+}) => {
   return (
     <div
       key={filter.id}
@@ -154,35 +220,29 @@ const FilterView = ({ filter, dispatch }: { filter: Filter, dispatch: Dispatch<M
     >
       <strong>[{filter.id}]</strong>{" "}
       <MeasureSelectionBox.view
-        model={filter.measureSelector}
+        model={castToSelectionModel(filter)}
         dispatch={(msg) =>
           dispatch({ type: "MEASURE_SELECTOR_MSG", id: filter.id, msg })
         }
       />{" "}
-      min:{" "}
-      <input
-        type="number"
-        value={filter.minStr}
-        onChange={(e) =>
-          dispatch({
-            type: "UPDATE_MIN",
-            id: filter.id,
-            value: e.target.value,
-          })
-        }
-      />{" "}
-      max:{" "}
-      <input
-        type="number"
-        value={filter.maxStr}
-        onChange={(e) =>
-          dispatch({
-            type: "UPDATE_MAX",
-            id: filter.id,
-            value: e.target.value,
-          })
-        }
-      />{" "}
+      {filter.state.state == "selected" && (
+        <span>
+          min:{" "}
+          <UnitInput.view
+            model={filter.state.minInput}
+            dispatch={(msg) =>
+              dispatch({ type: "MIN_INPUT_MSG", id: filter.id, msg })
+            }
+          />
+          max:{" "}
+          <UnitInput.view
+            model={filter.state.maxInput}
+            dispatch={(msg) =>
+              dispatch({ type: "MAX_INPUT_MSG", id: filter.id, msg })
+            }
+          />{" "}
+        </span>
+      )}
       <button
         onClick={() =>
           dispatch({
