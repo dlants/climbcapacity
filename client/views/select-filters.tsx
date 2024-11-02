@@ -5,6 +5,7 @@ import * as MeasureSelectionBox from "./measure-selection-box";
 import * as UnitInput from "./unit-input";
 import { Identifier } from "../parser/types";
 import { MeasureId, MeasureSpec } from "../../iso/units";
+import lodash from "lodash";
 
 export type Filter = immer.Immutable<{
   id: Identifier;
@@ -118,6 +119,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
                   },
             ),
           });
+          draft.filters = lodash.sortBy(draft.filters, (f) => f.id);
         }),
       ];
 
