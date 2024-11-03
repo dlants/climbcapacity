@@ -1,158 +1,106 @@
 // see https://www.ircra.rocks/single-post/2016/09/12/reporting-grades-in-climbing-research
 import { assertUnreachable } from "./utils.js";
 
-export const FONT = {
-  "3": true,
-  "4": true,
-  "4+": true,
-  "5": true,
-  "5+": true,
-  "6A": true,
-  "6A+": true,
-  "6B": true,
-  "6B+": true,
-  "6C": true,
-  "6C+": true,
-  "7A": true,
-  "7A+": true,
-  "7B": true,
-  "7B+": true,
-  "7C": true,
-  "7C+": true,
-  "8A": true,
-  "8A+": true,
-  "8B": true,
-  "8B+": true,
-  "8C": true,
-} as const;
+export const FONT = [
+  "3",
+  "4",
+  "4+",
+  "5",
+  "5+",
+  "6A",
+  "6A+",
+  "6B",
+  "6B+",
+  "6C",
+  "6C+",
+  "7A",
+  "7A+",
+  "7B",
+  "7B+",
+  "7C",
+  "7C+",
+  "8A",
+  "8A+",
+  "8B",
+  "8B+",
+  "8C",
+  "8C+",
+] as const;
 
-export type Font = keyof typeof FONT;
+export type Font = (typeof FONT)[number];
 
-export const VGRADE = {
-  0: true,
-  1: true,
-  2: true,
-  3: true,
-  4: true,
-  5: true,
-  6: true,
-  7: true,
-  8: true,
-  9: true,
-  10: true,
-  11: true,
-  12: true,
-  13: true,
-  14: true,
-  15: true,
-  16: true,
-  17: true,
-} as const;
+export const VGRADE = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+] as const;
 
-export type VGrade = keyof typeof VGRADE;
+export type VGrade = (typeof VGRADE)[number];
 
-export const FRENCH_SPORT = {
-  "5": true,
-  "5+": true,
-  "6a": true,
-  "6a+": true,
-  "6b": true,
-  "6b+": true,
-  "6c": true,
-  "6c+": true,
-  "7a": true,
-  "7a+": true,
-  "7b": true,
-  "7b+": true,
-  "7c": true,
-  "7c+": true,
-  "8a": true,
-  "8a+": true,
-  "8b": true,
-  "8b+": true,
-  "8c": true,
-  "8c+": true,
-  "9a": true,
-  "9a+": true,
-  "9b": true,
-  "9b+": true,
-} as const;
+export const FRENCH_SPORT = [
+  "5",
+  "5+",
+  "6a",
+  "6a+",
+  "6b",
+  "6b+",
+  "6c",
+  "6c+",
+  "7a",
+  "7a+",
+  "7b",
+  "7b+",
+  "7c",
+  "7c+",
+  "8a",
+  "8a+",
+  "8b",
+  "8b+",
+  "8c",
+  "8c+",
+  "9a",
+  "9a+",
+  "9b",
+  "9b+",
+] as const;
 
-export type FrenchSport = keyof typeof FRENCH_SPORT;
+export type FrenchSport = (typeof FRENCH_SPORT)[number];
 
-export const YDS = {
-  "5.6": true,
-  "5.7": true,
-  "5.8": true,
-  "5.9": true,
-  "5.10a": true,
-  "5.10b": true,
-  "5.10c": true,
-  "5.10d": true,
-  "5.11a": true,
-  "5.11b": true,
-  "5.11c": true,
-  "5.11d": true,
-  "5.12a": true,
-  "5.12b": true,
-  "5.12c": true,
-  "5.12d": true,
-  "5.13a": true,
-  "5.13b": true,
-  "5.13c": true,
-  "5.13d": true,
-  "5.14a": true,
-  "5.14b": true,
-  "5.14c": true,
-  "5.14d": true,
-  "5.15a": true,
-  "5.15b": true,
-  "5.15c": true,
-} as const;
+export const YDS = [
+  "5.6",
+  "5.7",
+  "5.8",
+  "5.9",
+  "5.10a",
+  "5.10b",
+  "5.10c",
+  "5.10d",
+  "5.11a",
+  "5.11b",
+  "5.11c",
+  "5.11d",
+  "5.12a",
+  "5.12b",
+  "5.12c",
+  "5.12d",
+  "5.13a",
+  "5.13b",
+  "5.13c",
+  "5.13d",
+  "5.14a",
+  "5.14b",
+  "5.14c",
+  "5.14d",
+  "5.15a",
+  "5.15b",
+  "5.15c",
+] as const;
 
-export type YDS = keyof typeof YDS;
+export type YDS = (typeof YDS)[number];
 
-export const EWBANK = {
-  1: true,
-  2: true,
-  3: true,
-  4: true,
-  5: true,
-  6: true,
-  7: true,
-  8: true,
-  9: true,
-  10: true,
-  11: true,
-  12: true,
-  13: true,
-  14: true,
-  15: true,
-  16: true,
-  17: true,
-  18: true,
-  19: true,
-  20: true,
-  21: true,
-  22: true,
-  23: true,
-  24: true,
-  25: true,
-  26: true,
-  27: true,
-  28: true,
-  29: true,
-  30: true,
-  31: true,
-  32: true,
-  33: true,
-  34: true,
-  35: true,
-  36: true,
-  37: true,
-  38: true,
-} as const;
-export type EwbankGrade = keyof typeof EWBANK;
+export const EWBANK = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+  23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+] as const;
+export type EwbankGrade = (typeof EWBANK)[number];
 
 export type IRCRAGrade = number & { __brand: "IRCRAGrade" };
 
@@ -281,7 +229,7 @@ export function frenchSportToIrcra(grade: FrenchSport): IRCRAGrade {
   })() as IRCRAGrade;
 }
 
-export function fromIRCRAtoFrenchSport(grade: IRCRAGrade): FrenchSport {
+export function ircraToFrenchSport(grade: IRCRAGrade): FrenchSport {
   return (() => {
     if (grade < 10) return "5";
     if (grade < 11) return "5+";
@@ -335,29 +283,31 @@ export function fontToIrcra(grade: Font): IRCRAGrade {
       case "6C":
         return 18.5;
       case "6C+":
-        return 21;
+        return 19.5;
       case "7A":
-        return 22;
+        return 20.5;
       case "7A+":
-        return 23;
+        return 21.5;
       case "7B":
-        return 24;
+        return 22.5;
       case "7B+":
-        return 25;
+        return 23.5;
       case "7C":
-        return 26;
+        return 24.5;
       case "7C+":
-        return 27;
+        return 25.5;
       case "8A":
-        return 28;
+        return 26.5;
       case "8A+":
-        return 29;
+        return 27.5;
       case "8B":
-        return 30;
+        return 28.5;
       case "8B+":
-        return 31;
+        return 29.5;
       case "8C":
-        return 32;
+        return 31;
+      case '8C+':
+        return 32
       default:
         throw new Error(`Unexpected Font grade ${grade}`);
     }
@@ -365,27 +315,29 @@ export function fontToIrcra(grade: Font): IRCRAGrade {
 }
 export function ircraToFont(grade: IRCRAGrade): Font {
   return (() => {
+    if (grade < 12) return "3";
     if (grade < 13) return "4";
     if (grade < 14) return "4+";
     if (grade < 15) return "5";
     if (grade < 16) return "5+";
-    if (grade < 17) return "6A";
-    if (grade < 18) return "6A+";
-    if (grade < 19) return "6B";
-    if (grade < 20) return "6B+";
-    if (grade < 21) return "6C";
-    if (grade < 22) return "6C+";
-    if (grade < 23) return "7A";
-    if (grade < 24) return "7A+";
-    if (grade < 25) return "7B";
-    if (grade < 26) return "7B+";
-    if (grade < 27) return "7C";
-    if (grade < 28) return "7C+";
-    if (grade < 29) return "8A";
-    if (grade < 30) return "8A+";
-    if (grade < 31) return "8B";
-    if (grade < 32) return "8B+";
-    if (grade <= 32) return "8C";
+    if (grade < 16.5) return "6A";
+    if (grade < 17) return "6A+";
+    if (grade < 18) return "6B";
+    if (grade < 18.5) return "6B+";
+    if (grade < 19.5) return "6C";
+    if (grade < 20.5) return "6C+";
+    if (grade < 21.5) return "7A";
+    if (grade < 22.5) return "7A+";
+    if (grade < 23.5) return "7B";
+    if (grade < 24.5) return "7B+";
+    if (grade < 25.5) return "7C";
+    if (grade < 26.5) return "7C+";
+    if (grade < 27.5) return "8A";
+    if (grade < 28.5) return "8A+";
+    if (grade < 29.5) return "8B";
+    if (grade < 31) return "8B+";
+    if (grade < 32) return "8C";
+    if (grade < 33) return "8C+";
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as Font;
 }

@@ -4,29 +4,91 @@ import * as Plot from "@observablehq/plot";
 import { useEffect, useRef } from "react";
 import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
+import { UnitType } from "../../iso/units";
+import lodash from "lodash";
+import { EWBANK, FONT, FRENCH_SPORT, VGRADE, YDS } from "../../iso/grade";
 
 export type Model = immer.Immutable<
   | {
       style: "histogram";
       data: number[];
       xLabel: string;
+      xUnit?: UnitType;
       myData?: number[];
     }
   | {
       style: "dotplot";
       data: { x: number; y: number }[];
       xLabel: string;
+      xUnit?: UnitType;
       yLabel: string;
+      yUnit?: UnitType;
       myData?: { x: number; y: number }[];
     }
   | {
       style: "heatmap";
       data: { x: number; y: number }[];
       xLabel: string;
+      xUnit?: UnitType;
       yLabel: string;
+      yUnit?: UnitType;
       myData?: { x: number; y: number }[];
     }
 >;
+
+function generateTicks(unit: UnitType | undefined): Plot.ScaleOptions {
+  if (!unit) {
+    return {};
+  }
+
+  switch (unit) {
+    case "second":
+    case "year":
+    case "lb":
+    case "kg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "feetinches":
+    case "inches":
+    case "count":
+      return {};
+    case "ircra":
+      return {};
+    case "sex-at-birth":
+      return {
+        ticks: [0, 1],
+        tickFormat: (d) => ["female", "male"][d],
+      };
+    case "vermin":
+      return {
+        ticks: VGRADE.map((d) => d + 0.5),
+        tickFormat: (d) => `V${Math.floor(d)}`,
+      };
+    case "font":
+      return {
+        ticks: lodash.range(FONT.length).map((d) => d + 0.5),
+        tickFormat: (d) => FONT[Math.floor(d)],
+      };
+    case "frenchsport":
+      return {
+        ticks: lodash.range(FRENCH_SPORT.length).map((d) => d + 0.5),
+        tickFormat: (d) => FRENCH_SPORT[Math.floor(d)],
+      };
+    case "yds":
+      return {
+        ticks: lodash.range(YDS.length).map((d) => d + 0.5),
+        tickFormat: (d) => YDS[Math.floor(d)],
+      };
+    case "ewbank":
+      return {
+        ticks: lodash.range(EWBANK.length).map((d) => d + 0.5),
+        tickFormat: (d) => EWBANK[Math.floor(d)],
+      };
+    default:
+      assertUnreachable(unit);
+  }
+}
 
 export const view: View<never, Model> = ({ model }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,10 +112,11 @@ export const view: View<never, Model> = ({ model }) => {
                 ]
               : []),
           ],
-          x: { label: model.xLabel },
+          x: { label: model.xLabel, ...generateTicks(model.xUnit) },
         });
         break;
       }
+
       case "dotplot": {
         plot = Plot.plot({
           marks: [
@@ -70,12 +133,24 @@ export const view: View<never, Model> = ({ model }) => {
                 ]
               : []),
           ],
-          x: { label: model.xLabel },
-          y: { label: model.yLabel },
+          x: { label: model.xLabel, ...generateTicks(model.xUnit) },
+          y: { label: model.yLabel, ...generateTicks(model.yUnit) },
         });
         break;
       }
+
       case "heatmap": {
+        const bin: Plot.RectOptions = Plot.bin(
+          {
+            fill: "count",
+          },
+          {
+            x: "x",
+            y: "y",
+          },
+        );
+        bin.tip = true;
+
         plot = Plot.plot({
           color: {
             type: "linear",
@@ -83,19 +158,7 @@ export const view: View<never, Model> = ({ model }) => {
             legend: true,
           },
           marks: [
-            Plot.rect(model.data, {
-              ...Plot.bin(
-                {
-                  fill: "count",
-                },
-                {
-                  x: "x",
-                  y: "y",
-                },
-              ),
-              tip: true,
-            }),
-
+            Plot.rect(model.data, bin),
             // Add point for myData if present
             ...(model.myData
               ? [
@@ -108,6 +171,8 @@ export const view: View<never, Model> = ({ model }) => {
                 ]
               : []),
           ],
+          x: { label: model.xLabel, ...generateTicks(model.xUnit) },
+          y: { label: model.yLabel, ...generateTicks(model.yUnit) },
         });
         break;
       }

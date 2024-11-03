@@ -1,12 +1,11 @@
 import React from "react";
 import { Update, View } from "../tea";
-import { parseExpression } from "../parser/parser";
-import { EvalResult } from "../parser/types";
+import { parseExpression, ParseResult } from "../parser/parser";
 import * as immer from "immer";
 
 export type Model = immer.Immutable<{
   expression: string;
-  evalResult: EvalResult;
+  evalResult: ParseResult;
 }>;
 
 export type Msg = {
@@ -50,11 +49,11 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
           })
         }
         style={{
-          borderColor: model.evalResult.isValid ? "initial" : "red",
+          borderColor: model.evalResult.status == 'success' ? "initial" : "red",
         }}
         placeholder="Enter expression (e.g. a + b * 2)"
       />
-      {!model.evalResult.isValid && (
+      {model.evalResult.status != 'success' && (
         <div style={{ color: "red", fontSize: "small" }}>
           {model.evalResult.error}
         </div>

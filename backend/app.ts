@@ -119,7 +119,6 @@ async function run() {
     }
 
     const snapshots: Snapshot[] = await snapshotModel.querySnapshots(query);
-    console.log(`snapshots: ${JSON.stringify(snapshots)}`);
     res.json(snapshots);
     return;
   });

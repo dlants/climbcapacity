@@ -1,15 +1,24 @@
 import {
+  EWBANK,
   EwbankGrade,
   ewbankToIrcra,
+  FONT,
   Font,
   fontToIrcra,
+  FRENCH_SPORT,
   FrenchSport,
   frenchSportToIrcra,
+  ircraToFrenchSport,
   IRCRAGrade,
+  ircraToFont,
+  ircraToVGrade,
   VGrade,
+  VGRADE,
   vGradeToIrcra,
   YDS,
   ydsToIrcra,
+  ircraToYDS,
+  ircraToEwbank,
 } from "./grade.js";
 import { assertUnreachable } from "./utils.js";
 
@@ -36,7 +45,7 @@ export type MeasureValue = {
 
 export function encodeMeasureValue(measure: MeasureValue): NormedMeasure {
   const standardValue = convertToStandardUnit(measure);
-  return { measureId: measure.id, value: standardValue }
+  return { measureId: measure.id, value: standardValue };
 }
 
 export function convertToStandardUnit(measure: MeasureValue): number {
@@ -81,12 +90,58 @@ export function convertToStandardUnit(measure: MeasureValue): number {
         case "male":
           return 1;
         default:
-          assertUnreachable(measure.value, 'sex-at-birth');
+          assertUnreachable(measure.value, "sex-at-birth");
       }
     case "count":
       return measure.value.value;
     default:
-      assertUnreachable(measure.value, 'measure.value');
+      assertUnreachable(measure.value, "measure.value");
+  }
+}
+
+export function convertToTargetUnit(
+  normalizedValue: number,
+  targetUnit: UnitType,
+): number {
+  switch (targetUnit) {
+    case "second":
+      return normalizedValue;
+    case "year":
+      return normalizedValue;
+    case "lb":
+      return normalizedValue / 0.45359237;
+    case "kg":
+      return normalizedValue;
+    case "m":
+      return normalizedValue;
+    case "cm":
+      return normalizedValue * 100;
+    case "mm":
+      return normalizedValue * 1000;
+    case "feetinches":
+      return normalizedValue / 0.3048; // returns feet
+    case "inches":
+      return normalizedValue / 0.0254;
+    case "vermin":
+      return VGRADE.indexOf(ircraToVGrade(normalizedValue as IRCRAGrade));
+    case "ircra":
+      return normalizedValue;
+    case "font":
+      return FONT.indexOf(ircraToFont(normalizedValue as IRCRAGrade));
+    case "frenchsport":
+      return FRENCH_SPORT.indexOf(
+        ircraToFrenchSport(normalizedValue as IRCRAGrade),
+      );
+    case "yds":
+      return YDS.indexOf(ircraToYDS(normalizedValue as IRCRAGrade));
+    case "ewbank":
+      return EWBANK.indexOf(ircraToEwbank(normalizedValue as IRCRAGrade));
+    case "sex-at-birth":
+      return normalizedValue;
+    case "count":
+      return normalizedValue;
+    default:
+      assertUnreachable(targetUnit);
   }
 }
 
@@ -163,7 +218,7 @@ export type UnitValue =
       value: number;
     };
 
-export type UnitType = UnitValue['unit']
+export type UnitType = UnitValue["unit"];
 
 export const GRIPS = {
   "half-crimp": true,

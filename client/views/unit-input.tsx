@@ -405,7 +405,7 @@ const InnerUnitInput = ({
 
     case "lb":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -417,7 +417,7 @@ const InnerUnitInput = ({
 
     case "kg":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -429,7 +429,7 @@ const InnerUnitInput = ({
 
     case "m":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -441,7 +441,7 @@ const InnerUnitInput = ({
 
     case "cm":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -453,7 +453,7 @@ const InnerUnitInput = ({
 
     case "mm":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -465,7 +465,7 @@ const InnerUnitInput = ({
 
     case "inches":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -477,7 +477,7 @@ const InnerUnitInput = ({
 
     case "count":
       return (
-        <span >
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
@@ -535,7 +535,7 @@ const InnerUnitInput = ({
           value={model.unitInput as string}
           onChange={(e) => handleChange(e.target.value)}
         >
-          {Object.keys(VGRADE).map((grade) => (
+          {VGRADE.map((grade) => (
             <option key={grade} value={grade}>
               V{grade}
             </option>
@@ -549,7 +549,7 @@ const InnerUnitInput = ({
           value={model.unitInput as string}
           onChange={(e) => handleChange(e.target.value)}
         >
-          {Object.keys(EWBANK).map((grade) => (
+          {EWBANK.map((grade) => (
             <option key={grade} value={grade}>
               {grade}
             </option>
@@ -563,7 +563,7 @@ const InnerUnitInput = ({
           value={model.unitInput as string}
           onChange={(e) => handleChange(e.target.value)}
         >
-          {Object.keys(FONT).map((grade) => (
+          {FONT.map((grade) => (
             <option key={grade} value={grade}>
               {grade}
             </option>
@@ -577,7 +577,7 @@ const InnerUnitInput = ({
           value={model.unitInput as string}
           onChange={(e) => handleChange(e.target.value)}
         >
-          {Object.keys(FRENCH_SPORT).map((grade) => (
+          {FRENCH_SPORT.map((grade) => (
             <option key={grade} value={grade}>
               {grade}
             </option>
@@ -591,7 +591,7 @@ const InnerUnitInput = ({
           value={model.unitInput as string}
           onChange={(e) => handleChange(e.target.value)}
         >
-          {Object.keys(YDS).map((grade) => (
+          {YDS.map((grade) => (
             <option key={grade} value={grade}>
               {grade}
             </option>

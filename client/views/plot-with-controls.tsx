@@ -5,9 +5,10 @@ import { HydratedSnapshot } from "../types";
 import { Update, View } from "../tea";
 import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
-import { Identifier } from "../parser/types";
+import { EvalPoint, Identifier } from "../parser/types";
 import { FilterMapping } from "./select-filters";
 import { Result } from "../../iso/utils";
+import { convertToTargetUnit } from "../../iso/units";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
@@ -77,20 +78,27 @@ export const update: Update<Msg, Model> = (msg, model) => {
 };
 
 function updatePlot(model: Model): Result<Plot.Model> {
-  const xAxisValid = model.xAxis.evalResult.isValid;
-  const yAxisValid = model.yAxis.evalResult.isValid;
+  const xAxisValid = model.xAxis.evalResult.status == "success";
+  const yAxisValid = model.yAxis.evalResult.status == "success";
 
   const snapshotDataById = model.snapshots.map((s) => {
-    const idValues: { [id: Identifier]: number } = {};
+    const idValues: EvalPoint = {};
     for (const id in model.filterMapping) {
-      idValues[id as Identifier] =
-        s.normalizedMeasures[model.filterMapping[id as Identifier]];
+      const filter = model.filterMapping[id as Identifier];
+
+      idValues[id as Identifier] = {
+        unit: filter.unit,
+        value: convertToTargetUnit(
+          s.normalizedMeasures[filter.measureId],
+          filter.unit,
+        ),
+      };
     }
     return { userId: s.userId, idValues };
   });
 
   if (xAxisValid) {
-    const evalX = model.xAxis.evalResult.fn;
+    const evalX = model.xAxis.evalResult.value;
     const xResult = evalX(snapshotDataById.map(({ idValues }) => idValues));
     if (xResult.status == "fail") {
       return xResult;
@@ -108,7 +116,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
     const myXData = myXResult.value;
 
     if (yAxisValid) {
-      const evalY = model.yAxis.evalResult.fn;
+      const evalY = model.yAxis.evalResult.value;
       const yResult = evalY(snapshotDataById.map(({ idValues }) => idValues));
       if (yResult.status == "fail") {
         return yResult;
@@ -126,18 +134,18 @@ function updatePlot(model: Model): Result<Plot.Model> {
       const myYData = myYResult.value;
 
       const data: { x: number; y: number }[] = [];
-      for (let i = 0; i < xData.length; i += 1) {
+      for (let i = 0; i < xData.values.length; i += 1) {
         data.push({
-          x: xData[i],
-          y: yData[i],
+          x: xData.values[i],
+          y: yData.values[i],
         });
       }
 
       const myData: { x: number; y: number }[] = [];
-      for (let i = 0; i < myXData.length; i += 1) {
+      for (let i = 0; i < myXData.values.length; i += 1) {
         myData.push({
-          x: myXData[i],
-          y: myYData[i],
+          x: myXData.values[i],
+          y: myYData.values[i],
         });
       }
 
@@ -149,7 +157,9 @@ function updatePlot(model: Model): Result<Plot.Model> {
             data,
             myData,
             xLabel: model.xAxis.expression,
+            xUnit: xData.unit,
             yLabel: model.yAxis.expression,
+            yUnit: yData.unit,
           },
         };
       } else {
@@ -160,7 +170,9 @@ function updatePlot(model: Model): Result<Plot.Model> {
             data,
             myData,
             xLabel: model.xAxis.expression,
+            xUnit: xData.unit,
             yLabel: model.yAxis.expression,
+            yUnit: yData.unit,
           },
         };
       }
@@ -169,9 +181,10 @@ function updatePlot(model: Model): Result<Plot.Model> {
         status: "success",
         value: {
           style: "histogram",
-          data: xData,
-          myData: myXData,
+          data: xData.values,
+          myData: myXData.values,
           xLabel: model.xAxis.expression,
+          xUnit: xData.unit,
         },
       };
     }

@@ -4,7 +4,7 @@ import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
 import * as UnitInput from "./unit-input";
 import { Identifier } from "../parser/types";
-import { MeasureId, MeasureSpec } from "../../iso/units";
+import { MeasureId, MeasureSpec, UnitType } from "../../iso/units";
 import lodash from "lodash";
 
 export type Filter = immer.Immutable<{
@@ -24,7 +24,10 @@ export type Filter = immer.Immutable<{
 }>;
 
 export type FilterMapping = {
-  [id: Identifier]: MeasureId;
+  [id: Identifier]: {
+    measureId: MeasureId;
+    unit: UnitType;
+  };
 };
 
 export type Model = immer.Immutable<{
@@ -67,7 +70,10 @@ export function generateFiltersMap(model: Model): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of model.filters) {
     if (filter.state.state == "selected") {
-      filterMapping[filter.id] = filter.state.measureId;
+      filterMapping[filter.id] = {
+        measureId: filter.state.measureId,
+        unit: filter.state.minInput.selectedUnit,
+      };
     }
   }
   return filterMapping;

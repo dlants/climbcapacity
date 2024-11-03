@@ -155,9 +155,10 @@ const navigate: Update<Msg, Model> = (msg, model) => {
     case "/explore":
       const [exploreModel] = ExplorePage.initModel({
         userId:
-          model.auth.status == "loaded" &&
-          model.auth.response.status == "logged in" &&
-          model.auth.response.user.id || undefined,
+          (model.auth.status == "loaded" &&
+            model.auth.response.status == "logged in" &&
+            model.auth.response.user.id) ||
+          undefined,
       });
       return [
         produce(model, (draft) => {
@@ -354,7 +355,7 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
 const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
-    <GlobalStyles />
+      <GlobalStyles />
       <Nav />
       <Page model={model} dispatch={dispatch} />
     </div>

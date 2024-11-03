@@ -1,6 +1,11 @@
-import type { Token, Expr, EvalResult, Identifier } from "./types";
+import type { Token, Expr, EvalResult, Identifier, EvalPoint } from "./types";
 import { tokenize } from "./tokenizer";
 import { evaluate } from "./evaluate";
+import { Result } from "../../iso/utils";
+
+export type ParseResult = Result<
+  (evalPoints: EvalPoint[]) => Result<EvalResult>
+>;
 
 class Parser {
   private tokens: Token[] = [];
@@ -14,16 +19,16 @@ class Parser {
     "^": 30,
   };
 
-  parse(input: string): EvalResult {
+  parse(input: string): ParseResult {
     try {
       this.tokens = tokenize(input);
       const ast = this.parseExpr(0);
       return {
-        isValid: true,
-        fn: (measures) => evaluate(ast, measures),
+        status: "success",
+        value: (evalPoints) => evaluate(ast, evalPoints),
       };
     } catch (e: any) {
-      return { isValid: false, error: e.message };
+      return { status: "fail", error: e.message };
     }
   }
 
