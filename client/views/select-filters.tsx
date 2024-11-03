@@ -229,19 +229,28 @@ const FilterView = ({
       {filter.state.state == "selected" && (
         <span>
           min:{" "}
-          <UnitInput.view
+          <UnitInput.UnitInput
             model={filter.state.minInput}
             dispatch={(msg) =>
               dispatch({ type: "MIN_INPUT_MSG", id: filter.id, msg })
             }
-          />
+          />{" "}
           max:{" "}
-          <UnitInput.view
+          <UnitInput.UnitInput
             model={filter.state.maxInput}
             dispatch={(msg) =>
               dispatch({ type: "MAX_INPUT_MSG", id: filter.id, msg })
             }
           />{" "}
+          {filter.state.minInput.possibleUnits.length > 1 && (
+            <UnitInput.UnitToggle
+              model={filter.state.maxInput}
+              dispatch={(msg) => {
+                dispatch({ type: "MIN_INPUT_MSG", id: filter.id, msg });
+                dispatch({ type: "MAX_INPUT_MSG", id: filter.id, msg });
+              }}
+            />
+          )}
         </span>
       )}
       <button

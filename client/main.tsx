@@ -21,6 +21,7 @@ import { NavigateMsg, parseRoute, Router } from "./router";
 import { SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import * as immer from "immer";
+import { GlobalStyles } from "./global-style";
 const produce = immer.produce;
 
 export type Model = {
@@ -353,6 +354,7 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
 const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
+    <GlobalStyles />
       <Nav />
       <Page model={model} dispatch={dispatch} />
     </div>

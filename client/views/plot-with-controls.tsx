@@ -183,11 +183,19 @@ function updatePlot(model: Model): Result<Plot.Model> {
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
-      {model.plot.status == "success" ? (
-        <Plot.view model={model.plot.value} dispatch={dispatch} />
-      ) : (
-        <div>Error: {model.plot.error}</div>
-      )}
+      <div
+        className="plot-container"
+        style={{
+          height: "300px",
+          width: "400px",
+        }}
+      >
+        {model.plot.status == "success" ? (
+          <Plot.view model={model.plot.value} dispatch={dispatch} />
+        ) : (
+          <div>Error: {model.plot.error}</div>
+        )}
+      </div>
       <div>
         xAxis:{" "}
         <MeasureExpressionBox.view

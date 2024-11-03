@@ -361,7 +361,7 @@ const EditMeasureView = ({
       className={`measure-item ${measureLoading ? "measure-loading" : ""}`}
     >
       <label>{measure.name}</label>
-      <UnitInput.view
+      <UnitInput.UnitInput
         model={measureUpdate.model}
         dispatch={(msg) => {
           dispatch({
@@ -371,6 +371,18 @@ const EditMeasureView = ({
           });
         }}
       />
+      {measureUpdate.model.possibleUnits.length > 1 && (
+        <UnitInput.UnitToggle
+          model={measureUpdate.model}
+          dispatch={(msg) => {
+            dispatch({
+              type: "UNIT_INPUT_MSG",
+              measureId: measure.id,
+              msg,
+            });
+          }}
+        />
+      )}
       <button
         onClick={() => {
           if (measureValid) {

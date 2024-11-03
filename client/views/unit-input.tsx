@@ -147,7 +147,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.selectedUnit = msg.unit;
-          draft.unitInput = getInitialInput(msg.unit)
+          draft.unitInput = getInitialInput(msg.unit);
         }),
       ];
     }
@@ -306,24 +306,24 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   }
 }
 
-export const view: View<Msg, Model> = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}): JSX.Element => {
-  return (
-    <span>
-      <UnitInput model={model} dispatch={dispatch} />
-      {model.possibleUnits.length > 1 && (
-        <UnitToggle model={model} dispatch={dispatch} />
-      )}
-    </span>
-  );
-};
+// export const view: View<Msg, Model> = ({
+//   model,
+//   dispatch,
+// }: {
+//   model: Model;
+//   dispatch: (msg: Msg) => void;
+// }): JSX.Element => {
+//   return (
+//     <span>
+//       <UnitInput model={model} dispatch={dispatch} />
+//       {model.possibleUnits.length > 1 && (
+//         <UnitToggle model={model} dispatch={dispatch} />
+//       )}
+//     </span>
+//   );
+// };
 
-const UnitToggle = ({
+export const UnitToggle = ({
   model,
   dispatch,
 }: {
@@ -333,22 +333,37 @@ const UnitToggle = ({
   return (
     <span>
       {model.possibleUnits.map((unit) => (
-        <label key={unit}>
+        <span>
           <input
             type="radio"
-            name="unit"
+            id={model.measureId + ":" + unit}
+            name={model.measureId + ":" + unit}
             value={unit}
             checked={unit === model.selectedUnit}
             onChange={() => dispatch({ type: "SELECT_UNIT", unit })}
           />
-          {unit}
-        </label>
+          <label key={unit}>{unit}</label>
+        </span>
       ))}
     </span>
   );
 };
 
-const UnitInput = ({
+export const UnitInput = ({
+  model,
+  dispatch,
+}: {
+  model: Model;
+  dispatch: (msg: Msg) => void;
+}) => {
+  return (
+    <span className={"unitInput"}>
+      {<InnerUnitInput model={model} dispatch={dispatch} />}
+    </span>
+  );
+};
+
+const InnerUnitInput = ({
   model,
   dispatch,
 }: {
@@ -390,7 +405,7 @@ const UnitInput = ({
 
     case "lb":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -402,7 +417,7 @@ const UnitInput = ({
 
     case "kg":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -414,7 +429,7 @@ const UnitInput = ({
 
     case "m":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -426,7 +441,7 @@ const UnitInput = ({
 
     case "cm":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -438,7 +453,7 @@ const UnitInput = ({
 
     case "mm":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -450,7 +465,7 @@ const UnitInput = ({
 
     case "inches":
       return (
-        <span>
+        <span >
           <input
             type="number"
             value={model.unitInput as string}
@@ -462,11 +477,13 @@ const UnitInput = ({
 
     case "count":
       return (
-        <input
-          type="number"
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        />
+        <span >
+          <input
+            type="number"
+            value={model.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          />
+        </span>
       );
 
     case "ircra":
