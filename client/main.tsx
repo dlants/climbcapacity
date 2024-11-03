@@ -220,7 +220,7 @@ const update: Update<Msg, Model> = (msg, model) => {
       }
 
       if (msg.msg.type == "SELECT_SNAPSHOT") {
-        const snapshotId = msg.msg.snapshot._id as SnapshotId;
+        const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
         return [
           model,
           async (dispatch) => {

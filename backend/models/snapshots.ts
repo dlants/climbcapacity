@@ -89,8 +89,11 @@ export class SnapshotsModel {
     return res != null;
   }
 
-  async deleteSnapshot(snapshotId: mongodb.ObjectId) {
-    const result = await this.snapshotCollection.deleteOne({ _id: snapshotId });
+  async deleteSnapshot({userId, snapshotId}: {userId: string, snapshotId: mongodb.ObjectId}) {
+    const result = await this.snapshotCollection.deleteOne({
+      _id: snapshotId,
+      userId,
+    });
     return result.deletedCount;
   }
 
@@ -135,7 +138,6 @@ export class SnapshotsModel {
       $and: findQueryClauses,
     };
 
-    console.log(`findQuery: `, JSON.stringify(findQuery, null, 2))
     return this.snapshotCollection.find(findQuery).toArray();
   }
 }

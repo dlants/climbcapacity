@@ -54,6 +54,30 @@ async function run() {
     return;
   });
 
+  app.delete("/api/snapshot", async (req, res) => {
+    const user = await auth.assertLoggedIn(req, res);
+    const snapshotId: SnapshotId = req.body.snapshotId;
+    assert.equal(
+      typeof snapshotId,
+      "string",
+      "Must provide snapshotId in body",
+    );
+    const result = await snapshotModel.deleteSnapshot({
+      userId: user.id,
+      snapshotId: new mongodb.ObjectId(snapshotId),
+    });
+
+    if (result == 0) {
+      throw new HandledError({
+        status: 404,
+        message: `Unable to delete snapshot`,
+      });
+    }
+
+    res.json("OK");
+    return;
+  });
+
   app.post("/api/snapshots", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
@@ -95,7 +119,7 @@ async function run() {
     }
 
     const snapshots: Snapshot[] = await snapshotModel.querySnapshots(query);
-    console.log(`snapshots: ${JSON.stringify(snapshots)}`)
+    console.log(`snapshots: ${JSON.stringify(snapshots)}`);
     res.json(snapshots);
     return;
   });
@@ -128,11 +152,7 @@ async function run() {
     );
 
     const value: UnitValue = req.body.value;
-    assert.equal(
-      typeof value,
-      "object",
-      "Must provide valid measure value",
-    );
+    assert.equal(typeof value, "object", "Must provide valid measure value");
 
     const updated = await snapshotModel.updateMeasure({
       userId: user.id,

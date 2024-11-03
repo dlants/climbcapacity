@@ -308,98 +308,98 @@ export const view: View<Msg, Model> = ({
   switch (measureSpec.defaultUnit) {
     case "second":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>s</span>
-        </div>
+        </span>
       );
 
     case "year":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>yr</span>
-        </div>
+        </span>
       );
 
     case "lb":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>lb</span>
-        </div>
+        </span>
       );
 
     case "kg":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>kg</span>
-        </div>
+        </span>
       );
 
     case "m":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>m</span>
-        </div>
+        </span>
       );
 
     case "cm":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>cm</span>
-        </div>
+        </span>
       );
 
     case "mm":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>mm</span>
-        </div>
+        </span>
       );
 
     case "inches":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>in</span>
-        </div>
+        </span>
       );
 
     case "count":
@@ -413,20 +413,20 @@ export const view: View<Msg, Model> = ({
 
     case "ircra":
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
           <span>IRCRA</span>
-        </div>
+        </span>
       );
 
     case "feetinches": {
       const value = model.unitInput as { feet: string; inches: string };
       return (
-        <div>
+        <span>
           <input
             type="number"
             value={value.feet}
@@ -439,7 +439,7 @@ export const view: View<Msg, Model> = ({
             onChange={(e) => handleChange({ ...value, inches: e.target.value })}
           />
           <span>"</span>
-        </div>
+        </span>
       );
     }
 

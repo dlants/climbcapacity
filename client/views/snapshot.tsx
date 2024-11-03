@@ -77,6 +77,10 @@ export type Msg =
       measureId: MeasureId;
     }
   | {
+      type: "DISCARD_MEASURE_UPDATE";
+      measureId: MeasureId;
+    }
+  | {
       type: "MEASURE_REQUEST_UPDATE";
       measureId: MeasureId;
       request: RequestStatus<void>;
@@ -89,7 +93,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         produce(model, (draft) => {
           draft.measureFilter = {
             query: msg.query,
-            measures: filterMeasures(MEASURES, msg.query)
+            measures: filterMeasures(MEASURES, msg.query),
           };
         }),
       ];
@@ -115,6 +119,13 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
 
+    case "DISCARD_MEASURE_UPDATE":
+      return [
+        produce(model, (draft) => {
+          delete draft.measureUpdates[msg.measureId];
+        }),
+      ];
+
     case "MEASURE_REQUEST_UPDATE": {
       const measureUpdate = model.measureUpdates[msg.measureId];
       if (!hasParseResult(measureUpdate)) {
@@ -126,15 +137,18 @@ export const update: Update<Msg, Model> = (msg, model) => {
       const measureValue = measureUpdate.parseResult.value;
 
       if (msg.request.status == "loaded") {
-        const nextSnapshot: HydratedSnapshot = produce(model.snapshot, (draft) => {
-          draft.measures[msg.measureId] = immer.castDraft(measureValue.value);
-          draft.normalizedMeasures[msg.measureId] = immer.castDraft(
-            convertToStandardUnit({
-              id: msg.measureId,
-              value: measureValue.value
-            }),
-          );
-        });
+        const nextSnapshot: HydratedSnapshot = produce(
+          model.snapshot,
+          (draft) => {
+            draft.measures[msg.measureId] = immer.castDraft(measureValue.value);
+            draft.normalizedMeasures[msg.measureId] = immer.castDraft(
+              convertToStandardUnit({
+                id: msg.measureId,
+                value: measureValue.value,
+              }),
+            );
+          },
+        );
 
         const nextMeasureUpdates = produce(model.measureUpdates, (draft) => {
           delete draft[msg.measureId];
@@ -341,12 +355,11 @@ const EditMeasureView = ({
     measureUpdate.parseResult.value.writeRequest.status == "loading";
 
   return (
-    <div
+    <span
       key={measure.id}
       className={`measure-item ${measureLoading ? "measure-loading" : ""}`}
     >
       <label>{measure.name}</label>
-
       <UnitInput.view
         model={measureUpdate.model}
         dispatch={(msg) => {
@@ -356,7 +369,6 @@ const EditMeasureView = ({
           });
         }}
       />
-
       <button
         onClick={() => {
           if (measureValid) {
@@ -369,7 +381,18 @@ const EditMeasureView = ({
         disabled={!(measureValid && !measureLoading)}
       >
         Submit
+      </button>{" "}
+      <button
+        onClick={() => {
+          dispatch({
+            type: "DISCARD_MEASURE_UPDATE",
+            measureId: measure.id,
+          });
+        }}
+        disabled={measureLoading}
+      >
+        Discard
       </button>
-    </div>
+    </span>
   );
 };

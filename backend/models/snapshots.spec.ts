@@ -35,8 +35,22 @@ describe("SnapshotsModel", () => {
   it("should delete a snapshot", async () => {
     await model.newSnapshot(mockUser);
     const snapshots = await model.getUsersSnapshots(mockUser.id);
-    const deleteCount = await model.deleteSnapshot(snapshots[0]._id);
+    const deleteCount = await model.deleteSnapshot({
+      userId: mockUser.id,
+      snapshotId: snapshots[0]._id,
+    });
     assert.strictEqual(deleteCount, 1);
+  });
+
+  it("should not delete snapshot of another user", async () => {
+    await model.newSnapshot(mockUser);
+    const snapshots = await model.getUsersSnapshots(mockUser.id);
+    assert.rejects(() =>
+      model.deleteSnapshot({
+        userId: "otherUser",
+        snapshotId: snapshots[0]._id,
+      }),
+    );
   });
 
   it("should update a measure", async () => {
