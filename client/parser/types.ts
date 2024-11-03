@@ -1,3 +1,5 @@
+import { Result } from "../../iso/utils";
+
 export type Token = {
   type: "number" | "identifier" | "operator" | "lparen" | "rparen" | "eof";
   value: string;
@@ -19,5 +21,5 @@ export type EvalResult =
     }
   | {
       isValid: true;
-      fn: (values: { [id: Identifier]: number }) => number;
+      fn: (idArr: { [id: Identifier]: number }[]) => Result<number[]>;
     };

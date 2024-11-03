@@ -10,21 +10,21 @@ export type Model = immer.Immutable<
       style: "histogram";
       data: number[];
       xLabel: string;
-      myData?: number;
+      myData?: number[];
     }
   | {
       style: "dotplot";
       data: { x: number; y: number }[];
       xLabel: string;
       yLabel: string;
-      myData?: { x: number; y: number };
+      myData?: { x: number; y: number }[];
     }
   | {
       style: "heatmap";
       data: { x: number; y: number }[];
       xLabel: string;
       yLabel: string;
-      myData?: { x: number; y: number };
+      myData?: { x: number; y: number }[];
     }
 >;
 

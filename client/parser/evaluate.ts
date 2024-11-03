@@ -1,16 +1,29 @@
+import { Result } from "../../iso/utils";
 import type { Expr, Identifier } from "./types";
 
-export function evaluate(expr: Expr, ids: Record<Identifier, number>): number {
+export function evaluate(
+  expr: Expr,
+  idArr: Record<Identifier, number>[],
+): Result<number[]> {
+  try {
+    const value = idArr.map((idPt) => evaluateInternal(expr, idPt));
+    return { status: "success", value };
+  } catch (e: unknown) {
+    return { status: "fail", error: (e as Error).message };
+  }
+}
+
+function evaluateInternal(expr: Expr, idPt: Record<Identifier, number>): number {
   switch (expr.type) {
     case "number":
       return expr.value;
     case "identifier":
-      if (!(expr.name in ids))
+      if (!(expr.name in idPt))
         throw new Error(`Unknown identifier: ${expr.name}`);
-      return ids[expr.name];
+      return idPt[expr.name];
     case "binary":
-      const left = evaluate(expr.left, ids);
-      const right = evaluate(expr.right, ids);
+      const left = evaluateInternal(expr.left, idPt);
+      const right = evaluateInternal(expr.right, idPt);
       switch (expr.op) {
         case "+":
           return left + right;

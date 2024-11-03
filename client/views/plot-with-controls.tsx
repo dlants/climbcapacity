@@ -7,6 +7,7 @@ import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
 import { Identifier } from "../parser/types";
 import { FilterMapping } from "./select-filters";
+import { Result } from "../../iso/utils";
 const produce = immer.produce;
 
 export type Model = immer.Immutable<{
@@ -15,7 +16,7 @@ export type Model = immer.Immutable<{
   filterMapping: FilterMapping;
   xAxis: MeasureExpressionBox.Model;
   yAxis: MeasureExpressionBox.Model;
-  plot: Plot.Model | undefined;
+  plot: Result<Plot.Model>;
 }>;
 
 export type Msg =
@@ -44,7 +45,7 @@ export function initModel({
     userId,
     xAxis: MeasureExpressionBox.initModel(ids[0] || ""),
     yAxis: MeasureExpressionBox.initModel(ids[1] || ""),
-    plot: undefined,
+    plot: { status: "fail", error: "Please enter an expression to proceed" },
   };
   return produce(model, (draft) => {
     draft.plot = immer.castDraft(updatePlot(draft));
@@ -75,7 +76,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-function updatePlot(model: Model): Plot.Model | undefined {
+function updatePlot(model: Model): Result<Plot.Model> {
   const xAxisValid = model.xAxis.evalResult.isValid;
   const yAxisValid = model.yAxis.evalResult.isValid;
 
@@ -90,70 +91,103 @@ function updatePlot(model: Model): Plot.Model | undefined {
 
   if (xAxisValid) {
     const evalX = model.xAxis.evalResult.fn;
-    const xData = snapshotDataById.map(({ userId, idValues }) => ({
-      userId,
-      x: evalX(idValues),
-    }));
+    const xResult = evalX(snapshotDataById.map(({ idValues }) => idValues));
+    if (xResult.status == "fail") {
+      return xResult;
+    }
+    const xData = xResult.value;
+
+    const myXResult = evalX(
+      snapshotDataById
+        .filter(({ userId }) => userId == model.userId)
+        .map(({ idValues }) => idValues),
+    );
+    if (myXResult.status == "fail") {
+      return myXResult;
+    }
+    const myXData = myXResult.value;
 
     if (yAxisValid) {
       const evalY = model.yAxis.evalResult.fn;
-      const yData = snapshotDataById.map(({ userId, idValues }) => ({
-        userId,
-        y: evalY(idValues),
-      }));
+      const yResult = evalY(snapshotDataById.map(({ idValues }) => idValues));
+      if (yResult.status == "fail") {
+        return yResult;
+      }
+      const yData = yResult.value;
 
-      const data = [];
-      let myData;
+      const myYResult = evalY(
+        snapshotDataById
+          .filter(({ userId }) => userId == model.userId)
+          .map(({ idValues }) => idValues),
+      );
+      if (myYResult.status == "fail") {
+        return myYResult;
+      }
+      const myYData = myYResult.value;
+
+      const data: { x: number; y: number }[] = [];
       for (let i = 0; i < xData.length; i += 1) {
-        if (xData[i].x && yData[i].y) {
-          data.push({
-            x: xData[i].x,
-            y: yData[i].y,
-          });
+        data.push({
+          x: xData[i],
+          y: yData[i],
+        });
+      }
 
-          if (xData[i].userId == model.userId) {
-            myData = {
-              x: xData[i].x,
-              y: yData[i].y,
-            };
-          }
-        }
+      const myData: { x: number; y: number }[] = [];
+      for (let i = 0; i < myXData.length; i += 1) {
+        myData.push({
+          x: myXData[i],
+          y: myYData[i],
+        });
       }
 
       if (data.length < 100) {
         return {
-          style: "dotplot",
-          data,
-          myData,
-          xLabel: model.xAxis.expression,
-          yLabel: model.yAxis.expression,
+          status: "success",
+          value: {
+            style: "dotplot",
+            data,
+            myData,
+            xLabel: model.xAxis.expression,
+            yLabel: model.yAxis.expression,
+          },
         };
       } else {
         return {
-          style: "heatmap",
-          data,
-          myData,
-          xLabel: model.xAxis.expression,
-          yLabel: model.yAxis.expression,
+          status: "success",
+          value: {
+            style: "heatmap",
+            data,
+            myData,
+            xLabel: model.xAxis.expression,
+            yLabel: model.yAxis.expression,
+          },
         };
       }
     } else {
       return {
-        style: "histogram",
-        data: xData.map((data) => data.x).filter((val) => val != undefined),
-        myData: xData.find((val) => val.userId == model.userId)?.x,
-        xLabel: model.xAxis.expression,
+        status: "success",
+        value: {
+          style: "histogram",
+          data: xData,
+          myData: myXData,
+          xLabel: model.xAxis.expression,
+        },
       };
     }
   } else {
-    return undefined;
+    return { status: "fail", error: `x expression is not valid` };
   }
 }
 
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
-      {model.plot && <Plot.view model={model.plot} dispatch={dispatch} />}
+      {model.plot.status == "success" ? (
+        <Plot.view model={model.plot.value} dispatch={dispatch} />
+      ) : (
+        <div>Error: {model.plot.error}</div>
+      )}
       <div>
         xAxis:{" "}
         <MeasureExpressionBox.view
