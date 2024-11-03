@@ -66,6 +66,7 @@ export type Msg =
     }
   | {
       type: "UNIT_INPUT_MSG";
+      measureId: MeasureId;
       msg: UnitInput.Msg;
     }
   | {
@@ -101,7 +102,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "INIT_MEASURE_UPDATE":
       return [
         produce(model, (draft) => {
-          const model = UnitInput.initModel(msg.measureId);
+          const model = immer.castDraft(UnitInput.initModel(msg.measureId));
           draft.measureUpdates[msg.measureId] = {
             measureId: msg.measureId,
             model,
@@ -157,7 +158,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         return [
           produce(model, (draft) => {
             draft.snapshot = nextSnapshot;
-            draft.measureUpdates = nextMeasureUpdates;
+            draft.measureUpdates = immer.castDraft(nextMeasureUpdates);
           }),
         ];
       } else {
@@ -177,10 +178,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
     }
 
     case "UNIT_INPUT_MSG": {
-      const measureUpdate = model.measureUpdates[msg.msg.measureId];
+      const measureUpdate = model.measureUpdates[msg.measureId];
       if (!measureUpdate) {
         throw new Error(
-          `Receivied message for measureId ${msg.msg.measureId} but it was undefined.`,
+          `Receivied message for measureId ${msg.measureId} but it was undefined.`,
         );
       }
 
@@ -188,14 +189,14 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
       return [
         produce(model, (draft) => {
-          const measureUpdate = draft.measureUpdates[msg.msg.measureId];
+          const measureUpdate = draft.measureUpdates[msg.measureId];
           if (!measureUpdate) {
             throw new Error(
-              `Receivied message for measureId ${msg.msg.measureId} but it was undefined.`,
+              `Receivied message for measureId ${msg.measureId} but it was undefined.`,
             );
           }
 
-          measureUpdate.model = next;
+          measureUpdate.model = immer.castDraft(next);
           if (next.parseResult.status == "success") {
             measureUpdate.parseResult = {
               status: "success",
@@ -318,7 +319,7 @@ const MeasureView = ({
 }: {
   model: Model;
   dispatch: Dispatch<Msg>;
-  measure: MeasureSpec;
+  measure: immer.Immutable<MeasureSpec>;
 }) => {
   const unitValue = model.snapshot.measures[measure.id];
   return (
@@ -346,7 +347,7 @@ const EditMeasureView = ({
 }: {
   model: Model;
   dispatch: Dispatch<Msg>;
-  measure: MeasureSpec;
+  measure: immer.Immutable<MeasureSpec>;
 }) => {
   const measureUpdate = model.measureUpdates[measure.id];
   const measureValid = hasParseResult(measureUpdate);
@@ -365,6 +366,7 @@ const EditMeasureView = ({
         dispatch={(msg) => {
           dispatch({
             type: "UNIT_INPUT_MSG",
+            measureId: measure.id,
             msg,
           });
         }}

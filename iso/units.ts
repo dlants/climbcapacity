@@ -25,7 +25,8 @@ export type MeasureSpec = {
   id: MeasureId;
   name: string;
   description: string;
-  defaultUnit: UnitValue["unit"];
+  // units[0] is the default
+  units: UnitValue["unit"][];
 };
 
 export type MeasureValue = {
@@ -161,6 +162,8 @@ export type UnitValue =
       unit: "count";
       value: number;
     };
+
+export type UnitType = UnitValue['unit']
 
 export const GRIPS = {
   "half-crimp": true,

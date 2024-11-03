@@ -13,7 +13,7 @@ import {
   VGrade,
   YDS,
 } from "../../iso/grade";
-import { MeasureId, UnitValue } from "../../iso/units";
+import { MeasureId, UnitType, UnitValue } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update, View } from "../tea";
@@ -41,10 +41,12 @@ type UnitInputMap = {
   count: string;
 };
 
-type UnitInput = UnitInputMap[keyof UnitInputMap];
+type UnitInput = UnitInputMap[UnitType];
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
+  selectedUnit: UnitType;
+  possibleUnits: UnitType[];
   unitInput: UnitInput;
   parseResult: Result<UnitValue>;
 }>;
@@ -61,8 +63,19 @@ export function initModel(measureId: MeasureId): Model {
     throw new Error(`Unexpected measureId ${measureId}`);
   }
 
-  let initialInput: UnitInput;
-  switch (measureSpec.defaultUnit) {
+  const defaultUnit = measureSpec.units[0];
+  const initialInput = getInitialInput(defaultUnit);
+  return {
+    measureId,
+    selectedUnit: defaultUnit,
+    possibleUnits: measureSpec.units,
+    unitInput: initialInput,
+    parseResult: parseUnitValue(defaultUnit, initialInput),
+  };
+}
+
+function getInitialInput(unitType: UnitType): UnitInput {
+  switch (unitType) {
     case "second":
     case "year":
     case "lb":
@@ -78,23 +91,14 @@ export function initModel(measureId: MeasureId): Model {
     case "ewbank":
     case "ircra":
     case "count":
-      initialInput = "";
-      break;
+      return "";
     case "feetinches":
-      initialInput = { feet: "", inches: "" };
-      break;
+      return { feet: "", inches: "" };
     case "sex-at-birth":
-      initialInput = "female";
-      break;
+      return "female";
     default:
-      assertUnreachable(measureSpec.defaultUnit);
+      assertUnreachable(unitType);
   }
-
-  return {
-    measureId,
-    unitInput: initialInput,
-    parseResult: parseUnitValue(measureSpec.defaultUnit, initialInput),
-  };
 }
 
 export type HasParseResult = Omit<Model, "parseResult"> & {
@@ -107,11 +111,16 @@ export function hasParseResult(
   return !!(model && model.parseResult.status == "success");
 }
 
-export type Msg = {
-  type: "MEASURE_TYPED";
-  measureId: MeasureId;
-  unitInput: UnitInput;
-};
+export type Msg =
+  | {
+      type: "MEASURE_TYPED";
+      measureId: MeasureId;
+      unitInput: UnitInput;
+    }
+  | {
+      type: "SELECT_UNIT";
+      unit: UnitType;
+    };
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
@@ -121,10 +130,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         throw new Error(`Unexpected measureId ${msg.measureId}`);
       }
 
-      const parseResult = parseUnitValue(
-        measureSpec.defaultUnit,
-        msg.unitInput,
-      );
+      const parseResult = parseUnitValue(model.selectedUnit, msg.unitInput);
       return [
         produce(model, (draft) => {
           draft.unitInput = msg.unitInput;
@@ -132,6 +138,21 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
     }
+    case "SELECT_UNIT": {
+      if (!model.possibleUnits.includes(msg.unit)) {
+        throw new Error(
+          `${msg.unit} is not a possible unit for measure ${model.measureId}`,
+        );
+      }
+      return [
+        produce(model, (draft) => {
+          draft.selectedUnit = msg.unit;
+          draft.unitInput = getInitialInput(msg.unit)
+        }),
+      ];
+    }
+    default:
+      assertUnreachable(msg);
   }
 };
 
@@ -292,11 +313,48 @@ export const view: View<Msg, Model> = ({
   model: Model;
   dispatch: (msg: Msg) => void;
 }): JSX.Element => {
-  const measureSpec = MEASURE_MAP[model.measureId];
-  if (!measureSpec) {
-    throw new Error(`Unexpected measureId ${model.measureId}`);
-  }
+  return (
+    <span>
+      <UnitInput model={model} dispatch={dispatch} />
+      {model.possibleUnits.length > 1 && (
+        <UnitToggle model={model} dispatch={dispatch} />
+      )}
+    </span>
+  );
+};
 
+const UnitToggle = ({
+  model,
+  dispatch,
+}: {
+  model: Model;
+  dispatch: (msg: Msg) => void;
+}) => {
+  return (
+    <span>
+      {model.possibleUnits.map((unit) => (
+        <label key={unit}>
+          <input
+            type="radio"
+            name="unit"
+            value={unit}
+            checked={unit === model.selectedUnit}
+            onChange={() => dispatch({ type: "SELECT_UNIT", unit })}
+          />
+          {unit}
+        </label>
+      ))}
+    </span>
+  );
+};
+
+const UnitInput = ({
+  model,
+  dispatch,
+}: {
+  model: Model;
+  dispatch: (msg: Msg) => void;
+}) => {
   const handleChange = (unitInput: typeof model.unitInput) => {
     dispatch({
       type: "MEASURE_TYPED",
@@ -305,7 +363,7 @@ export const view: View<Msg, Model> = ({
     });
   };
 
-  switch (measureSpec.defaultUnit) {
+  switch (model.selectedUnit) {
     case "second":
       return (
         <span>
@@ -525,6 +583,6 @@ export const view: View<Msg, Model> = ({
       );
 
     default:
-      assertUnreachable(measureSpec.defaultUnit);
+      assertUnreachable(model.selectedUnit);
   }
 };

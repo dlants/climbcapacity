@@ -5,25 +5,25 @@ export const MEASURES: MeasureSpec[] = [
     id: "height" as MeasureId,
     name: "height",
     description: "Your height",
-    defaultUnit: "m",
+    units: ["m", "feetinches", "inches"],
   },
   {
     id: "weight" as MeasureId,
     name: "weight",
     description: "Your weight",
-    defaultUnit: "kg",
+    units: ["kg", "lb"],
   },
   {
     id: "armspan" as MeasureId,
     name: "Arm Span",
     description: `Your arm span.`,
-    defaultUnit: "m",
+    units: ["m", "feetinches", "inches"],
   },
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
     description: "The sex that was assigned to you at birth",
-    defaultUnit: "sex-at-birth",
+    units: ["sex-at-birth"],
   },
   {
     id: "years-climbing" as MeasureId,
@@ -32,7 +32,7 @@ export const MEASURES: MeasureSpec[] = [
 
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
 `,
-    defaultUnit: "year",
+    units: ["year"],
   },
   {
     id: "years-training" as MeasureId,
@@ -44,13 +44,13 @@ Examples that count as deliberate practice:
  - doing supplemental stretching or strength training exercise
  - choosing one day a week to work on climbs of a specific style or difficulty level
 `,
-    defaultUnit: "year",
+    units: ["year"],
   },
   {
     id: "max-pullup-reps" as MeasureId,
     name: "How many bodyweight pullups can you do?",
     description: `Avoid kipping. A successful rep means your chin reaches above the bar.`,
-    defaultUnit: "count",
+    units: ["count"],
   },
   {
     id: "2-rep-max-weighted-pull" as MeasureId,
@@ -58,7 +58,7 @@ Examples that count as deliberate practice:
     description: `Avoid kipping. A successful rep means your chin reaches above the bar.
 
 Record total weight. For example, if you weigh 70kg and had to remove 10kg, record 60kg. If you weigh 70kg and added 10kg, record 80kg`,
-    defaultUnit: "kg",
+    units: ["kg", "lb"],
   },
   {
     id: "5-rep-max-weighted-pull" as MeasureId,
@@ -66,19 +66,19 @@ Record total weight. For example, if you weigh 70kg and had to remove 10kg, reco
     description: `Avoid kipping. A successful rep means your chin reaches above the bar.
 
 Record total weight. For example, if you weigh 70kg and had to remove 10kg, record 60kg. If you weigh 70kg and added 10kg, record 80kg`,
-    defaultUnit: "kg",
+    units: ["kg", "lb"],
   },
   {
     id: "max-pushup-reps" as MeasureId,
     name: "How many bodyweight pushups can you do?",
     description: `Keep your glutes engaged so your hips don't sag. A successful rep means your chest reaches within a fist of the floor. At the top, elbows should be fully extended.`,
-    defaultUnit: "count",
+    units: ["count"],
   },
   {
     id: "max-l-sit" as MeasureId,
     name: "How long can you hold an L sit?",
     description: `Hang from a bar with straight hands. Raise your straight legs to approximately 90 degrees and hold.`,
-    defaultUnit: "second",
+    units: ["second"],
   },
 ];
 
@@ -106,7 +106,7 @@ Record the maximum successful hang weight, including your bodyweight.
 So for example, if you weigh 70kg, and you removed 20kg, you would record 50kg.
 If you weigh 70kg, and you added 30kg, you'd record 100kg.
 `,
-    defaultUnit: "kg",
+    units: ["kg", "lb"],
   };
 }
 
@@ -133,7 +133,7 @@ Warm up thoroughly.
 
 Find the smallest edge you can hang your bodyweight for ${duration}s using a ${gripType}.
 `,
-    defaultUnit: "mm",
+    units: ["mm"],
   };
 }
 
@@ -178,7 +178,10 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
           throw new Error(`Unexpected stat ${stat}`);
       }
     })(),
-    defaultUnit: sportOrBoulder == "sport" ? "yds" : "vermin",
+    units:
+      sportOrBoulder == "sport"
+        ? ["ircra", "yds", "frenchsport", "ewbank"]
+        : ["ircra", "vermin", "font"],
   };
 }
 
@@ -216,7 +219,7 @@ function edgePullups({
     id: `max-pullups-${edgeSize}-mm-edge-${gripType}` as MeasureId,
     name: `Max pullups on a ${edgeSize}mm edge using ${gripType} grip type`,
     description: `On a ${edgeSize}mm edge, using a ${gripType} grip, do as many pullups as you can.`,
-    defaultUnit: "count",
+    units: ["count"],
   };
 }
 
