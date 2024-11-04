@@ -11,6 +11,11 @@ import { FilterQuery, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 import { MeasureId, UnitValue } from "../iso/units.js";
+import { fileURLToPath } from "url";
+import path, { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -21,6 +26,10 @@ async function run() {
 
   const app = express();
   app.use(express.json());
+
+  // once built, this file will be in /app/backend/dist/backend/app.js
+  // the built client assets will be in /app/client/dist/
+  app.use(express.static(path.join(__dirname, "../../../client/dist")));
 
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
