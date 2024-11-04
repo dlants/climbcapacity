@@ -179,8 +179,19 @@ async function run() {
     }
   });
 
-  app.listen(3000, () => {
-    console.log("Server running on port 3000");
+  // Serve index.html for all non-API routes that don't match static files
+  // (for SPA)
+  app.use("/*", (req, res, next) => {
+    if (!req.path.startsWith("/api")) {
+      res.sendFile(path.join(__dirname, "../../../client/dist/index.html"));
+    } else {
+      next();
+    }
+  });
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
