@@ -2,14 +2,28 @@ import mongodb from "mongodb";
 import { generateRandomString, alphabet } from "oslo/crypto";
 import { isWithinExpirationDate } from "oslo";
 import { HandledError } from "../utils.js";
+import { Resend } from "resend";
 
 export class MagicLink {
   private magicLinkCollection: mongodb.Collection<MagicLinkDoc>;
+  private resend: Resend;
+  private BASE_URL: string;
 
-  constructor({ client }: { client: mongodb.MongoClient }) {
+  constructor({
+    client,
+    env,
+  }: {
+    client: mongodb.MongoClient;
+    env: {
+      RESEND_API_KEY: string;
+      BASE_URL: string;
+    };
+  }) {
     this.magicLinkCollection = client
       .db()
       .collection<MagicLinkDoc>("magicLinks");
+    this.resend = new Resend(env.RESEND_API_KEY);
+    this.BASE_URL = env.BASE_URL;
   }
 
   async generateMagicLink({
@@ -38,8 +52,18 @@ export class MagicLink {
     email: string;
   }): Promise<void> {
     const code = await this.generateMagicLink({ userId, email });
-    // TODO: email code
-    console.log(`code: ${code}`)
+    const loginUrl = `${this.BASE_URL}/api/login?code=${code}`;
+
+    await this.resend.emails.send({
+      from: "Your App <onboarding@resend.dev>",
+      to: email,
+      subject: `Login to ${this.BASE_URL}`,
+      html: `
+        <p>Click the link below to log in:</p>
+        <p><a href="${loginUrl}">${loginUrl}</a></p>
+        <p>This link will expire in 15 minutes.</p>
+      `,
+    });
   }
 
   async verifyMagicLink({ code }: { code: string }) {

@@ -17,10 +17,11 @@ export class Auth {
     env,
   }: {
     app: express.Application;
-    // magicSecretKey: string,
     client: mongodb.MongoClient;
     env: {
       RELEASE_STAGE: "prod" | "dev";
+      RESEND_API_KEY: string;
+      BASE_URL: string;
     };
   }) {
     const db = client.db();
@@ -29,7 +30,7 @@ export class Auth {
 
     const adapter = new MongodbAdapter(sessionCollection, this.userCollection);
 
-    this.magicLink = new MagicLink({ client });
+    this.magicLink = new MagicLink({ client, env });
 
     this.lucia = new Lucia(adapter, {
       sessionCookie: {
