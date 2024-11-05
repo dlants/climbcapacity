@@ -64,11 +64,6 @@ export function convertToStandardUnit(measure: MeasureValue): number {
       return measure.value.value / 100;
     case "mm":
       return measure.value.value / 1000;
-    case "feetinches":
-      return (
-        (measure.value.value.feet + measure.value.value.inches * (1 / 12)) *
-        0.3048
-      );
     case "inches":
       return measure.value.value * 0.0254;
     case "vermin":
@@ -118,8 +113,6 @@ export function convertToTargetUnit(
       return normalizedValue * 100;
     case "mm":
       return normalizedValue * 1000;
-    case "feetinches":
-      return normalizedValue / 0.3048; // returns feet
     case "inches":
       return normalizedValue / 0.0254;
     case "vermin":
@@ -173,13 +166,6 @@ export type UnitValue =
   | {
       unit: "mm";
       value: number;
-    }
-  | {
-      unit: "feetinches";
-      value: {
-        feet: number;
-        inches: number;
-      };
     }
   | {
       unit: "inches";
@@ -245,8 +231,6 @@ export function unitValueToString(unitValue: UnitValue): string {
       return `${unitValue.value}cm`;
     case "mm":
       return `${unitValue.value}mm`;
-    case "feetinches":
-      return `${unitValue.value.feet}'${unitValue.value.inches}"`;
     case "inches":
       return `${unitValue.value}"`;
     case "vermin":

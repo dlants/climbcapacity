@@ -16,7 +16,7 @@ import {
 import { MeasureId, UnitType, UnitValue } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
-import { Update, View } from "../tea";
+import { Update } from "../tea";
 
 type UnitInputMap = {
   second: string;
@@ -26,11 +26,10 @@ type UnitInputMap = {
   m: string;
   cm: string;
   mm: string;
-  feetinches: {
+  inches: {
     feet: string;
     inches: string;
   };
-  inches: string;
   vermin: string;
   font: string;
   frenchsport: string;
@@ -83,7 +82,6 @@ function getInitialInput(unitType: UnitType): UnitInput {
     case "m":
     case "cm":
     case "mm":
-    case "inches":
     case "vermin":
     case "font":
     case "frenchsport":
@@ -92,7 +90,7 @@ function getInitialInput(unitType: UnitType): UnitInput {
     case "ircra":
     case "count":
       return "";
-    case "feetinches":
+    case "inches":
       return { feet: "", inches: "" };
     case "sex-at-birth":
       return "female";
@@ -169,7 +167,6 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       case "m":
       case "cm":
       case "mm":
-      case "inches":
       case "count": {
         if (
           !(
@@ -181,7 +178,6 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
               | "m"
               | "cm"
               | "mm"
-              | "inches"
               | "count"]
           ).length
         ) {
@@ -194,9 +190,9 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           value: { unit, value: num } as Extract<UnitValue, { unit: UnitName }>,
         };
       }
-      case "feetinches": {
+      case "inches": {
         const { feet: feetStr, inches: inchesStr } =
-          input as UnitInputMap["feetinches"];
+          input as UnitInputMap["inches"];
         const feet = Number(feetStr);
         const inches = Number(inchesStr);
 
@@ -204,7 +200,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           return { status: "fail", error: "Invalid feet/inches format" };
         return {
           status: "success",
-          value: { unit, value: { feet, inches } } as Extract<
+          value: { unit, value: feet * 12 + inches } as Extract<
             UnitValue,
             { unit: UnitName }
           >,
@@ -463,18 +459,6 @@ const InnerUnitInput = ({
         </span>
       );
 
-    case "inches":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>in</span>
-        </span>
-      );
-
     case "count":
       return (
         <span>
@@ -498,7 +482,7 @@ const InnerUnitInput = ({
         </span>
       );
 
-    case "feetinches": {
+    case "inches": {
       const value = model.unitInput as { feet: string; inches: string };
       return (
         <span>

@@ -49,10 +49,16 @@ function generateTicks(unit: UnitType | undefined): Plot.ScaleOptions {
     case "m":
     case "cm":
     case "mm":
-    case "feetinches":
-    case "inches":
     case "count":
       return {};
+    case "inches":
+      return {
+        tickFormat: (d) => {
+          const feet = Math.floor(d / 12);
+          const inches = Math.floor(d % 12);
+          return inches === 0 ? `${feet}'` : `${feet}'${inches}"`;
+        },
+      };
     case "ircra":
       return {};
     case "sex-at-birth":

@@ -5,7 +5,7 @@ export const MEASURES: MeasureSpec[] = [
     id: "height" as MeasureId,
     name: "height",
     description: "Your height",
-    units: ["m", "feetinches", "inches"],
+    units: ["m", "cm", "inches"],
   },
   {
     id: "weight" as MeasureId,
@@ -17,7 +17,7 @@ export const MEASURES: MeasureSpec[] = [
     id: "armspan" as MeasureId,
     name: "Arm Span",
     description: `Your arm span.`,
-    units: ["m", "feetinches", "inches"],
+    units: ["m", "cm", "inches"],
   },
   {
     id: "sex-at-birth" as MeasureId,
