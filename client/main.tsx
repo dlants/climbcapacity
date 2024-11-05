@@ -356,7 +356,12 @@ const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       <GlobalStyles />
-      <Nav />
+      <Nav
+        loggedIn={
+          model.auth.status == "loaded" &&
+          model.auth.response.status == "logged in"
+        }
+      />
       <Page model={model} dispatch={dispatch} />
     </div>
   );

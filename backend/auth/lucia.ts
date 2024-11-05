@@ -94,6 +94,24 @@ export class Auth {
       return;
     });
 
+    app.get("/api/logout", async (req, res) => {
+      // Get current session
+      const sessionId = this.lucia.readSessionCookie(req.headers.cookie ?? "");
+      if (sessionId) {
+        // Invalidate the session
+        await this.lucia.invalidateSession(sessionId);
+      }
+
+      // Clear the session cookie
+      const sessionCookie = this.lucia.createBlankSessionCookie();
+
+      res
+        .status(302)
+        .setHeader("Set-Cookie", sessionCookie.serialize())
+        .setHeader("Location", "/")
+        .send("OK");
+    });
+
     app.post("/api/auth", async (req, res) => {
       try {
         const user = await this.assertLoggedIn(req, res);
