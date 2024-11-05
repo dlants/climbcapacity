@@ -5,11 +5,14 @@ import { MongodbAdapter } from "@lucia-auth/adapter-mongodb";
 import { HandledError } from "../utils.js";
 import assert from "assert";
 import { MagicLink } from "./magic-link.js";
+import rateLimit from "express-rate-limit";
 
 export class Auth {
   private lucia: Lucia;
   private magicLink: MagicLink;
   private userCollection: mongodb.Collection<UserDoc>;
+  private emailAttempts: Map<string, number>;
+  private emailLastAttempt: Map<string, number>;
 
   constructor({
     app,
@@ -41,6 +44,16 @@ export class Auth {
       },
     });
 
+    const loginLinkIpLimiter = rateLimit({
+      windowMs: 60 * 60 * 1000, // 1 hour
+      max: 5, // 5 requests per IP
+      message:
+        "Too many login attempts from this IP, please try again in an hour",
+    });
+
+    this.emailAttempts = new Map<string, number>();
+    this.emailLastAttempt = new Map<string, number>();
+
     app.use((req, res, next) => {
       if (req.method === "GET") {
         return next();
@@ -59,9 +72,18 @@ export class Auth {
       return next();
     });
 
-    app.post("/api/send-login-link", async (req, res) => {
+    app.post("/api/send-login-link", loginLinkIpLimiter, async (req, res) => {
       const email: string = req.body.email;
       assert.equal(typeof email, "string");
+
+      if (this.shouldRateLimitLogin(email)) {
+        res
+          .status(429)
+          .send(
+            "Too many login attempts for this email, please try again later",
+          );
+        return;
+      }
 
       const user = await this.findOrCreateUser(email);
 
@@ -69,7 +91,7 @@ export class Auth {
         userId: user._id,
         email,
       });
-      res.send("OK");
+      res.json("OK");
       return;
     });
 
@@ -124,6 +146,26 @@ export class Auth {
         res.status(401).json({ status: "logged out" });
       }
     });
+  }
+
+  shouldRateLimitLogin(email: string): boolean {
+    const now = Date.now();
+    const lastAttempt = this.emailLastAttempt.get(email) || 0;
+    const attempts = this.emailAttempts.get(email) || 0;
+
+    if (now - lastAttempt > 60 * 60 * 1000) {
+      this.emailAttempts.set(email, 1);
+      this.emailLastAttempt.set(email, now);
+      return false;
+    }
+
+    if (attempts >= 3) {
+      return true;
+    }
+
+    this.emailAttempts.set(email, attempts + 1);
+    this.emailLastAttempt.set(email, now);
+    return false;
   }
 
   async assertLoggedIn(req: express.Request, res: express.Response) {
