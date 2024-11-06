@@ -12,7 +12,7 @@ import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 import { MeasureId, UnitValue } from "../iso/units.js";
 import { fileURLToPath } from "url";
-import path, { dirname } from "path";
+import path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,12 +87,25 @@ async function run() {
     return;
   });
 
-  app.post("/api/snapshots", async (req, res) => {
+  /** Lists out the snapshots for user
+   */
+  app.post("/api/my-snapshots", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
     const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
       user.id,
     );
     res.json(snapshots);
+    return;
+  });
+
+  /** Lists out the snapshots for user
+   */
+  app.post("/api/my-latest-snapshot", async (req, res) => {
+    const user = await auth.assertLoggedIn(req, res);
+    const snapshot: Snapshot | null = await snapshotModel.getLatestSnapshot(
+      user.id,
+    );
+    res.json(snapshot || undefined);
     return;
   });
 

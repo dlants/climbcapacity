@@ -89,7 +89,13 @@ export class SnapshotsModel {
     return res != null;
   }
 
-  async deleteSnapshot({userId, snapshotId}: {userId: string, snapshotId: mongodb.ObjectId}) {
+  async deleteSnapshot({
+    userId,
+    snapshotId,
+  }: {
+    userId: string;
+    snapshotId: mongodb.ObjectId;
+  }) {
     const result = await this.snapshotCollection.deleteOne({
       _id: snapshotId,
       userId,
@@ -97,12 +103,17 @@ export class SnapshotsModel {
     return result.deletedCount;
   }
 
-  async getSnapshot(snapshotId: mongodb.ObjectId): Promise<SnapshotDoc | null> {
-    return this.snapshotCollection.findOne({ _id: snapshotId });
+  async getSnapshot(snapshotId: mongodb.ObjectId): Promise<SnapshotDoc | undefined> {
+    return (await this.snapshotCollection.findOne({ _id: snapshotId })) || undefined;
   }
 
   async getUsersSnapshots(userId: string): Promise<SnapshotDoc[]> {
     return this.snapshotCollection.find({ userId }).toArray();
+  }
+
+  async getLatestSnapshot(userId: string): Promise<SnapshotDoc | undefined> {
+    return (await this.snapshotCollection
+      .findOne({ userId }, { sort: { createdAt: "desc" } })) || undefined;
   }
 
   async querySnapshots(query: MeasurementQuery): Promise<SnapshotDoc[]> {

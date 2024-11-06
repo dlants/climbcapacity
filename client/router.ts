@@ -1,5 +1,6 @@
 import { Dispatch } from "react";
 import { SnapshotId } from "../iso/protocol";
+import { Snapshot } from "./types";
 
 export type NavigateMsg = {
   type: "NAVIGATE";
@@ -16,6 +17,7 @@ export type NavigateMsg = {
       }
     | {
         route: "/explore";
+        mySnapshot?: Snapshot
       }
     | {
         route: "/";

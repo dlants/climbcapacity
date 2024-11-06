@@ -14,6 +14,7 @@ import lodash from "lodash";
 
 export type Model = immer.Immutable<{
   snapshots: HydratedSnapshot[];
+  mySnapshot: HydratedSnapshot | undefined;
   userId: string | undefined;
   filterMapping: FilterMapping;
   xAxis: MeasureExpressionBox.Model;
@@ -35,15 +36,18 @@ export function initModel({
   filterMapping,
   userId,
   snapshots,
+  mySnapshot
 }: {
   filterMapping: FilterMapping;
   userId: string | undefined;
   snapshots: HydratedSnapshot[];
+  mySnapshot: HydratedSnapshot | undefined;
 }): Model {
   const ids = Object.keys(filterMapping).sort();
   const model: Model = {
     filterMapping,
     snapshots,
+    mySnapshot,
     userId,
     xAxis: MeasureExpressionBox.initModel(ids[0] || ""),
     yAxis: MeasureExpressionBox.initModel(ids[1] || ""),

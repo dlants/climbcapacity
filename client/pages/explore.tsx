@@ -24,6 +24,7 @@ export type Model = immer.Immutable<{
     snapshots: HydratedSnapshot[];
     plotModel: PlotWithControls.Model;
   }>;
+  mySnapshotRequest: RequestStatus<HydratedSnapshot | undefined>;
 }>;
 
 export type Msg =
@@ -36,6 +37,10 @@ export type Msg =
   | {
       type: "SNAPSHOT_RESPONSE";
       request: RequestStatus<HydratedSnapshot[]>;
+    }
+  | {
+      type: "MY_SNAPSHOT_RESPONSE";
+      request: RequestStatus<HydratedSnapshot | undefined>;
     }
   | {
       type: "PLOT_MSG";
@@ -73,14 +78,48 @@ function generateFetchThunk(model: Model) {
   };
 }
 
-export function initModel({userId}: {userId: string | undefined}): [Model] | [Model, Thunk<Msg> | undefined] {
+export function initModel({
+  userId,
+}: {
+  userId: string | undefined;
+}): [Model] | [Model, Thunk<Msg> | undefined] {
+  let mySnapshotRequest: RequestStatus<Snapshot> = { status: "not-sent" };
+  let fetchSnapshotThunk;
+  if (userId) {
+    mySnapshotRequest = {
+      status: "loading",
+    };
+    fetchSnapshotThunk = async (dispatch: Dispatch<Msg>) => {
+      const response = await fetch("/api/my-latest-snapshot", {
+        method: "POST",
+      });
+      if (response.ok) {
+        const snapshot = (await response.json()) as Snapshot | undefined;
+        dispatch({
+          type: "MY_SNAPSHOT_RESPONSE",
+          request: {
+            status: "loaded",
+            response: snapshot ? hydrateSnapshot(snapshot) : undefined,
+          },
+        });
+      } else {
+        dispatch({
+          type: "MY_SNAPSHOT_RESPONSE",
+          request: { status: "error", error: response.statusText },
+        });
+      }
+    };
+  }
+
   return [
     {
       filtersModel: SelectFilters.initModel(),
       userId,
       query: {},
       dataRequest: { status: "not-sent" },
+      mySnapshotRequest,
     },
+    fetchSnapshotThunk,
   ];
 }
 export const update: Update<Msg, Model> = (msg, model) => {
@@ -96,6 +135,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
           case "loaded":
             const plotModel = PlotWithControls.initModel({
               snapshots: msg.request.response,
+              mySnapshot:
+                model.mySnapshotRequest.status == "loaded"
+                  ? model.mySnapshotRequest.response
+                  : undefined,
               userId: model.userId,
               filterMapping: SelectFilters.generateFiltersMap(
                 draft.filtersModel,
@@ -114,6 +157,32 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }
       });
       return [nextModel];
+    }
+
+    case "MY_SNAPSHOT_RESPONSE": {
+      return [
+        produce(model, (draft) => {
+          draft.mySnapshotRequest = msg.request;
+          if (draft.mySnapshotRequest.status == 'loaded' && draft.dataRequest.status == 'loaded') {
+            const plotModel = PlotWithControls.initModel({
+              snapshots: draft.dataRequest.response.snapshots,
+              mySnapshot: draft.mySnapshotRequest.response,
+              userId: model.userId,
+              filterMapping: SelectFilters.generateFiltersMap(
+                draft.filtersModel,
+              ),
+            });
+
+            draft.dataRequest = {
+              status: "loaded",
+              response: {
+                ...draft.dataRequest.response,
+                plotModel: immer.castDraft(plotModel),
+              },
+            };
+          }
+        }),
+      ];
     }
 
     case "UPDATE_QUERY":

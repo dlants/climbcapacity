@@ -43,7 +43,7 @@ export type Msg =
     };
 
 async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
-  const response = await fetch("/api/snapshots", { method: "POST" });
+  const response = await fetch("/api/my-snapshots", { method: "POST" });
   if (response.ok) {
     const snapshots = (await response.json()) as Snapshot[];
     dispatch({

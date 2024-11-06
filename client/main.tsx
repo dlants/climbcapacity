@@ -154,7 +154,7 @@ const navigate: Update<Msg, Model> = (msg, model) => {
         ];
       }
     case "/explore":
-      const [exploreModel] = ExplorePage.initModel({
+      const [exploreModel, exploreThunk] = ExplorePage.initModel({
         userId:
           (model.auth.status == "loaded" &&
             model.auth.response.status == "logged in" &&
@@ -168,6 +168,7 @@ const navigate: Update<Msg, Model> = (msg, model) => {
             exploreModel: immer.castDraft(exploreModel),
           };
         }),
+        wrapThunk("EXPLORE_MSG", exploreThunk),
       ];
     default:
       assertUnreachable(msg.target);
