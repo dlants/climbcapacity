@@ -72,14 +72,14 @@ type Msg =
     };
 
 const navigate: Update<Msg, Model> = (msg, model) => {
+  if (msg.type != "NAVIGATE") {
+    throw new Error(`Unexpected msg passed to navigate fn ${msg.type}`);
+  }
+
   const user =
     model.auth.status == "loaded" &&
     model.auth.response.status == "logged in" &&
     model.auth.response.user;
-
-  if (msg.type != "NAVIGATE") {
-    return [model];
-  }
 
   switch (msg.target.route) {
     case "/":
@@ -88,6 +88,7 @@ const navigate: Update<Msg, Model> = (msg, model) => {
           draft.page = { route: "/" };
         }),
       ];
+
     case "/send-link":
       if (user) {
         return [
@@ -418,9 +419,15 @@ async function run() {
 
   let initialModel: Model = {
     auth,
-    page: {
-      route: "/",
-    },
+    page:
+      auth.status == "loaded" && auth.response.status == "logged in"
+        ? {
+            route: "/",
+          }
+        : {
+            route: "/send-link",
+            sendLinkModel: SendLinkPage.initModel(),
+          },
   };
 
   const app = createApp<Model, Msg, "router">({
