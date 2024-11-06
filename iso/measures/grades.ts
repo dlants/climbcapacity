@@ -44,7 +44,7 @@ export function synthesizeGradeMeasure(
 ): MeasureSpec {
   const { context, stat } = measureType;
   return {
-    id: `grade-${context.type}-${context.location}-${stat}` as MeasureId,
+    id: `grade:${context.type}:${context.location}:${stat}` as MeasureId,
     name: `${stat} ${context.type} grade, ${context.location}`,
     description: (() => {
       switch (stat) {

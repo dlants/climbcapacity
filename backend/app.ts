@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
-import { MEASURES } from "../iso/measures.js";
+import { MEASURES } from "../iso/measures/index.js";
 import { FilterQuery, SnapshotId } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
