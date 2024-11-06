@@ -140,7 +140,7 @@ table.slice(1).forEach((row, idx) => {
   const hardestVGradeStr = row[7];
   try {
     const grade = parseVgrade(hardestVGradeStr);
-    addMeasure("grade-boulder-gym-max" as MeasureId, {
+    addMeasure("grade:boulder:gym:max" as MeasureId, {
       unit: "vermin",
       value: grade,
     });
@@ -149,7 +149,7 @@ table.slice(1).forEach((row, idx) => {
   const p90VGradeStr = row[9];
   try {
     const grade = parseVgrade(p90VGradeStr);
-    addMeasure("grade-boulder-gym-p90" as MeasureId, {
+    addMeasure("grade:boulder:gym:projectp90" as MeasureId, {
       unit: "vermin",
       value: grade,
     });
@@ -166,7 +166,7 @@ table.slice(1).forEach((row, idx) => {
   const hardestRouteGrade = row[10];
   try {
     const grade = parseEwbankGrade(hardestRouteGrade);
-    addMeasure("grade-sport-gym-max" as MeasureId, {
+    addMeasure("grade:sport:gym:max" as MeasureId, {
       unit: "ewbank",
       value: grade,
     });
@@ -175,7 +175,7 @@ table.slice(1).forEach((row, idx) => {
   const p90RouteGradeStr = row[12];
   try {
     const grade = parseEwbankGrade(p90RouteGradeStr);
-    addMeasure("grade-sport-gym-p90" as MeasureId, {
+    addMeasure("grade:sport:gym:projectp90" as MeasureId, {
       unit: "ewbank",
       value: grade,
     });
@@ -185,7 +185,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang-18mm-10s-half-crimp" as MeasureId, {
+      addMeasure("maxhang:18:10:half-crimp" as MeasureId, {
         unit: "kg",
         value: addedWeight,
       });
@@ -196,7 +196,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang-18mm-10s-open" as MeasureId, {
+      addMeasure("maxhang:18:10:open" as MeasureId, {
         unit: "kg",
         value: addedWeight,
       });
@@ -213,7 +213,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeHalfStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("ming-edge-hang-10s-half-crimp" as MeasureId, {
+      addMeasure("ming-edge-hang:10:half-crimp" as MeasureId, {
         unit: "mm",
         value: edgeSize,
       });
@@ -224,7 +224,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeOpenStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("ming-edge-hang-10s-open" as MeasureId, {
+      addMeasure("ming-edge-hang:10:open" as MeasureId, {
         unit: "mm",
         value: edgeSize,
       });
@@ -234,7 +234,7 @@ table.slice(1).forEach((row, idx) => {
   const maxPullRepStr = row[31];
   const maxPulls = parseFloat(maxPullRepStr);
   if (!isNaN(maxPulls)) {
-    addMeasure("max-pullup-reps" as MeasureId, {
+    addMeasure("max-rep:pullup" as MeasureId, {
       unit: "count",
       value: maxPulls,
     });
@@ -242,7 +242,7 @@ table.slice(1).forEach((row, idx) => {
   const maxPushupsStr = row[33];
   const maxPushups = parseFloat(maxPushupsStr);
   if (!isNaN(maxPushups)) {
-    addMeasure("max-pushup-reps" as MeasureId, {
+    addMeasure("max-rep:pushup" as MeasureId, {
       unit: "count",
       value: maxPushups,
     });
@@ -251,7 +251,7 @@ table.slice(1).forEach((row, idx) => {
   const maxLsitStr = row[34];
   const maxLsit = parseFloat(maxLsitStr);
   if (!isNaN(maxLsit)) {
-    addMeasure("max-l-sit" as MeasureId, {
+    addMeasure("duration:lsit" as MeasureId, {
       unit: "second",
       value: maxLsit,
     });
