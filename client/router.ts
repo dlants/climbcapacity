@@ -12,12 +12,15 @@ export type NavigateMsg = {
         route: "/snapshots";
       }
     | {
+        route: "/report-card";
+      }
+    | {
         route: "/snapshot";
         snapshotId: SnapshotId;
       }
     | {
         route: "/explore";
-        mySnapshot?: Snapshot
+        mySnapshot?: Snapshot;
       }
     | {
         route: "/";
@@ -99,6 +102,15 @@ export function parseRoute(pathname: string): NavigateMsg | undefined {
       type: "NAVIGATE",
       target: {
         route: "/snapshots",
+      },
+    };
+  }
+
+  if (pathname == "/report-card") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/report-card",
       },
     };
   }

@@ -12,6 +12,7 @@ import * as SendLinkPage from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
 import * as SnapshotPage from "./pages/load-snapshot";
 import * as ExplorePage from "./pages/explore";
+import * as ReportCardPage from "./pages/report-card";
 import {
   assertUnreachable,
   ExtractFromDisjointUnion,
@@ -44,6 +45,10 @@ export type Model = {
         exploreModel: ExplorePage.Model;
       }
     | {
+        route: "/report-card";
+        reportCardModel: ReportCardPage.Model;
+      }
+    | {
         route: "/";
       };
 };
@@ -69,6 +74,10 @@ type Msg =
   | {
       type: "EXPLORE_MSG";
       msg: ExplorePage.Msg;
+    }
+  | {
+      type: "REPORT_CARD_MSG";
+      msg: ReportCardPage.Msg;
     };
 
 const navigate: Update<Msg, Model> = (msg, model) => {
@@ -129,6 +138,32 @@ const navigate: Update<Msg, Model> = (msg, model) => {
           }),
         ];
       }
+
+    case "/report-card":
+      if (user) {
+        const [reportCardModel, reportCardThunk] = ReportCardPage.initModel({
+          userId: user.id,
+        });
+        return [
+          produce(model, (draft) => {
+            draft.page = {
+              route: "/report-card",
+              reportCardModel: immer.castDraft(reportCardModel),
+            };
+          }),
+          wrapThunk("REPORT_CARD_MSG", reportCardThunk),
+        ];
+      } else {
+        return [
+          produce(model, (draft) => {
+            draft.page = {
+              route: "/send-link",
+              sendLinkModel: SendLinkPage.initModel(),
+            };
+          }),
+        ];
+      }
+
     case "/snapshot":
       if (user) {
         const [snapshotModel, snapshotThunk] = SnapshotPage.initModel(
@@ -307,6 +342,31 @@ const update: Update<Msg, Model> = (msg, model) => {
       ];
     }
 
+    case "REPORT_CARD_MSG": {
+      if (model.page.route != "/report-card") {
+        console.warn(
+          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
+        );
+        return [model];
+      }
+      const [reportCardModel, reportCardThunk] = ReportCardPage.update(
+        msg.msg,
+        model.page.reportCardModel,
+      );
+      return [
+        produce(model, (draft) => {
+          (
+            draft.page as ExtractFromDisjointUnion<
+              Model["page"],
+              "route",
+              "/report-card"
+            >
+          ).reportCardModel = immer.castDraft(reportCardModel);
+        }),
+        wrapThunk("REPORT_CARD_MSG", reportCardThunk),
+      ];
+    }
+
     default:
       return assertUnreachable(msg);
   }
@@ -327,6 +387,14 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
         <UserSnapshotsPage.view
           model={model.page.userSnapshotsModel}
           dispatch={(msg) => dispatch({ type: "USER_SNAPSHOTS_MSG", msg })}
+        />
+      );
+
+    case "/report-card":
+      return (
+        <ReportCardPage.view
+          model={model.page.reportCardModel}
+          dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
         />
       );
 
@@ -382,6 +450,9 @@ function navigationThunk(model: Model) {
         break;
       case "/snapshots":
         newUrl = "/snapshots";
+        break;
+      case "/report-card":
+        newUrl = "/report-card";
         break;
       case "/snapshot":
         newUrl = `/snapshot/${model.page.snapshotModel.snapshotId}`;
