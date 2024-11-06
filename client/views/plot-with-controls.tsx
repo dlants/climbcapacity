@@ -10,6 +10,7 @@ import { FilterMapping } from "./select-filters";
 import { Result } from "../../iso/utils";
 import { convertToTargetUnit } from "../../iso/units";
 const produce = immer.produce;
+import lodash from "lodash";
 
 export type Model = immer.Immutable<{
   snapshots: HydratedSnapshot[];
@@ -94,8 +95,13 @@ function updatePlot(model: Model): Result<Plot.Model> {
         ),
       };
     }
-    return { userId: s.userId, idValues };
+    return { userId: s.userId, idValues, lastUpdated: new Date(s.lastUpdated) };
   });
+
+  const myLatestSnapshot = lodash.sortBy(
+    snapshotDataById.filter((s) => s.userId == model.userId),
+    "lastUpdated",
+  ).reverse()[0];
 
   if (xAxisValid) {
     const evalX = model.xAxis.evalResult.value;
@@ -105,15 +111,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
     }
     const xData = xResult.value;
 
-    const myXResult = evalX(
-      snapshotDataById
-        .filter(({ userId }) => userId == model.userId)
-        .map(({ idValues }) => idValues),
-    );
-    if (myXResult.status == "fail") {
-      return myXResult;
-    }
-    const myXData = myXResult.value;
+    const myXResult = evalX([myLatestSnapshot.idValues]);
 
     if (yAxisValid) {
       const evalY = model.yAxis.evalResult.value;
@@ -123,15 +121,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
       }
       const yData = yResult.value;
 
-      const myYResult = evalY(
-        snapshotDataById
-          .filter(({ userId }) => userId == model.userId)
-          .map(({ idValues }) => idValues),
-      );
-      if (myYResult.status == "fail") {
-        return myYResult;
-      }
-      const myYData = myYResult.value;
+      const myYResult = evalY([myLatestSnapshot.idValues]);
 
       const data: { x: number; y: number }[] = [];
       for (let i = 0; i < xData.values.length; i += 1) {
@@ -141,12 +131,17 @@ function updatePlot(model: Model): Result<Plot.Model> {
         });
       }
 
-      const myData: { x: number; y: number }[] = [];
-      for (let i = 0; i < myXData.values.length; i += 1) {
-        myData.push({
-          x: myXData.values[i],
-          y: myYData.values[i],
-        });
+      let myData: { x: number; y: number } | undefined;
+      if (
+        myXResult.status == "success" &&
+        myXResult.value.values.length &&
+        myYResult.status == "success" &&
+        myYResult.value.values.length
+      ) {
+        myData = {
+          x: myXResult.value.values[0],
+          y: myYResult.value.values[0],
+        };
       }
 
       if (data.length < 100) {
@@ -182,7 +177,10 @@ function updatePlot(model: Model): Result<Plot.Model> {
         value: {
           style: "histogram",
           data: xData.values,
-          myData: myXData.values,
+          myData:
+            myXResult.status == "success"
+              ? myXResult.value.values[0]
+              : undefined,
           xLabel: model.xAxis.expression,
           xUnit: xData.unit,
         },

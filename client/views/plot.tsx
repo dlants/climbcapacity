@@ -14,7 +14,7 @@ export type Model = immer.Immutable<
       data: number[];
       xLabel: string;
       xUnit?: UnitType;
-      myData?: number[];
+      myData?: number;
     }
   | {
       style: "dotplot";
@@ -23,7 +23,7 @@ export type Model = immer.Immutable<
       xUnit?: UnitType;
       yLabel: string;
       yUnit?: UnitType;
-      myData?: { x: number; y: number }[];
+      myData?: { x: number; y: number };
     }
   | {
       style: "heatmap";
@@ -32,7 +32,7 @@ export type Model = immer.Immutable<
       xUnit?: UnitType;
       yLabel: string;
       yUnit?: UnitType;
-      myData?: { x: number; y: number }[];
+      myData?: { x: number; y: number };
     }
 >;
 
@@ -55,7 +55,7 @@ function generateTicks(unit: UnitType | undefined): Plot.ScaleOptions {
       return {
         tickFormat: (d) => {
           const feet = Math.floor(d / 12);
-          const inches = Math.floor(d % 12);
+          const inches = d % 12;
           return inches === 0 ? `${feet}'` : `${feet}'${inches}"`;
         },
       };
@@ -108,7 +108,6 @@ export const view: View<never, Model> = ({ model }) => {
         plot = Plot.plot({
           marks: [
             Plot.rectY(model.data, { ...Plot.binX({ y: "count" }), tip: true }),
-            // Add vertical line for myData if present
             ...(model.myData
               ? [
                   Plot.ruleX([model.myData], {
