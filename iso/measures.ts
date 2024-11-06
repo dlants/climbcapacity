@@ -1,4 +1,17 @@
-import { MeasureId, MeasureSpec, Grip, GRIPS_ARR } from "./units.js";
+import {
+  Grip,
+  GRIPS,
+  synthesizeBlockPullMeasure,
+  synthesizeMaxHangMeasure,
+  synthesizeMinEdgeMeasure,
+} from "./measures/fingers.js";
+import {
+  BOULDER_LOCATION,
+  SPORT_LOCATION,
+  STAT,
+  synthesizeGradeMeasure,
+} from "./measures/grades.js";
+import { MeasureId, MeasureSpec } from "./units.js";
 
 export const MEASURES: MeasureSpec[] = [
   {
@@ -82,128 +95,64 @@ Record total weight. For example, if you weigh 70kg and had to remove 10kg, reco
   },
 ];
 
-function maxHangMeasure({
-  edgeSize,
-  duration,
-  gripType,
-}: {
-  edgeSize: number;
-  duration: number;
-  gripType: Grip;
-}): MeasureSpec {
-  return {
-    id: `maxhang-${edgeSize}mm-${duration}s-${gripType}` as MeasureId,
-    name: `MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
-    description: `\
-Warm up thoroughly.
-
-Find a ${edgeSize}mm edge. Using a ${gripType} grip, hang for ${duration}s. If the hang is successful, increase weight and try again after at least a 5m rest.
-
-If you cannot hang your bodyweight, use a pulley system to remove weight.
-
-Record the maximum successful hang weight, including your bodyweight.
-
-So for example, if you weigh 70kg, and you removed 20kg, you would record 50kg.
-If you weigh 70kg, and you added 30kg, you'd record 100kg.
-`,
-    units: ["kg", "lb"],
-  };
-}
-
 for (const edgeSize of [18, 20]) {
   for (const duration of [7, 10]) {
-    for (const gripType of GRIPS_ARR) {
-      MEASURES.push(maxHangMeasure({ edgeSize, duration, gripType }));
+    for (const gripType of GRIPS) {
+      MEASURES.push(
+        synthesizeMaxHangMeasure({
+          type: "maxhang",
+          edgeSize,
+          duration,
+          gripType,
+        }),
+      );
     }
   }
 }
 
-function minEdgeHangMeasure({
-  duration,
-  gripType,
-}: {
-  duration: number;
-  gripType: Grip;
-}): MeasureSpec {
-  return {
-    id: `min-edge-hang-${duration}s-${gripType}` as MeasureId,
-    name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
-    description: `\
-Warm up thoroughly.
-
-Find the smallest edge you can hang your bodyweight for ${duration}s using a ${gripType}.
-`,
-    units: ["mm"],
-  };
-}
-
-for (const duration of [7, 10]) {
-  for (const gripType of GRIPS_ARR) {
-    MEASURES.push(minEdgeHangMeasure({ duration, gripType }));
+for (const edgeSize of [18, 20]) {
+  for (const duration of [7, 10]) {
+    for (const gripType of GRIPS) {
+      MEASURES.push(
+        synthesizeBlockPullMeasure({
+          type: "blockpull",
+          edgeSize,
+          duration,
+          gripType,
+        }),
+      );
+    }
   }
 }
 
-function climbMeasure({
-  sportOrBoulder,
-  gymOrOutside,
-  stat,
-}: {
-  sportOrBoulder: "sport" | "boulder";
-  gymOrOutside:
-    | "gym"
-    | "outside"
-    | "kilter"
-    | "tensionboard1"
-    | "tensionboard2"
-    | "moonboard";
-  stat: "max" | "top5" | "p50" | "p90";
-}): MeasureSpec {
-  return {
-    id: `grade-${sportOrBoulder}-${gymOrOutside}-${stat}` as MeasureId,
-    name: `${stat} ${sportOrBoulder} grade, ${gymOrOutside}`,
-    description: (() => {
-      switch (stat) {
-        case "max":
-          return `What's the absolute highest grade that you've climbed?
-Record the grade even if you've only ever climbed it once.`;
-        case "top5":
-          return `What's the lowest grade of your 5 hardest completed climbs?
-For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
-        case "p50":
-          return `What's the hardest grade that you have at least a 50% chance of completing?`;
-        case "p90":
-          return `What's the hardest grade that you have at least a 90% chance of completing?`;
-        default:
-          stat satisfies never;
-          throw new Error(`Unexpected stat ${stat}`);
-      }
-    })(),
-    units:
-      sportOrBoulder == "sport"
-        ? ["ircra", "yds", "frenchsport", "ewbank"]
-        : ["ircra", "vermin", "font"],
-  };
-}
-
-for (const stat of ["max", "top5", "p50", "p90"] as const) {
-  for (const gymOrOutside of ["gym", "outside"] as const) {
+for (const duration of [7, 10]) {
+  for (const gripType of GRIPS) {
     MEASURES.push(
-      climbMeasure({ sportOrBoulder: "sport", gymOrOutside, stat }),
+      synthesizeMinEdgeMeasure({ type: "min-edge", duration, gripType }),
     );
   }
 }
 
-for (const stat of ["max", "top5", "p50", "p90"] as const) {
-  for (const gymOrOutside of [
-    "gym",
-    "outside",
-    "kilter",
-    "tensionboard1",
-    "tensionboard2",
-    "moonboard",
-  ] as const) {
+for (const stat of STAT) {
+  for (const location of SPORT_LOCATION) {
     MEASURES.push(
-      climbMeasure({ sportOrBoulder: "boulder", gymOrOutside, stat }),
+      synthesizeGradeMeasure({
+        type: "grade",
+        context: { type: "sport", location },
+        stat,
+      }),
+    );
+  }
+}
+
+for (const stat of STAT) {
+  for (const location of BOULDER_LOCATION) {
+    MEASURES.push(
+      synthesizeGradeMeasure({
+        type: "grade",
+        context: { type: "boulder", location },
+        stat,
+      }),
     );
   }
 }
@@ -216,15 +165,17 @@ function edgePullups({
   gripType: Grip;
 }): MeasureSpec {
   return {
-    id: `max-pullups-${edgeSize}-mm-edge-${gripType}` as MeasureId,
+    id: `max-pullups-${edgeSize}mm-edge-${gripType}` as MeasureId,
     name: `Max pullups on a ${edgeSize}mm edge using ${gripType} grip type`,
-    description: `On a ${edgeSize}mm edge, using a ${gripType} grip, do as many pullups as you can.`,
+    description: `On a ${edgeSize}mm edge, using a ${gripType} grip, do as many pullups as you can.
+
+If you need to reset your grip at the bottom that's ok, but you must control the descent. Avoid "jumping off" at the end of the pullup.`,
     units: ["count"],
   };
 }
 
 for (const edgeSize of [5, 6, 7, 8, 9, 10, 14, 18, 20] as const) {
-  for (const gripType of GRIPS_ARR) {
+  for (const gripType of GRIPS) {
     MEASURES.push(edgePullups({ edgeSize, gripType }));
   }
 }

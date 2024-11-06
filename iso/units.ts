@@ -34,8 +34,9 @@ export type MeasureSpec = {
   id: MeasureId;
   name: string;
   description: string;
-  // units[0] is the default
-  units: UnitValue["unit"][];
+  /** units[0] is the default
+   */
+  units: UnitType[];
 };
 
 export type MeasureValue = {
@@ -205,15 +206,6 @@ export type UnitValue =
     };
 
 export type UnitType = UnitValue["unit"];
-
-export const GRIPS = {
-  "half-crimp": true,
-  "full-crimp": true,
-  open: true,
-} as const;
-
-export type Grip = keyof typeof GRIPS;
-export const GRIPS_ARR = Object.keys(GRIPS) as Grip[];
 
 export function unitValueToString(unitValue: UnitValue): string {
   switch (unitValue.unit) {
