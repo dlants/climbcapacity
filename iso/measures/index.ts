@@ -2,6 +2,7 @@ import {
   Grip,
   GRIPS,
   synthesizeBlockPullMeasure,
+  synthesizeDurationMeasure,
   synthesizeMaxHangMeasure,
   synthesizeMinEdgeMeasure,
 } from "./fingers.js";
@@ -28,6 +29,12 @@ import {
   WEIGHTED_UNILATERAL_MOVEMENT,
 } from "./movement.js";
 import { MeasureId, MeasureSpec } from "../units.js";
+import {
+  DISTANCE_MOVEMENT,
+  synthesizeDistanceMeasure,
+  synthesizeUnilateralDistanceMeasure,
+  UNILATERAL_DISTANCE_MOVEMENT,
+} from "./distance.js";
 
 export const MEASURES: MeasureSpec[] = [
   {
@@ -41,12 +48,6 @@ export const MEASURES: MeasureSpec[] = [
     name: "weight",
     description: "Your weight",
     units: ["kg", "lb"],
-  },
-  {
-    id: "armspan" as MeasureId,
-    name: "Arm Span",
-    description: `Your arm span.`,
-    units: ["m", "cm", "inches"],
   },
   {
     id: "sex-at-birth" as MeasureId,
@@ -76,6 +77,25 @@ Examples that count as deliberate practice:
     units: ["year"],
   },
 ];
+
+for (const movement of DISTANCE_MOVEMENT) {
+  MEASURES.push(
+    synthesizeDistanceMeasure({
+      movement,
+    }),
+  );
+}
+
+for (const movement of UNILATERAL_DISTANCE_MOVEMENT) {
+  for (const dominantSide of DOMINANT_SIDE) {
+    MEASURES.push(
+      synthesizeUnilateralDistanceMeasure({
+        movement,
+        dominantSide,
+      }),
+    );
+  }
+}
 
 for (const movement of WEIGHTED_MOVEMENT) {
   for (const stat of WEIGHTED_MOVEMENT_STAT) {
@@ -150,6 +170,18 @@ for (const edgeSize of [18, 20]) {
         }),
       );
     }
+  }
+}
+
+for (const edgeSize of [18, 20]) {
+  for (const gripType of GRIPS) {
+    MEASURES.push(
+      synthesizeDurationMeasure({
+        movement: "7-3repeaters",
+        edgeSize,
+        gripType,
+      }),
+    );
   }
 }
 

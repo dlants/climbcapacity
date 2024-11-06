@@ -50,7 +50,7 @@ export function synthesizeMaxRepMeasure({
 }
 
 export const DOMINANT_SIDE = ["dominant", "nondominant"] as const;
-type DominantSide = (typeof DOMINANT_SIDE)[number];
+export type DominantSide = (typeof DOMINANT_SIDE)[number];
 
 export const WEIGHTED_UNILATERAL_MOVEMENT = [
   "pullup",
@@ -96,7 +96,7 @@ export function synthesizeUnilateralMaxrepMeasure({
   dominantSide: DominantSide;
 }): MeasureSpec {
   return {
-    id: `max:rep:${movement}:${dominantSide}` as MeasureId,
+    id: `max-rep:${movement}:${dominantSide}` as MeasureId,
     name: `Unilateral ${movement} Max Reps ${dominantSide}`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
@@ -108,7 +108,7 @@ export const MAX_DURATION_MOVEMENT = [
   "front-lever",
   "plank",
   "hollow-hold",
-  "barhang"
+  "barhang",
 ] as const;
 export type MaxDurationMovement = (typeof MAX_DURATION_MOVEMENT)[number];
 

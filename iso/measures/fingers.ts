@@ -97,3 +97,20 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
     units: ["mm"],
   };
 }
+
+export function synthesizeDurationMeasure({
+  movement,
+  gripType,
+  edgeSize,
+}: {
+  movement: "7-3repeaters";
+  gripType: Grip;
+  edgeSize: number;
+}): MeasureSpec {
+  return {
+    id: `duration:${movement}:${edgeSize}:${gripType}` as MeasureId,
+    name: `(bodyweight)`,
+    description: ``,
+    units: ["second"],
+  };
+}
