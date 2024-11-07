@@ -94,7 +94,9 @@ export function initModel({
         method: "POST",
       });
       if (response.ok) {
-        const snapshot = (await response.json()) as Snapshot | undefined;
+        const { snapshot } = (await response.json()) as {
+          snapshot: Snapshot | undefined;
+        };
         dispatch({
           type: "MY_SNAPSHOT_RESPONSE",
           request: {
@@ -113,7 +115,7 @@ export function initModel({
 
   return [
     {
-      filtersModel: SelectFilters.initModel({myMeasures: {}}),
+      filtersModel: SelectFilters.initModel({ myMeasures: {} }),
       userId,
       query: {},
       dataRequest: { status: "not-sent" },
@@ -163,7 +165,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.mySnapshotRequest = msg.request;
-          if (draft.mySnapshotRequest.status == 'loaded' && draft.dataRequest.status == 'loaded') {
+          if (
+            draft.mySnapshotRequest.status == "loaded" &&
+            draft.dataRequest.status == "loaded"
+          ) {
             const plotModel = PlotWithControls.initModel({
               snapshots: draft.dataRequest.response.snapshots,
               mySnapshot: draft.mySnapshotRequest.response,

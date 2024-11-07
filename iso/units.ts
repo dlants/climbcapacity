@@ -20,6 +20,7 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
+import { Snapshot } from "./protocol.js";
 import { assertUnreachable } from "./utils.js";
 
 export type MeasureId = string & { __brand: "measureId" };
@@ -45,53 +46,53 @@ export type MeasureValue = {
 };
 
 export function encodeMeasureValue(measure: MeasureValue): NormedMeasure {
-  const standardValue = convertToStandardUnit(measure);
+  const standardValue = convertToStandardUnit(measure.value);
   return { measureId: measure.id, value: standardValue };
 }
 
-export function convertToStandardUnit(measure: MeasureValue): number {
-  switch (measure.value.unit) {
+export function convertToStandardUnit(unit: UnitValue): number {
+  switch (unit.unit) {
     case "second":
-      return measure.value.value;
+      return unit.value;
     case "year":
-      return measure.value.value;
+      return unit.value;
     case "lb":
-      return measure.value.value * 0.45359237;
+      return unit.value * 0.45359237;
     case "kg":
-      return measure.value.value;
+      return unit.value;
     case "m":
-      return measure.value.value;
+      return unit.value;
     case "cm":
-      return measure.value.value / 100;
+      return unit.value / 100;
     case "mm":
-      return measure.value.value / 1000;
+      return unit.value / 1000;
     case "inches":
-      return measure.value.value * 0.0254;
+      return unit.value * 0.0254;
     case "vermin":
-      return vGradeToIrcra(measure.value.value);
+      return vGradeToIrcra(unit.value);
     case "ircra":
-      return measure.value.value;
+      return unit.value;
     case "font":
-      return fontToIrcra(measure.value.value);
+      return fontToIrcra(unit.value);
     case "frenchsport":
-      return frenchSportToIrcra(measure.value.value);
+      return frenchSportToIrcra(unit.value);
     case "yds":
-      return ydsToIrcra(measure.value.value);
+      return ydsToIrcra(unit.value);
     case "ewbank":
-      return ewbankToIrcra(measure.value.value);
+      return ewbankToIrcra(unit.value);
     case "sex-at-birth":
-      switch (measure.value.value) {
+      switch (unit.value) {
         case "female":
           return 0;
         case "male":
           return 1;
         default:
-          assertUnreachable(measure.value, "sex-at-birth");
+          assertUnreachable(unit);
       }
     case "count":
-      return measure.value.value;
+      return unit.value;
     default:
-      assertUnreachable(measure.value, "measure.value");
+      assertUnreachable(unit);
   }
 }
 
@@ -244,4 +245,38 @@ export function unitValueToString(unitValue: UnitValue): string {
     default:
       assertUnreachable(unitValue);
   }
+}
+
+export function inchesToFeetAndInches(inches: number) {
+  const feet = Math.floor(inches / 12);
+  const outInches = inches % 12;
+  return { feet, inches: outInches };
+}
+
+export function extractDataPoint({
+  measures,
+  inputMeasure,
+  outputMeasure,
+}: {
+  measures: Snapshot["measures"];
+  inputMeasure: { id: MeasureId; unit: UnitType };
+  outputMeasure: { id: MeasureId; unit: UnitType };
+}): { x: number; y: number } | undefined {
+  const inputValue = measures[inputMeasure.id];
+  const outputValue = measures[outputMeasure.id];
+
+  if (!(inputValue && outputValue)) {
+    return undefined;
+  }
+
+  return {
+    x: convertToTargetUnit(
+      convertToStandardUnit(inputValue),
+      inputMeasure.unit,
+    ),
+    y: convertToTargetUnit(
+      convertToStandardUnit(outputValue),
+      outputMeasure.unit,
+    ),
+  };
 }

@@ -347,7 +347,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       {model.filters.map((filter) => (
-        <FilterView filter={filter} dispatch={dispatch} />
+        <FilterView key={filter.id} filter={filter} dispatch={dispatch} />
       ))}
       <button onClick={() => dispatch({ type: "ADD_FILTER" })}>
         Add Filter

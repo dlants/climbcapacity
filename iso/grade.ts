@@ -167,7 +167,8 @@ export function ircraToVGrade(grade: IRCRAGrade): VGrade {
     if (grade < 29.5) return 13;
     if (grade < 31) return 14;
     if (grade < 32) return 15;
-    if (grade <= 32) return 16;
+    if (grade < 33) return 16;
+    if (grade <= 33) return 17;
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as VGrade;
 }

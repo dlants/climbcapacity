@@ -13,11 +13,10 @@ import {
   VGrade,
   YDS,
 } from "../../iso/grade";
-import { MeasureId, UnitType, UnitValue } from "../../iso/units";
+import { MeasureId, UnitType, UnitValue, inchesToFeetAndInches } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
-import { inchesToFeetAndInches } from "../util/units";
 
 type UnitInputMap = {
   second: string;
@@ -395,7 +394,7 @@ export const UnitToggle = ({
   return (
     <span>
       {model.possibleUnits.map((unit) => (
-        <span>
+        <span key={unit}>
           <input
             type="radio"
             id={model.measureId + ":" + unit}

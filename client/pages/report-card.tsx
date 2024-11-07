@@ -49,7 +49,7 @@ export function initModel({
       method: "POST",
     });
     if (response.ok) {
-      const snapshot = (await response.json()) as Snapshot | undefined;
+      const {snapshot} = (await response.json()) as {snapshot: Snapshot | undefined};
       dispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: {
@@ -77,33 +77,48 @@ export function initModel({
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "MY_SNAPSHOT_RESPONSE": {
-      return [
-        produce(model, (draft) => {
-          switch (msg.request.status) {
-            case "not-sent":
-            case "error":
-            case "loading":
-              draft.mySnapshotRequest = msg.request;
-              return;
-            case "loaded":
-              if (msg.request.response == undefined) {
+      switch (msg.request.status) {
+        case "not-sent":
+        case "error":
+        case "loading":
+          const request = msg.request;
+          return [
+            produce(model, (draft) => {
+              draft.mySnapshotRequest = immer.castDraft(request);
+            }),
+          ];
+        case "loaded":
+          if (msg.request.response == undefined) {
+            return [
+              produce(model, (draft) => {
                 draft.mySnapshotRequest = {
                   status: "loaded",
                   response: { state: "no-snapshot" },
                 };
-              } else {
-                LoadedReportCard.initModel({
-                  userId: draft.userId,
-                  mySnapshot: msg.request.response,
-                });
-              }
-              return;
-
-            default:
-              assertUnreachable(msg.request);
+              }),
+            ];
+          } else {
+            const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
+              userId: model.userId,
+              mySnapshot: msg.request.response,
+            });
+            return [
+              produce(model, (draft) => {
+                draft.mySnapshotRequest = {
+                  status: "loaded",
+                  response: {
+                    state: "has-snapshot",
+                    model: immer.castDraft(loadedModel),
+                  },
+                };
+              }),
+              wrapThunk("LOADED_MSG", loadedThunk),
+            ];
           }
-        }),
-      ];
+
+        default:
+          assertUnreachable(msg.request);
+      }
     }
 
     case "LOADED_MSG": {

@@ -264,7 +264,7 @@ for (const measure of MEASURES) {
 }
 
 export const INPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["height", "weight", "sex-at-birth", "armspan", "vertical-reach"].some(
+  ["height", "weight", "sex-at-birth", "distance:armspan", "distance:vertical-reach"].some(
     (idPrefix) => m.id.startsWith(idPrefix),
   ),
 );

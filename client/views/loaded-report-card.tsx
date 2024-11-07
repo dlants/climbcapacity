@@ -1,6 +1,6 @@
 import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
+import { Update, Thunk, View, Dispatch } from "../tea";
 import {
   assertLoaded,
   assertUnreachable,
@@ -10,9 +10,9 @@ import {
   RequestStatusViewMap,
 } from "../util/utils";
 import { FilterQuery } from "../../iso/protocol";
-import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
+import * as ReportCardGraph from "./report-card-graph";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 import lodash from "lodash";
@@ -25,7 +25,7 @@ export type Model = immer.Immutable<{
   mySnapshot: HydratedSnapshot;
   dataRequest: RequestStatus<{
     snapshots: HydratedSnapshot[];
-    plotModel: PlotWithControls.Model;
+    reportCardModel: ReportCardGraph.Model;
   }>;
 }>;
 
@@ -41,8 +41,8 @@ export type Msg =
       request: RequestStatus<HydratedSnapshot[]>;
     }
   | {
-      type: "PLOT_MSG";
-      msg: PlotWithControls.Msg;
+      type: "REPORT_CARD_MSG";
+      msg: ReportCardGraph.Msg;
     }
   | {
       type: "FILTERS_MSG";
@@ -83,22 +83,20 @@ export function initModel({
   userId: string;
   mySnapshot: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
+  const filtersModel = SelectFilters.initModel({
+    myMeasures: lodash.pick(
+      mySnapshot.measures,
+      INPUT_MEASURES.map((m) => m.id),
+    ),
+  });
   const model: Model = {
-      filtersModel: SelectFilters.initModel({
-        myMeasures: lodash.pick(
-          mySnapshot.measures,
-          INPUT_MEASURES.map((m) => m.id),
-        ),
-      }),
-      userId,
-      mySnapshot,
-      query: {},
-      dataRequest: { status: "loading" },
-    }
-  return [
-    model,
-    generateFetchThunk(model)
-  ];
+    filtersModel,
+    userId,
+    mySnapshot,
+    query: getQuery(filtersModel),
+    dataRequest: { status: "loading" },
+  };
+  return [model, generateFetchThunk(model)];
 }
 
 export const update: Update<Msg, Model> = (msg, model) => {
@@ -112,19 +110,15 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            const plotModel = PlotWithControls.initModel({
+            const reportCardModel = ReportCardGraph.initModel({
               snapshots: msg.request.response,
               mySnapshot: draft.mySnapshot,
-              userId: model.userId,
-              filterMapping: SelectFilters.generateFiltersMap(
-                draft.filtersModel,
-              ),
             });
             draft.dataRequest = {
               status: "loaded",
               response: {
                 snapshots: msg.request.response,
-                plotModel: immer.castDraft(plotModel),
+                reportCardModel: immer.castDraft(reportCardModel),
               },
             };
             return;
@@ -144,22 +138,22 @@ export const update: Update<Msg, Model> = (msg, model) => {
       });
       return [nextModel, generateFetchThunk(model)];
 
-    case "PLOT_MSG":
+    case "REPORT_CARD_MSG":
       if (model.dataRequest.status != "loaded") {
         console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
         return [model];
       }
-      const [nextPlotModel, thunk] = PlotWithControls.update(
+      const [nextReportCardModel] = ReportCardGraph.update(
         msg.msg,
-        model.dataRequest.response.plotModel,
+        model.dataRequest.response.reportCardModel,
       );
 
       return [
         produce(model, (draft) => {
           const request = assertLoaded(draft.dataRequest);
-          request.response.plotModel = immer.castDraft(nextPlotModel);
+          request.response.reportCardModel =
+            immer.castDraft(nextReportCardModel);
         }),
-        wrapThunk("PLOT_MSG", thunk),
       ];
 
     case "FILTERS_MSG": {
@@ -170,21 +164,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.filtersModel = immer.castDraft(nextFiltersModel);
-          // Convert filters to query format
-          draft.query = {};
-          nextFiltersModel.filters.forEach((filter) => {
-            if (filter.state.state === "selected") {
-              const minResult = filter.state.minInput.parseResult;
-              const maxResult = filter.state.maxInput.parseResult;
-
-              draft.query[filter.state.measureId] = {
-                min:
-                  minResult.status == "success" ? minResult.value : undefined,
-                max:
-                  maxResult.status == "success" ? maxResult.value : undefined,
-              };
-            }
-          });
+          draft.query = getQuery(nextFiltersModel);
         }),
       ];
     }
@@ -193,6 +173,22 @@ export const update: Update<Msg, Model> = (msg, model) => {
       assertUnreachable(msg);
   }
 };
+
+function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
+  const query: FilterQuery = {};
+  filtersModel.filters.forEach((filter) => {
+    if (filter.state.state === "selected") {
+      const minResult = filter.state.minInput.parseResult;
+      const maxResult = filter.state.maxInput.parseResult;
+
+      query[filter.state.measureId] = {
+        min: minResult.status == "success" ? minResult.value : undefined,
+        max: maxResult.status == "success" ? maxResult.value : undefined,
+      };
+    }
+  });
+  return query;
+}
 
 const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
   <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
@@ -209,9 +205,9 @@ const viewMap: RequestStatusViewMap<
     <div>
       {response.snapshots.length} snapshots loaded.{" "}
       <FetchButton dispatch={dispatch} />
-      <PlotWithControls.view
-        model={response.plotModel}
-        dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
+      <ReportCardGraph.view
+        model={response.reportCardModel}
+        dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
       />
     </div>
   ),

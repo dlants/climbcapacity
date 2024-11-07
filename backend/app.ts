@@ -42,7 +42,7 @@ async function run() {
       "string",
       "Must provide snapshotId in body",
     );
-    const snapshot: Snapshot | null = await snapshotModel.getSnapshot(
+    const snapshot: Snapshot | undefined = await snapshotModel.getSnapshot(
       new mongodb.ObjectId(snapshotId),
     );
 
@@ -105,7 +105,7 @@ async function run() {
     const snapshot: Snapshot | undefined = await snapshotModel.getLatestSnapshot(
       user.id,
     );
-    res.json(snapshot);
+    res.json({snapshot});
     return;
   });
 

@@ -308,7 +308,11 @@ const SnapshotList = ({
       return (
         <div className="loaded">
           {model.snapshotRequest.response.map((snapshot) => (
-            <SnapshotResponse snapshot={snapshot} dispatch={dispatch} />
+            <SnapshotResponse
+              key={snapshot.snapshot._id}
+              snapshot={snapshot}
+              dispatch={dispatch}
+            />
           ))}
         </div>
       );

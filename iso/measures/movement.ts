@@ -42,7 +42,7 @@ export function synthesizeMaxRepMeasure({
   movement: MaxRepMovement;
 }): MeasureSpec {
   return {
-    id: `max:rep:${movement}` as MeasureId,
+    id: `max-rep:${movement}` as MeasureId,
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],

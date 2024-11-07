@@ -143,10 +143,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           (draft) => {
             draft.measures[msg.measureId] = immer.castDraft(measureValue.value);
             draft.normalizedMeasures[msg.measureId] = immer.castDraft(
-              convertToStandardUnit({
-                id: msg.measureId,
-                value: measureValue.value,
-              }),
+              convertToStandardUnit(measureValue.value),
             );
           },
         );

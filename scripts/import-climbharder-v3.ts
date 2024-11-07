@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url'
-import { SnapshotDoc } from "../backend/models/snapshots";
-import { encodeMeasureValue, MeasureId, UnitValue } from "../iso/units";
-import { VGrade, EWBANK, EwbankGrade } from "../iso/grade";
+import { fileURLToPath } from "url";
+import { SnapshotDoc } from "../backend/models/snapshots.js";
+import { encodeMeasureValue, MeasureId, UnitValue } from "../iso/units.js";
+import { VGrade, EWBANK, EwbankGrade } from "../iso/grade.js";
 import mongodb from "mongodb";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
   path.join(__dirname, "./climbharder.tsv"),
   "utf-8",
@@ -28,7 +28,7 @@ table.slice(1).forEach((row, idx) => {
     normedMeasures: [],
     createdAt: new Date(),
     lastUpdated: new Date(),
-    importSource: 'climbharderv3'
+    importSource: "climbharderv3",
   };
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
@@ -70,7 +70,7 @@ table.slice(1).forEach((row, idx) => {
   const spanStr = row[4];
   const span = Number(spanStr);
   if (!isNaN(span)) {
-    addMeasure("armspan" as MeasureId, {
+    addMeasure("distance:armspan" as MeasureId, {
       unit: "cm",
       value: span,
     });
@@ -157,7 +157,7 @@ table.slice(1).forEach((row, idx) => {
 
   function parseEwbankGrade(str: string) {
     const grade = parseFloat(str);
-    if (EWBANK[grade as EwbankGrade]) {
+    if (EWBANK.includes(grade as EwbankGrade)) {
       return grade as EwbankGrade;
     }
     throw new Error(`Unexpected EWBANK grade ${str}`);
@@ -185,7 +185,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang:18:10:half-crimp" as MeasureId, {
+      addMeasure("maxhang:18mm:10s:half-crimp" as MeasureId, {
         unit: "kg",
         value: addedWeight,
       });
@@ -196,7 +196,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang:18:10:open" as MeasureId, {
+      addMeasure("maxhang:18mm:10s:open" as MeasureId, {
         unit: "kg",
         value: addedWeight,
       });
@@ -213,7 +213,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeHalfStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("ming-edge-hang:10:half-crimp" as MeasureId, {
+      addMeasure("min-edge-hang:10s:half-crimp" as MeasureId, {
         unit: "mm",
         value: edgeSize,
       });
@@ -224,7 +224,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeOpenStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("ming-edge-hang:10:open" as MeasureId, {
+      addMeasure("min-edge-hang:10s:open" as MeasureId, {
         unit: "mm",
         value: edgeSize,
       });

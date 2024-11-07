@@ -32,7 +32,7 @@ export function synthesizeMaxHangMeasure(
   const { edgeSize, duration, gripType } = measureType;
 
   return {
-    id: `maxhang:${edgeSize}:${duration}:${gripType}` as MeasureId,
+    id: `maxhang:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
     name: `MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
     description: `\
 Warm up thoroughly.
@@ -63,7 +63,7 @@ export function synthesizeBlockPullMeasure(
   const { edgeSize, duration, gripType } = measureType;
 
   return {
-    id: `blockpull:${edgeSize}:${duration}:${gripType}` as MeasureId,
+    id: `blockpull:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
     name: `Block Pull: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
     description: `\
 Warm up thoroughly.
@@ -87,7 +87,7 @@ export function synthesizeMinEdgeMeasure(
 ): MeasureSpec {
   const { duration, gripType } = measureType;
   return {
-    id: `min-edge-hang:${duration}:${gripType}` as MeasureId,
+    id: `min-edge-hang:${duration}s:${gripType}` as MeasureId,
     name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
     description: `\
 Warm up thoroughly.
@@ -108,8 +108,8 @@ export function synthesizeDurationMeasure({
   edgeSize: number;
 }): MeasureSpec {
   return {
-    id: `duration:${movement}:${edgeSize}:${gripType}` as MeasureId,
-    name: `(bodyweight)`,
+    id: `duration:${movement}:${edgeSize}mm:${gripType}` as MeasureId,
+    name: `${movement} ${edgeSize}mm ${gripType}(bodyweight)`,
     description: ``,
     units: ["second"],
   };
