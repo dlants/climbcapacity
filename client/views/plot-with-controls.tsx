@@ -57,6 +57,7 @@ export function initModel({
     draft.plot = immer.castDraft(updatePlot(draft));
   });
 }
+
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "X_AXIS_MSG": {

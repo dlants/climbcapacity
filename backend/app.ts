@@ -102,10 +102,10 @@ async function run() {
    */
   app.post("/api/my-latest-snapshot", async (req, res) => {
     const user = await auth.assertLoggedIn(req, res);
-    const snapshot: Snapshot | null = await snapshotModel.getLatestSnapshot(
+    const snapshot: Snapshot | undefined = await snapshotModel.getLatestSnapshot(
       user.id,
     );
-    res.json(snapshot || undefined);
+    res.json(snapshot);
     return;
   });
 

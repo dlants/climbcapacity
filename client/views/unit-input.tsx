@@ -17,6 +17,7 @@ import { MeasureId, UnitType, UnitValue } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
+import { inchesToFeetAndInches } from "../util/units";
 
 type UnitInputMap = {
   second: string;
@@ -56,14 +57,20 @@ export type HasParseResultModel = immer.Immutable<
   }
 >;
 
-export function initModel(measureId: MeasureId): Model {
+export function initModel(
+  measureId: MeasureId,
+  initialValue?: UnitValue,
+): Model {
   const measureSpec = MEASURE_MAP[measureId];
   if (!measureSpec) {
     throw new Error(`Unexpected measureId ${measureId}`);
   }
 
-  const defaultUnit = measureSpec.units[0];
-  const initialInput = getInitialInput(defaultUnit);
+  const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
+  const initialInput = getInitialInput(
+    initialValue || getDefaultValueFromUnitType(defaultUnit),
+  );
+
   return {
     measureId,
     selectedUnit: defaultUnit,
@@ -73,8 +80,64 @@ export function initModel(measureId: MeasureId): Model {
   };
 }
 
-function getInitialInput(unitType: UnitType): UnitInput {
-  switch (unitType) {
+function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
+  switch (unit) {
+    case "second":
+    case "year":
+    case "lb":
+    case "kg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inches":
+    case "count":
+      return {
+        unit,
+        value: 0,
+      };
+    case "vermin":
+      return {
+        unit,
+        value: 0,
+      };
+    case "font":
+      return {
+        unit,
+        value: "3",
+      };
+    case "frenchsport":
+      return {
+        unit,
+        value: "5",
+      };
+
+    case "yds":
+      return {
+        unit,
+        value: "5.6",
+      };
+    case "ewbank":
+      return {
+        unit,
+        value: 1,
+      };
+    case "ircra":
+      return {
+        unit,
+        value: 1 as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return {
+        unit,
+        value: "female",
+      };
+    default:
+      assertUnreachable(unit);
+  }
+}
+
+function getInitialInput(initialValue: UnitValue): UnitInput {
+  switch (initialValue.unit) {
     case "second":
     case "year":
     case "lb":
@@ -89,13 +152,14 @@ function getInitialInput(unitType: UnitType): UnitInput {
     case "ewbank":
     case "ircra":
     case "count":
-      return "";
+      return initialValue.value.toString() || "";
     case "inches":
-      return { feet: "", inches: "" };
+      const { feet, inches } = inchesToFeetAndInches(initialValue.value || 0);
+      return { feet: feet.toString(), inches: inches.toString() };
     case "sex-at-birth":
-      return "female";
+      return initialValue.value;
     default:
-      assertUnreachable(unitType);
+      assertUnreachable(initialValue);
   }
 }
 
@@ -145,7 +209,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.selectedUnit = msg.unit;
-          draft.unitInput = getInitialInput(msg.unit);
+          draft.unitInput = getInitialInput(
+            getDefaultValueFromUnitType(msg.unit),
+          );
         }),
       ];
     }

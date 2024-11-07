@@ -262,3 +262,15 @@ export const MEASURE_MAP: {
 for (const measure of MEASURES) {
   MEASURE_MAP[measure.id] = measure;
 }
+
+export const INPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
+  ["height", "weight", "sex-at-birth", "armspan", "vertical-reach"].some(
+    (idPrefix) => m.id.startsWith(idPrefix),
+  ),
+);
+
+export const OUTPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
+  ["grade:"].some(
+    (idPrefix) => m.id.startsWith(idPrefix),
+  ),
+);

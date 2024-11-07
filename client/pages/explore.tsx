@@ -113,7 +113,7 @@ export function initModel({
 
   return [
     {
-      filtersModel: SelectFilters.initModel(),
+      filtersModel: SelectFilters.initModel({myMeasures: {}}),
       userId,
       query: {},
       dataRequest: { status: "not-sent" },

@@ -15,6 +15,8 @@ import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
+import lodash from "lodash";
+import { INPUT_MEASURES } from "../../iso/measures/index";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
@@ -81,14 +83,21 @@ export function initModel({
   userId: string;
   mySnapshot: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
-  return [
-    {
-      filtersModel: SelectFilters.initModel(),
+  const model: Model = {
+      filtersModel: SelectFilters.initModel({
+        myMeasures: lodash.pick(
+          mySnapshot.measures,
+          INPUT_MEASURES.map((m) => m.id),
+        ),
+      }),
       userId,
       mySnapshot,
       query: {},
-      dataRequest: { status: "not-sent" },
-    },
+      dataRequest: { status: "loading" },
+    }
+  return [
+    model,
+    generateFetchThunk(model)
   ];
 }
 
