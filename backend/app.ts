@@ -12,6 +12,7 @@ import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 import { MeasureId, UnitValue } from "../iso/units.js";
 import { fileURLToPath } from "url";
+import { apiRoute } from "./utils.js";
 import path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,163 +35,178 @@ async function run() {
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
 
-  app.post("/api/snapshot", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    const snapshotId: SnapshotId = req.body.snapshotId;
-    assert.equal(
-      typeof snapshotId,
-      "string",
-      "Must provide snapshotId in body",
-    );
-    const snapshot: Snapshot | undefined = await snapshotModel.getSnapshot(
-      new mongodb.ObjectId(snapshotId),
-    );
+  app.post(
+    "/api/snapshot",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshotId: SnapshotId = req.body.snapshotId;
+      assert.equal(
+        typeof snapshotId,
+        "string",
+        "Must provide snapshotId in body",
+      );
+      const snapshot: Snapshot | undefined = await snapshotModel.getSnapshot(
+        new mongodb.ObjectId(snapshotId),
+      );
 
-    if (!snapshot) {
-      throw new HandledError({
-        status: 404,
-        message: `Snapshot not found`,
+      if (!snapshot) {
+        throw new HandledError({
+          status: 404,
+          message: `Snapshot not found`,
+        });
+      }
+
+      if (snapshot.userId != user.id) {
+        throw new HandledError({
+          status: 403,
+          message: `You can only look at your own snapshots`,
+        });
+      }
+      return snapshot;
+    }),
+  );
+
+  app.delete(
+    "/api/snapshot",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshotId: SnapshotId = req.body.snapshotId;
+      assert.equal(
+        typeof snapshotId,
+        "string",
+        "Must provide snapshotId in body",
+      );
+      const result = await snapshotModel.deleteSnapshot({
+        userId: user.id,
+        snapshotId: new mongodb.ObjectId(snapshotId),
       });
-    }
 
-    if (snapshot.userId != user.id) {
-      throw new HandledError({
-        status: 403,
-        message: `You can only look at your own snapshots`,
-      });
-    }
-    res.json(snapshot);
-    return;
-  });
+      if (result == 0) {
+        throw new HandledError({
+          status: 404,
+          message: `Unable to delete snapshot`,
+        });
+      }
 
-  app.delete("/api/snapshot", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    const snapshotId: SnapshotId = req.body.snapshotId;
-    assert.equal(
-      typeof snapshotId,
-      "string",
-      "Must provide snapshotId in body",
-    );
-    const result = await snapshotModel.deleteSnapshot({
-      userId: user.id,
-      snapshotId: new mongodb.ObjectId(snapshotId),
-    });
-
-    if (result == 0) {
-      throw new HandledError({
-        status: 404,
-        message: `Unable to delete snapshot`,
-      });
-    }
-
-    res.json("OK");
-    return;
-  });
+      return "OK";
+    }),
+  );
 
   /** Lists out the snapshots for user
    */
-  app.post("/api/my-snapshots", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
-      user.id,
-    );
-    res.json(snapshots);
-    return;
-  });
+  app.post(
+    "/api/my-snapshots",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
+        user.id,
+      );
+      return snapshots;
+    }),
+  );
 
   /** Lists out the snapshots for user
    */
-  app.post("/api/my-latest-snapshot", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    const snapshot: Snapshot | undefined = await snapshotModel.getLatestSnapshot(
-      user.id,
-    );
-    res.json({snapshot});
-    return;
-  });
+  app.post(
+    "/api/my-latest-snapshot",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshot: Snapshot | undefined =
+        await snapshotModel.getLatestSnapshot(user.id);
+      return { snapshot };
+    }),
+  );
 
-  app.post("/api/snapshots/query", async (req, res) => {
-    const query: FilterQuery = req.body.query;
+  app.post(
+    "/api/snapshots/query",
+    apiRoute(async (req, _res) => {
+      const query: FilterQuery = req.body.query;
 
-    assert.equal(typeof query, "object", "filter must be an object");
-    for (const measureId in query) {
+      assert.equal(typeof query, "object", "filter must be an object");
+      for (const measureId in query) {
+        assert.ok(
+          MEASURES.findIndex((m) => m.id == measureId) > -1,
+          `Measure has invalid id ${measureId}`,
+        );
+
+        const val = query[measureId as MeasureId];
+        assert.equal(
+          typeof val,
+          "object",
+          `query measure ${measureId} must be an object.`,
+        );
+
+        for (const valKey in val) {
+          assert.ok(
+            ["min", "max"].indexOf(valKey) > -1,
+            `query ${measureId} can only define min and max but it defined ${valKey}`,
+          );
+
+          assert.equal(
+            typeof val[valKey as "min" | "max"],
+            "object",
+            `query ${measureId}:${valKey} must be a UnitValue`,
+          );
+        }
+      }
+
+      return await snapshotModel.querySnapshots(query);
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/new",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      await snapshotModel.newSnapshot(user);
+      return "OK";
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/update",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshotId: string = req.body.snapshotId;
+      assert.equal(
+        typeof snapshotId,
+        "string",
+        "Must provide snapshotId of type string",
+      );
+      const measureId: MeasureId = req.body.measureId;
+      assert.equal(
+        typeof measureId,
+        "string",
+        "Must provide measureId which is a string",
+      );
+
       assert.ok(
         MEASURES.findIndex((m) => m.id == measureId) > -1,
-        `Measure has invalid id ${measureId}`,
+        `Measure had invalid id ${measureId}`,
       );
 
-      const val = query[measureId as MeasureId];
-      assert.equal(
-        typeof val,
-        "object",
-        `query measure ${measureId} must be an object.`,
-      );
+      const value: UnitValue = req.body.value;
+      assert.equal(typeof value, "object", "Must provide valid measure value");
 
-      for (const valKey in val) {
-        assert.ok(
-          ["min", "max"].indexOf(valKey) > -1,
-          `query ${measureId} can only define min and max but it defined ${valKey}`,
-        );
+      const updated = await snapshotModel.updateMeasure({
+        userId: user.id,
+        snapshotId: new mongodb.ObjectId(snapshotId),
+        measure: {
+          id: measureId,
+          value,
+        },
+      });
 
-        assert.equal(
-          typeof val[valKey as "min" | "max"],
-          "object",
-          `query ${measureId}:${valKey} must be a UnitValue`,
-        );
+      if (updated) {
+        return "OK";
+      } else {
+        throw new HandledError({
+          status: 400,
+          message: "Unable to update snapshot.",
+        });
       }
-    }
-
-    const snapshots: Snapshot[] = await snapshotModel.querySnapshots(query);
-    res.json(snapshots);
-    return;
-  });
-
-  app.post("/api/snapshots/new", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    await snapshotModel.newSnapshot(user);
-    res.json("OK");
-    return;
-  });
-
-  app.post("/api/snapshots/update", async (req, res) => {
-    const user = await auth.assertLoggedIn(req, res);
-    const snapshotId: string = req.body.snapshotId;
-    assert.equal(
-      typeof snapshotId,
-      "string",
-      "Must provide snapshotId of type string",
-    );
-    const measureId: MeasureId = req.body.measureId;
-    assert.equal(
-      typeof measureId,
-      "string",
-      "Must provide measureId which is a string",
-    );
-
-    assert.ok(
-      MEASURES.findIndex((m) => m.id == measureId) > -1,
-      `Measure had invalid id ${measureId}`,
-    );
-
-    const value: UnitValue = req.body.value;
-    assert.equal(typeof value, "object", "Must provide valid measure value");
-
-    const updated = await snapshotModel.updateMeasure({
-      userId: user.id,
-      snapshotId: new mongodb.ObjectId(snapshotId),
-      measure: {
-        id: measureId,
-        value,
-      },
-    });
-
-    if (updated) {
-      res.json("OK");
-      return;
-    } else {
-      res.status(400).json("Unable to update snapshot.");
-    }
-  });
+    }),
+  );
 
   // Serve index.html for all non-API routes that don't match static files
   // (for SPA)

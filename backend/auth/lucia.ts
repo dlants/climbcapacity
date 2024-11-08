@@ -6,6 +6,8 @@ import { HandledError } from "../utils.js";
 import assert from "assert";
 import { MagicLink } from "./magic-link.js";
 import rateLimit from "express-rate-limit";
+import { apiRoute } from "../utils.js";
+import { AuthStatus } from "../../iso/protocol.js";
 
 export class Auth {
   private lucia: Lucia;
@@ -72,28 +74,30 @@ export class Auth {
       return next();
     });
 
-    app.post("/api/send-login-link", loginLinkIpLimiter, async (req, res) => {
-      const email: string = req.body.email;
-      assert.equal(typeof email, "string");
+    app.post(
+      "/api/send-login-link",
+      loginLinkIpLimiter,
+      apiRoute(async (req, _res) => {
+        const email: string = req.body.email;
+        assert.equal(typeof email, "string");
 
-      if (this.shouldRateLimitLogin(email)) {
-        res
-          .status(429)
-          .send(
-            "Too many login attempts for this email, please try again later",
-          );
-        return;
-      }
+        if (this.shouldRateLimitLogin(email)) {
+          throw new HandledError({
+            status: 429,
+            message:
+              "Too many login attempts for this email, please try again later",
+          });
+        }
 
-      const user = await this.findOrCreateUser(email);
+        const user = await this.findOrCreateUser(email);
 
-      await this.magicLink.sendMagicLink({
-        userId: user._id,
-        email,
-      });
-      res.json("OK");
-      return;
-    });
+        await this.magicLink.sendMagicLink({
+          userId: user._id,
+          email,
+        });
+        return "OK";
+      }),
+    );
 
     app.get("/api/login", async (req, res) => {
       const code = req.query.code;
@@ -134,18 +138,22 @@ export class Auth {
         .send("OK");
     });
 
-    app.post("/api/auth", async (req, res) => {
-      try {
-        const user = await this.assertLoggedIn(req, res);
-        res.json({
-          status: "logged in",
-          user,
-        });
-      } catch (e) {
-        console.error(e);
-        res.status(401).json({ status: "logged out" });
-      }
-    });
+    app.post(
+      "/api/auth",
+      apiRoute<AuthStatus>(async (req, res) => {
+        try {
+          const user = await this.assertLoggedIn(req, res);
+          return {
+            status: "logged in",
+            user: { id: user.id },
+          };
+        } catch {
+          return {
+            status: "logged out",
+          };
+        }
+      }),
+    );
   }
 
   shouldRateLimitLogin(email: string): boolean {

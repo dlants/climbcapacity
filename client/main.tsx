@@ -19,7 +19,7 @@ import {
   RequestStatus,
 } from "./util/utils";
 import { NavigateMsg, parseRoute, Router } from "./router";
-import { SnapshotId } from "../iso/protocol";
+import { AuthStatus, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import * as immer from "immer";
 import { GlobalStyles } from "./global-style";
@@ -436,10 +436,6 @@ const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
-
-type AuthStatus =
-  | { status: "logged out" }
-  | { status: "logged in"; user: { id: string } };
 
 function navigationThunk(model: Model) {
   return async function () {

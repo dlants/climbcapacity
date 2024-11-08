@@ -52,3 +52,7 @@ export type Filter = {
 };
 
 export type FilterQuery = { [measureId: MeasureId]: Filter };
+
+export type AuthStatus =
+  | { status: "logged out" }
+  | { status: "logged in"; user: { id: string } };
