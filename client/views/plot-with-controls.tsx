@@ -10,7 +10,6 @@ import { FilterMapping } from "./select-filters";
 import { Result } from "../../iso/utils";
 import { convertToTargetUnit } from "../../iso/units";
 const produce = immer.produce;
-import lodash from "lodash";
 
 export type Model = immer.Immutable<{
   snapshots: HydratedSnapshot[];
@@ -36,7 +35,7 @@ export function initModel({
   filterMapping,
   userId,
   snapshots,
-  mySnapshot
+  mySnapshot,
 }: {
   filterMapping: FilterMapping;
   userId: string | undefined;
@@ -87,7 +86,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
   const xAxisValid = model.xAxis.evalResult.status == "success";
   const yAxisValid = model.yAxis.evalResult.status == "success";
 
-  const snapshotDataById = model.snapshots.map((s) => {
+  const mapSnapshot = (s: HydratedSnapshot) => {
     const idValues: EvalPoint = {};
     for (const id in model.filterMapping) {
       const filter = model.filterMapping[id as Identifier];
@@ -101,12 +100,12 @@ function updatePlot(model: Model): Result<Plot.Model> {
       };
     }
     return { userId: s.userId, idValues, lastUpdated: new Date(s.lastUpdated) };
-  });
+  };
+  const snapshotDataById = model.snapshots.map(mapSnapshot);
 
-  const myLatestSnapshot = lodash.sortBy(
-    snapshotDataById.filter((s) => s.userId == model.userId),
-    "lastUpdated",
-  ).reverse()[0];
+  const myLatestSnapshot = model.mySnapshot
+    ? mapSnapshot(model.mySnapshot)
+    : undefined;
 
   if (xAxisValid) {
     const evalX = model.xAxis.evalResult.value;
@@ -116,7 +115,9 @@ function updatePlot(model: Model): Result<Plot.Model> {
     }
     const xData = xResult.value;
 
-    const myXResult = evalX([myLatestSnapshot.idValues]);
+    const myXResult = myLatestSnapshot
+      ? evalX([myLatestSnapshot.idValues])
+      : undefined;
 
     if (yAxisValid) {
       const evalY = model.yAxis.evalResult.value;
@@ -126,7 +127,9 @@ function updatePlot(model: Model): Result<Plot.Model> {
       }
       const yData = yResult.value;
 
-      const myYResult = evalY([myLatestSnapshot.idValues]);
+      const myYResult = myLatestSnapshot
+        ? evalY([myLatestSnapshot.idValues])
+        : undefined;
 
       const data: { x: number; y: number }[] = [];
       for (let i = 0; i < xData.values.length; i += 1) {
@@ -138,8 +141,10 @@ function updatePlot(model: Model): Result<Plot.Model> {
 
       let myData: { x: number; y: number } | undefined;
       if (
+        myXResult &&
         myXResult.status == "success" &&
         myXResult.value.values.length &&
+        myYResult &&
         myYResult.status == "success" &&
         myYResult.value.values.length
       ) {
@@ -183,7 +188,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
           style: "histogram",
           data: xData.values,
           myData:
-            myXResult.status == "success"
+            myXResult && myXResult.status == "success"
               ? myXResult.value.values[0]
               : undefined,
           xLabel: model.xAxis.expression,
@@ -202,8 +207,8 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
       <div
         className="plot-container"
         style={{
-          height: "300px",
-          width: "400px",
+          height: "400px",
+          width: "600px",
         }}
       >
         {model.plot.status == "success" ? (
