@@ -43,12 +43,12 @@ const fmt = new Intl.NumberFormat("en", {
 });
 
 function tickFormat(
-  value: number,
+  binIndex: number,
   unit: UnitType | undefined,
   thresholds: number[],
 ): string {
   if (!unit) {
-    return fmt.format(value);
+    return fmt.format(binIndex);
   }
 
   switch (unit) {
@@ -60,29 +60,29 @@ function tickFormat(
     case "mm":
     case "year":
     case "count": {
-      const min = thresholds[value];
-      const max = thresholds[value + 1];
+      const min = thresholds[binIndex];
+      const max = thresholds[binIndex + 1];
       return max ? `${fmt.format(min)}-${fmt.format(max)}` : ``;
     }
     case "inches": {
-      const min = thresholds[value];
-      const max = thresholds[value + 1];
+      const min = thresholds[binIndex];
+      const max = thresholds[binIndex + 1];
       return max ? `${displayInches(min)}-${displayInches(max)}` : ``;
     }
     case "ircra":
-      return value.toString();
+      return binIndex.toString();
     case "sex-at-birth":
-      return ["female", "male"][value];
+      return ["female", "male"][binIndex];
     case "vermin":
-      return `V${Math.floor(value)}`;
+      return `V${Math.ceil(thresholds[binIndex])}`;
     case "font":
-      return FONT[Math.floor(value)];
+      return FONT[Math.ceil(thresholds[binIndex])];
     case "frenchsport":
-      return FRENCH_SPORT[Math.floor(value)];
+      return FRENCH_SPORT[Math.ceil(thresholds[binIndex])];
     case "yds":
-      return YDS[Math.floor(value)];
+      return YDS[Math.ceil(thresholds[binIndex])];
     case "ewbank":
-      return EWBANK[Math.floor(value)].toString();
+      return EWBANK[Math.ceil(thresholds[binIndex])].toString();
     default:
       assertUnreachable(unit);
   }
@@ -226,7 +226,10 @@ export const view: View<never, Model> = ({ model }) => {
                 .tickFormat((d) =>
                   tickFormat(parseInt(d), model.xUnit, thresholds),
                 ),
-            ).selectAll('text').attr('transform', 'rotate(25)').style('text-anchor', 'start');
+            )
+            .selectAll("text")
+            .attr("transform", "rotate(25)")
+            .style("text-anchor", "start");
 
         const yAxis = (
           g: d3.Selection<SVGGElement, unknown, null, undefined>,

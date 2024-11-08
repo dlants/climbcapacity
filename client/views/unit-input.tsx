@@ -13,7 +13,12 @@ import {
   VGrade,
   YDS,
 } from "../../iso/grade";
-import { MeasureId, UnitType, UnitValue, inchesToFeetAndInches } from "../../iso/units";
+import {
+  MeasureId,
+  UnitType,
+  UnitValue,
+  inchesToFeetAndInches,
+} from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
@@ -283,7 +288,11 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "vermin": {
-        if (!((input as UnitInputMap["vermin"]) in VGRADE)) {
+        if (
+          !VGRADE.includes(
+            parseFloat(input as UnitInputMap["vermin"]) as VGrade,
+          )
+        ) {
           return { status: "fail", error: "Invalid V grade" };
         }
         return {
@@ -295,7 +304,11 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "ewbank": {
-        if (!((input as UnitInputMap["ewbank"]) in EWBANK)) {
+        if (
+          !EWBANK.includes(
+            parseFloat(input as UnitInputMap["ewbank"]) as EwbankGrade,
+          )
+        ) {
           return { status: "fail", error: "Invalid Ewbank grade" };
         }
         return {
@@ -308,7 +321,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
 
       case "font": {
-        if (!((input as UnitInputMap["font"]) in FONT)) {
+        if (!FONT.includes(input as UnitInputMap["font"] as Font)) {
           return { status: "fail", error: "Invalid Font grade" };
         }
         return {
@@ -320,7 +333,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "frenchsport": {
-        if (!((input as UnitInputMap["frenchsport"]) in FRENCH_SPORT)) {
+        if (!(FRENCH_SPORT.includes(input as UnitInputMap["frenchsport"] as FrenchSport))) {
           return { status: "fail", error: "Invalid French Sport grade" };
         }
         return {
@@ -332,7 +345,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "yds": {
-        if (!((input as UnitInputMap["yds"]) in YDS)) {
+        if (!(YDS.includes(input as UnitInputMap["yds"] as YDS))) {
           return { status: "fail", error: "Invalid YDS grade" };
         }
         return {

@@ -125,6 +125,9 @@ function getPlot({
     outputMeasure,
   });
 
+  const minYValue = myData ? myData.y - 1 : undefined;
+  const maxYValue = myData ? myData.y + 3 : undefined;
+
   for (const snapshot of snapshots) {
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
@@ -132,12 +135,22 @@ function getPlot({
       outputMeasure,
     });
 
-    if (dataPoint) {
-      data.push(dataPoint);
+    if (!dataPoint) {
+      continue;
     }
+
+    if (minYValue != undefined && dataPoint.y < minYValue) {
+      continue;
+    }
+
+    if (maxYValue != undefined && maxYValue < dataPoint.y) {
+      continue;
+    }
+
+    data.push(dataPoint);
   }
 
-  if (data.length < 100) {
+  if (data.length < 20) {
     return {
       style: "dotplot",
       data,

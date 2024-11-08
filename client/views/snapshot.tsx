@@ -254,7 +254,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "MEASURE_REQUEST_UPDATE",
               measureId: msg.measureId,
-              request: { status: "error", error: await response.text()},
+              request: { status: "error", error: await response.text() },
             });
           }
         },
@@ -294,12 +294,18 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
         {model.measureFilter.measures.map((measure) =>
           model.measureUpdates[measure.id] ? (
             <EditMeasureView
+            key={measure.id}
               measure={measure}
               dispatch={dispatch}
               model={model}
             />
           ) : (
-            <MeasureView measure={measure} dispatch={dispatch} model={model} />
+            <MeasureView
+              key={measure.id}
+              measure={measure}
+              dispatch={dispatch}
+              model={model}
+            />
           ),
         )}
       </div>

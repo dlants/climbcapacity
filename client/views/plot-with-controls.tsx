@@ -154,7 +154,7 @@ function updatePlot(model: Model): Result<Plot.Model> {
         };
       }
 
-      if (data.length < 100) {
+      if (data.length < 20) {
         return {
           status: "success",
           value: {
