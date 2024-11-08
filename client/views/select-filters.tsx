@@ -16,6 +16,7 @@ import {
   YDS,
 } from "../../iso/grade";
 import { assertUnreachable } from "../util/utils";
+import { MEASURES } from "../constants";
 
 export type Filter = immer.Immutable<{
   id: Identifier;
@@ -86,8 +87,14 @@ export function initModel({
       state: {
         state: "selected",
         measureId: measureId,
-        minInput: UnitInput.initModel(measureId, getMinInputValue(myValue as UnitValue)),
-        maxInput: UnitInput.initModel(measureId, getMaxInputValue(myValue as UnitValue)),
+        minInput: UnitInput.initModel(
+          measureId,
+          getMinInputValue(myValue as UnitValue),
+        ),
+        maxInput: UnitInput.initModel(
+          measureId,
+          getMaxInputValue(myValue as UnitValue),
+        ),
       },
     });
   }
@@ -256,23 +263,39 @@ export const update: Update<Msg, Model> = (msg, model) => {
         immer.produce(model, (draft) => {
           const id = getNextId(draft);
           const measureModel = MeasureSelectionBox.initModel(id);
-          draft.filters.push({
-            id,
-            state: immer.castDraft(
-              measureModel.state == "typing"
-                ? {
-                    state: "typing",
-                    query: measureModel.query,
-                    measures: measureModel.measures,
-                  }
-                : {
-                    state: "selected",
-                    measureId: measureModel.measureId,
-                    minInput: UnitInput.initModel(measureModel.measureId),
-                    maxInput: UnitInput.initModel(measureModel.measureId),
-                  },
-            ),
-          });
+          if (measureModel.state == "typing") {
+            draft.filters.push({
+              id,
+              state: immer.castDraft({
+                state: "typing",
+                query: measureModel.query,
+                measures: measureModel.measures,
+              }),
+            });
+          } else {
+            const spec = MEASURES.find(
+              (spec) => spec.id == measureModel.measureId,
+            );
+            if (!spec) {
+              throw new Error(`Unexpected measureId ${measureModel.measureId}`);
+            }
+
+            draft.filters.push({
+              id,
+              state: immer.castDraft({
+                state: "selected",
+                measureId: measureModel.measureId,
+                minInput: UnitInput.initModel(
+                  measureModel.measureId,
+                  spec.defaultMinValue,
+                ),
+                maxInput: UnitInput.initModel(
+                  measureModel.measureId,
+                  spec.defaultMaxValue,
+                ),
+              }),
+            });
+          }
           draft.filters = lodash.sortBy(draft.filters, (f) => f.id);
         }),
       ];
@@ -293,20 +316,33 @@ export const update: Update<Msg, Model> = (msg, model) => {
               msg.msg,
               castToSelectionModel(filter),
             );
-            filter.state = immer.castDraft(
-              newModel.state == "typing"
-                ? {
-                    state: "typing",
-                    query: newModel.query,
-                    measures: newModel.measures,
-                  }
-                : {
-                    state: "selected",
-                    measureId: newModel.measureId,
-                    minInput: UnitInput.initModel(newModel.measureId),
-                    maxInput: UnitInput.initModel(newModel.measureId),
-                  },
-            );
+            if (newModel.state == "typing") {
+              filter.state = immer.castDraft({
+                state: "typing",
+                query: newModel.query,
+                measures: newModel.measures,
+              });
+            } else {
+              const spec = MEASURES.find(
+                (spec) => spec.id == newModel.measureId,
+              );
+              if (!spec) {
+                throw new Error(`Unexpected measureId ${newModel.measureId}`);
+              }
+
+              filter.state = immer.castDraft({
+                state: "selected",
+                measureId: newModel.measureId,
+                minInput: UnitInput.initModel(
+                  newModel.measureId,
+                  spec.defaultMinValue,
+                ),
+                maxInput: UnitInput.initModel(
+                  newModel.measureId,
+                  spec.defaultMaxValue,
+                ),
+              });
+            }
           }
         }),
       ];

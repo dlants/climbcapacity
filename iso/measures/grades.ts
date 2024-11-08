@@ -1,3 +1,4 @@
+import { IRCRAGrade } from "../grade.js";
 import { MeasureId, MeasureSpec } from "../units.js";
 
 export const BOULDER_LOCATION = [
@@ -71,5 +72,7 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
       context.type == "sport"
         ? ["ircra", "yds", "frenchsport", "ewbank"]
         : ["ircra", "vermin", "font"],
+    defaultMinValue: {unit: 'ircra', value: 1 as IRCRAGrade},
+    defaultMaxValue: {unit: 'ircra', value: 33 as IRCRAGrade}
   };
 }

@@ -42,18 +42,24 @@ export const MEASURES: MeasureSpec[] = [
     name: "height",
     description: "Your height",
     units: ["m", "cm", "inches"],
+    defaultMinValue: {unit: 'm', value: 1.53},
+    defaultMaxValue: {unit: 'm', value: 1.85}
   },
   {
     id: "weight" as MeasureId,
     name: "weight",
     description: "Your weight",
     units: ["kg", "lb"],
+    defaultMinValue: {unit: 'kg', value: 39.7},
+    defaultMaxValue: {unit: 'kg', value: 115.5}
   },
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
+    defaultMinValue: {unit: 'sex-at-birth', value: 'female'},
+    defaultMaxValue: {unit: 'sex-at-birth', value: 'male'}
   },
   {
     id: "years-climbing" as MeasureId,
@@ -63,6 +69,8 @@ export const MEASURES: MeasureSpec[] = [
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
 `,
     units: ["year"],
+    defaultMinValue: {unit: 'year', value: 0},
+    defaultMaxValue: {unit: 'year', value: 15}
   },
   {
     id: "years-training" as MeasureId,
@@ -75,6 +83,8 @@ Examples that count as deliberate practice:
  - choosing one day a week to work on climbs of a specific style or difficulty level
 `,
     units: ["year"],
+    defaultMinValue: {unit: 'year', value: 0},
+    defaultMaxValue: {unit: 'year', value: 15}
   },
 ];
 
@@ -246,6 +256,8 @@ function edgePullups({
 
 If you need to reset your grip at the bottom that's ok, but you must control the descent. Avoid "jumping off" at the end of the pullup.`,
     units: ["count"],
+    defaultMinValue: {unit: 'count', value: 0},
+    defaultMaxValue: {unit: 'count', value: 10}
   };
 }
 

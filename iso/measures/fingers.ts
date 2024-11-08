@@ -47,6 +47,8 @@ So for example, if you weigh 70kg, and you removed 20kg, you would record 50kg.
 If you weigh 70kg, and you added 30kg, you'd record 100kg.
 `,
     units: ["kg", "lb"],
+    defaultMinValue: { unit: "kg", value: 10 },
+    defaultMaxValue: { unit: "kg", value: 100 },
   };
 }
 
@@ -73,6 +75,8 @@ Find a ${edgeSize}mm edge on a block pulling device, like a tension block. Using
 Record the maximum successful weight.
 `,
     units: ["kg", "lb"],
+    defaultMinValue: { unit: "kg", value: 10 },
+    defaultMaxValue: { unit: "kg", value: 100 },
   };
 }
 
@@ -95,6 +99,8 @@ Warm up thoroughly.
 Find the smallest edge you can hang your bodyweight for ${duration}s using a ${gripType}.
 `,
     units: ["mm"],
+    defaultMinValue: { unit: "mm", value: 4 },
+    defaultMaxValue: { unit: "mm", value: 20 },
   };
 }
 
@@ -112,5 +118,7 @@ export function synthesizeDurationMeasure({
     name: `${movement} ${edgeSize}mm ${gripType}(bodyweight)`,
     description: ``,
     units: ["second"],
+    defaultMinValue: { unit: "second", value: 10 },
+    defaultMaxValue: { unit: "second", value: 200 },
   };
 }

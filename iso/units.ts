@@ -38,6 +38,8 @@ export type MeasureSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
+  defaultMinValue: UnitValue;
+  defaultMaxValue: UnitValue;
 };
 
 export type MeasureValue = {

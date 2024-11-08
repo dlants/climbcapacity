@@ -30,6 +30,8 @@ export function synthesizeWeightedMovementMeasure(
 So for example, for a pullup if you weigh 70kg and you added 30kg, you'd record 100kg.
 `,
     units: ["kg", "lb"],
+    defaultMinValue: { unit: "kg", value: 0 },
+    defaultMaxValue: { unit: "kg", value: 100 },
   };
 }
 
@@ -46,6 +48,8 @@ export function synthesizeMaxRepMeasure({
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
+    defaultMinValue: { unit: "count", value: 0 },
+    defaultMaxValue: { unit: "count", value: 20 },
   };
 }
 
@@ -78,6 +82,8 @@ export function synthesizeWeightedUnilateralMovementMeasure({
 So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd record 40kg.
 `,
     units: ["kg", "lb"],
+    defaultMinValue: { unit: "kg", value: 0 },
+    defaultMaxValue: { unit: "kg", value: 100 },
   };
 }
 
@@ -100,6 +106,8 @@ export function synthesizeUnilateralMaxrepMeasure({
     name: `Unilateral ${movement} Max Reps ${dominantSide}`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
+    defaultMinValue: { unit: "count", value: 0 },
+    defaultMaxValue: { unit: "count", value: 20 },
   };
 }
 
@@ -122,10 +130,12 @@ export function synthesizeMaxDurationMeasure({
     name: `${movement} Max Duration`,
     description: ``,
     units: ["second"],
+    defaultMinValue: { unit: "second", value: 0 },
+    defaultMaxValue: { unit: "second", value: 120 },
   };
 }
 
-export const UNILATERAL_MAX_DURATION_MOVEMENT = ["plank"] as const;
+export const UNILATERAL_MAX_DURATION_MOVEMENT = ["sideplank"] as const;
 export type UnilateralMaxDurationMovement =
   (typeof UNILATERAL_MAX_DURATION_MOVEMENT)[number];
 
@@ -141,5 +151,7 @@ export function synthesizeUnilateralMaxDurationMeasure({
     name: `${movement} Max Duration ${dominantSide}`,
     description: ``,
     units: ["second"],
+    defaultMinValue: { unit: "second", value: 0 },
+    defaultMaxValue: { unit: "second", value: 120 },
   };
 }
