@@ -70,7 +70,7 @@ function generateFetchThunk(model: Model) {
     } else {
       dispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "error", error: response.statusText },
+        request: { status: "error", error: await response.text()},
       });
     }
   };
@@ -200,7 +200,12 @@ const viewMap: RequestStatusViewMap<
 > = {
   "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
   loading: () => <div>Fetching...</div>,
-  error: ({ error }) => <div>error when fetching data: {error}</div>,
+  error: ({ dispatch, error }) => (
+    <div>
+      <div>error when fetching data: {error}</div>
+      <FetchButton dispatch={dispatch} />
+    </div>
+  ),
   loaded: ({ response, dispatch }) => (
     <div>
       {response.snapshots.length} snapshots loaded.{" "}

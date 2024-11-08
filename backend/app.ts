@@ -150,6 +150,8 @@ async function run() {
         }
       }
 
+      assert.ok(Object.keys(query).length, 'Must provide non-empty query')
+
       return await snapshotModel.querySnapshots(query);
     }),
   );

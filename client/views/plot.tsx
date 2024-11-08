@@ -68,28 +68,62 @@ function generateTicks(unit: UnitType | undefined): Plot.ScaleOptions {
       };
     case "vermin":
       return {
-        ticks: VGRADE.map((d) => d + 0.5),
+        ticks: lodash.range(VGRADE.length),
         tickFormat: (d) => `V${Math.floor(d)}`,
       };
     case "font":
       return {
-        ticks: lodash.range(FONT.length).map((d) => d + 0.5),
+        ticks: lodash.range(FONT.length),
         tickFormat: (d) => FONT[Math.floor(d)],
       };
     case "frenchsport":
       return {
-        ticks: lodash.range(FRENCH_SPORT.length).map((d) => d + 0.5),
+        ticks: lodash.range(FRENCH_SPORT.length),
         tickFormat: (d) => FRENCH_SPORT[Math.floor(d)],
       };
     case "yds":
       return {
-        ticks: lodash.range(YDS.length).map((d) => d + 0.5),
+        ticks: lodash.range(YDS.length),
         tickFormat: (d) => YDS[Math.floor(d)],
       };
     case "ewbank":
       return {
-        ticks: lodash.range(EWBANK.length).map((d) => d + 0.5),
+        ticks: lodash.range(EWBANK.length),
         tickFormat: (d) => EWBANK[Math.floor(d)],
+      };
+    default:
+      assertUnreachable(unit);
+  }
+}
+
+function generateBinOptions(unit: UnitType | undefined): Plot.BinOptions {
+  if (!unit) {
+    return {};
+  }
+
+  switch (unit) {
+    case "second":
+    case "lb":
+    case "kg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inches":
+    case "sex-at-birth":
+    case "count":
+      return {};
+    case "year":
+      return {
+        thresholds: [0.5, 1.5, 2.5, 3.5, 6, 8, 10, 15],
+      };
+    case "vermin":
+    case "font":
+    case "frenchsport":
+    case "yds":
+    case "ewbank":
+    case "ircra":
+      return {
+        thresholds: lodash.range(0, 100).map((d) => d - 0.5),
       };
     default:
       assertUnreachable(unit);
@@ -107,7 +141,10 @@ export const view: View<never, Model> = ({ model }) => {
       case "histogram": {
         plot = Plot.plot({
           marks: [
-            Plot.rectY(model.data, { ...Plot.binX({ y: "count" }), tip: true }),
+            Plot.rectY(model.data, {
+              ...Plot.binX({ y: "count", ...generateBinOptions(model.xUnit) }),
+              tip: true,
+            }),
             ...(model.myData
               ? [
                   Plot.ruleX([model.myData], {
@@ -150,8 +187,14 @@ export const view: View<never, Model> = ({ model }) => {
             fill: "count",
           },
           {
-            x: "x",
-            y: "y",
+            x: {
+              value: "x",
+              ...generateBinOptions(model.xUnit),
+            },
+            y: {
+              value: "y",
+              ...generateBinOptions(model.yUnit),
+            },
           },
         );
         bin.tip = true;

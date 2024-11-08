@@ -59,7 +59,7 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
       } else {
         dispatch({
           type: "SNAPSHOT_RESPONSE",
-          request: { status: "error", error: response.statusText },
+          request: { status: "error", error: await response.text()},
         });
       }
     },

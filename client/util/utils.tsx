@@ -108,7 +108,7 @@ export function createRequestThunk<T, Body, MsgType extends string>({
     } else {
       dispatch({
         type: msgType,
-        request: { status: "error", error: response.statusText },
+        request: { status: "error", error: await response.text()},
       });
     }
   };

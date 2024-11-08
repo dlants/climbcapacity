@@ -59,7 +59,7 @@ async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
   } else {
     dispatch({
       type: "SNAPSHOT_RESPONSE",
-      request: { status: "error", error: response.statusText },
+      request: { status: "error", error: await response.text()},
     });
   }
 }
@@ -116,7 +116,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           } else {
             dispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
-              request: { status: "error", error: response.statusText },
+              request: { status: "error", error: await response.text()},
             });
           }
         },
@@ -167,7 +167,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
-              request: { status: "error", error: response.statusText },
+              request: { status: "error", error: await response.text()},
             });
           }
         },

@@ -49,7 +49,9 @@ export function initModel({
       method: "POST",
     });
     if (response.ok) {
-      const {snapshot} = (await response.json()) as {snapshot: Snapshot | undefined};
+      const { snapshot } = (await response.json()) as {
+        snapshot: Snapshot | undefined;
+      };
       dispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: {
@@ -60,7 +62,7 @@ export function initModel({
     } else {
       dispatch({
         type: "MY_SNAPSHOT_RESPONSE",
-        request: { status: "error", error: response.statusText },
+        request: { status: "error", error: await response.text()},
       });
     }
   };

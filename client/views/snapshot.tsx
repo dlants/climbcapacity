@@ -254,7 +254,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "MEASURE_REQUEST_UPDATE",
               measureId: msg.measureId,
-              request: { status: "error", error: response.statusText },
+              request: { status: "error", error: await response.text()},
             });
           }
         },

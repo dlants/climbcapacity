@@ -482,7 +482,7 @@ async function run() {
     const status = (await response.json()) as AuthStatus;
     auth = { status: "loaded", response: status };
   } else {
-    auth = { status: "error", error: response.statusText };
+    auth = { status: "error", error: await response.text()};
   }
 
   let initialModel: Model = {
