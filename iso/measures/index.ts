@@ -101,13 +101,13 @@ for (const measure of MEASURES) {
 }
 
 export const INPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  [
-    "height",
-    "weight",
-    "sex-at-birth",
-    "distance:armspan",
-    "distance:vertical-reach",
-  ].some((idPrefix) => m.id.startsWith(idPrefix)),
+  ["height", "weight", "sex-at-birth", "armspan", "standing-reach"].some(
+    (idPrefix) => m.id.startsWith(idPrefix),
+  ),
+);
+
+export const TIME_TRAINING_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
+  ["time-training:"].some((idPrefix) => m.id.startsWith(idPrefix)),
 );
 
 export const OUTPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
