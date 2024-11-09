@@ -68,26 +68,25 @@ const TIME_TRAINING_SQUAT: MeasureSpec = {
 };
 MEASURES.push(TIME_TRAINING_SQUAT);
 
-const TIME_TRAINING_ABS: MeasureSpec = {
-  id: `time-training:abs` as MeasureId,
-  name: `Time training abdominal movements (plank, veeup, hollow hold, etc...)`,
+const TIME_TRAINING_CORE_FRONTAL: MeasureSpec = {
+  id: `time-training:core:frontal` as MeasureId,
+  name: `Time training frontal core movements (plank, veeup, hollow hold, etc...)`,
   description: ``,
   units: ["year", "month"],
   defaultMinValue: { unit: "year", value: 0 },
   defaultMaxValue: { unit: "year", value: 5 },
 };
-MEASURES.push(TIME_TRAINING_ABS);
+MEASURES.push(TIME_TRAINING_CORE_FRONTAL);
 
-
-const TIME_TRAINING_OBLIQUES: MeasureSpec = {
-  id: `time-training:abs` as MeasureId,
-  name: `Time training oblique movements (sideplank, human flag, etc...)`,
+const TIME_TRAINING_CORE_SAGITTAL: MeasureSpec = {
+  id: `time-training:core:sagittal` as MeasureId,
+  name: `Time training sagittal core movements (sideplank, human flag, etc...)`,
   description: ``,
   units: ["year", "month"],
   defaultMinValue: { unit: "year", value: 0 },
   defaultMaxValue: { unit: "year", value: 5 },
 };
-MEASURES.push(TIME_TRAINING_OBLIQUES);
+MEASURES.push(TIME_TRAINING_CORE_SAGITTAL);
 
 const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
   {
@@ -98,18 +97,18 @@ const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
     bodyweightsquat: TIME_TRAINING_SQUAT.id,
     deadlift: TIME_TRAINING_HINGE.id,
     dumbellpress: TIME_TRAINING_PRESS.id,
-    frontlever: TIME_TRAINING_ABS.id,
-    hollowhold: TIME_TRAINING_ABS.id,
-    humanflag: TIME_TRAINING_OBLIQUES.id,
-    lsit: TIME_TRAINING_ABS.id,
+    frontlever: TIME_TRAINING_CORE_FRONTAL.id,
+    hollowhold: TIME_TRAINING_CORE_FRONTAL.id,
+    humanflag: TIME_TRAINING_CORE_SAGITTAL.id,
+    lsit: TIME_TRAINING_CORE_FRONTAL.id,
     overheadpress: TIME_TRAINING_PRESS.id,
     pistolsquat: TIME_TRAINING_SQUAT.id,
-    plank: TIME_TRAINING_ABS.id,
+    plank: TIME_TRAINING_CORE_FRONTAL.id,
     pullup: TIME_TRAINING_PULL.id,
     pushup: TIME_TRAINING_PRESS.id,
-    sideplank: TIME_TRAINING_OBLIQUES.id,
+    sideplank: TIME_TRAINING_CORE_SAGITTAL.id,
     standingrow: TIME_TRAINING_PULL.id,
-    veeup: TIME_TRAINING_ABS.id,
+    veeup: TIME_TRAINING_CORE_FRONTAL.id,
   };
 
 for (const movement of [
