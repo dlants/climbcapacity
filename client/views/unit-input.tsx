@@ -380,23 +380,6 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   }
 }
 
-// export const view: View<Msg, Model> = ({
-//   model,
-//   dispatch,
-// }: {
-//   model: Model;
-//   dispatch: (msg: Msg) => void;
-// }): JSX.Element => {
-//   return (
-//     <span>
-//       <UnitInput model={model} dispatch={dispatch} />
-//       {model.possibleUnits.length > 1 && (
-//         <UnitToggle model={model} dispatch={dispatch} />
-//       )}
-//     </span>
-//   );
-// };
-
 export const UnitToggle = ({
   model,
   dispatch,

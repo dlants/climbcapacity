@@ -228,7 +228,7 @@ export const view: View<never, Model> = ({ model }) => {
                 ),
             )
             .selectAll("text")
-            .attr("transform", "rotate(25)")
+            .attr("transform", "rotate(12.5)")
             .style("text-anchor", "start");
 
         const yAxis = (
@@ -246,7 +246,7 @@ export const view: View<never, Model> = ({ model }) => {
           .attr("x", width / 2)
           .attr("y", height - 5)
           .attr("text-anchor", "middle")
-          .text(model.xLabel);
+          .text(model.xLabel + (model.xUnit ? ` (${model.xUnit})` : ""));
 
         svg
           .append("text")
@@ -254,7 +254,37 @@ export const view: View<never, Model> = ({ model }) => {
           .attr("x", -height / 2)
           .attr("y", 15)
           .attr("text-anchor", "middle")
-          .text("Count");
+          .text("Frequency");
+
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("position", "absolute")
+          .style("visibility", "hidden")
+          .style("background-color", "white")
+          .style("border", "1px solid black")
+          .style("padding", "5px")
+          .style("border-radius", "5px");
+
+        svg
+          .selectAll("rect")
+          .on("mouseover", (event, data) => {
+            const d = data as Bin | undefined;
+            if (!d) {
+              return;
+            }
+            const range = tickFormat(bins.indexOf(d), model.xUnit, thresholds);
+
+            tooltip
+              .style("visibility", "visible")
+              .html(`Count: ${d.length}<br/>` + `${model.xLabel}: ${range}`)
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 10 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+          });
 
         break;
       }
@@ -466,7 +496,10 @@ export const view: View<never, Model> = ({ model }) => {
         svg
           .selectAll("rect")
           .on("mouseover", (event, data) => {
-            const d = data as Bin2D;
+            const d = data as Bin2D | undefined;
+            if (!d) {
+              return;
+            }
             const xRange = tickFormat(d.col, model.xUnit, xThresholds);
             const yRange = tickFormat(d.row, model.yUnit, yThresholds);
 
