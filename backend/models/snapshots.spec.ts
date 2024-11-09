@@ -60,9 +60,8 @@ describe("SnapshotsModel", () => {
     const updateCount = await model.updateMeasure({
       snapshotId: snapshot._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 70, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 70, unit: "kg" },
       },
     });
 
@@ -82,9 +81,8 @@ describe("SnapshotsModel", () => {
     const updateCount = await model.updateMeasure({
       snapshotId: snapshot._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 70, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 70, unit: "kg" },
       },
     });
 
@@ -110,18 +108,16 @@ describe("SnapshotsModel", () => {
     await model.updateMeasure({
       snapshotId: snapshot._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 70, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 70, unit: "kg" },
       },
     });
 
     await model.updateMeasure({
       snapshotId: snapshot._id,
       userId: mockUser.id,
-      measure: {
-        id: "height" as MeasureId,
-        value: { value: 1.7, unit: "m" },
+      updates: {
+        ["height" as MeasureId]: { value: 1.7, unit: "m" },
       },
     });
 
@@ -129,9 +125,8 @@ describe("SnapshotsModel", () => {
     await model.updateMeasure({
       snapshotId: snapshot._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 75, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 75, unit: "kg" },
       },
     });
 
@@ -160,27 +155,22 @@ describe("SnapshotsModel", () => {
       await model.updateMeasure({
         snapshotId: snapshot1._id,
         userId: mockUser.id,
-        measure: {
-          id: "weight" as MeasureId,
-          value: { value: 70, unit: "kg" },
-        },
+        updates: { ["weight" as MeasureId]: { value: 70, unit: "kg" } },
       });
 
       await model.updateMeasure({
         snapshotId: snapshot2._id,
         userId: mockUser.id,
-        measure: {
-          id: "weight" as MeasureId,
-          value: { value: 80, unit: "kg" },
+        updates: {
+          ["weight" as MeasureId]: { value: 80, unit: "kg" },
         },
       });
 
       await model.updateMeasure({
         snapshotId: snapshot3._id,
         userId: mockUser.id,
-        measure: {
-          id: "weight" as MeasureId,
-          value: { value: 90, unit: "kg" },
+        updates: {
+          ["weight" as MeasureId]: { value: 90, unit: "kg" },
         },
       });
 
@@ -209,18 +199,16 @@ describe("SnapshotsModel", () => {
       await model.updateMeasure({
         snapshotId: snapshot1._id,
         userId: mockUser.id,
-        measure: {
-          id: "weight" as MeasureId,
-          value: { value: 154, unit: "lb" },
+        updates: {
+          ["weight" as MeasureId]: { value: 154, unit: "lb" },
         },
       });
 
       await model.updateMeasure({
         snapshotId: snapshot2._id,
         userId: mockUser.id,
-        measure: {
-          id: "weight" as MeasureId,
-          value: { value: -5, unit: "kg" },
+        updates: {
+          ["weight" as MeasureId]: { value: -5, unit: "kg" },
         },
       });
 
@@ -251,18 +239,16 @@ describe("SnapshotsModel", () => {
     await model.updateMeasure({
       snapshotId: snapshot1._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 70, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 70, unit: "kg" },
       },
     });
 
     await model.updateMeasure({
       snapshotId: snapshot1._id,
       userId: mockUser.id,
-      measure: {
-        id: "height" as MeasureId,
-        value: { value: 180, unit: "cm" },
+      updates: {
+        ["height" as MeasureId]: { value: 180, unit: "cm" },
       },
     });
 
@@ -272,17 +258,15 @@ describe("SnapshotsModel", () => {
     await model.updateMeasure({
       snapshotId: snapshot2._id,
       userId: mockUser.id,
-      measure: {
-        id: "weight" as MeasureId,
-        value: { value: 70, unit: "kg" },
+      updates: {
+        ["weight" as MeasureId]: { value: 70, unit: "kg" },
       },
     });
     await model.updateMeasure({
       snapshotId: snapshot2._id,
       userId: mockUser.id,
-      measure: {
-        id: "height" as MeasureId,
-        value: { value: 170, unit: "cm" }, // Different height
+      updates: {
+        ["height" as MeasureId]: { value: 170, unit: "cm" }, // Different height
       },
     });
 
