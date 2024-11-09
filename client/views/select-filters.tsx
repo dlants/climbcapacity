@@ -105,6 +105,7 @@ function getMinInputValue(value: UnitValue) {
   switch (value.unit) {
     case "second":
     case "year":
+    case "month":
     case "lb":
     case "kg":
     case "m":
@@ -161,6 +162,7 @@ function getMaxInputValue(value: UnitValue) {
   switch (value.unit) {
     case "second":
     case "year":
+    case "month":
     case "lb":
     case "kg":
     case "m":

@@ -9,7 +9,7 @@ export const WEIGHTED_MOVEMENT = [
 ] as const;
 export type WeightedMovement = (typeof WEIGHTED_MOVEMENT)[number];
 
-export const STAT = ["1rm", "2rm", "5rm"] as const;
+export const STAT = ["2rm"] as const;
 export type Stat = (typeof STAT)[number];
 
 export type WeightedMovementMeasureType = {

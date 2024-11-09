@@ -58,6 +58,8 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value;
     case "year":
       return unit.value;
+    case "month":
+      return unit.value / 12;
     case "lb":
       return unit.value * 0.45359237;
     case "kg":
@@ -107,6 +109,8 @@ export function convertToTargetUnit(
       return normalizedValue;
     case "year":
       return normalizedValue;
+    case "month":
+      return normalizedValue * 12;
     case "lb":
       return normalizedValue / 0.45359237;
     case "kg":
@@ -149,6 +153,10 @@ export type UnitValue =
     }
   | {
       unit: "year";
+      value: number;
+    }
+  | {
+      unit: "month";
       value: number;
     }
   | {
@@ -216,6 +224,8 @@ export function unitValueToString(unitValue: UnitValue): string {
       return `${unitValue.value}s`;
     case "year":
       return `${unitValue.value}y`;
+    case "month":
+      return `${unitValue.value}mo`;
     case "lb":
       return `${unitValue.value}lb`;
     case "kg":

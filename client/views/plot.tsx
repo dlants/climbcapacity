@@ -58,6 +58,7 @@ function tickFormat(
     case "m":
     case "cm":
     case "mm":
+    case "month":
     case "year":
     case "count": {
       const min = thresholds[binIndex];
@@ -127,6 +128,7 @@ function generateBinThresholds(
     case "cm":
     case "mm":
     case "inches":
+    case "month":
     case "sex-at-birth":
     case "count":
       return defaultThresholds;

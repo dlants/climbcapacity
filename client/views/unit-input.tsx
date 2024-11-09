@@ -25,6 +25,7 @@ import { Update } from "../tea";
 
 type UnitInputMap = {
   second: string;
+  month: string;
   year: string;
   lb: string;
   kg: string;
@@ -87,6 +88,7 @@ export function initModel(
 function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
   switch (unit) {
     case "second":
+    case "month":
     case "year":
     case "lb":
     case "kg":
@@ -143,6 +145,7 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
 function getInitialInput(initialValue: UnitValue): UnitInput {
   switch (initialValue.unit) {
     case "second":
+    case "month":
     case "year":
     case "lb":
     case "kg":
@@ -231,6 +234,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   try {
     switch (unit) {
       case "second":
+      case "month":
       case "year":
       case "lb":
       case "kg":
@@ -447,6 +451,19 @@ const InnerUnitInput = ({
           <span>s</span>
         </span>
       );
+
+    case "month":
+      return (
+        <span>
+          <input
+            type="number"
+            value={model.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          />
+          <span>mo</span>
+        </span>
+      );
+
 
     case "year":
       return (
