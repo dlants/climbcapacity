@@ -70,7 +70,7 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value / 100;
     case "mm":
       return unit.value / 1000;
-    case "inches":
+    case "inch":
       return unit.value * 0.0254;
     case "vermin":
       return vGradeToIrcra(unit.value);
@@ -121,7 +121,7 @@ export function convertToTargetUnit(
       return normalizedValue * 100;
     case "mm":
       return normalizedValue * 1000;
-    case "inches":
+    case "inch":
       return normalizedValue / 0.0254;
     case "vermin":
       return VGRADE.indexOf(ircraToVGrade(normalizedValue as IRCRAGrade));
@@ -180,7 +180,7 @@ export type UnitValue =
       value: number;
     }
   | {
-      unit: "inches";
+      unit: "inch";
       value: number;
     }
   | {
@@ -236,7 +236,7 @@ export function unitValueToString(unitValue: UnitValue): string {
       return `${unitValue.value}cm`;
     case "mm":
       return `${unitValue.value}mm`;
-    case "inches":
+    case "inch":
       return `${unitValue.value}"`;
     case "vermin":
       return `V${unitValue.value}`;

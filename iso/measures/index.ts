@@ -41,7 +41,7 @@ export const MEASURES: MeasureSpec[] = [
     id: "height" as MeasureId,
     name: "height",
     description: "Your height",
-    units: ["m", "cm", "inches"],
+    units: ["m", "cm", "inch"],
     defaultMinValue: {unit: 'm', value: 1.53},
     defaultMaxValue: {unit: 'm', value: 1.85}
   },

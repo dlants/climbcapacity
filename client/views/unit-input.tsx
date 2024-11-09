@@ -32,7 +32,7 @@ type UnitInputMap = {
   m: string;
   cm: string;
   mm: string;
-  inches: {
+  inch: {
     feet: string;
     inches: string;
   };
@@ -95,7 +95,7 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
     case "m":
     case "cm":
     case "mm":
-    case "inches":
+    case "inch":
     case "count":
       return {
         unit,
@@ -160,7 +160,7 @@ function getInitialInput(initialValue: UnitValue): UnitInput {
     case "ircra":
     case "count":
       return initialValue.value.toString() || "";
-    case "inches":
+    case "inch":
       const { feet, inches } = inchesToFeetAndInches(initialValue.value || 0);
       return { feet: feet.toString(), inches: inches.toString() };
     case "sex-at-birth":
@@ -264,9 +264,9 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           value: { unit, value: num } as Extract<UnitValue, { unit: UnitName }>,
         };
       }
-      case "inches": {
+      case "inch": {
         const { feet: feetStr, inches: inchesStr } =
-          input as UnitInputMap["inches"];
+          input as UnitInputMap["inch"];
         const feet = Number(feetStr);
         const inches = Number(inchesStr);
 
@@ -560,7 +560,7 @@ const InnerUnitInput = ({
         </span>
       );
 
-    case "inches": {
+    case "inch": {
       const value = model.unitInput as { feet: string; inches: string };
       return (
         <span>

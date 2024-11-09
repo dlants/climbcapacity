@@ -111,7 +111,7 @@ function getMinInputValue(value: UnitValue) {
     case "m":
     case "cm":
     case "mm":
-    case "inches":
+    case "inch":
       return {
         ...value,
         value: value.value * 0.9,
@@ -168,7 +168,7 @@ function getMaxInputValue(value: UnitValue) {
     case "m":
     case "cm":
     case "mm":
-    case "inches":
+    case "inch":
       return {
         ...value,
         value: value.value * 1.1,

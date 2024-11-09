@@ -19,7 +19,7 @@ export function synthesizeDistanceMeasure({
     id: `distance:${movement}` as MeasureId,
     name: `${movement}`,
     description: ``,
-    units: ["m", "cm", "inches"],
+    units: ["m", "cm", "inch"],
     defaultMinValue: { unit: "m", value: 0 },
     defaultMaxValue: { unit: "m", value: 2 },
   };
@@ -44,7 +44,7 @@ export function synthesizeUnilateralDistanceMeasure({
     id: `distance:${movement}:${dominantSide}` as MeasureId,
     name: `${movement} ${dominantSide}`,
     description: ``,
-    units: ["m", "cm", "inches"],
+    units: ["m", "cm", "inch"],
     defaultMinValue: { unit: "m", value: 0 },
     defaultMaxValue: { unit: "m", value: 2 },
   };

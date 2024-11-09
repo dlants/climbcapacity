@@ -65,7 +65,7 @@ function tickFormat(
       const max = thresholds[binIndex + 1];
       return max ? `${fmt.format(min)}-${fmt.format(max)}` : ``;
     }
-    case "inches": {
+    case "inch": {
       const min = thresholds[binIndex];
       const max = thresholds[binIndex + 1];
       return max ? `${displayInches(min)}-${displayInches(max)}` : ``;
@@ -127,7 +127,7 @@ function generateBinThresholds(
     case "m":
     case "cm":
     case "mm":
-    case "inches":
+    case "inch":
     case "month":
     case "sex-at-birth":
     case "count":

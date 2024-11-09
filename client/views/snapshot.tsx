@@ -294,7 +294,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
         {model.measureFilter.measures.map((measure) =>
           model.measureUpdates[measure.id] ? (
             <EditMeasureView
-            key={measure.id}
+              key={measure.id}
               measure={measure}
               dispatch={dispatch}
               model={model}
