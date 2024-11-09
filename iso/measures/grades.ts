@@ -76,3 +76,31 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
     defaultMaxValue: {unit: 'ircra', value: 33 as IRCRAGrade}
   };
 }
+
+export const MEASURES: MeasureSpec[] = []
+
+for (const stat of STAT) {
+  for (const location of SPORT_LOCATION) {
+    MEASURES.push(
+      synthesizeGradeMeasure({
+        type: "grade",
+        context: { type: "sport", location },
+        stat,
+      }),
+    );
+  }
+}
+
+for (const stat of STAT) {
+  for (const location of BOULDER_LOCATION) {
+    MEASURES.push(
+      synthesizeGradeMeasure({
+        type: "grade",
+        context: { type: "boulder", location },
+        stat,
+      }),
+    );
+  }
+}
+
+

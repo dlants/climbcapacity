@@ -1,40 +1,8 @@
-import {
-  Grip,
-  GRIPS,
-  synthesizeBlockPullMeasure,
-  synthesizeDurationMeasure,
-  synthesizeMaxHangMeasure,
-  synthesizeMinEdgeMeasure,
-} from "./fingers.js";
-import {
-  BOULDER_LOCATION,
-  SPORT_LOCATION,
-  STAT as GRADE_STAT,
-  synthesizeGradeMeasure,
-} from "./grades.js";
-import {
-  DOMINANT_SIDE,
-  MAX_DURATION_MOVEMENT,
-  MAX_REP_MOVEMENT,
-  MAX_REP_UNITLATERAL_MOVEMENT,
-  synthesizeMaxDurationMeasure,
-  synthesizeMaxRepMeasure,
-  synthesizeUnilateralMaxDurationMeasure,
-  synthesizeUnilateralMaxrepMeasure,
-  synthesizeWeightedMovementMeasure,
-  synthesizeWeightedUnilateralMovementMeasure,
-  UNILATERAL_MAX_DURATION_MOVEMENT,
-  WEIGHTED_MOVEMENT,
-  STAT as WEIGHTED_MOVEMENT_STAT,
-  WEIGHTED_UNILATERAL_MOVEMENT,
-} from "./movement.js";
+import { MEASURES as FINGER_MEASURES } from "./fingers.js";
+import { MEASURES as GRADE_MEASURES } from "./grades.js";
+import { MEASURES as MOVEMENT_MEASURES } from "./movement.js";
 import { MeasureId, MeasureSpec } from "../units.js";
-import {
-  DISTANCE_MOVEMENT,
-  synthesizeDistanceMeasure,
-  synthesizeUnilateralDistanceMeasure,
-  UNILATERAL_DISTANCE_MOVEMENT,
-} from "./distance.js";
+import { MEASURES as DISTANCE_MEASURES } from "./distance.js";
 
 export const MEASURES: MeasureSpec[] = [
   {
@@ -42,39 +10,57 @@ export const MEASURES: MeasureSpec[] = [
     name: "height",
     description: "Your height",
     units: ["m", "cm", "inch"],
-    defaultMinValue: {unit: 'm', value: 1.53},
-    defaultMaxValue: {unit: 'm', value: 1.85}
+    defaultMinValue: { unit: "m", value: 1.53 },
+    defaultMaxValue: { unit: "m", value: 1.85 },
   },
+  {
+    id: "armspan" as MeasureId,
+    name: "Arm span",
+    description: "Your arm span, fingertip to fingertip",
+    units: ["m", "cm", "inch"],
+    defaultMinValue: { unit: "m", value: 1.53 },
+    defaultMaxValue: { unit: "m", value: 1.85 },
+  },
+  {
+    id: "standing-reach" as MeasureId,
+    name: "vertical reach",
+    description:
+      "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
+    units: ["m", "cm", "inch"],
+    defaultMinValue: { unit: "m", value: 2.2 },
+    defaultMaxValue: { unit: "m", value: 2.8 },
+  },
+
   {
     id: "weight" as MeasureId,
     name: "weight",
     description: "Your weight",
     units: ["kg", "lb"],
-    defaultMinValue: {unit: 'kg', value: 39.7},
-    defaultMaxValue: {unit: 'kg', value: 115.5}
+    defaultMinValue: { unit: "kg", value: 39.7 },
+    defaultMaxValue: { unit: "kg", value: 115.5 },
   },
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
-    defaultMinValue: {unit: 'sex-at-birth', value: 'female'},
-    defaultMaxValue: {unit: 'sex-at-birth', value: 'male'}
+    defaultMinValue: { unit: "sex-at-birth", value: "female" },
+    defaultMaxValue: { unit: "sex-at-birth", value: "male" },
   },
   {
-    id: "years-climbing" as MeasureId,
+    id: "time-climbing" as MeasureId,
     name: "How long have you been climbing?",
     description: `Count time during which you've been going at least once a week.
 
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
 `,
-    units: ["year"],
-    defaultMinValue: {unit: 'year', value: 0},
-    defaultMaxValue: {unit: 'year', value: 15}
+    units: ["year", "month"],
+    defaultMinValue: { unit: "year", value: 0 },
+    defaultMaxValue: { unit: "year", value: 15 },
   },
   {
-    id: "years-training" as MeasureId,
-    name: "How long have you been training?",
+    id: "time-training" as MeasureId,
+    name: "How long have you been training for climbing?",
     description: `Count time during which you've been engaging in consistent deliberate practice at least once a week.
 
 Examples that count as deliberate practice:
@@ -82,190 +68,29 @@ Examples that count as deliberate practice:
  - doing supplemental stretching or strength training exercise
  - choosing one day a week to work on climbs of a specific style or difficulty level
 `,
-    units: ["year"],
-    defaultMinValue: {unit: 'year', value: 0},
-    defaultMaxValue: {unit: 'year', value: 15}
+    units: ["year", "month"],
+    defaultMinValue: { unit: "year", value: 0 },
+    defaultMaxValue: { unit: "year", value: 15 },
   },
+  {
+    id: "time-strength-training" as MeasureId,
+    name: "Time spent strength training.",
+    description: `Count time during which you were consistently practicing strength training at least once a week.
+
+Examples of activities that count as strength training practice:
+- doing movements with weights (dumbells, kettlebells, barbells) like presses, lifts, etc.
+- doing movements at high intensity (1-10RM).
+- overloading the movements, so progressing the load over time.
+`,
+    units: ["year", "month"],
+    defaultMinValue: { unit: "year", value: 0 },
+    defaultMaxValue: { unit: "year", value: 15 },
+  },
+  ...DISTANCE_MEASURES,
+  ...MOVEMENT_MEASURES,
+  ...FINGER_MEASURES,
+  ...GRADE_MEASURES,
 ];
-
-for (const movement of DISTANCE_MOVEMENT) {
-  MEASURES.push(
-    synthesizeDistanceMeasure({
-      movement,
-    }),
-  );
-}
-
-for (const movement of UNILATERAL_DISTANCE_MOVEMENT) {
-  for (const dominantSide of DOMINANT_SIDE) {
-    MEASURES.push(
-      synthesizeUnilateralDistanceMeasure({
-        movement,
-        dominantSide,
-      }),
-    );
-  }
-}
-
-for (const movement of WEIGHTED_MOVEMENT) {
-  for (const stat of WEIGHTED_MOVEMENT_STAT) {
-    MEASURES.push(
-      synthesizeWeightedMovementMeasure({
-        type: "weighted",
-        movement,
-        stat,
-      }),
-    );
-  }
-}
-
-for (const movement of WEIGHTED_UNILATERAL_MOVEMENT) {
-  for (const stat of WEIGHTED_MOVEMENT_STAT) {
-    for (const dominantSide of DOMINANT_SIDE) {
-      MEASURES.push(
-        synthesizeWeightedUnilateralMovementMeasure({
-          movement,
-          stat,
-          dominantSide,
-        }),
-      );
-    }
-  }
-}
-
-for (const movement of MAX_REP_MOVEMENT) {
-  MEASURES.push(
-    synthesizeMaxRepMeasure({
-      movement,
-    }),
-  );
-}
-
-for (const movement of MAX_REP_UNITLATERAL_MOVEMENT) {
-  for (const dominantSide of DOMINANT_SIDE) {
-    MEASURES.push(
-      synthesizeUnilateralMaxrepMeasure({
-        movement,
-        dominantSide,
-      }),
-    );
-  }
-}
-
-for (const movement of MAX_DURATION_MOVEMENT) {
-  MEASURES.push(
-    synthesizeMaxDurationMeasure({
-      movement,
-    }),
-  );
-}
-
-for (const movement of UNILATERAL_MAX_DURATION_MOVEMENT) {
-  for (const dominantSide of DOMINANT_SIDE) {
-    MEASURES.push(
-      synthesizeUnilateralMaxDurationMeasure({ movement, dominantSide }),
-    );
-  }
-}
-
-for (const edgeSize of [18, 20]) {
-  for (const duration of [7, 10]) {
-    for (const gripType of GRIPS) {
-      MEASURES.push(
-        synthesizeMaxHangMeasure({
-          type: "maxhang",
-          edgeSize,
-          duration,
-          gripType,
-        }),
-      );
-    }
-  }
-}
-
-for (const edgeSize of [18, 20]) {
-  for (const gripType of GRIPS) {
-    MEASURES.push(
-      synthesizeDurationMeasure({
-        movement: "7-3repeaters",
-        edgeSize,
-        gripType,
-      }),
-    );
-  }
-}
-
-for (const edgeSize of [18, 20]) {
-  for (const duration of [7, 10]) {
-    for (const gripType of GRIPS) {
-      MEASURES.push(
-        synthesizeBlockPullMeasure({
-          type: "blockpull",
-          edgeSize,
-          duration,
-          gripType,
-        }),
-      );
-    }
-  }
-}
-
-for (const duration of [7, 10]) {
-  for (const gripType of GRIPS) {
-    MEASURES.push(
-      synthesizeMinEdgeMeasure({ type: "min-edge", duration, gripType }),
-    );
-  }
-}
-
-for (const stat of GRADE_STAT) {
-  for (const location of SPORT_LOCATION) {
-    MEASURES.push(
-      synthesizeGradeMeasure({
-        type: "grade",
-        context: { type: "sport", location },
-        stat,
-      }),
-    );
-  }
-}
-
-for (const stat of GRADE_STAT) {
-  for (const location of BOULDER_LOCATION) {
-    MEASURES.push(
-      synthesizeGradeMeasure({
-        type: "grade",
-        context: { type: "boulder", location },
-        stat,
-      }),
-    );
-  }
-}
-
-function edgePullups({
-  edgeSize,
-  gripType,
-}: {
-  edgeSize: number;
-  gripType: Grip;
-}): MeasureSpec {
-  return {
-    id: `max-pullups:${edgeSize}:${gripType}` as MeasureId,
-    name: `Max pullups on a ${edgeSize}mm edge using ${gripType} grip type`,
-    description: `On a ${edgeSize}mm edge, using a ${gripType} grip, do as many pullups as you can.
-
-If you need to reset your grip at the bottom that's ok, but you must control the descent. Avoid "jumping off" at the end of the pullup.`,
-    units: ["count"],
-    defaultMinValue: {unit: 'count', value: 0},
-    defaultMaxValue: {unit: 'count', value: 10}
-  };
-}
-
-for (const edgeSize of [5, 6, 7, 8, 9, 10, 14, 18, 20] as const) {
-  for (const gripType of GRIPS) {
-    MEASURES.push(edgePullups({ edgeSize, gripType }));
-  }
-}
 
 export const MEASURE_MAP: {
   [measureId: MeasureId]: MeasureSpec;
@@ -276,13 +101,15 @@ for (const measure of MEASURES) {
 }
 
 export const INPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["height", "weight", "sex-at-birth", "distance:armspan", "distance:vertical-reach"].some(
-    (idPrefix) => m.id.startsWith(idPrefix),
-  ),
+  [
+    "height",
+    "weight",
+    "sex-at-birth",
+    "distance:armspan",
+    "distance:vertical-reach",
+  ].some((idPrefix) => m.id.startsWith(idPrefix)),
 );
 
 export const OUTPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["grade:"].some(
-    (idPrefix) => m.id.startsWith(idPrefix),
-  ),
+  ["grade:"].some((idPrefix) => m.id.startsWith(idPrefix)),
 );

@@ -33,6 +33,7 @@ export type NormedMeasure = { measureId: MeasureId; value: number };
 
 export type MeasureSpec = {
   id: MeasureId;
+  trainingMeasureId?: MeasureId;
   name: string;
   description: string;
   /** units[0] is the default
@@ -52,6 +53,16 @@ export function encodeMeasureValue(measure: MeasureValue): NormedMeasure {
   return { measureId: measure.id, value: standardValue };
 }
 
+/** Convert from the weight at given reps to a 1rm. So for exmaple from a 5rm weight to a 1rm weight
+ */
+function brzycki(weight: number, reps: number) {
+  return weight * (36 / (37 - reps));
+}
+
+function inverse_brzycki(weight1rm: number, targetReps: number) {
+  return weight1rm * ((37 - targetReps) / 36);
+}
+
 export function convertToStandardUnit(unit: UnitValue): number {
   switch (unit.unit) {
     case "second":
@@ -62,8 +73,20 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value / 12;
     case "lb":
       return unit.value * 0.45359237;
+    case "1RMlb":
+      return unit.value * 0.45359237;
+    case "2RMlb":
+      return brzycki(unit.value * 0.45359237, 2);
+    case "5RMlb":
+      return brzycki(unit.value * 0.45359237, 5);
     case "kg":
       return unit.value;
+    case "1RMkg":
+      return unit.value;
+    case "2RMkg":
+      return brzycki(unit.value, 2);
+    case "5RMkg":
+      return brzycki(unit.value, 5);
     case "m":
       return unit.value;
     case "cm":
@@ -113,8 +136,20 @@ export function convertToTargetUnit(
       return normalizedValue * 12;
     case "lb":
       return normalizedValue / 0.45359237;
+    case "1RMlb":
+      return normalizedValue / 0.45359237;
+    case "2RMlb":
+      return inverse_brzycki(normalizedValue, 2) / 0.45359237;
+    case "5RMlb":
+      return inverse_brzycki(normalizedValue, 5) / 0.45359237;
     case "kg":
       return normalizedValue;
+    case "1RMkg":
+      return normalizedValue;
+    case "2RMkg":
+      return inverse_brzycki(normalizedValue, 2);
+    case "5RMkg":
+      return inverse_brzycki(normalizedValue, 5);
     case "m":
       return normalizedValue;
     case "cm":
@@ -164,7 +199,31 @@ export type UnitValue =
       value: number;
     }
   | {
+      unit: "1RMlb";
+      value: number;
+    }
+  | {
+      unit: "2RMlb";
+      value: number;
+    }
+  | {
+      unit: "5RMlb";
+      value: number;
+    }
+  | {
       unit: "kg";
+      value: number;
+    }
+  | {
+      unit: "1RMkg";
+      value: number;
+    }
+  | {
+      unit: "2RMkg";
+      value: number;
+    }
+  | {
+      unit: "5RMkg";
       value: number;
     }
   | {
@@ -227,9 +286,15 @@ export function unitValueToString(unitValue: UnitValue): string {
     case "month":
       return `${unitValue.value}mo`;
     case "lb":
-      return `${unitValue.value}lb`;
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+      return `${unitValue.value}${unitValue.unit}`;
     case "kg":
-      return `${unitValue.value}kg`;
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+      return `${unitValue.value}${unitValue.unit}`;
     case "m":
       return `${unitValue.value}m`;
     case "cm":

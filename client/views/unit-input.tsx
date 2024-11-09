@@ -28,7 +28,13 @@ type UnitInputMap = {
   month: string;
   year: string;
   lb: string;
+  ["1RMlb"]: string;
+  ["2RMlb"]: string;
+  ["5RMlb"]: string;
   kg: string;
+  ["1RMkg"]: string;
+  ["2RMkg"]: string;
+  ["5RMkg"]: string;
   m: string;
   cm: string;
   mm: string;
@@ -91,7 +97,13 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
     case "month":
     case "year":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
@@ -148,7 +160,13 @@ function getInitialInput(initialValue: UnitValue): UnitInput {
     case "month":
     case "year":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
@@ -237,7 +255,13 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       case "month":
       case "year":
       case "lb":
+      case "1RMlb":
+      case "2RMlb":
+      case "5RMlb":
       case "kg":
+      case "1RMkg":
+      case "2RMkg":
+      case "5RMkg":
       case "m":
       case "cm":
       case "mm":
@@ -337,7 +361,11 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "frenchsport": {
-        if (!(FRENCH_SPORT.includes(input as UnitInputMap["frenchsport"] as FrenchSport))) {
+        if (
+          !FRENCH_SPORT.includes(
+            input as UnitInputMap["frenchsport"] as FrenchSport,
+          )
+        ) {
           return { status: "fail", error: "Invalid French Sport grade" };
         }
         return {
@@ -349,7 +377,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         };
       }
       case "yds": {
-        if (!(YDS.includes(input as UnitInputMap["yds"] as YDS))) {
+        if (!YDS.includes(input as UnitInputMap["yds"] as YDS)) {
           return { status: "fail", error: "Invalid YDS grade" };
         }
         return {
@@ -441,102 +469,19 @@ const InnerUnitInput = ({
 
   switch (model.selectedUnit) {
     case "second":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>s</span>
-        </span>
-      );
-
     case "month":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>mo</span>
-        </span>
-      );
-
-
     case "year":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>yr</span>
-        </span>
-      );
-
     case "lb":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>lb</span>
-        </span>
-      );
-
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>kg</span>
-        </span>
-      );
-
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>m</span>
-        </span>
-      );
-
     case "cm":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>cm</span>
-        </span>
-      );
-
     case "mm":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>mm</span>
-        </span>
-      );
-
     case "count":
       return (
         <span>
@@ -545,18 +490,7 @@ const InnerUnitInput = ({
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
-        </span>
-      );
-
-    case "ircra":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>IRCRA</span>
+          <span>{model.selectedUnit}</span>
         </span>
       );
 
@@ -589,6 +523,18 @@ const InnerUnitInput = ({
           <option value="female">Female</option>
           <option value="male">Male</option>
         </select>
+      );
+
+    case "ircra":
+      return (
+        <span>
+          <input
+            type="number"
+            value={model.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          />
+          <span>IRCRA</span>
+        </span>
       );
 
     case "vermin":

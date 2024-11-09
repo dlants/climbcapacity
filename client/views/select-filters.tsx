@@ -107,7 +107,13 @@ function getMinInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
@@ -164,7 +170,13 @@ function getMaxInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":

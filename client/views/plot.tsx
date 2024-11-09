@@ -54,7 +54,13 @@ function tickFormat(
   switch (unit) {
     case "second":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
@@ -123,7 +129,13 @@ function generateBinThresholds(
   switch (unit) {
     case "second":
     case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
     case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
