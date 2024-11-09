@@ -56,3 +56,10 @@ export type FilterQuery = { [measureId: MeasureId]: Filter };
 export type AuthStatus =
   | { status: "logged out" }
   | { status: "logged in"; user: { id: string } };
+
+export type SnapshotUpdateRequest = {
+  snapshotId: SnapshotId;
+  updates: {
+    [measureId: MeasureId]: UnitValue;
+  };
+};

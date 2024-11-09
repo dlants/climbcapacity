@@ -4,7 +4,6 @@ import { User } from "lucia";
 import {
   encodeMeasureValue,
   MeasureId,
-  MeasureValue,
   NormedMeasure,
   UnitValue,
 } from "../../iso/units.js";
@@ -56,37 +55,49 @@ export class SnapshotsModel {
   async updateMeasure({
     snapshotId,
     userId,
-    measure,
+    updates,
   }: {
     snapshotId: mongodb.ObjectId;
     userId: string;
-    measure: MeasureValue;
+    updates: {
+      [measureId: MeasureId]: UnitValue;
+    };
   }) {
-    const res = await this.snapshotCollection.findOneAndUpdate(
-      { _id: snapshotId, userId },
-      [
-        {
-          $set: {
-            [`measures.${measure.id}`]: measure.value,
-            normedMeasures: {
-              $concatArrays: [
-                {
-                  $filter: {
-                    input: "$normedMeasures",
-                    cond: {
-                      $ne: ["$$this.measureId", measure.id],
+    for (const measureIdStr in updates) {
+      const measureId = measureIdStr as MeasureId;
+      const value = updates[measureId];
+
+      await this.snapshotCollection.findOneAndUpdate(
+        { _id: snapshotId, userId },
+        [
+          {
+            $set: {
+              [`measures.${measureId}`]: value,
+              normedMeasures: {
+                $concatArrays: [
+                  {
+                    $filter: {
+                      input: "$normedMeasures",
+                      cond: {
+                        $ne: ["$$this.measureId", measureId],
+                      },
                     },
                   },
-                },
-                [encodeMeasureValue(measure)],
-              ],
-            } as unknown as NormedMeasure[],
+                  [
+                    encodeMeasureValue({
+                      id: measureId,
+                      value,
+                    }),
+                  ],
+                ],
+              } as unknown as NormedMeasure[],
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
+    }
 
-    return res != null;
+    return true
   }
 
   async deleteSnapshot({
@@ -103,8 +114,12 @@ export class SnapshotsModel {
     return result.deletedCount;
   }
 
-  async getSnapshot(snapshotId: mongodb.ObjectId): Promise<SnapshotDoc | undefined> {
-    return (await this.snapshotCollection.findOne({ _id: snapshotId })) || undefined;
+  async getSnapshot(
+    snapshotId: mongodb.ObjectId,
+  ): Promise<SnapshotDoc | undefined> {
+    return (
+      (await this.snapshotCollection.findOne({ _id: snapshotId })) || undefined
+    );
   }
 
   async getUsersSnapshots(userId: string): Promise<SnapshotDoc[]> {
@@ -112,8 +127,12 @@ export class SnapshotsModel {
   }
 
   async getLatestSnapshot(userId: string): Promise<SnapshotDoc | undefined> {
-    return (await this.snapshotCollection
-      .findOne({ userId }, { sort: { createdAt: "desc" } })) || undefined;
+    return (
+      (await this.snapshotCollection.findOne(
+        { userId },
+        { sort: { createdAt: "desc" } },
+      )) || undefined
+    );
   }
 
   async querySnapshots(query: MeasurementQuery): Promise<SnapshotDoc[]> {

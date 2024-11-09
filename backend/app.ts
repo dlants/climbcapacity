@@ -7,7 +7,7 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
-import { FilterQuery, SnapshotId } from "../iso/protocol.js";
+import { FilterQuery, SnapshotId, SnapshotUpdateRequest } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { HandledError } from "./utils.js";
 import { MeasureId, UnitValue } from "../iso/units.js";
@@ -169,34 +169,34 @@ async function run() {
     "/api/snapshots/update",
     apiRoute(async (req, res) => {
       const user = await auth.assertLoggedIn(req, res);
-      const snapshotId: string = req.body.snapshotId;
+      const body = req.body as SnapshotUpdateRequest;
+
       assert.equal(
-        typeof snapshotId,
+        typeof body.snapshotId,
         "string",
         "Must provide snapshotId of type string",
       );
-      const measureId: MeasureId = req.body.measureId;
       assert.equal(
-        typeof measureId,
-        "string",
-        "Must provide measureId which is a string",
+        typeof body.updates,
+        "object",
+        "Must provide updates which is a string",
       );
 
-      assert.ok(
-        MEASURES.findIndex((m) => m.id == measureId) > -1,
-        `Measure had invalid id ${measureId}`,
-      );
+      for (const measureId in body.updates) {
+        assert.ok(
+          MEASURES.findIndex((m) => m.id == measureId) > -1,
+          `Measure had invalid id ${measureId}`,
+        );
 
-      const value: UnitValue = req.body.value;
-      assert.equal(typeof value, "object", "Must provide valid measure value");
+        const update = body.updates[measureId as MeasureId];
+        const value: UnitValue = update;
+        assert.equal(typeof value, "object", "Must provide valid measure value");
+      }
 
       const updated = await snapshotModel.updateMeasure({
         userId: user.id,
-        snapshotId: new mongodb.ObjectId(snapshotId),
-        measure: {
-          id: measureId,
-          value,
-        },
+        snapshotId: new mongodb.ObjectId(body.snapshotId),
+        updates: body.updates
       });
 
       if (updated) {
