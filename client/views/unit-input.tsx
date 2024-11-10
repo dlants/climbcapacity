@@ -17,6 +17,8 @@ import {
   MeasureId,
   UnitType,
   UnitValue,
+  convertToStandardUnit,
+  convertToTargetUnit,
   inchesToFeetAndInches,
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
@@ -79,6 +81,7 @@ export function initModel(
 
   const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
   const initialInput = getInitialInput(
+    defaultUnit,
     initialValue || getDefaultValueFromUnitType(defaultUnit),
   );
 
@@ -154,8 +157,16 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
   }
 }
 
-function getInitialInput(initialValue: UnitValue): UnitInput {
-  switch (initialValue.unit) {
+function getInitialInput(
+  targetUnit: UnitType,
+  initialValue: UnitValue,
+): UnitInput {
+  const targetValue =
+    initialValue.unit == targetUnit
+      ? initialValue.value
+      : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit);
+
+  switch (targetUnit) {
     case "second":
     case "month":
     case "year":
@@ -177,14 +188,16 @@ function getInitialInput(initialValue: UnitValue): UnitInput {
     case "ewbank":
     case "ircra":
     case "count":
-      return initialValue.value.toString() || "";
+      return targetValue.toString() || "";
     case "inch":
-      const { feet, inches } = inchesToFeetAndInches(initialValue.value || 0);
+      const { feet, inches } = inchesToFeetAndInches(
+        (targetValue as number) || 0,
+      );
       return { feet: feet.toString(), inches: inches.toString() };
     case "sex-at-birth":
-      return initialValue.value;
+      return targetValue as "female" | "male";
     default:
-      assertUnreachable(initialValue);
+      assertUnreachable(targetUnit);
   }
 }
 
@@ -231,11 +244,15 @@ export const update: Update<Msg, Model> = (msg, model) => {
           `${msg.unit} is not a possible unit for measure ${model.measureId}`,
         );
       }
+
       return [
         produce(model, (draft) => {
           draft.selectedUnit = msg.unit;
           draft.unitInput = getInitialInput(
-            getDefaultValueFromUnitType(msg.unit),
+            msg.unit,
+            draft.parseResult.status == "success"
+              ? draft.parseResult.value
+              : getDefaultValueFromUnitType(msg.unit),
           );
         }),
       ];
