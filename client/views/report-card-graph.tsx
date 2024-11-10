@@ -3,18 +3,39 @@ import { HydratedSnapshot } from "../types";
 import * as Plot from "./plot";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
-import { INPUT_MEASURES, OUTPUT_MEASURES } from "../../iso/measures";
-import { extractDataPoint, MeasureId, UnitType } from "../../iso/units";
+import {
+  INPUT_MEASURES,
+  OUTPUT_MEASURES,
+  TIME_TRAINING_MEASURES,
+} from "../../iso/measures";
+import {
+  convertToStandardUnit,
+  extractDataPoint,
+  MeasureId,
+  UnitType,
+  UnitValue,
+} from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { Result } from "../../iso/utils";
+import { filterOutliersX } from "../util/stats";
+import { MEASURE_MAP } from "../constants";
 const { produce } = immer;
 
 const INPUT_MEASURE_IDS = INPUT_MEASURES.map((s) => s.id);
+const TIME_TRAINING_MEASURE_IDS = TIME_TRAINING_MEASURES.map((s) => s.id);
 const OUTPUT_MEASURE_IDS = OUTPUT_MEASURES.map((s) => s.id);
 
-type PlotId = string & { __brand: "PlotId" };
-
-type PlotModel = { id: PlotId; model: Plot.Model };
+type PlotModel = {
+  inputMeasure: {
+    id: MeasureId;
+    unit: UnitType;
+  };
+  timeTrainingMeasure?: {
+    id: MeasureId;
+    filter: boolean;
+  };
+  model: Plot.Model;
+};
 
 type MeasureWithUnit = {
   id: MeasureId;
@@ -29,10 +50,15 @@ export type Model = immer.Immutable<{
   plots: PlotModel[];
 }>;
 
-export type Msg = {
-  type: "SELECT_OUTPUT_MEASURE";
-  measureId: MeasureId;
-};
+export type Msg =
+  | {
+      type: "SELECT_OUTPUT_MEASURE";
+      measureId: MeasureId;
+    }
+  | {
+      type: "TOGGLE_TRAINING_FILTER";
+      measureId: MeasureId;
+    };
 
 export function initModel({
   mySnapshot,
@@ -84,7 +110,8 @@ function getPlots(model: Model) {
     if (
       !(
         INPUT_MEASURE_IDS.includes(id as MeasureId) ||
-        OUTPUT_MEASURE_IDS.includes(id as MeasureId)
+        OUTPUT_MEASURE_IDS.includes(id as MeasureId) ||
+        TIME_TRAINING_MEASURE_IDS.includes(id as MeasureId)
       )
     ) {
       otherMeasures.push({
@@ -95,11 +122,17 @@ function getPlots(model: Model) {
   }
 
   const plots: PlotModel[] = [];
-  for (const inputMeasure of otherMeasures) {
+  for (const otherMeasure of otherMeasures) {
+    const measureSpec = MEASURE_MAP[otherMeasure.id];
+
     plots.push({
-      id: inputMeasure.id as unknown as PlotId,
+      inputMeasure: otherMeasure,
+      timeTrainingMeasure: measureSpec.trainingMeasureId && {
+        id: measureSpec.trainingMeasureId,
+        filter: false,
+      },
       model: getPlot({
-        inputMeasure,
+        inputMeasure: otherMeasure,
         outputMeasure: model.outputMeasure,
         snapshots: model.snapshots,
         mySnapshot: model.mySnapshot,
@@ -113,10 +146,12 @@ function getPlots(model: Model) {
 function getPlot({
   inputMeasure,
   outputMeasure,
+  filterByTrainingMeasureId,
   snapshots,
   mySnapshot,
 }: {
   inputMeasure: MeasureWithUnit;
+  filterByTrainingMeasureId?: MeasureId;
   outputMeasure: MeasureWithUnit;
   snapshots: readonly HydratedSnapshot[];
   mySnapshot: HydratedSnapshot;
@@ -133,6 +168,15 @@ function getPlot({
   const maxYValue = myData ? myData.y + 3 : undefined;
 
   for (const snapshot of snapshots) {
+    if (filterByTrainingMeasureId) {
+      const trainingTimeUnitValue =
+        snapshot.measures[filterByTrainingMeasureId];
+      const trainingTimeYears = trainingTimeUnitValue
+        ? convertToStandardUnit(trainingTimeUnitValue as UnitValue)
+        : 0;
+      if (trainingTimeYears >= 1) continue;
+    }
+
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
       inputMeasure,
@@ -167,7 +211,7 @@ function getPlot({
   } else {
     return {
       style: "heatmap",
-      data,
+      data: filterOutliersX(data),
       myData,
       xLabel: inputMeasure.id,
       xUnit: inputMeasure.unit,
@@ -192,8 +236,32 @@ export function update(msg: Msg, model: Model): [Model] {
           draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
+    case "TOGGLE_TRAINING_FILTER":
+      return [
+        produce(model, (draft) => {
+          const plot = draft.plots.find(
+            (p) => p.inputMeasure.id === msg.measureId,
+          );
+
+          if (plot?.timeTrainingMeasure) {
+            plot.timeTrainingMeasure.filter = !plot.timeTrainingMeasure.filter;
+            plot.model = immer.castDraft(
+              getPlot({
+                inputMeasure: plot.inputMeasure,
+                filterByTrainingMeasureId: plot.timeTrainingMeasure.filter
+                  ? plot.timeTrainingMeasure.id
+                  : undefined,
+                outputMeasure: draft.outputMeasure,
+                snapshots: draft.snapshots,
+                mySnapshot: draft.mySnapshot,
+              }),
+            );
+          }
+        }),
+      ];
+
     default:
-      assertUnreachable(msg.type);
+      assertUnreachable(msg);
   }
 }
 
@@ -206,6 +274,7 @@ export function view({
 }) {
   return (
     <div>
+      Output Measure:
       <select
         value={model.outputMeasure.id}
         onChange={(e) =>
@@ -221,12 +290,44 @@ export function view({
           </option>
         ))}
       </select>
-
       {model.plots.map((plot) => (
-        <div key={plot.id}>
-          <Plot.view model={plot.model} dispatch={dispatch} />
-        </div>
+        <PlotWithTrainingControls
+          key={plot.inputMeasure.id}
+          plot={plot}
+          dispatch={dispatch}
+        />
       ))}
+    </div>
+  );
+}
+
+function PlotWithTrainingControls({
+  plot,
+  dispatch,
+}: {
+  plot: PlotModel;
+  dispatch: Dispatch<Msg>;
+}) {
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
+    >
+      {plot.timeTrainingMeasure && (
+        <label>
+          <input
+            type="checkbox"
+            checked={plot.timeTrainingMeasure.filter}
+            onChange={() =>
+              dispatch({
+                type: "TOGGLE_TRAINING_FILTER",
+                measureId: plot.inputMeasure.id,
+              })
+            }
+          />
+          Exclude people who trained this specific measure for over a year
+        </label>
+      )}
+      <Plot.view model={plot.model} dispatch={dispatch} />
     </div>
   );
 }

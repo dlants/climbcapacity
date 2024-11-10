@@ -548,7 +548,7 @@ export const view: View<never, Model> = ({ model }) => {
       className="plot-container"
       ref={containerRef}
       width="600"
-      height="600"
+      height="400"
     ></svg>
   );
 };
