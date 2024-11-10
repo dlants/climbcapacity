@@ -501,7 +501,7 @@ async function run() {
   const app = createApp<Model, Msg, "router">({
     initialModel,
     update,
-    view,
+    View: view,
     sub: {
       subscriptions: () => [{ id: "router" }],
       subscriptionManager,

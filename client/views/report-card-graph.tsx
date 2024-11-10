@@ -6,6 +6,7 @@ import { Dispatch } from "../tea";
 import { INPUT_MEASURES, OUTPUT_MEASURES } from "../../iso/measures";
 import { extractDataPoint, MeasureId, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
+import { Result } from "../../iso/utils";
 const { produce } = immer;
 
 const INPUT_MEASURE_IDS = INPUT_MEASURES.map((s) => s.id);
@@ -39,7 +40,7 @@ export function initModel({
 }: {
   mySnapshot: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
-}): Model {
+}): Result<Model> {
   const outputMeasures: MeasureWithUnit[] = [];
   for (const id in mySnapshot.measures) {
     const measureId = id as MeasureId;
@@ -52,7 +53,10 @@ export function initModel({
   }
 
   if (outputMeasures.length == 0) {
-    throw new Error(`No output measures found.`);
+    return {
+      status: "fail",
+      error: `No output measures found. Try adding some grade data to your snapshot.`,
+    };
   }
   const outputMeasure = outputMeasures[0];
 
@@ -69,7 +73,7 @@ export function initModel({
     },
   );
 
-  return model;
+  return { status: "success", value: model };
 }
 
 function getPlots(model: Model) {

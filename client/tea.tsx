@@ -28,15 +28,25 @@ export type SubscriptionManager<SubscriptionType extends string, Msg> = {
   };
 };
 
+type AppState<Model> =
+  | {
+      status: "running";
+      model: Model;
+    }
+  | {
+      status: "error";
+      error: string;
+    };
+
 export function createApp<Model, Msg, SubscriptionType extends string>({
   initialModel,
   update,
-  view,
+  View,
   sub,
 }: {
   initialModel: Model;
   update: Update<Msg, Model>;
-  view: View<Msg, Model>;
+  View: View<Msg, Model>;
   sub?: {
     subscriptions: (model: Model) => Subscription<SubscriptionType>[];
     subscriptionManager: SubscriptionManager<SubscriptionType, Msg>;
@@ -47,36 +57,47 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
   };
 
   function App() {
-    const [model, setModel] = React.useState(initialModel);
+    const [appState, setModel] = React.useState<AppState<Model>>({
+      status: "running",
+      model: initialModel,
+    });
+
     const subsRef = React.useRef<{
       [id: string]: Subscription<SubscriptionType>;
     }>({});
 
-    const dispatch = useCallback(
-      (msg: Msg) => {
-        setModel(currentModel => {
-          const [nextModel, thunk] = update(msg, currentModel);
+    const dispatch = useCallback((msg: Msg) => {
+      setModel((currentState) => {
+        if (currentState.status == "error") {
+          return currentState;
+        }
+
+        try {
+          const [nextModel, thunk] = update(msg, currentState.model);
 
           if (thunk) {
             // purposefully do not await
             thunk(dispatch);
           }
 
-          return nextModel
-        });
-
-      },
-      [],
-    );
+          return { status: "running", model: nextModel };
+        } catch (e) {
+          console.error(e);
+          return { status: "error", error: (e as Error).message };
+        }
+      });
+    }, []);
 
     dispatchRef.current = dispatch;
 
     React.useEffect(() => {
       if (!sub) return;
+      if (appState.status != "running") return;
+
       const subscriptionManager = sub.subscriptionManager;
       const currentSubscriptions = subsRef.current;
 
-      const nextSubs = sub.subscriptions(model);
+      const nextSubs = sub.subscriptions(appState.model);
       const nextSubsMap: { [id: string]: Subscription<SubscriptionType> } = {};
 
       // Add new subs
@@ -97,9 +118,17 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
       });
 
       return () => {};
-    }, [model]);
+    }, [appState]);
 
-    return view({ model, dispatch });
+    return (
+      <div>
+        {appState.status == "running" ? (
+          <View model={appState.model} dispatch={dispatch} />
+        ) : (
+          <div>Error: {appState.error}</div>
+        )}
+      </div>
+    );
   }
 
   return {

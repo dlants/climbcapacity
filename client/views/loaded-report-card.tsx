@@ -70,7 +70,7 @@ function generateFetchThunk(model: Model) {
     } else {
       dispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "error", error: await response.text()},
+        request: { status: "error", error: await response.text() },
       });
     }
   };
@@ -110,17 +110,24 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            const reportCardModel = ReportCardGraph.initModel({
+            const initModelResult = ReportCardGraph.initModel({
               snapshots: msg.request.response,
               mySnapshot: draft.mySnapshot,
             });
-            draft.dataRequest = {
-              status: "loaded",
-              response: {
-                snapshots: msg.request.response,
-                reportCardModel: immer.castDraft(reportCardModel),
-              },
-            };
+            if (initModelResult.status == "success") {
+              draft.dataRequest = {
+                status: "loaded",
+                response: {
+                  snapshots: msg.request.response,
+                  reportCardModel: immer.castDraft(initModelResult.value),
+                },
+              };
+            } else {
+              draft.dataRequest = {
+                status: "error",
+                error: initModelResult.error,
+              };
+            }
             return;
           default:
             assertUnreachable(msg.request);
@@ -202,7 +209,7 @@ const viewMap: RequestStatusViewMap<
   loading: () => <div>Fetching...</div>,
   error: ({ dispatch, error }) => (
     <div>
-      <div>error when fetching data: {error}</div>
+      <div>Error: {error}</div>
       <FetchButton dispatch={dispatch} />
     </div>
   ),
