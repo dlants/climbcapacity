@@ -108,7 +108,7 @@ export function createRequestThunk<T, Body, MsgType extends string>({
     } else {
       dispatch({
         type: msgType,
-        request: { status: "error", error: await response.text()},
+        request: { status: "error", error: await response.text() },
       });
     }
   };
@@ -120,10 +120,38 @@ export type ExtractFromDisjointUnion<
   V extends T[K],
 > = T extends { [key in K]: V } ? T : never;
 
-export function filterMeasures(measures: MeasureSpec[], query: string) {
-  return measures.filter(
-    (m) =>
-      m.id.toLowerCase().includes(query.toLowerCase()) ||
-      m.name.toLowerCase().includes(query.toLowerCase()),
-  );
+export function filterMeasures(
+  measures: MeasureSpec[],
+  query: string,
+): MeasureSpec[] {
+  const queryTerms = query
+    .toLowerCase()
+    .split(" ")
+    .filter((t) => t.length > 0);
+  if (queryTerms.length === 0) return measures;
+
+  return measures.filter((measure) => {
+    const measureNameLower = measure.name.toLowerCase();
+    const measureIdLower = measure.id.toLowerCase();
+    return queryTerms.every(
+      (term) =>
+        isSubsequence(term, measureNameLower) ||
+        isSubsequence(term, measureIdLower),
+    );
+  });
+}
+
+function isSubsequence(query: string, str: string): boolean {
+  let i = 0;
+  let j = 0;
+  while (i < str.length && j < query.length) {
+    if (str[i] === query[j]) {
+      i++;
+      j++;
+    } else {
+      i++;
+    }
+  }
+
+  return j === query.length;
 }

@@ -399,8 +399,6 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
             );
         }
       })()}
-
-      <pre>{JSON.stringify(model.snapshot, null, 2)}</pre>
     </div>
   );
 };
