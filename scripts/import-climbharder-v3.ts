@@ -97,7 +97,7 @@ table.slice(1).forEach((row, idx) => {
   }
 
   if (!isNaN(climbingAge)) {
-    addMeasure("years-climbing" as MeasureId, {
+    addMeasure("time-climbing" as MeasureId, {
       unit: "year",
       value: climbingAge,
     });

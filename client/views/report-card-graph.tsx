@@ -173,8 +173,8 @@ function getPlot({
         snapshot.measures[filterByTrainingMeasureId];
       const trainingTimeYears = trainingTimeUnitValue
         ? convertToStandardUnit(trainingTimeUnitValue as UnitValue)
-        : 0;
-      if (trainingTimeYears >= 1) continue;
+        : NaN;
+      if (trainingTimeYears >= 0.5) continue;
     }
 
     const dataPoint = extractDataPoint({
@@ -324,7 +324,7 @@ function PlotWithTrainingControls({
               })
             }
           />
-          Exclude people who trained this specific measure for over a year
+          Exclude people who did training similar to this measure for over 6 months
         </label>
       )}
       <Plot.view model={plot.model} dispatch={dispatch} />
