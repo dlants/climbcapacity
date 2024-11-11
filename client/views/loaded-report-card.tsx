@@ -9,7 +9,7 @@ import {
   RequestStatusView,
   RequestStatusViewMap,
 } from "../util/utils";
-import { FilterQuery } from "../../iso/protocol";
+import { FilterQuery, MeasureStats } from "../../iso/protocol";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
 import * as ReportCardGraph from "./report-card-graph";
@@ -79,11 +79,14 @@ function generateFetchThunk(model: Model) {
 export function initModel({
   userId,
   mySnapshot,
+  measureStats,
 }: {
   userId: string;
+  measureStats: MeasureStats;
   mySnapshot: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   const filtersModel = SelectFilters.initModel({
+    measureStats,
     myMeasures: lodash.pick(
       mySnapshot.measures,
       INPUT_MEASURES.map((m) => m.id),

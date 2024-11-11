@@ -11,10 +11,12 @@ import {
 import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
 import { hydrateSnapshot } from "../util/snapshot";
+import { MeasureStats } from "../../iso/protocol";
 const produce = immer.produce;
 
 export type Model = {
   userId: string;
+  measureStats: MeasureStats;
   mySnapshotRequest: RequestStatus<
     | {
         state: "no-snapshot";
@@ -38,8 +40,10 @@ export type Msg =
 
 export function initModel({
   userId,
+  measureStats,
 }: {
   userId: string;
+  measureStats: MeasureStats;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   const mySnapshotRequest: RequestStatus<Snapshot> = {
     status: "loading",
@@ -62,7 +66,7 @@ export function initModel({
     } else {
       dispatch({
         type: "MY_SNAPSHOT_RESPONSE",
-        request: { status: "error", error: await response.text()},
+        request: { status: "error", error: await response.text() },
       });
     }
   };
@@ -70,6 +74,7 @@ export function initModel({
   return [
     {
       userId,
+      measureStats,
       mySnapshotRequest,
     },
     fetchSnapshotThunk,
@@ -101,6 +106,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             ];
           } else {
             const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
+              measureStats: model.measureStats,
               userId: model.userId,
               mySnapshot: msg.request.response,
             });

@@ -9,7 +9,7 @@ import {
   RequestStatusView,
   RequestStatusViewMap,
 } from "../util/utils";
-import { FilterQuery } from "../../iso/protocol";
+import { FilterQuery, MeasureStats } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
@@ -72,7 +72,7 @@ function generateFetchThunk(model: Model) {
     } else {
       dispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "error", error: await response.text()},
+        request: { status: "error", error: await response.text() },
       });
     }
   };
@@ -80,8 +80,10 @@ function generateFetchThunk(model: Model) {
 
 export function initModel({
   userId,
+  measureStats,
 }: {
   userId: string | undefined;
+  measureStats: MeasureStats;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   let mySnapshotRequest: RequestStatus<Snapshot> = { status: "not-sent" };
   let fetchSnapshotThunk;
@@ -107,7 +109,7 @@ export function initModel({
       } else {
         dispatch({
           type: "MY_SNAPSHOT_RESPONSE",
-          request: { status: "error", error: await response.text()},
+          request: { status: "error", error: await response.text() },
         });
       }
     };
@@ -115,7 +117,10 @@ export function initModel({
 
   return [
     {
-      filtersModel: SelectFilters.initModel({ myMeasures: {} }),
+      filtersModel: SelectFilters.initModel({
+        measureStats,
+        myMeasures: {},
+      }),
       userId,
       query: {},
       dataRequest: { status: "not-sent" },

@@ -17,6 +17,7 @@ import {
 } from "../../iso/grade";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
+import { MeasureStats } from "../../iso/protocol";
 
 export type Filter = immer.Immutable<{
   id: Identifier;
@@ -42,21 +43,28 @@ export type FilterMapping = {
 };
 
 export type Model = immer.Immutable<{
+  measureStats: MeasureStats;
   filters: Filter[];
 }>;
 
-function castToSelectionModel(
-  filter: immer.Immutable<Filter>,
-): MeasureSelectionBox.Model {
+function castToSelectionModel({
+  filter,
+  measureStats,
+}: {
+  filter: immer.Immutable<Filter>;
+  measureStats: MeasureStats;
+}): MeasureSelectionBox.Model {
   return filter.state.state == "typing"
     ? {
         id: filter.id,
         state: "typing",
+        measureStats,
         query: filter.state.query,
         measures: filter.state.measures,
       }
     : {
         id: filter.id,
+        measureStats,
         state: "selected",
         measureId: filter.state.measureId,
       };
@@ -75,8 +83,10 @@ export type Msg =
 
 export function initModel({
   myMeasures,
+  measureStats,
 }: {
   myMeasures: Snapshot["measures"];
+  measureStats: MeasureStats;
 }): Model {
   const filters: Filter[] = [];
   for (const measureIdStr in myMeasures) {
@@ -98,7 +108,7 @@ export function initModel({
       },
     });
   }
-  return { filters };
+  return { measureStats, filters };
 }
 
 function getMinInputValue(value: UnitValue) {
@@ -252,7 +262,7 @@ function nextChar(char: string) {
   return String.fromCharCode(char.charCodeAt(0) + 1);
 }
 
-function getNextId(model: Model): Identifier {
+function getNextId(model: Pick<Model, "filters">): Identifier {
   const ids = new Set<string>(model.filters.map((m) => m.id));
   let id = "a";
 
@@ -276,7 +286,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         immer.produce(model, (draft) => {
           const id = getNextId(draft);
-          const measureModel = MeasureSelectionBox.initModel(id);
+          const measureModel = MeasureSelectionBox.initModel({
+            measureStats: model.measureStats,
+            id,
+          });
           if (measureModel.state == "typing") {
             draft.filters.push({
               id,
@@ -328,7 +341,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
           if (filter) {
             const [newModel] = MeasureSelectionBox.update(
               msg.msg,
-              castToSelectionModel(filter),
+              castToSelectionModel({
+                filter,
+                measureStats: model.measureStats,
+              }),
             );
             if (newModel.state == "typing") {
               filter.state = immer.castDraft({
@@ -397,7 +413,12 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
       {model.filters.map((filter) => (
-        <FilterView key={filter.id} filter={filter} dispatch={dispatch} />
+        <FilterView
+          key={filter.id}
+          filter={filter}
+          dispatch={dispatch}
+          model={model}
+        />
       ))}
       <button onClick={() => dispatch({ type: "ADD_FILTER" })}>
         Add Filter
@@ -407,9 +428,11 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
 };
 
 const FilterView = ({
+  model,
   filter,
   dispatch,
 }: {
+  model: Model;
   filter: Filter;
   dispatch: Dispatch<Msg>;
 }) => {
@@ -425,7 +448,10 @@ const FilterView = ({
     >
       <strong>[{filter.id}]</strong>{" "}
       <MeasureSelectionBox.view
-        model={castToSelectionModel(filter)}
+        model={castToSelectionModel({
+          filter,
+          measureStats: model.measureStats,
+        })}
         dispatch={(msg) =>
           dispatch({ type: "MEASURE_SELECTOR_MSG", id: filter.id, msg })
         }

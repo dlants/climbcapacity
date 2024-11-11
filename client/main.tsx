@@ -144,6 +144,7 @@ const navigate: Update<Msg, Model> = (msg, model) => {
       if (user) {
         const [reportCardModel, reportCardThunk] = ReportCardPage.initModel({
           userId: user.id,
+          measureStats: model.measureStats,
         });
         return [
           produce(model, (draft) => {
@@ -197,6 +198,7 @@ const navigate: Update<Msg, Model> = (msg, model) => {
             model.auth.response.status == "logged in" &&
             model.auth.response.user.id) ||
           undefined,
+        measureStats: model.measureStats,
       });
       return [
         produce(model, (draft) => {

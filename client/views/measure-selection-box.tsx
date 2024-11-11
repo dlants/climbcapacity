@@ -4,16 +4,19 @@ import { Update, View } from "../tea";
 import { MEASURES } from "../constants";
 import { assertUnreachable, filterMeasures } from "../util/utils";
 import { MeasureId, MeasureSpec } from "../../iso/units";
+import { MeasureStats } from "../../iso/protocol";
 
 export type Model = immer.Immutable<
   | {
       id: string;
+      measureStats: MeasureStats;
       state: "typing";
       query: string;
       measures: MeasureSpec[];
     }
   | {
       id: string;
+      measureStats: MeasureStats;
       state: "selected";
       measureId: MeasureId;
     }
@@ -29,9 +32,16 @@ export type Msg =
       measureId: MeasureId;
     };
 
-export function initModel(id: string): Model {
+export function initModel({
+  id,
+  measureStats,
+}: {
+  id: string;
+  measureStats: MeasureStats;
+}): Model {
   return {
     id,
+    measureStats,
     state: "typing",
     query: "",
     measures: [],
@@ -44,6 +54,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         {
           id: model.id,
+          measureStats: model.measureStats,
           state: "typing",
           query: msg.query,
           measures: filterMeasures(MEASURES, msg.query),
@@ -54,6 +65,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         {
           id: model.id,
+          measureStats: model.measureStats,
           state: "selected",
           measureId: msg.measureId,
         },
@@ -84,7 +96,8 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                 dispatch({ type: "SELECT_MEASURE", measureId: measure.id })
               }
             >
-              {measure.id}
+              {measure.id}({model.measureStats.stats[measure.id] || 0}{" "}
+              snapshots)
             </li>
           ))}
         </ul>
