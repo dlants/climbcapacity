@@ -344,6 +344,7 @@ function PlotWithControls({
     <div
       style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
     >
+      <h1>{plot.inputMeasure.id}</h1>
       <SelectFilters.view
         model={plot.filterModel}
         dispatch={(msg) => {
