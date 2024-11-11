@@ -55,7 +55,7 @@ export class MagicLink {
     const loginUrl = `${this.BASE_URL}/api/login?code=${code}`;
 
     await this.resend.emails.send({
-      from: "Your App <onboarding@resend.dev>",
+      from: `ClimbingData <noreply@${this.BASE_URL}>`,
       to: email,
       subject: `Login to ${this.BASE_URL}`,
       html: `

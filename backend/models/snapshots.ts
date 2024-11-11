@@ -7,7 +7,6 @@ import {
   NormedMeasure,
   UnitValue,
 } from "../../iso/units.js";
-import { HandledError } from "../utils.js";
 
 export type SnapshotDoc = {
   _id: mongodb.ObjectId;

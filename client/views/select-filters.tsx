@@ -18,6 +18,7 @@ import {
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
+import * as MinMaxFilter from "./min-max-filter";
 
 export type Filter = immer.Immutable<{
   id: Identifier;
@@ -29,9 +30,7 @@ export type Filter = immer.Immutable<{
       }
     | {
         state: "selected";
-        measureId: MeasureId;
-        minInput: UnitInput.Model;
-        maxInput: UnitInput.Model;
+        model: MinMaxFilter.Model;
       };
 }>;
 
@@ -66,7 +65,7 @@ function castToSelectionModel({
         id: filter.id,
         measureStats,
         state: "selected",
-        measureId: filter.state.measureId,
+        measureId: filter.state.model.measureId,
       };
 }
 
@@ -78,8 +77,7 @@ export type Msg =
       id: Identifier;
       msg: MeasureSelectionBox.Msg;
     }
-  | { type: "MAX_INPUT_MSG"; id: Identifier; msg: UnitInput.Msg }
-  | { type: "MIN_INPUT_MSG"; id: Identifier; msg: UnitInput.Msg };
+  | { type: "MIN_MAX_FILTER_MSG"; id: Identifier; msg: MinMaxFilter.Msg };
 
 export type InitialMeasures = {
   [measureId: MeasureId]: {
@@ -103,9 +101,11 @@ export function initModel({
       id: getNextId({ filters }),
       state: {
         state: "selected",
-        measureId: measureId,
-        minInput: UnitInput.initModel(measureId, minValue),
-        maxInput: UnitInput.initModel(measureId, maxValue),
+        model: MinMaxFilter.initModel({
+          measureId,
+          minValue,
+          maxValue,
+        }),
       },
     });
   }
@@ -117,8 +117,8 @@ export function generateFiltersMap(model: Model): FilterMapping {
   for (const filter of model.filters) {
     if (filter.state.state == "selected") {
       filterMapping[filter.id] = {
-        measureId: filter.state.measureId,
-        unit: filter.state.minInput.selectedUnit,
+        measureId: filter.state.model.measureId,
+        unit: filter.state.model.minInput.selectedUnit,
       };
     }
   }
@@ -178,15 +178,11 @@ export const update: Update<Msg, Model> = (msg, model) => {
               id,
               state: immer.castDraft({
                 state: "selected",
-                measureId: measureModel.measureId,
-                minInput: UnitInput.initModel(
-                  measureModel.measureId,
-                  spec.defaultMinValue,
-                ),
-                maxInput: UnitInput.initModel(
-                  measureModel.measureId,
-                  spec.defaultMaxValue,
-                ),
+                model: MinMaxFilter.initModel({
+                  measureId: measureModel.measureId,
+                  minValue: spec.defaultMinValue,
+                  maxValue: spec.defaultMaxValue,
+                }),
               }),
             });
           }
@@ -229,22 +225,18 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
               filter.state = immer.castDraft({
                 state: "selected",
-                measureId: newModel.measureId,
-                minInput: UnitInput.initModel(
-                  newModel.measureId,
-                  spec.defaultMinValue,
-                ),
-                maxInput: UnitInput.initModel(
-                  newModel.measureId,
-                  spec.defaultMaxValue,
-                ),
+                model: MinMaxFilter.initModel({
+                  measureId: newModel.measureId,
+                  minValue: spec.defaultMinValue,
+                  maxValue: spec.defaultMaxValue,
+                }),
               });
             }
           }
         }),
       ];
 
-    case "MIN_INPUT_MSG":
+    case "MIN_MAX_FILTER_MSG":
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find((f) => f.id === msg.id);
@@ -254,25 +246,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
             );
           }
 
-          const [newModel] = UnitInput.update(msg.msg, filter.state.minInput);
-          filter.state.minInput = immer.castDraft(newModel);
+          const [next] = MinMaxFilter.update(msg.msg, filter.state.model);
+          filter.state.model = immer.castDraft(next);
         }),
       ];
-
-    case "MAX_INPUT_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const filter = draft.filters.find((f) => f.id === msg.id);
-          if (!(filter && filter.state.state == "selected")) {
-            throw new Error(
-              `Unexpected filter state when handling input msg ${filter?.state.state}`,
-            );
-          }
-
-          const [newModel] = UnitInput.update(msg.msg, filter.state.maxInput);
-          filter.state.maxInput = immer.castDraft(newModel);
-        }),
-      ];
+    default:
+      assertUnreachable(msg);
   }
 };
 
@@ -324,31 +303,12 @@ const FilterView = ({
         }
       />{" "}
       {filter.state.state == "selected" && (
-        <span>
-          min:{" "}
-          <UnitInput.UnitInput
-            model={filter.state.minInput}
-            dispatch={(msg) =>
-              dispatch({ type: "MIN_INPUT_MSG", id: filter.id, msg })
-            }
-          />{" "}
-          max:{" "}
-          <UnitInput.UnitInput
-            model={filter.state.maxInput}
-            dispatch={(msg) =>
-              dispatch({ type: "MAX_INPUT_MSG", id: filter.id, msg })
-            }
-          />{" "}
-          {filter.state.minInput.possibleUnits.length > 1 && (
-            <UnitInput.UnitToggle
-              model={filter.state.maxInput}
-              dispatch={(msg) => {
-                dispatch({ type: "MIN_INPUT_MSG", id: filter.id, msg });
-                dispatch({ type: "MAX_INPUT_MSG", id: filter.id, msg });
-              }}
-            />
-          )}
-        </span>
+        <MinMaxFilter.view
+          model={filter.state.model}
+          dispatch={(msg) =>
+            dispatch({ type: "MIN_MAX_FILTER_MSG", id: filter.id, msg })
+          }
+        />
       )}
       <button
         onClick={() =>

@@ -198,7 +198,7 @@ function getPlot({
         return true;
       }
 
-      const snapshotValue = snapshot.measures[filter.state.measureId];
+      const snapshotValue = snapshot.measures[filter.state.model.measureId];
       if (!snapshotValue) {
         return false;
       }
@@ -206,8 +206,8 @@ function getPlot({
         snapshotValue as UnitValue,
       );
 
-      const minInputModel = filter.state.minInput;
-      const maxInputModel = filter.state.maxInput;
+      const minInputModel = filter.state.model.minInput;
+      const maxInputModel = filter.state.model.maxInput;
 
       if (minInputModel.parseResult.status == "success") {
         const minValue = convertToStandardUnit(minInputModel.parseResult.value);
