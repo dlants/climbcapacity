@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import * as immer from "immer";
 const produce = immer.produce;
 import {
@@ -436,14 +436,16 @@ export const UnitToggle = ({
   model: Model;
   dispatch: (msg: Msg) => void;
 }) => {
+  const toggleId = useId(); // React 18+ feature
+
   return (
     <span>
       {model.possibleUnits.map((unit) => (
         <span key={unit}>
           <input
             type="radio"
-            id={model.measureId + ":" + unit}
-            name={model.measureId + ":" + unit}
+            id={toggleId + ":" + unit}
+            name={toggleId}
             value={unit}
             checked={unit === model.selectedUnit}
             onChange={() => dispatch({ type: "SELECT_UNIT", unit })}

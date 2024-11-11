@@ -30,14 +30,7 @@ const OUTPUT_MEASURE_IDS = OUTPUT_MEASURES.map((s) => s.id);
 
 type PlotModel = {
   filterModel: SelectFilters.Model;
-  inputMeasure: {
-    id: MeasureId;
-    unit: UnitType;
-  };
-  timeTrainingMeasure?: {
-    id: MeasureId;
-    filter: boolean;
-  };
+  inputMeasure: MeasureWithUnit;
   model: Plot.Model;
 };
 
@@ -61,8 +54,9 @@ export type Msg =
       measureId: MeasureId;
     }
   | {
-      type: "TOGGLE_TRAINING_FILTER";
+      type: "FILTER_MSG";
       measureId: MeasureId;
+      msg: SelectFilters.Msg;
     };
 
 export function initModel({
@@ -146,26 +140,23 @@ function getPlots(model: Model) {
 
     if (measureSpec.trainingMeasureId) {
       initialMeasures[measureSpec.trainingMeasureId] = {
-        minValue: { unit: "year", value: 0 },
-        maxValue: { unit: "year", value: 1 },
+        minValue: { unit: "month", value: 0 },
+        maxValue: { unit: "month", value: 6 },
       };
     }
 
+    const filterModel = SelectFilters.initModel({
+      initialMeasures,
+      measureStats: model.measureStats,
+    });
+
     plots.push({
-      filterModel: SelectFilters.initModel({
-        initialMeasures,
-        measureStats: model.measureStats,
-      }),
       inputMeasure: otherMeasure,
-      timeTrainingMeasure: measureSpec.trainingMeasureId && {
-        id: measureSpec.trainingMeasureId,
-        filter: false,
-      },
+      filterModel,
       model: getPlot({
         inputMeasure: otherMeasure,
-        outputMeasure: model.outputMeasure,
-        snapshots: model.snapshots,
-        mySnapshot: model.mySnapshot,
+        filterModel,
+        model,
       }),
     });
   }
@@ -175,18 +166,15 @@ function getPlots(model: Model) {
 
 function getPlot({
   inputMeasure,
-  outputMeasure,
-  filterByTrainingMeasureId,
-  snapshots,
-  mySnapshot,
+  filterModel,
+  model,
 }: {
   inputMeasure: MeasureWithUnit;
-  filterByTrainingMeasureId?: MeasureId;
-  outputMeasure: MeasureWithUnit;
-  snapshots: readonly HydratedSnapshot[];
-  mySnapshot: HydratedSnapshot;
+  filterModel: SelectFilters.Model;
+  model: Model;
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
+  const { mySnapshot, snapshots, outputMeasure } = model;
 
   const myData = extractDataPoint({
     measures: mySnapshot.measures as any,
@@ -194,19 +182,7 @@ function getPlot({
     outputMeasure,
   });
 
-  const minYValue = myData ? myData.y - 1 : undefined;
-  const maxYValue = myData ? myData.y + 3 : undefined;
-
   for (const snapshot of snapshots) {
-    if (filterByTrainingMeasureId) {
-      const trainingTimeUnitValue =
-        snapshot.measures[filterByTrainingMeasureId];
-      const trainingTimeYears = trainingTimeUnitValue
-        ? convertToStandardUnit(trainingTimeUnitValue as UnitValue)
-        : NaN;
-      if (trainingTimeYears >= 0.5) continue;
-    }
-
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
       inputMeasure,
@@ -217,11 +193,40 @@ function getPlot({
       continue;
     }
 
-    if (minYValue != undefined && dataPoint.y < minYValue) {
-      continue;
-    }
+    const shouldKeep = filterModel.filters.every((filter) => {
+      if (filter.state.state != "selected") {
+        return true;
+      }
 
-    if (maxYValue != undefined && maxYValue < dataPoint.y) {
+      const snapshotValue = snapshot.measures[filter.state.measureId];
+      if (!snapshotValue) {
+        return false;
+      }
+      const normalizedSnapshotValue = convertToStandardUnit(
+        snapshotValue as UnitValue,
+      );
+
+      const minInputModel = filter.state.minInput;
+      const maxInputModel = filter.state.maxInput;
+
+      if (minInputModel.parseResult.status == "success") {
+        const minValue = convertToStandardUnit(minInputModel.parseResult.value);
+        if (minValue > normalizedSnapshotValue) {
+          return false;
+        }
+      }
+
+      if (maxInputModel.parseResult.status == "success") {
+        const maxValue = convertToStandardUnit(maxInputModel.parseResult.value);
+        if (maxValue < normalizedSnapshotValue) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    if (!shouldKeep) {
       continue;
     }
 
@@ -266,27 +271,24 @@ export function update(msg: Msg, model: Model): [Model] {
           draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
-    case "TOGGLE_TRAINING_FILTER":
+    case "FILTER_MSG":
       return [
         produce(model, (draft) => {
           const plot = draft.plots.find(
             (p) => p.inputMeasure.id === msg.measureId,
           );
-
-          if (plot?.timeTrainingMeasure) {
-            plot.timeTrainingMeasure.filter = !plot.timeTrainingMeasure.filter;
-            plot.model = immer.castDraft(
-              getPlot({
-                inputMeasure: plot.inputMeasure,
-                filterByTrainingMeasureId: plot.timeTrainingMeasure.filter
-                  ? plot.timeTrainingMeasure.id
-                  : undefined,
-                outputMeasure: draft.outputMeasure,
-                snapshots: draft.snapshots,
-                mySnapshot: draft.mySnapshot,
-              }),
-            );
+          if (!plot) {
+            throw new Error(`Cannot find plot for measure ${msg.measureId}`);
           }
+          const [next] = SelectFilters.update(msg.msg, plot.filterModel);
+          plot.filterModel = immer.castDraft(next);
+          plot.model = immer.castDraft(
+            getPlot({
+              filterModel: next,
+              inputMeasure: plot.inputMeasure,
+              model,
+            }),
+          );
         }),
       ];
 
@@ -342,22 +344,16 @@ function PlotWithControls({
     <div
       style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
     >
-      {plot.timeTrainingMeasure && (
-        <label>
-          <input
-            type="checkbox"
-            checked={plot.timeTrainingMeasure.filter}
-            onChange={() =>
-              dispatch({
-                type: "TOGGLE_TRAINING_FILTER",
-                measureId: plot.inputMeasure.id,
-              })
-            }
-          />
-          Exclude people who did training similar to this measure for over 6
-          months
-        </label>
-      )}
+      <SelectFilters.view
+        model={plot.filterModel}
+        dispatch={(msg) => {
+          dispatch({
+            type: "FILTER_MSG",
+            measureId: plot.inputMeasure.id,
+            msg,
+          });
+        }}
+      />
       <Plot.view model={plot.model} dispatch={dispatch} />
     </div>
   );
