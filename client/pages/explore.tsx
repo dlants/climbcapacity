@@ -119,7 +119,7 @@ export function initModel({
     {
       filtersModel: SelectFilters.initModel({
         measureStats,
-        myMeasures: {},
+        initialMeasures: {},
       }),
       userId,
       query: {},

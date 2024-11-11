@@ -1,6 +1,7 @@
 import React from "react";
 import { HydratedSnapshot } from "../types";
 import * as Plot from "./plot";
+import * as SelectFilters from "./select-filters";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
@@ -9,6 +10,7 @@ import {
   TIME_TRAINING_MEASURES,
 } from "../../iso/measures";
 import {
+  adjustGrade,
   convertToStandardUnit,
   extractDataPoint,
   MeasureId,
@@ -19,6 +21,7 @@ import { assertUnreachable } from "../util/utils";
 import { Result } from "../../iso/utils";
 import { filterOutliersX } from "../util/stats";
 import { MEASURE_MAP } from "../constants";
+import { MeasureStats } from "../../iso/protocol";
 const { produce } = immer;
 
 const INPUT_MEASURE_IDS = INPUT_MEASURES.map((s) => s.id);
@@ -26,6 +29,7 @@ const TIME_TRAINING_MEASURE_IDS = TIME_TRAINING_MEASURES.map((s) => s.id);
 const OUTPUT_MEASURE_IDS = OUTPUT_MEASURES.map((s) => s.id);
 
 type PlotModel = {
+  filterModel: SelectFilters.Model;
   inputMeasure: {
     id: MeasureId;
     unit: UnitType;
@@ -43,6 +47,7 @@ type MeasureWithUnit = {
 };
 
 export type Model = immer.Immutable<{
+  measureStats: MeasureStats;
   mySnapshot: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
   outputMeasure: MeasureWithUnit;
@@ -62,9 +67,11 @@ export type Msg =
 
 export function initModel({
   mySnapshot,
+  measureStats,
   snapshots,
 }: {
   mySnapshot: HydratedSnapshot;
+  measureStats: MeasureStats;
   snapshots: HydratedSnapshot[];
 }): Result<Model> {
   const outputMeasures: MeasureWithUnit[] = [];
@@ -89,6 +96,7 @@ export function initModel({
   const model: Model = produce<Model>(
     {
       mySnapshot,
+      measureStats,
       snapshots,
       outputMeasure,
       outputMeasures,
@@ -124,8 +132,30 @@ function getPlots(model: Model) {
   const plots: PlotModel[] = [];
   for (const otherMeasure of otherMeasures) {
     const measureSpec = MEASURE_MAP[otherMeasure.id];
+    const initialMeasures: SelectFilters.InitialMeasures = {};
+    initialMeasures[model.outputMeasure.id] = {
+      minValue: adjustGrade(
+        model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+        -1,
+      ),
+      maxValue: adjustGrade(
+        model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+        2,
+      ),
+    };
+
+    if (measureSpec.trainingMeasureId) {
+      initialMeasures[measureSpec.trainingMeasureId] = {
+        minValue: { unit: "year", value: 0 },
+        maxValue: { unit: "year", value: 1 },
+      };
+    }
 
     plots.push({
+      filterModel: SelectFilters.initModel({
+        initialMeasures,
+        measureStats: model.measureStats,
+      }),
       inputMeasure: otherMeasure,
       timeTrainingMeasure: measureSpec.trainingMeasureId && {
         id: measureSpec.trainingMeasureId,
@@ -291,7 +321,7 @@ export function view({
         ))}
       </select>
       {model.plots.map((plot) => (
-        <PlotWithTrainingControls
+        <PlotWithControls
           key={plot.inputMeasure.id}
           plot={plot}
           dispatch={dispatch}
@@ -301,7 +331,7 @@ export function view({
   );
 }
 
-function PlotWithTrainingControls({
+function PlotWithControls({
   plot,
   dispatch,
 }: {
@@ -324,7 +354,8 @@ function PlotWithTrainingControls({
               })
             }
           />
-          Exclude people who did training similar to this measure for over 6 months
+          Exclude people who did training similar to this measure for over 6
+          months
         </label>
       )}
       <Plot.view model={plot.model} dispatch={dispatch} />

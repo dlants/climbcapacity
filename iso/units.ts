@@ -357,3 +357,43 @@ export function extractDataPoint({
     ),
   };
 }
+
+export function adjustGrade(unit: UnitValue, adjustment: number): UnitValue {
+  switch (unit.unit) {
+    case "vermin": {
+      const index = VGRADE.indexOf(unit.value) + adjustment;
+      const newValue = VGRADE[Math.max(0, Math.min(index, VGRADE.length - 1))];
+      return { unit: "vermin", value: newValue };
+    }
+    case "font": {
+      const index = FONT.indexOf(unit.value) + adjustment;
+      const newValue = FONT[Math.max(0, Math.min(index, FONT.length - 1))];
+      return { unit: "font", value: newValue };
+    }
+    case "frenchsport": {
+      const index = FRENCH_SPORT.indexOf(unit.value) + adjustment;
+      const newValue =
+        FRENCH_SPORT[Math.max(0, Math.min(index, FRENCH_SPORT.length - 1))];
+      return { unit: "frenchsport", value: newValue };
+    }
+    case "yds": {
+      const index = YDS.indexOf(unit.value) + adjustment;
+      const newValue = YDS[Math.max(0, Math.min(index, YDS.length - 1))];
+      return { unit: "yds", value: newValue };
+    }
+    case "ewbank": {
+      const index = EWBANK.indexOf(unit.value) + adjustment;
+      const newValue = EWBANK[Math.max(0, Math.min(index, EWBANK.length - 1))];
+      return { unit: "ewbank", value: newValue };
+    }
+    case "ircra": {
+      const newValue = Math.max(
+        0,
+        Math.min(unit.value + adjustment, 52),
+      ) as IRCRAGrade;
+      return { unit: "ircra", value: newValue };
+    }
+    default:
+      throw new Error(`Unexpected unit for adjustGrade ${unit.unit}`);
+  }
+}

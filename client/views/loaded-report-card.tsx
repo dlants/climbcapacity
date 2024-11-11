@@ -17,9 +17,20 @@ import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 import lodash from "lodash";
 import { INPUT_MEASURES } from "../../iso/measures/index";
+import { MeasureId, UnitType, UnitValue } from "../../iso/units";
+import {
+  EWBANK,
+  FONT,
+  FRENCH_SPORT,
+  IRCRAGrade,
+  VGRADE,
+  YDS,
+} from "../../iso/grade";
+import { InitialMeasures } from "../views/select-filters";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
+  measureStats: MeasureStats;
   query: FilterQuery;
   userId: string;
   mySnapshot: HydratedSnapshot;
@@ -85,15 +96,28 @@ export function initModel({
   measureStats: MeasureStats;
   mySnapshot: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
+  let myInputValues = lodash.pick(
+    mySnapshot.measures,
+    INPUT_MEASURES.map((m) => m.id),
+  );
+
+  const initialMeasures: InitialMeasures = {};
+  for (const measureIdStr in myInputValues) {
+    const measureId = measureIdStr as MeasureId;
+    const value = myInputValues[measureId];
+    initialMeasures[measureId] = {
+      minValue: getMinInputValue(value as UnitValue),
+      maxValue: getMaxInputValue(value as UnitValue),
+    };
+  }
+
   const filtersModel = SelectFilters.initModel({
     measureStats,
-    myMeasures: lodash.pick(
-      mySnapshot.measures,
-      INPUT_MEASURES.map((m) => m.id),
-    ),
+    initialMeasures,
   });
   const model: Model = {
     filtersModel,
+    measureStats,
     userId,
     mySnapshot,
     query: getQuery(filtersModel),
@@ -115,6 +139,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           case "loaded":
             const initModelResult = ReportCardGraph.initModel({
               snapshots: msg.request.response,
+              measureStats: model.measureStats,
               mySnapshot: draft.mySnapshot,
             });
             if (initModelResult.status == "success") {
@@ -243,3 +268,137 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
+
+function getMinInputValue(value: UnitValue) {
+  switch (value.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+    case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+      return {
+        ...value,
+        value: value.value * 0.9,
+      };
+    case "count":
+      return {
+        ...value,
+        value: Math.max(Math.floor(value.value * 0.9), value.value - 1),
+      };
+    case "vermin":
+      return {
+        ...value,
+        value: VGRADE[Math.max(VGRADE.indexOf(value.value) - 1, 0)],
+      };
+    case "font":
+      return {
+        ...value,
+        value: FONT[Math.max(FONT.indexOf(value.value) - 1, 0)],
+      };
+    case "frenchsport":
+      return {
+        ...value,
+        value: FRENCH_SPORT[Math.max(FRENCH_SPORT.indexOf(value.value) - 1, 0)],
+      };
+    case "yds":
+      return {
+        ...value,
+        value: YDS[Math.max(YDS.indexOf(value.value) - 1, 0)],
+      };
+    case "ewbank":
+      return {
+        ...value,
+        value: EWBANK[Math.max(EWBANK.indexOf(value.value) - 1, 0)],
+      };
+    case "ircra":
+      return {
+        ...value,
+        value: (value.value * 0.9) as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return value;
+    default:
+      assertUnreachable(value);
+  }
+}
+
+function getMaxInputValue(value: UnitValue) {
+  switch (value.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+    case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+      return {
+        ...value,
+        value: value.value * 1.1,
+      };
+    case "count":
+      return {
+        ...value,
+        value: Math.max(Math.ceil(value.value * 1.1), value.value + 1),
+      };
+    case "vermin":
+      return {
+        ...value,
+        value:
+          VGRADE[Math.min(VGRADE.indexOf(value.value) + 1, VGRADE.length - 1)],
+      };
+    case "font":
+      return {
+        ...value,
+        value: FONT[Math.min(FONT.indexOf(value.value) + 1, FONT.length - 1)],
+      };
+    case "frenchsport":
+      return {
+        ...value,
+        value:
+          FRENCH_SPORT[
+            Math.min(
+              FRENCH_SPORT.indexOf(value.value) + 1,
+              FRENCH_SPORT.length - 1,
+            )
+          ],
+      };
+    case "yds":
+      return {
+        ...value,
+        value: YDS[Math.min(YDS.indexOf(value.value) + 1, YDS.length - 1)],
+      };
+    case "ewbank":
+      return {
+        ...value,
+        value:
+          EWBANK[Math.min(EWBANK.indexOf(value.value) + 1, EWBANK.length - 1)],
+      };
+    case "ircra":
+      return {
+        ...value,
+        value: (value.value * 1.1) as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return value;
+    default:
+      assertUnreachable(value);
+  }
+}

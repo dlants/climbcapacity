@@ -307,8 +307,8 @@ export function fontToIrcra(grade: Font): IRCRAGrade {
         return 29.5;
       case "8C":
         return 31;
-      case '8C+':
-        return 32
+      case "8C+":
+        return 32;
       default:
         throw new Error(`Unexpected Font grade ${grade}`);
     }
