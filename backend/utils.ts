@@ -1,5 +1,6 @@
 import express from "express";
 import assert from "assert";
+import { addSyntheticTrailingComment } from "typescript";
 
 export function assertEnv(varName: string) {
   const value = process.env[varName];
@@ -18,13 +19,15 @@ export class HandledError extends Error {
   }
 }
 
-export function apiRoute<T>(
-  fn: (req: express.Request, res: express.Response) => Promise<T>,
+export function asyncRoute(
+  fn: (
+    req: express.Request,
+    res: express.Response,
+  ) => Promise<express.Response>,
 ): express.Handler {
   const handler: express.Handler = async (req, res) => {
     try {
-      const response = await fn(req, res);
-      res.json(response);
+      await fn(req, res);
     } catch (e) {
       console.error(e);
       if (e instanceof HandledError) {
@@ -42,4 +45,14 @@ export function apiRoute<T>(
   };
 
   return handler;
+}
+
+export function apiRoute<T>(
+  fn: (req: express.Request, res: express.Response) => Promise<T>,
+): express.Handler {
+  return asyncRoute(async (req, res) => {
+    const val = await fn(req, res);
+    res.json(val);
+    return res;
+  });
 }

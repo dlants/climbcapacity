@@ -10,7 +10,7 @@ import {
 } from "./tea";
 import * as SendLinkPage from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
-import * as SnapshotPage from "./pages/load-snapshot";
+import * as SnapshotPage from "./pages/snapshot";
 import * as ExplorePage from "./pages/explore";
 import * as ReportCardPage from "./pages/report-card";
 import {
@@ -19,7 +19,7 @@ import {
   RequestStatus,
 } from "./util/utils";
 import { NavigateMsg, parseRoute, Router } from "./router";
-import { AuthStatus, SnapshotId } from "../iso/protocol";
+import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import * as immer from "immer";
 import { GlobalStyles } from "./global-style";
@@ -27,6 +27,7 @@ const produce = immer.produce;
 
 export type Model = {
   auth: RequestStatus<AuthStatus>;
+  measureStats: MeasureStats;
   page:
     | {
         route: "/send-link";
@@ -166,9 +167,10 @@ const navigate: Update<Msg, Model> = (msg, model) => {
 
     case "/snapshot":
       if (user) {
-        const [snapshotModel, snapshotThunk] = SnapshotPage.initModel(
-          msg.target.snapshotId,
-        );
+        const [snapshotModel, snapshotThunk] = SnapshotPage.initModel({
+          snapshotId: msg.target.snapshotId,
+          measureStats: model.measureStats,
+        });
         return [
           produce(model, (draft) => {
             draft.page = {
@@ -482,11 +484,22 @@ async function run() {
     const status = (await response.json()) as AuthStatus;
     auth = { status: "loaded", response: status };
   } else {
-    auth = { status: "error", error: await response.text()};
+    auth = { status: "error", error: await response.text() };
+  }
+
+  const measureStatsResponse = await fetch("/api/measure-stats");
+  let measureStats: MeasureStats;
+  if (measureStatsResponse.ok) {
+    measureStats = (await measureStatsResponse.json()) as MeasureStats;
+  } else {
+    measureStats = {
+      stats: {},
+    };
   }
 
   let initialModel: Model = {
     auth,
+    measureStats,
     page:
       auth.status == "loaded" && auth.response.status == "logged in"
         ? {

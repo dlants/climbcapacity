@@ -63,3 +63,9 @@ export type SnapshotUpdateRequest = {
     [measureId: MeasureId]: UnitValue;
   };
 };
+
+export type MeasureStats = {
+  stats: {
+    [measureId: MeasureId]: number;
+  };
+};

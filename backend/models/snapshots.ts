@@ -7,6 +7,7 @@ import {
   NormedMeasure,
   UnitValue,
 } from "../../iso/units.js";
+import { HandledError } from "../utils.js";
 
 export type SnapshotDoc = {
   _id: mongodb.ObjectId;
@@ -27,15 +28,23 @@ export type SnapshotDoc = {
   importSource?: "climbharderv3";
 };
 
+export type MeasureStatsDoc = {
+  stats: { [measureId: MeasureId]: number };
+};
+
 export type MeasurementQuery = {
   [measureId: MeasureId]: Filter;
 };
 
 export class SnapshotsModel {
   private snapshotCollection: mongodb.Collection<SnapshotDoc>;
+  private statsCollection: mongodb.Collection<MeasureStatsDoc>;
 
   constructor({ client }: { client: mongodb.MongoClient }) {
     this.snapshotCollection = client.db().collection<SnapshotDoc>("snapshots");
+    this.statsCollection = client
+      .db()
+      .collection<MeasureStatsDoc>("measureStats");
   }
 
   async newSnapshot(user: User): Promise<void> {
@@ -97,7 +106,7 @@ export class SnapshotsModel {
       );
     }
 
-    return true
+    return true;
   }
 
   async deleteSnapshot({
@@ -120,6 +129,34 @@ export class SnapshotsModel {
     return (
       (await this.snapshotCollection.findOne({ _id: snapshotId })) || undefined
     );
+  }
+
+  private statsDocCache:
+    | { doc: MeasureStatsDoc; timestamp: number }
+    | undefined = undefined;
+  private readonly CACHE_TTL = 3600000; // 1 hour in milliseconds
+
+  async getMeasureStats(): Promise<MeasureStatsDoc> {
+    const now = Date.now();
+
+    if (
+      this.statsDocCache &&
+      now - this.statsDocCache.timestamp < this.CACHE_TTL
+    ) {
+      return this.statsDocCache.doc;
+    }
+
+    const statsDoc = await this.statsCollection.findOne({});
+    if (!statsDoc) {
+      throw new Error(`No stats document found.`);
+    }
+
+    this.statsDocCache = {
+      doc: statsDoc,
+      timestamp: now,
+    };
+
+    return statsDoc;
   }
 
   async getUsersSnapshots(userId: string): Promise<SnapshotDoc[]> {

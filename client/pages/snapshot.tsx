@@ -11,11 +11,12 @@ import {
   assertLoaded,
   RequestStatusViewMap,
 } from "../util/utils";
-import { SnapshotId } from "../../iso/protocol";
+import { MeasureStats, SnapshotId } from "../../iso/protocol";
 import { hydrateSnapshot } from "../util/snapshot";
 
 export type Model = immer.Immutable<{
   snapshotId: SnapshotId;
+  measureStats: MeasureStats;
   snapshotRequest: RequestStatus<LoadedSnapshot.Model>;
 }>;
 
@@ -29,10 +30,17 @@ export type Msg =
       msg: LoadedSnapshot.Msg;
     };
 
-export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
+export function initModel({
+  snapshotId,
+  measureStats,
+}: {
+  snapshotId: SnapshotId;
+  measureStats: MeasureStats;
+}): [Model, Thunk<Msg>] {
   return [
     {
       snapshotId,
+      measureStats,
       snapshotRequest: { status: "loading" },
     },
 
@@ -50,6 +58,7 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
       if (response.ok) {
         const snapshot = (await response.json()) as Snapshot;
         const model = LoadedSnapshot.initModel({
+          measureStats,
           snapshot: hydrateSnapshot(snapshot),
         });
         dispatch({
@@ -59,7 +68,7 @@ export function initModel(snapshotId: SnapshotId): [Model, Thunk<Msg>] {
       } else {
         dispatch({
           type: "SNAPSHOT_RESPONSE",
-          request: { status: "error", error: await response.text()},
+          request: { status: "error", error: await response.text() },
         });
       }
     },

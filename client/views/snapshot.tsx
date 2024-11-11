@@ -18,7 +18,11 @@ import {
   RequestStatusView,
 } from "../util/utils";
 import * as UnitInput from "./unit-input";
-import { SnapshotId, SnapshotUpdateRequest } from "../../iso/protocol";
+import {
+  MeasureStats,
+  SnapshotId,
+  SnapshotUpdateRequest,
+} from "../../iso/protocol";
 
 type CanSubmitEditingState = {
   state: "can-submit";
@@ -61,13 +65,21 @@ type EditingState =
 
 export type Model = immer.Immutable<{
   snapshot: HydratedSnapshot;
+  measureStats: MeasureStats;
   measureFilter: { query: string; measures: MeasureSpec[] };
   editingState: EditingState;
 }>;
 
-export function initModel({ snapshot }: { snapshot: HydratedSnapshot }): Model {
+export function initModel({
+  snapshot,
+  measureStats,
+}: {
+  snapshot: HydratedSnapshot;
+  measureStats: MeasureStats;
+}): Model {
   return {
     snapshot,
+    measureStats,
     measureFilter: {
       query: "",
       measures: MEASURES,
@@ -393,7 +405,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                   "not-sent": () => <div>Not Sent</div>,
                   loading: () => <div>Submitting...</div>,
                   error: ({ error }) => <div>Error: {error}</div>,
-                  "loaded": () => <div>Done.</div>,
+                  loaded: () => <div>Done.</div>,
                 }}
               />
             );
@@ -415,6 +427,7 @@ function NotEditingView({
       {model.measureFilter.measures.map((measure) => (
         <MeasureView
           key={measure.id}
+          measureStatsCount={model.measureStats.stats[measure.id] || 0}
           measure={measure}
           dispatch={dispatch}
           model={model}
@@ -490,19 +503,24 @@ function EditingView({
     </div>
   );
 }
+
 const MeasureView = ({
   model,
+  measureStatsCount,
   dispatch,
   measure,
 }: {
   model: Model;
+  measureStatsCount: number;
   dispatch: Dispatch<Msg>;
   measure: immer.Immutable<MeasureSpec>;
 }) => {
   const unitValue = model.snapshot.measures[measure.id];
   return (
     <div key={measure.id} className="measure-item">
-      <label>{measure.name}</label>{" "}
+      <label>
+        {measure.name} ({measureStatsCount} snapshots)
+      </label>{" "}
       {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
       <button
         onClick={() => {

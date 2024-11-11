@@ -7,13 +7,19 @@ import { SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
-import { FilterQuery, SnapshotId, SnapshotUpdateRequest } from "../iso/protocol.js";
+import {
+  FilterQuery,
+  MeasureStats,
+  SnapshotId,
+  SnapshotUpdateRequest,
+} from "../iso/protocol.js";
 import mongodb from "mongodb";
-import { HandledError } from "./utils.js";
+import { asyncRoute, HandledError } from "./utils.js";
 import { MeasureId, UnitValue } from "../iso/units.js";
 import { fileURLToPath } from "url";
 import { apiRoute } from "./utils.js";
 import path from "path";
+import { addSyntheticTrailingComment } from "typescript";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +40,25 @@ async function run() {
 
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
+
+  app.get(
+    "/api/measure-stats",
+    asyncRoute(async (req, res) => {
+      const stats: MeasureStats = await snapshotModel.getMeasureStats();
+
+      const etag = `"${Buffer.from(JSON.stringify(stats)).toString("base64")}"`;
+      if (req.header("If-None-Match") === etag) {
+        res.status(304).send();
+        return res;
+      }
+
+      res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
+      res.setHeader("ETag", etag);
+
+      res.json(stats);
+      return res;
+    }),
+  );
 
   app.post(
     "/api/snapshot",
@@ -150,7 +175,7 @@ async function run() {
         }
       }
 
-      assert.ok(Object.keys(query).length, 'Must provide non-empty query')
+      assert.ok(Object.keys(query).length, "Must provide non-empty query");
 
       return await snapshotModel.querySnapshots(query);
     }),
@@ -190,13 +215,17 @@ async function run() {
 
         const update = body.updates[measureId as MeasureId];
         const value: UnitValue = update;
-        assert.equal(typeof value, "object", "Must provide valid measure value");
+        assert.equal(
+          typeof value,
+          "object",
+          "Must provide valid measure value",
+        );
       }
 
       const updated = await snapshotModel.updateMeasure({
         userId: user.id,
         snapshotId: new mongodb.ObjectId(body.snapshotId),
-        updates: body.updates
+        updates: body.updates,
       });
 
       if (updated) {
