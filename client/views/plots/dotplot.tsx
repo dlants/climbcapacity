@@ -57,7 +57,7 @@ export function generateDotplotTicks(
     case "yds":
     case "ewbank":
     case "ircra":
-      return lodash.range(min, max);
+      return lodash.range(min, max + 1);
     default:
       assertUnreachable(unit);
   }

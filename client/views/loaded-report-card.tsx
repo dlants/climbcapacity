@@ -213,10 +213,10 @@ function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
   const query: FilterQuery = {};
   filtersModel.filters.forEach((filter) => {
     if (filter.state.state === "selected") {
-      const minResult = filter.state.minInput.parseResult;
-      const maxResult = filter.state.maxInput.parseResult;
+      const minResult = filter.state.model.minInput.parseResult;
+      const maxResult = filter.state.model.maxInput.parseResult;
 
-      query[filter.state.measureId] = {
+      query[filter.state.model.measureId] = {
         min: minResult.status == "success" ? minResult.value : undefined,
         max: maxResult.status == "success" ? maxResult.value : undefined,
       };

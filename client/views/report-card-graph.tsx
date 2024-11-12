@@ -1,7 +1,7 @@
 import React from "react";
 import { HydratedSnapshot } from "../types";
 import * as Plot from "./plot";
-import * as SelectFilters from "./select-filters";
+import * as Filters from "./report-graph-filters";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
@@ -29,7 +29,7 @@ const TIME_TRAINING_MEASURE_IDS = TIME_TRAINING_MEASURES.map((s) => s.id);
 const OUTPUT_MEASURE_IDS = OUTPUT_MEASURES.map((s) => s.id);
 
 type PlotModel = {
-  filterModel: SelectFilters.Model;
+  filterModel: Filters.Model;
   inputMeasure: MeasureWithUnit;
   model: Plot.Model;
 };
@@ -56,7 +56,7 @@ export type Msg =
   | {
       type: "FILTER_MSG";
       measureId: MeasureId;
-      msg: SelectFilters.Msg;
+      msg: Filters.Msg;
     };
 
 export function initModel({
@@ -126,7 +126,7 @@ function getPlots(model: Model) {
   const plots: PlotModel[] = [];
   for (const otherMeasure of otherMeasures) {
     const measureSpec = MEASURE_MAP[otherMeasure.id];
-    const initialMeasures: SelectFilters.InitialMeasures = {};
+    const initialMeasures: Filters.InitialMeasures = {};
     initialMeasures[model.outputMeasure.id] = {
       minValue: adjustGrade(
         model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
@@ -145,7 +145,7 @@ function getPlots(model: Model) {
       };
     }
 
-    const filterModel = SelectFilters.initModel({
+    const filterModel = Filters.initModel({
       initialMeasures,
       measureStats: model.measureStats,
     });
@@ -170,7 +170,7 @@ function getPlot({
   model,
 }: {
   inputMeasure: MeasureWithUnit;
-  filterModel: SelectFilters.Model;
+  filterModel: Filters.Model;
   model: Model;
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
@@ -194,11 +194,11 @@ function getPlot({
     }
 
     const shouldKeep = filterModel.filters.every((filter) => {
-      if (filter.state.state != "selected") {
+      if (!filter.enabled) {
         return true;
       }
 
-      const snapshotValue = snapshot.measures[filter.state.model.measureId];
+      const snapshotValue = snapshot.measures[filter.model.measureId];
       if (!snapshotValue) {
         return false;
       }
@@ -206,8 +206,8 @@ function getPlot({
         snapshotValue as UnitValue,
       );
 
-      const minInputModel = filter.state.model.minInput;
-      const maxInputModel = filter.state.model.maxInput;
+      const minInputModel = filter.model.minInput;
+      const maxInputModel = filter.model.maxInput;
 
       if (minInputModel.parseResult.status == "success") {
         const minValue = convertToStandardUnit(minInputModel.parseResult.value);
@@ -280,7 +280,7 @@ export function update(msg: Msg, model: Model): [Model] {
           if (!plot) {
             throw new Error(`Cannot find plot for measure ${msg.measureId}`);
           }
-          const [next] = SelectFilters.update(msg.msg, plot.filterModel);
+          const [next] = Filters.update(msg.msg, plot.filterModel);
           plot.filterModel = immer.castDraft(next);
           plot.model = immer.castDraft(
             getPlot({
@@ -345,7 +345,7 @@ function PlotWithControls({
       style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
     >
       <h1>{plot.inputMeasure.id}</h1>
-      <SelectFilters.view
+      <Filters.view
         model={plot.filterModel}
         dispatch={(msg) => {
           dispatch({

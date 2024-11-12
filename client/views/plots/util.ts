@@ -130,7 +130,7 @@ export function generateBinThresholds(
     case "yds":
     case "ewbank":
     case "ircra":
-      return lodash.range(min, max + 1).map((d) => d - 0.5);
+      return lodash.range(min, max + 2).map((d) => d - 0.5);
     default:
       assertUnreachable(unit);
   }
