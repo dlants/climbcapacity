@@ -69,14 +69,22 @@ export function view({
   model: Model;
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 }) {
+  const allData = [...model.data];
+  if (model.myData) {
+    allData.push(model.myData);
+  }
+  if (allData.length == 0) {
+    return;
+  }
+
   const x = d3
     .scaleLinear()
-    .domain(d3.extent(model.data, (d) => d.x) as [number, number])
+    .domain(d3.extent(allData, (d) => d.x) as [number, number])
     .range([MARGIN.left, WIDTH - MARGIN.right]);
 
   const y = d3
     .scaleLinear()
-    .domain(d3.extent(model.data, (d) => d.y) as [number, number])
+    .domain(d3.extent(allData, (d) => d.y) as [number, number])
     .range([HEIGHT - MARGIN.bottom, MARGIN.top]);
 
   // Draw dots
