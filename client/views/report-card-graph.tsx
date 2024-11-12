@@ -6,6 +6,7 @@ import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
   INPUT_MEASURES,
+  OTHER_MEASURES,
   OUTPUT_MEASURES,
   TIME_TRAINING_MEASURES,
 } from "../../iso/measures";
@@ -41,7 +42,7 @@ type MeasureWithUnit = {
 
 export type Model = immer.Immutable<{
   measureStats: MeasureStats;
-  mySnapshot: HydratedSnapshot;
+  mySnapshot?: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
   outputMeasure: MeasureWithUnit;
   outputMeasures: MeasureWithUnit[];
@@ -64,17 +65,26 @@ export function initModel({
   measureStats,
   snapshots,
 }: {
-  mySnapshot: HydratedSnapshot;
+  mySnapshot?: HydratedSnapshot;
   measureStats: MeasureStats;
   snapshots: HydratedSnapshot[];
 }): Result<Model> {
   const outputMeasures: MeasureWithUnit[] = [];
-  for (const id in mySnapshot.measures) {
-    const measureId = id as MeasureId;
-    if (OUTPUT_MEASURE_IDS.includes(measureId)) {
+  if (mySnapshot) {
+    for (const id in mySnapshot.measures) {
+      const measureId = id as MeasureId;
+      if (OUTPUT_MEASURE_IDS.includes(measureId)) {
+        outputMeasures.push({
+          id: measureId,
+          unit: mySnapshot.measures[measureId].unit,
+        });
+      }
+    }
+  } else {
+    for (const { id, units } of OUTPUT_MEASURES) {
       outputMeasures.push({
-        id: measureId,
-        unit: mySnapshot.measures[measureId].unit,
+        id,
+        unit: units[0],
       });
     }
   }
@@ -107,39 +117,56 @@ export function initModel({
 function getPlots(model: Model) {
   const otherMeasures: MeasureWithUnit[] = [];
 
-  for (const id in model.mySnapshot.measures) {
-    const measureId = id as MeasureId;
-    if (
-      !(
-        INPUT_MEASURE_IDS.includes(id as MeasureId) ||
-        OUTPUT_MEASURE_IDS.includes(id as MeasureId) ||
-        TIME_TRAINING_MEASURE_IDS.includes(id as MeasureId)
-      )
-    ) {
+  if (model.mySnapshot) {
+    for (const id in model.mySnapshot.measures) {
+      const measureId = id as MeasureId;
+      if (
+        !(
+          INPUT_MEASURE_IDS.includes(id as MeasureId) ||
+          OUTPUT_MEASURE_IDS.includes(id as MeasureId) ||
+          TIME_TRAINING_MEASURE_IDS.includes(id as MeasureId)
+        )
+      ) {
+        otherMeasures.push({
+          id: measureId,
+          unit: model.mySnapshot.measures[measureId].unit,
+        });
+      }
+    }
+  } else {
+    for (const { id, units } of OTHER_MEASURES) {
       otherMeasures.push({
-        id: measureId,
-        unit: model.mySnapshot.measures[measureId].unit,
+        id,
+        unit: units[0],
       });
     }
   }
 
   const plots: PlotModel[] = [];
+  const outputMeasureSpec = MEASURE_MAP[model.outputMeasure.id];
   for (const otherMeasure of otherMeasures) {
-    const measureSpec = MEASURE_MAP[otherMeasure.id];
+    const otherMeasureSpec = MEASURE_MAP[otherMeasure.id];
     const initialMeasures: Filters.InitialMeasures = {};
-    initialMeasures[model.outputMeasure.id] = {
-      minValue: adjustGrade(
-        model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
-        -1,
-      ),
-      maxValue: adjustGrade(
-        model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
-        2,
-      ),
-    };
+    if (model.mySnapshot) {
+      initialMeasures[model.outputMeasure.id] = {
+        minValue: adjustGrade(
+          model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+          -1,
+        ),
+        maxValue: adjustGrade(
+          model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+          2,
+        ),
+      };
+    } else {
+      initialMeasures[model.outputMeasure.id] = {
+        minValue: outputMeasureSpec.defaultMinValue,
+        maxValue: outputMeasureSpec.defaultMaxValue,
+      };
+    }
 
-    if (measureSpec.trainingMeasureId) {
-      initialMeasures[measureSpec.trainingMeasureId] = {
+    if (otherMeasureSpec.trainingMeasureId) {
+      initialMeasures[otherMeasureSpec.trainingMeasureId] = {
         minValue: { unit: "month", value: 0 },
         maxValue: { unit: "month", value: 6 },
       };
@@ -176,11 +203,13 @@ function getPlot({
   const data: { x: number; y: number }[] = [];
   const { mySnapshot, snapshots, outputMeasure } = model;
 
-  const myData = extractDataPoint({
-    measures: mySnapshot.measures as any,
-    inputMeasure,
-    outputMeasure,
-  });
+  const myData =
+    mySnapshot &&
+    extractDataPoint({
+      measures: mySnapshot.measures as any,
+      inputMeasure,
+      outputMeasure,
+    });
 
   for (const snapshot of snapshots) {
     const dataPoint = extractDataPoint({

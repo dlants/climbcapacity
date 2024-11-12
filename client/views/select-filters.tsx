@@ -79,7 +79,7 @@ export type Msg =
     }
   | { type: "MIN_MAX_FILTER_MSG"; id: Identifier; msg: MinMaxFilter.Msg };
 
-export type InitialMeasures = {
+export type InitialFilters = {
   [measureId: MeasureId]: {
     minValue: UnitValue;
     maxValue: UnitValue;
@@ -87,10 +87,10 @@ export type InitialMeasures = {
 };
 
 export function initModel({
-  initialMeasures,
+  initialFilters: initialMeasures,
   measureStats,
 }: {
-  initialMeasures: InitialMeasures;
+  initialFilters: InitialFilters;
   measureStats: MeasureStats;
 }): Model {
   const filters: Filter[] = [];

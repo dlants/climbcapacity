@@ -113,3 +113,10 @@ export const TIME_TRAINING_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
 export const OUTPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
   ["grade:"].some((idPrefix) => m.id.startsWith(idPrefix)),
 );
+
+export const OTHER_MEASURES: MeasureSpec[] = MEASURES.filter(
+  (m) =>
+    !INPUT_MEASURES.includes(m) &&
+    !OUTPUT_MEASURES.includes(m) &&
+    !TIME_TRAINING_MEASURES.includes(m),
+);

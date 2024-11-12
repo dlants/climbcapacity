@@ -193,11 +193,6 @@ const navigate: Update<Msg, Model> = (msg, model) => {
       }
     case "/explore":
       const [exploreModel, exploreThunk] = ExplorePage.initModel({
-        userId:
-          (model.auth.status == "loaded" &&
-            model.auth.response.status == "logged in" &&
-            model.auth.response.user.id) ||
-          undefined,
         measureStats: model.measureStats,
       });
       return [

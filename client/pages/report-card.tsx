@@ -12,7 +12,19 @@ import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
+import { INPUT_MEASURES } from "../../iso/measures";
 const produce = immer.produce;
+import lodash from "lodash";
+import { InitialFilters } from "../views/select-filters";
+import { MeasureId, UnitValue } from "../../iso/units";
+import {
+  EWBANK,
+  FONT,
+  FRENCH_SPORT,
+  IRCRAGrade,
+  VGRADE,
+  YDS,
+} from "../../iso/grade";
 
 export type Model = {
   userId: string;
@@ -105,9 +117,26 @@ export const update: Update<Msg, Model> = (msg, model) => {
               }),
             ];
           } else {
+            const mySnapshot = msg.request.response;
+
+            let myInputValues = lodash.pick(
+              mySnapshot.measures,
+              INPUT_MEASURES.map((m) => m.id),
+            );
+            const initialFilters: InitialFilters = {};
+
+            for (const measureIdStr in myInputValues) {
+              const measureId = measureIdStr as MeasureId;
+              const value = myInputValues[measureId];
+              initialFilters[measureId] = {
+                minValue: getMinInputValue(value as UnitValue),
+                maxValue: getMaxInputValue(value as UnitValue),
+              };
+            }
+
             const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
+              initialFilters,
               measureStats: model.measureStats,
-              userId: model.userId,
               mySnapshot: msg.request.response,
             });
             return [
@@ -212,3 +241,137 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
+
+function getMinInputValue(value: UnitValue) {
+  switch (value.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+    case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+      return {
+        ...value,
+        value: value.value * 0.9,
+      };
+    case "count":
+      return {
+        ...value,
+        value: Math.max(Math.floor(value.value * 0.9), value.value - 1),
+      };
+    case "vermin":
+      return {
+        ...value,
+        value: VGRADE[Math.max(VGRADE.indexOf(value.value) - 1, 0)],
+      };
+    case "font":
+      return {
+        ...value,
+        value: FONT[Math.max(FONT.indexOf(value.value) - 1, 0)],
+      };
+    case "frenchsport":
+      return {
+        ...value,
+        value: FRENCH_SPORT[Math.max(FRENCH_SPORT.indexOf(value.value) - 1, 0)],
+      };
+    case "yds":
+      return {
+        ...value,
+        value: YDS[Math.max(YDS.indexOf(value.value) - 1, 0)],
+      };
+    case "ewbank":
+      return {
+        ...value,
+        value: EWBANK[Math.max(EWBANK.indexOf(value.value) - 1, 0)],
+      };
+    case "ircra":
+      return {
+        ...value,
+        value: (value.value * 0.9) as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return value;
+    default:
+      assertUnreachable(value);
+  }
+}
+
+function getMaxInputValue(value: UnitValue) {
+  switch (value.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+    case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+      return {
+        ...value,
+        value: value.value * 1.1,
+      };
+    case "count":
+      return {
+        ...value,
+        value: Math.max(Math.ceil(value.value * 1.1), value.value + 1),
+      };
+    case "vermin":
+      return {
+        ...value,
+        value:
+          VGRADE[Math.min(VGRADE.indexOf(value.value) + 1, VGRADE.length - 1)],
+      };
+    case "font":
+      return {
+        ...value,
+        value: FONT[Math.min(FONT.indexOf(value.value) + 1, FONT.length - 1)],
+      };
+    case "frenchsport":
+      return {
+        ...value,
+        value:
+          FRENCH_SPORT[
+            Math.min(
+              FRENCH_SPORT.indexOf(value.value) + 1,
+              FRENCH_SPORT.length - 1,
+            )
+          ],
+      };
+    case "yds":
+      return {
+        ...value,
+        value: YDS[Math.min(YDS.indexOf(value.value) + 1, YDS.length - 1)],
+      };
+    case "ewbank":
+      return {
+        ...value,
+        value:
+          EWBANK[Math.min(EWBANK.indexOf(value.value) + 1, EWBANK.length - 1)],
+      };
+    case "ircra":
+      return {
+        ...value,
+        value: (value.value * 1.1) as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return value;
+    default:
+      assertUnreachable(value);
+  }
+}

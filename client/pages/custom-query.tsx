@@ -1,6 +1,6 @@
 import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch } from "../tea";
+import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
 import {
   assertLoaded,
   assertUnreachable,
@@ -10,33 +10,21 @@ import {
   RequestStatusViewMap,
 } from "../util/utils";
 import { FilterQuery, MeasureStats } from "../../iso/protocol";
+import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
 import * as immer from "immer";
-import * as ReportCardGraph from "./report-card-graph";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
-import lodash from "lodash";
-import { INPUT_MEASURES } from "../../iso/measures/index";
-import { MeasureId, UnitType, UnitValue } from "../../iso/units";
-import {
-  EWBANK,
-  FONT,
-  FRENCH_SPORT,
-  IRCRAGrade,
-  VGRADE,
-  YDS,
-} from "../../iso/grade";
-import { InitialFilters } from "../views/select-filters";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
-  measureStats: MeasureStats;
+  userId: string | undefined;
   query: FilterQuery;
-  mySnapshot?: HydratedSnapshot;
   dataRequest: RequestStatus<{
     snapshots: HydratedSnapshot[];
-    reportCardModel: ReportCardGraph.Model;
+    plotModel: PlotWithControls.Model;
   }>;
+  mySnapshotRequest: RequestStatus<HydratedSnapshot | undefined>;
 }>;
 
 export type Msg =
@@ -51,8 +39,12 @@ export type Msg =
       request: RequestStatus<HydratedSnapshot[]>;
     }
   | {
-      type: "REPORT_CARD_MSG";
-      msg: ReportCardGraph.Msg;
+      type: "MY_SNAPSHOT_RESPONSE";
+      request: RequestStatus<HydratedSnapshot | undefined>;
+    }
+  | {
+      type: "PLOT_MSG";
+      msg: PlotWithControls.Msg;
     }
   | {
       type: "FILTERS_MSG";
@@ -87,28 +79,56 @@ function generateFetchThunk(model: Model) {
 }
 
 export function initModel({
-  initialFilters,
+  userId,
   measureStats,
-  mySnapshot,
 }: {
-  initialFilters: InitialFilters;
+  userId: string | undefined;
   measureStats: MeasureStats;
-  mySnapshot?: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
-  const filtersModel = SelectFilters.initModel({
-    measureStats,
-    initialFilters: initialFilters,
-  });
-  const model: Model = {
-    filtersModel,
-    measureStats,
-    mySnapshot,
-    query: getQuery(filtersModel),
-    dataRequest: { status: "loading" },
-  };
-  return [model, generateFetchThunk(model)];
-}
+  let mySnapshotRequest: RequestStatus<Snapshot> = { status: "not-sent" };
+  let fetchSnapshotThunk;
+  if (userId) {
+    mySnapshotRequest = {
+      status: "loading",
+    };
+    fetchSnapshotThunk = async (dispatch: Dispatch<Msg>) => {
+      const response = await fetch("/api/my-latest-snapshot", {
+        method: "POST",
+      });
+      if (response.ok) {
+        const { snapshot } = (await response.json()) as {
+          snapshot: Snapshot | undefined;
+        };
+        dispatch({
+          type: "MY_SNAPSHOT_RESPONSE",
+          request: {
+            status: "loaded",
+            response: snapshot ? hydrateSnapshot(snapshot) : undefined,
+          },
+        });
+      } else {
+        dispatch({
+          type: "MY_SNAPSHOT_RESPONSE",
+          request: { status: "error", error: await response.text() },
+        });
+      }
+    };
+  }
 
+  return [
+    {
+      filtersModel: SelectFilters.initModel({
+        measureStats,
+        initialFilters: {},
+      }),
+      userId,
+      query: {},
+      dataRequest: { status: "not-sent" },
+      mySnapshotRequest,
+    },
+    fetchSnapshotThunk,
+  ];
+}
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "SNAPSHOT_RESPONSE": {
@@ -120,32 +140,59 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            const initModelResult = ReportCardGraph.initModel({
+            const plotModel = PlotWithControls.initModel({
               snapshots: msg.request.response,
-              measureStats: model.measureStats,
-              mySnapshot: draft.mySnapshot,
+              mySnapshot:
+                model.mySnapshotRequest.status == "loaded"
+                  ? model.mySnapshotRequest.response
+                  : undefined,
+              userId: model.userId,
+              filterMapping: SelectFilters.generateFiltersMap(
+                draft.filtersModel,
+              ),
             });
-
-            if (initModelResult.status == "success") {
-              draft.dataRequest = {
-                status: "loaded",
-                response: {
-                  snapshots: msg.request.response,
-                  reportCardModel: immer.castDraft(initModelResult.value),
-                },
-              };
-            } else {
-              draft.dataRequest = {
-                status: "error",
-                error: initModelResult.error,
-              };
-            }
+            draft.dataRequest = {
+              status: "loaded",
+              response: {
+                snapshots: msg.request.response,
+                plotModel: immer.castDraft(plotModel),
+              },
+            };
             return;
           default:
             assertUnreachable(msg.request);
         }
       });
       return [nextModel];
+    }
+
+    case "MY_SNAPSHOT_RESPONSE": {
+      return [
+        produce(model, (draft) => {
+          draft.mySnapshotRequest = msg.request;
+          if (
+            draft.mySnapshotRequest.status == "loaded" &&
+            draft.dataRequest.status == "loaded"
+          ) {
+            const plotModel = PlotWithControls.initModel({
+              snapshots: draft.dataRequest.response.snapshots,
+              mySnapshot: draft.mySnapshotRequest.response,
+              userId: model.userId,
+              filterMapping: SelectFilters.generateFiltersMap(
+                draft.filtersModel,
+              ),
+            });
+
+            draft.dataRequest = {
+              status: "loaded",
+              response: {
+                ...draft.dataRequest.response,
+                plotModel: immer.castDraft(plotModel),
+              },
+            };
+          }
+        }),
+      ];
     }
 
     case "UPDATE_QUERY":
@@ -157,22 +204,22 @@ export const update: Update<Msg, Model> = (msg, model) => {
       });
       return [nextModel, generateFetchThunk(model)];
 
-    case "REPORT_CARD_MSG":
+    case "PLOT_MSG":
       if (model.dataRequest.status != "loaded") {
         console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
         return [model];
       }
-      const [nextReportCardModel] = ReportCardGraph.update(
+      const [nextPlotModel, thunk] = PlotWithControls.update(
         msg.msg,
-        model.dataRequest.response.reportCardModel,
+        model.dataRequest.response.plotModel,
       );
 
       return [
         produce(model, (draft) => {
           const request = assertLoaded(draft.dataRequest);
-          request.response.reportCardModel =
-            immer.castDraft(nextReportCardModel);
+          request.response.plotModel = immer.castDraft(nextPlotModel);
         }),
+        wrapThunk("PLOT_MSG", thunk),
       ];
 
     case "FILTERS_MSG": {
@@ -183,7 +230,21 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.filtersModel = immer.castDraft(nextFiltersModel);
-          draft.query = getQuery(nextFiltersModel);
+          // Convert filters to query format
+          draft.query = {};
+          nextFiltersModel.filters.forEach((filter) => {
+            if (filter.state.state === "selected") {
+              const minResult = filter.state.minInput.parseResult;
+              const maxResult = filter.state.maxInput.parseResult;
+
+              draft.query[filter.state.measureId] = {
+                min:
+                  minResult.status == "success" ? minResult.value : undefined,
+                max:
+                  maxResult.status == "success" ? maxResult.value : undefined,
+              };
+            }
+          });
         }),
       ];
     }
@@ -192,22 +253,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
       assertUnreachable(msg);
   }
 };
-
-function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
-  const query: FilterQuery = {};
-  filtersModel.filters.forEach((filter) => {
-    if (filter.state.state === "selected") {
-      const minResult = filter.state.model.minInput.parseResult;
-      const maxResult = filter.state.model.maxInput.parseResult;
-
-      query[filter.state.model.measureId] = {
-        min: minResult.status == "success" ? minResult.value : undefined,
-        max: maxResult.status == "success" ? maxResult.value : undefined,
-      };
-    }
-  });
-  return query;
-}
 
 const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
   <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
@@ -219,9 +264,9 @@ const viewMap: RequestStatusViewMap<
 > = {
   "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
   loading: () => <div>Fetching...</div>,
-  error: ({ dispatch, error }) => (
+  error: ({ error, dispatch }) => (
     <div>
-      <div>Error: {error}</div>
+      <div>error when fetching data: {error}</div>
       <FetchButton dispatch={dispatch} />
     </div>
   ),
@@ -229,9 +274,9 @@ const viewMap: RequestStatusViewMap<
     <div>
       {response.snapshots.length} snapshots loaded.{" "}
       <FetchButton dispatch={dispatch} />
-      <ReportCardGraph.view
-        model={response.reportCardModel}
-        dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
+      <PlotWithControls.view
+        model={response.plotModel}
+        dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
       />
     </div>
   ),
