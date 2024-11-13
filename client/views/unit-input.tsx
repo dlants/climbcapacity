@@ -80,10 +80,7 @@ export function initModel(
   }
 
   const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
-  const initialInput = getInitialInput(
-    defaultUnit,
-    initialValue || getDefaultValueFromUnitType(defaultUnit),
-  );
+  const initialInput = getInitialInput(defaultUnit, initialValue);
 
   return {
     measureId,
@@ -159,12 +156,13 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
 
 function getInitialInput(
   targetUnit: UnitType,
-  initialValue: UnitValue,
+  initialValue?: UnitValue,
 ): UnitInput {
   const targetValue =
-    initialValue.unit == targetUnit
+    initialValue &&
+    (initialValue.unit == targetUnit
       ? initialValue.value
-      : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit);
+      : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit));
 
   switch (targetUnit) {
     case "second":
@@ -188,7 +186,7 @@ function getInitialInput(
     case "ewbank":
     case "ircra":
     case "count":
-      return targetValue.toString() || "";
+      return targetValue ? targetValue.toString() : "";
     case "inch":
       const { feet, inches } = inchesToFeetAndInches(
         (targetValue as number) || 0,

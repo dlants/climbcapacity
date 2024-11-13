@@ -220,11 +220,16 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
   }
 }
 
-for (const gripType of GRIPS) {
+for (const gripType of [
+  "full-crimp",
+  "half-crimp",
+  "open",
+  "front-3-drag",
+] as const) {
   MEASURES.push({
     id: `min-edge-pullups:2rm:${gripType}` as MeasureId,
     trainingMeasureId: MEASURE_MAP[gripType],
-    name: `Smallest edge you can do 2 pullups on.`,
+    name: `Smallest edge you can do 2 pullups on using ${gripType} grip.`,
     description: `Using a ${gripType} grip, find the smallest edge you can do 2 pullups on.
 
       If you need to reset your grip at the bottom that's ok, but you must control the descent. Avoid "jumping off" at the end of the pullup.`,

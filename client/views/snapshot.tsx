@@ -1,5 +1,6 @@
 import React from "react";
 import * as immer from "immer";
+import lodash from "lodash";
 const produce = immer.produce;
 
 import type { HydratedSnapshot } from "../types";
@@ -23,6 +24,11 @@ import {
   SnapshotId,
   SnapshotUpdateRequest,
 } from "../../iso/protocol";
+import {
+  INPUT_MEASURES,
+  OUTPUT_MEASURES,
+  TIME_TRAINING_MEASURES,
+} from "../../iso/measures";
 
 type CanSubmitEditingState = {
   state: "can-submit";
@@ -70,6 +76,32 @@ export type Model = immer.Immutable<{
   editingState: EditingState;
 }>;
 
+function sortBase(m: MeasureSpec) {
+  if (INPUT_MEASURES.includes(m)) {
+    return 30;
+  } else if (OUTPUT_MEASURES.includes(m)) {
+    return 20;
+  } else if (TIME_TRAINING_MEASURES.includes(m)) {
+    return 0;
+  } else {
+    return 10;
+  }
+}
+
+function sortedMeasures(measureStats: MeasureStats) {
+  return [...MEASURES].sort((a, b) => {
+    const baseA = sortBase(a);
+    const baseB = sortBase(b);
+    if (baseA == baseB) {
+      const statsA = measureStats.stats[a.id] || 0;
+      const statsB = measureStats.stats[b.id] || 0;
+      return statsB - statsA;
+    } else {
+      return baseB - baseA;
+    }
+  });
+}
+
 export function initModel({
   snapshot,
   measureStats,
@@ -82,7 +114,7 @@ export function initModel({
     measureStats,
     measureFilter: {
       query: "",
-      measures: MEASURES,
+      measures: sortedMeasures(measureStats),
     },
     editingState: { state: "not-editing" },
   };
@@ -123,7 +155,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
         produce(model, (draft) => {
           draft.measureFilter = {
             query: msg.query,
-            measures: filterMeasures(MEASURES, msg.query),
+            measures: filterMeasures(
+              sortedMeasures(draft.measureStats),
+              msg.query,
+            ),
           };
         }),
       ];
@@ -132,7 +167,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           const inputModel = immer.castDraft(
-            UnitInput.initModel(msg.measureId),
+            UnitInput.initModel(
+              msg.measureId,
+              draft.snapshot.measures[msg.measureId] as UnitValue | undefined,
+            ),
           );
           draft.editingState = {
             state: "editing",
@@ -144,7 +182,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
           const trainingMeasureId = measure.trainingMeasureId;
           if (trainingMeasureId) {
             let trainingInputmodel = immer.castDraft(
-              UnitInput.initModel(trainingMeasureId),
+              UnitInput.initModel(
+                trainingMeasureId,
+                draft.snapshot.measures[trainingMeasureId] as
+                  | UnitValue
+                  | undefined,
+              ),
             );
             draft.editingState.trainingMeasure = {
               measureId: trainingMeasureId,
@@ -376,13 +419,6 @@ const FilterInput = React.memo(
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className="snapshot-view">
-      <FilterInput
-        value={model.measureFilter.query}
-        onChange={(e) =>
-          dispatch({ type: "SET_MEASURE_FILTER", query: e.target.value })
-        }
-      />
-
       {(() => {
         switch (model.editingState.state) {
           case "not-editing":
@@ -424,6 +460,13 @@ function NotEditingView({
 }) {
   return (
     <div className="measures-list">
+      <FilterInput
+        value={model.measureFilter.query}
+        onChange={(e) =>
+          dispatch({ type: "SET_MEASURE_FILTER", query: e.target.value })
+        }
+      />
+
       {model.measureFilter.measures.map((measure) => (
         <MeasureView
           key={measure.id}
@@ -498,7 +541,7 @@ function EditingView({
           });
         }}
       >
-        Discard
+        Discard Changes
       </button>
     </div>
   );

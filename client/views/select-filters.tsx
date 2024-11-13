@@ -2,19 +2,9 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
-import * as UnitInput from "./unit-input";
 import { Identifier } from "../parser/types";
 import { MeasureId, MeasureSpec, UnitType, UnitValue } from "../../iso/units";
 import lodash from "lodash";
-import { Snapshot } from "../types";
-import {
-  EWBANK,
-  FONT,
-  FRENCH_SPORT,
-  IRCRAGrade,
-  VGRADE,
-  YDS,
-} from "../../iso/grade";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
