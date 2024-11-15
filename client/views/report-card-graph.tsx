@@ -6,15 +6,14 @@ import * as Filter from "./filters/filter";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
-  INPUT_MEASURES,
+  ANTHRO_MEASURES,
   MeasureId,
-  OTHER_MEASURES,
-  OUTPUT_MEASURES,
+  INPUT_MEASURES,
+  PERFORMANCE_MEASURES,
   TIME_TRAINING_MEASURES,
 } from "../../iso/measures";
 import {
   adjustGrade,
-  convertToStandardUnit,
   extractDataPoint,
   UnitType,
   UnitValue,
@@ -27,9 +26,9 @@ import { MeasureStats } from "../../iso/protocol";
 import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
 
-const INPUT_MEASURE_IDS = INPUT_MEASURES.map((s) => s.id);
+const INPUT_MEASURE_IDS = ANTHRO_MEASURES.map((s) => s.id);
 const TIME_TRAINING_MEASURE_IDS = TIME_TRAINING_MEASURES.map((s) => s.id);
-const OUTPUT_MEASURE_IDS = OUTPUT_MEASURES.map((s) => s.id);
+const OUTPUT_MEASURE_IDS = PERFORMANCE_MEASURES.map((s) => s.id);
 
 type PlotModel = {
   filterModel: Filters.Model;
@@ -90,7 +89,7 @@ export function initModel({
       }
     }
   } else {
-    for (const { id, units } of OUTPUT_MEASURES) {
+    for (const { id, units } of PERFORMANCE_MEASURES) {
       outputMeasures.push({
         id,
         unit: units[0],
@@ -166,7 +165,7 @@ function getPlots(model: Model) {
       }
     }
 
-    for (const { id, units } of OTHER_MEASURES) {
+    for (const { id, units } of INPUT_MEASURES) {
       if (snapshotStats[id] > 0) {
         otherMeasures.push({
           id,

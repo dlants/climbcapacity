@@ -2,9 +2,9 @@ import { assertUnreachable } from "../utils.js";
 import { MeasureId, MeasureSpec } from "./index.js";
 import { DOMINANT_SIDE } from "./movement.js";
 
-export const DISTANCE_MOVEMENT = ["vertical-jump", "horizontal-jump"] as const;
+export const POWER_MOVEMENT = ["vertical-jump", "horizontal-jump"] as const;
 
-export type DistanceMovement = (typeof DISTANCE_MOVEMENT)[number];
+export type PowerMovement = (typeof POWER_MOVEMENT)[number];
 
 const TIME_TRAINING_JUMP: MeasureSpec = {
   id: `time-training:jump` as MeasureId,
@@ -63,13 +63,13 @@ export const MEASURES: MeasureSpec[] = [
   },
 ];
 
-const UNILATERAL_DISTANCE_MOVEMENT = [
+const UNILATERAL_POWER_MOVEMENT = [
   "vertial-jump",
   "horizontal-jump",
   "campus-reach",
 ] as const;
 
-for (const movement of UNILATERAL_DISTANCE_MOVEMENT) {
+for (const movement of UNILATERAL_POWER_MOVEMENT) {
   for (const dominantSide of DOMINANT_SIDE) {
     let trainingMeasureId;
     switch (movement) {

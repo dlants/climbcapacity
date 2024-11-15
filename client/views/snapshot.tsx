@@ -23,10 +23,10 @@ import {
   SnapshotUpdateRequest,
 } from "../../iso/protocol";
 import {
-  INPUT_MEASURES,
+  ANTHRO_MEASURES,
   MeasureId,
   MeasureSpec,
-  OUTPUT_MEASURES,
+  PERFORMANCE_MEASURES,
   TIME_TRAINING_MEASURES,
 } from "../../iso/measures";
 
@@ -77,9 +77,9 @@ export type Model = immer.Immutable<{
 }>;
 
 function sortBase(m: MeasureSpec) {
-  if (INPUT_MEASURES.includes(m)) {
+  if (ANTHRO_MEASURES.includes(m)) {
     return 30;
-  } else if (OUTPUT_MEASURES.includes(m)) {
+  } else if (PERFORMANCE_MEASURES.includes(m)) {
     return 20;
   } else if (TIME_TRAINING_MEASURES.includes(m)) {
     return 0;

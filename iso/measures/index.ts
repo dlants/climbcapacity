@@ -1,7 +1,14 @@
-import { MEASURES as FINGER_MEASURES } from "./fingers.js";
-import { MEASURES as GRADE_MEASURES } from "./grades.js";
-import { MEASURES as MOVEMENT_MEASURES } from "./movement.js";
-import { MEASURES as DISTANCE_MEASURES } from "./distance.js";
+export { MEASURES as FINGER_MEASURES } from "./fingers.js";
+export { MEASURES as PERFORMANCE_MEASURES } from "./grades.js";
+export { MEASURES as MOVEMENT_MEASURES } from "./movement.js";
+export { MEASURES as POWER_MEASURES } from "./power.js";
+
+import {
+  FINGER_MEASURES,
+  PERFORMANCE_MEASURES,
+  MOVEMENT_MEASURES,
+  POWER_MEASURES,
+} from "./index.js";
 import { InitialFilter, UnitType } from "../units.js";
 
 export type MeasureId = string & { __brand: "measureId" };
@@ -17,7 +24,20 @@ export type MeasureSpec = {
   initialFilter: InitialFilter;
 };
 
-export const MEASURES: MeasureSpec[] = [
+export const MEASURES = [
+  ...FINGER_MEASURES,
+  ...PERFORMANCE_MEASURES,
+  ...MOVEMENT_MEASURES,
+  ...POWER_MEASURES,
+];
+
+export const INPUT_MEASURES = [
+  ...FINGER_MEASURES,
+  ...MOVEMENT_MEASURES,
+  ...POWER_MEASURES,
+];
+
+export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
     name: "height",
@@ -79,6 +99,11 @@ export const MEASURES: MeasureSpec[] = [
       value: { unit: "sex-at-birth", value: "female" },
     },
   },
+];
+
+MEASURES.push(...ANTHRO_MEASURES);
+
+export const TIME_TRAINING_MEASURES: MeasureSpec[] = [
   {
     id: "time-climbing" as MeasureId,
     name: "How long have you been climbing?",
@@ -130,11 +155,8 @@ Examples of activities that count as strength training practice:
       maxValue: { unit: "year", value: 15 },
     },
   },
-  ...DISTANCE_MEASURES,
-  ...MOVEMENT_MEASURES,
-  ...FINGER_MEASURES,
-  ...GRADE_MEASURES,
 ];
+MEASURES.push(...TIME_TRAINING_MEASURES);
 
 export const MEASURE_MAP: {
   [measureId: MeasureId]: MeasureSpec;
@@ -143,24 +165,3 @@ export const MEASURE_MAP: {
 for (const measure of MEASURES) {
   MEASURE_MAP[measure.id] = measure;
 }
-
-export const INPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["height", "weight", "sex-at-birth", "armspan", "standing-reach"].some(
-    (id) => m.id == id,
-  ),
-);
-
-export const TIME_TRAINING_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["time-training:"].some((idPrefix) => m.id.startsWith(idPrefix)),
-);
-
-export const OUTPUT_MEASURES: MeasureSpec[] = MEASURES.filter((m) =>
-  ["grade:"].some((idPrefix) => m.id.startsWith(idPrefix)),
-);
-
-export const OTHER_MEASURES: MeasureSpec[] = MEASURES.filter(
-  (m) =>
-    !INPUT_MEASURES.includes(m) &&
-    !OUTPUT_MEASURES.includes(m) &&
-    !TIME_TRAINING_MEASURES.includes(m),
-);
