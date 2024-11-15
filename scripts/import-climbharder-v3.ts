@@ -51,7 +51,7 @@ table.slice(1).forEach((row, idx) => {
   } else if (sexStr == "Female") {
     addMeasure("sex-at-birth" as MeasureId, {
       unit: "sex-at-birth",
-      value: "male",
+      value: "female",
     });
   }
 
