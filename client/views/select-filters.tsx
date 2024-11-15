@@ -12,16 +12,7 @@ import * as MinMaxFilter from "./min-max-filter";
 
 export type Filter = immer.Immutable<{
   id: Identifier;
-  state:
-    | {
-        state: "typing";
-        query: string;
-        measures: MeasureSpec[];
-      }
-    | {
-        state: "selected";
-        model: MinMaxFilter.Model;
-      };
+  model: MinMaxFilter.Model;
 }>;
 
 export type FilterMapping = {
@@ -34,37 +25,14 @@ export type FilterMapping = {
 export type Model = immer.Immutable<{
   measureStats: MeasureStats;
   filters: Filter[];
+  measureSelectionBox: MeasureSelectionBox.Model;
 }>;
 
-function castToSelectionModel({
-  filter,
-  measureStats,
-}: {
-  filter: immer.Immutable<Filter>;
-  measureStats: MeasureStats;
-}): MeasureSelectionBox.Model {
-  return filter.state.state == "typing"
-    ? {
-        id: filter.id,
-        state: "typing",
-        measureStats,
-        query: filter.state.query,
-        measures: filter.state.measures,
-      }
-    : {
-        id: filter.id,
-        measureStats,
-        state: "selected",
-        measureId: filter.state.model.measureId,
-      };
-}
-
 export type Msg =
-  | { type: "ADD_FILTER" }
+  | { type: "ADD_FILTER"; measureId: MeasureId }
   | { type: "REMOVE_FILTER"; id: Identifier }
   | {
       type: "MEASURE_SELECTOR_MSG";
-      id: Identifier;
       msg: MeasureSelectionBox.Msg;
     }
   | { type: "MIN_MAX_FILTER_MSG"; id: Identifier; msg: MinMaxFilter.Msg };
@@ -89,28 +57,30 @@ export function initModel({
     const { minValue, maxValue } = initialMeasures[measureId];
     filters.push({
       id: getNextId({ filters }),
-      state: {
-        state: "selected",
-        model: MinMaxFilter.initModel({
-          measureId,
-          minValue,
-          maxValue,
-        }),
-      },
+      model: MinMaxFilter.initModel({
+        measureId,
+        minValue,
+        maxValue,
+      }),
     });
   }
-  return { measureStats, filters };
+  return {
+    measureStats,
+    filters,
+    measureSelectionBox: MeasureSelectionBox.initModel({
+      measureStats,
+      id: getNextId({ filters }),
+    }),
+  };
 }
 
 export function generateFiltersMap(model: Model): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of model.filters) {
-    if (filter.state.state == "selected") {
-      filterMapping[filter.id] = {
-        measureId: filter.state.model.measureId,
-        unit: filter.state.model.minInput.selectedUnit,
-      };
-    }
+    filterMapping[filter.id] = {
+      measureId: filter.model.measureId,
+      unit: filter.model.minInput.selectedUnit,
+    };
   }
   return filterMapping;
 }
@@ -142,41 +112,29 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "ADD_FILTER":
       return [
         immer.produce(model, (draft) => {
-          const id = getNextId(draft);
-          const measureModel = MeasureSelectionBox.initModel({
-            measureStats: model.measureStats,
-            id,
-          });
-          if (measureModel.state == "typing") {
-            draft.filters.push({
-              id,
-              state: immer.castDraft({
-                state: "typing",
-                query: measureModel.query,
-                measures: measureModel.measures,
-              }),
-            });
-          } else {
-            const spec = MEASURES.find(
-              (spec) => spec.id == measureModel.measureId,
-            );
-            if (!spec) {
-              throw new Error(`Unexpected measureId ${measureModel.measureId}`);
-            }
-
-            draft.filters.push({
-              id,
-              state: immer.castDraft({
-                state: "selected",
-                model: MinMaxFilter.initModel({
-                  measureId: measureModel.measureId,
-                  minValue: spec.defaultMinValue,
-                  maxValue: spec.defaultMaxValue,
-                }),
-              }),
-            });
+          const spec = MEASURES.find((spec) => spec.id == msg.measureId);
+          if (!spec) {
+            throw new Error(`Unexpected measureId ${msg.measureId}`);
           }
-          draft.filters = lodash.sortBy(draft.filters, (f) => f.id);
+
+          draft.filters.push({
+            id: model.measureSelectionBox.id as Identifier,
+            model: immer.castDraft(
+              MinMaxFilter.initModel({
+                measureId: msg.measureId,
+                minValue: spec.defaultMinValue,
+                maxValue: spec.defaultMaxValue,
+              }),
+            ),
+          });
+
+          const id = getNextId(draft);
+          draft.measureSelectionBox = immer.castDraft(
+            MeasureSelectionBox.initModel({
+              measureStats: model.measureStats,
+              id,
+            }),
+          );
         }),
       ];
 
@@ -190,39 +148,11 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "MEASURE_SELECTOR_MSG":
       return [
         immer.produce(model, (draft) => {
-          const filter = draft.filters.find((f) => f.id === msg.id);
-          if (filter) {
-            const [newModel] = MeasureSelectionBox.update(
-              msg.msg,
-              castToSelectionModel({
-                filter,
-                measureStats: model.measureStats,
-              }),
-            );
-            if (newModel.state == "typing") {
-              filter.state = immer.castDraft({
-                state: "typing",
-                query: newModel.query,
-                measures: newModel.measures,
-              });
-            } else {
-              const spec = MEASURES.find(
-                (spec) => spec.id == newModel.measureId,
-              );
-              if (!spec) {
-                throw new Error(`Unexpected measureId ${newModel.measureId}`);
-              }
-
-              filter.state = immer.castDraft({
-                state: "selected",
-                model: MinMaxFilter.initModel({
-                  measureId: newModel.measureId,
-                  minValue: spec.defaultMinValue,
-                  maxValue: spec.defaultMaxValue,
-                }),
-              });
-            }
-          }
+          const [newModel] = MeasureSelectionBox.update(
+            msg.msg,
+            model.measureSelectionBox,
+          );
+          draft.measureSelectionBox = immer.castDraft(newModel);
         }),
       ];
 
@@ -230,14 +160,11 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find((f) => f.id === msg.id);
-          if (!(filter && filter.state.state == "selected")) {
-            throw new Error(
-              `Unexpected filter state when handling input msg ${filter?.state.state}`,
-            );
+          if (!filter) {
+            throw new Error(`Unexpected filter id ${msg.id}`);
           }
-
-          const [next] = MinMaxFilter.update(msg.msg, filter.state.model);
-          filter.state.model = immer.castDraft(next);
+          const [next] = MinMaxFilter.update(msg.msg, filter.model);
+          filter.model = immer.castDraft(next);
         }),
       ];
     default:
@@ -256,11 +183,26 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
           model={model}
         />
       ))}
-      <button onClick={() => dispatch({ type: "ADD_FILTER" })}>
-        Add Filter
-      </button>
+      <MeasureSelectionBox.view
+        model={model.measureSelectionBox}
+        dispatch={(msg) => dispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
+      />{" "}
+      <AddFilterButton model={model} dispatch={dispatch} />
     </div>
   );
+};
+
+export const AddFilterButton: View<Msg, Model> = ({ model, dispatch }) => {
+  if (model.measureSelectionBox.state == "selected") {
+    const measureId = model.measureSelectionBox.measureId;
+    return (
+      <button onClick={() => dispatch({ type: "ADD_FILTER", measureId })}>
+        Add Filter
+      </button>
+    );
+  } else {
+    return <button disabled>Add Filter</button>;
+  }
 };
 
 const FilterView = ({
@@ -282,24 +224,14 @@ const FilterView = ({
         gap: "8px",
       }}
     >
-      <strong>[{filter.id}]</strong>{" "}
-      <MeasureSelectionBox.view
-        model={castToSelectionModel({
-          filter,
-          measureStats: model.measureStats,
-        })}
+      <strong>{filter.model.measureId}</strong>(
+      {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
+      <MinMaxFilter.view
+        model={filter.model}
         dispatch={(msg) =>
-          dispatch({ type: "MEASURE_SELECTOR_MSG", id: filter.id, msg })
+          dispatch({ type: "MIN_MAX_FILTER_MSG", id: filter.id, msg })
         }
-      />{" "}
-      {filter.state.state == "selected" && (
-        <MinMaxFilter.view
-          model={filter.state.model}
-          dispatch={(msg) =>
-            dispatch({ type: "MIN_MAX_FILTER_MSG", id: filter.id, msg })
-          }
-        />
-      )}
+      />
       <button
         onClick={() =>
           dispatch({

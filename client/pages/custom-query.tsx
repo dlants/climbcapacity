@@ -233,17 +233,13 @@ export const update: Update<Msg, Model> = (msg, model) => {
           // Convert filters to query format
           draft.query = {};
           nextFiltersModel.filters.forEach((filter) => {
-            if (filter.state.state === "selected") {
-              const minResult = filter.state.minInput.parseResult;
-              const maxResult = filter.state.maxInput.parseResult;
+            const minResult = filter.model.minInput.parseResult;
+            const maxResult = filter.model.maxInput.parseResult;
 
-              draft.query[filter.state.measureId] = {
-                min:
-                  minResult.status == "success" ? minResult.value : undefined,
-                max:
-                  maxResult.status == "success" ? maxResult.value : undefined,
-              };
-            }
+            draft.query[filter.model.measureId] = {
+              min: minResult.status == "success" ? minResult.value : undefined,
+              max: maxResult.status == "success" ? maxResult.value : undefined,
+            };
           });
         }),
       ];
