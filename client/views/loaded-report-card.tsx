@@ -15,40 +15,32 @@ import * as immer from "immer";
 import * as ReportCardGraph from "./report-card-graph";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
-import lodash from "lodash";
-import { INPUT_MEASURES } from "../../iso/measures/index";
-import { MeasureId, UnitType, UnitValue } from "../../iso/units";
-import {
-  EWBANK,
-  FONT,
-  FRENCH_SPORT,
-  IRCRAGrade,
-  VGRADE,
-  YDS,
-} from "../../iso/grade";
 import { InitialFilters } from "../views/select-filters";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
   measureStats: MeasureStats;
-  query: FilterQuery;
+  query: {
+    body: FilterQuery;
+    hash: string;
+  };
   mySnapshot?: HydratedSnapshot;
-  dataRequest: RequestStatus<{
-    snapshots: HydratedSnapshot[];
-    reportCardModel: ReportCardGraph.Model;
-  }>;
+  dataRequest: RequestStatus<
+    {
+      snapshots: HydratedSnapshot[];
+      reportCardModel: ReportCardGraph.Model;
+    },
+    { queryHash: string }
+  >;
 }>;
 
 export type Msg =
-  | {
-      type: "UPDATE_QUERY";
-    }
   | {
       type: "REQUEST_DATA";
     }
   | {
       type: "SNAPSHOT_RESPONSE";
-      request: RequestStatus<HydratedSnapshot[]>;
+      request: RequestStatus<HydratedSnapshot[], { queryHash: string }>;
     }
   | {
       type: "REPORT_CARD_MSG";
@@ -61,7 +53,7 @@ export type Msg =
 
 function generateFetchThunk(model: Model) {
   return async (dispatch: Dispatch<Msg>) => {
-    const query: FilterQuery = model.query;
+    const query = model.query.body;
     const response = await fetch("/api/snapshots/query", {
       method: "POST",
       headers: {
@@ -75,7 +67,11 @@ function generateFetchThunk(model: Model) {
       const snapshots = (await response.json()) as Snapshot[];
       dispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "loaded", response: snapshots.map(hydrateSnapshot) },
+        request: {
+          status: "loaded",
+          response: snapshots.map(hydrateSnapshot),
+          queryHash: model.query.hash,
+        },
       });
     } else {
       dispatch({
@@ -99,12 +95,13 @@ export function initModel({
     measureStats,
     initialFilters: initialFilters,
   });
+  const query = getQuery(filtersModel);
   const model: Model = {
     filtersModel,
     measureStats,
     mySnapshot,
-    query: getQuery(filtersModel),
-    dataRequest: { status: "loading" },
+    query,
+    dataRequest: { status: "loading", queryHash: query.hash },
   };
   return [model, generateFetchThunk(model)];
 }
@@ -129,6 +126,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             if (initModelResult.status == "success") {
               draft.dataRequest = {
                 status: "loaded",
+                queryHash: msg.request.queryHash,
                 response: {
                   snapshots: msg.request.response,
                   reportCardModel: immer.castDraft(initModelResult.value),
@@ -148,12 +146,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [nextModel];
     }
 
-    case "UPDATE_QUERY":
-      return [model];
-
     case "REQUEST_DATA":
       const nextModel: Model = produce(model, (draft) => {
-        draft.dataRequest = { status: "loading" };
+        draft.dataRequest = { status: "loading", queryHash: model.query.hash };
       });
       return [nextModel, generateFetchThunk(model)];
 
@@ -184,6 +179,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
         produce(model, (draft) => {
           draft.filtersModel = immer.castDraft(nextFiltersModel);
           draft.query = getQuery(nextFiltersModel);
+          if (draft.query.hash != model.query.hash) {
+            draft.dataRequest = { status: "not-sent" };
+          }
         }),
       ];
     }
@@ -195,6 +193,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
 function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
   const query: FilterQuery = {};
+  const queryHashParts: string[] = [];
   filtersModel.filters.forEach((filter) => {
     const minResult = filter.model.minInput.parseResult;
     const maxResult = filter.model.maxInput.parseResult;
@@ -203,38 +202,56 @@ function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
       min: minResult.status == "success" ? minResult.value : undefined,
       max: maxResult.status == "success" ? maxResult.value : undefined,
     };
+    queryHashParts.push(
+      filter.model.measureId +
+        ":" +
+        JSON.stringify(query[filter.model.measureId]),
+    );
   });
-  return query;
+  return {
+    body: query,
+    hash: queryHashParts.join(","),
+  };
 }
 
-const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
-  <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
+const FetchButton = ({
+  dispatch,
+  model,
+}: {
+  dispatch: Dispatch<Msg>;
+  model: Model;
+}) => (
+  <button
+    onClick={() => dispatch({ type: "REQUEST_DATA" })}
+    disabled={
+      model.dataRequest.status === "loaded" &&
+      model.dataRequest.queryHash === model.query.hash
+    }
+  >
+    Fetch Data
+  </button>
 );
 
-const viewMap: RequestStatusViewMap<
-  GetLoadedRequestType<Model["dataRequest"]>["response"],
-  Msg
-> = {
-  "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
-  loading: () => <div>Fetching...</div>,
-  error: ({ dispatch, error }) => (
-    <div>
-      <div>Error: {error}</div>
-      <FetchButton dispatch={dispatch} />
-    </div>
-  ),
-  loaded: ({ response, dispatch }) => (
+function LoadedView({
+  response,
+  dispatch,
+  model,
+}: {
+  response: GetLoadedRequestType<Model["dataRequest"]>["response"];
+  dispatch: Dispatch<Msg>;
+  model: Model;
+}) {
+  return (
     <div>
       {response.snapshots.length} snapshots loaded.{" "}
-      <FetchButton dispatch={dispatch} />
+      <FetchButton dispatch={dispatch} model={model} />
       <ReportCardGraph.view
         model={response.reportCardModel}
         dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
       />
     </div>
-  ),
-};
-
+  );
+}
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div>
@@ -242,11 +259,31 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
         model={model.filtersModel}
         dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
       />
-      <RequestStatusView
-        dispatch={dispatch}
-        request={model.dataRequest}
-        viewMap={viewMap}
-      />
+      {(() => {
+        switch (model.dataRequest.status) {
+          case "not-sent":
+            return <FetchButton dispatch={dispatch} model={model} />;
+          case "loading":
+            return <div>Fetching...</div>;
+          case "error":
+            return (
+              <div>
+                <div>Error: {model.dataRequest.error}</div>
+                <FetchButton dispatch={dispatch} model={model} />
+              </div>
+            );
+          case "loaded":
+            return (
+              <LoadedView
+                response={model.dataRequest.response}
+                dispatch={dispatch}
+                model={model}
+              />
+            );
+          default:
+            assertUnreachable(model.dataRequest);
+        }
+      })()}
     </div>
   );
 };

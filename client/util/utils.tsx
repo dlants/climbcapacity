@@ -7,14 +7,14 @@ export type LoadedRequest<T> = {
   response: T;
 };
 
-export type RequestStatus<T> =
+export type RequestStatus<T, Ext = {}> =
   | {
       status: "not-sent";
     }
-  | {
+  | ({
       status: "loading";
-    }
-  | LoadedRequest<T>
+    } & Ext)
+  | (LoadedRequest<T> & Ext)
   | {
       status: "error";
       error: string;
