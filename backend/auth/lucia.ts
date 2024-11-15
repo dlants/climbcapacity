@@ -46,8 +46,6 @@ export class Auth {
       },
     });
 
-    // we are sitting behind the render proxy. This should help the rate limiter work properly.
-    app.set("trust proxy", 1);
     const loginLinkIpLimiter = rateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       max: 5, // 5 requests per IP

@@ -31,19 +31,20 @@ async function run() {
   const { client } = await connect(env.MONGODB_URL);
 
   const app = express();
-  app.use(express.json());
 
+  // we are sitting behind the render proxy. This should help the rate limiter work properly.
+  app.set("trust proxy", 1);
+  app.get("/api/ip", (req, res) => {
+    res.send(req.ip);
+  });
+
+  app.use(express.json());
   // once built, this file will be in /app/backend/dist/backend/app.js
   // the built client assets will be in /app/client/dist/
   app.use(express.static(path.join(__dirname, "../../../client/dist")));
 
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
-
-  app.get("/api/ip", (req, res) => {
-    res.send(req.ip);
-    return;
-  });
 
   app.get(
     "/api/measure-stats",
