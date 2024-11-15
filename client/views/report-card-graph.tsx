@@ -104,6 +104,13 @@ export function initModel({
       error: `No output measures found. Try adding some grade data to your snapshot.`,
     };
   }
+
+  outputMeasures.sort((a, b) => {
+    const aCount = measureStats.stats[a.id] || 0;
+    const bCount = measureStats.stats[b.id] || 0;
+    return bCount - aCount;
+  });
+
   const outputMeasure = outputMeasures[0];
   const outputMeasureToggle: UnitToggle.Model = {
     measureId: outputMeasure.id,
@@ -390,7 +397,7 @@ export function view({
       >
         {model.outputMeasures.map((m) => (
           <option key={m.id} value={m.id}>
-            {m.id}
+            {m.id}({model.measureStats.stats[m.id] || 0})
           </option>
         ))}
       </select>
