@@ -2,7 +2,7 @@ import express from "express";
 import mongodb from "mongodb";
 import { Lucia, verifyRequestOrigin, generateIdFromEntropySize } from "lucia";
 import { MongodbAdapter } from "@lucia-auth/adapter-mongodb";
-import { HandledError } from "../utils.js";
+import { asyncRoute, HandledError } from "../utils.js";
 import assert from "assert";
 import { MagicLink } from "./magic-link.js";
 import rateLimit from "express-rate-limit";
@@ -99,44 +99,54 @@ export class Auth {
       }),
     );
 
-    app.get("/api/login", async (req, res) => {
-      const code = req.query.code;
-      if (typeof code !== "string") {
-        throw new HandledError({ status: 401, message: `No token provided` });
-      }
+    app.get(
+      "/api/login",
+      loginLinkIpLimiter,
+      asyncRoute(async (req, res) => {
+        const code = req.query.code;
+        if (typeof code !== "string") {
+          throw new HandledError({ status: 401, message: `No token provided` });
+        }
 
-      const userId = await this.magicLink.verifyMagicLink({ code });
+        const userId = await this.magicLink.verifyMagicLink({ code });
 
-      await this.lucia.invalidateUserSessions(userId);
+        await this.lucia.invalidateUserSessions(userId);
 
-      const session = await this.lucia.createSession(userId, {});
-      const sessionCookie = this.lucia.createSessionCookie(session.id);
-      res
-        .status(302)
-        .setHeader("Set-Cookie", sessionCookie.serialize())
-        .setHeader("Location", "/")
-        .send("OK");
+        const session = await this.lucia.createSession(userId, {});
+        const sessionCookie = this.lucia.createSessionCookie(session.id);
+        res
+          .status(302)
+          .setHeader("Set-Cookie", sessionCookie.serialize())
+          .setHeader("Location", "/")
+          .send("OK");
 
-      return;
-    });
+        return res;
+      }),
+    );
 
-    app.get("/api/logout", async (req, res) => {
-      // Get current session
-      const sessionId = this.lucia.readSessionCookie(req.headers.cookie ?? "");
-      if (sessionId) {
-        // Invalidate the session
-        await this.lucia.invalidateSession(sessionId);
-      }
+    app.get(
+      "/api/logout",
+      asyncRoute(async (req, res) => {
+        // Get current session
+        const sessionId = this.lucia.readSessionCookie(
+          req.headers.cookie ?? "",
+        );
+        if (sessionId) {
+          // Invalidate the session
+          await this.lucia.invalidateSession(sessionId);
+        }
 
-      // Clear the session cookie
-      const sessionCookie = this.lucia.createBlankSessionCookie();
+        // Clear the session cookie
+        const sessionCookie = this.lucia.createBlankSessionCookie();
 
-      res
-        .status(302)
-        .setHeader("Set-Cookie", sessionCookie.serialize())
-        .setHeader("Location", "/")
-        .send("OK");
-    });
+        res
+          .status(302)
+          .setHeader("Set-Cookie", sessionCookie.serialize())
+          .setHeader("Location", "/")
+          .send("OK");
+        return res;
+      }),
+    );
 
     app.post(
       "/api/auth",
