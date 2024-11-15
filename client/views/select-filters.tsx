@@ -2,20 +2,14 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
-import { Identifier } from "../parser/types";
-import { MeasureId, UnitType, UnitValue } from "../../iso/units";
+import { InitialFilter, MeasureId, UnitType, UnitValue } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
-import * as MinMaxFilter from "./min-max-filter";
-
-export type Filter = immer.Immutable<{
-  id: Identifier;
-  model: MinMaxFilter.Model;
-}>;
+import * as Filter from "./filters/filter";
 
 export type FilterMapping = {
-  [id: Identifier]: {
+  [measureId: MeasureId]: {
     measureId: MeasureId;
     unit: UnitType;
   };
@@ -23,52 +17,41 @@ export type FilterMapping = {
 
 export type Model = immer.Immutable<{
   measureStats: MeasureStats;
-  filters: Filter[];
+  filters: Filter.Model[];
   measureSelectionBox: MeasureSelectionBox.Model;
 }>;
 
 export type Msg =
   | { type: "ADD_FILTER"; measureId: MeasureId }
-  | { type: "REMOVE_FILTER"; id: Identifier }
+  | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
       type: "MEASURE_SELECTOR_MSG";
       msg: MeasureSelectionBox.Msg;
     }
-  | { type: "MIN_MAX_FILTER_MSG"; id: Identifier; msg: MinMaxFilter.Msg };
+  | { type: "FILTER_MSG"; measureId: MeasureId; msg: Filter.Msg };
 
 export type InitialFilters = {
-  [measureId: MeasureId]: {
-    minValue: UnitValue;
-    maxValue: UnitValue;
-  };
+  [measureId: MeasureId]: InitialFilter;
 };
 
 export function initModel({
-  initialFilters: initialMeasures,
+  initialFilters,
   measureStats,
 }: {
   initialFilters: InitialFilters;
   measureStats: MeasureStats;
 }): Model {
-  const filters: Filter[] = [];
-  for (const measureIdStr in initialMeasures) {
+  const filters: Filter.Model[] = [];
+  for (const measureIdStr in initialFilters) {
     const measureId = measureIdStr as MeasureId;
-    const { minValue, maxValue } = initialMeasures[measureId];
-    filters.push({
-      id: getNextId({ filters }),
-      model: MinMaxFilter.initModel({
-        measureId,
-        minValue,
-        maxValue,
-      }),
-    });
+    const initialFilter = initialFilters[measureId];
+    filters.push(Filter.initModel(initialFilter));
   }
   return {
     measureStats,
     filters,
     measureSelectionBox: MeasureSelectionBox.initModel({
       measureStats,
-      id: getNextId({ filters }),
     }),
   };
 }
@@ -76,9 +59,9 @@ export function initModel({
 export function generateFiltersMap(model: Model): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of model.filters) {
-    filterMapping[filter.id] = {
+    filterMapping[filter.model.measureId] = {
       measureId: filter.model.measureId,
-      unit: filter.model.minInput.selectedUnit,
+      unit: filter.model.unitToggle.selectedUnit,
     };
   }
   return filterMapping;
@@ -86,24 +69,6 @@ export function generateFiltersMap(model: Model): FilterMapping {
 
 function nextChar(char: string) {
   return String.fromCharCode(char.charCodeAt(0) + 1);
-}
-
-function getNextId(model: Pick<Model, "filters">): Identifier {
-  const ids = new Set<string>(model.filters.map((m) => m.id));
-  let id = "a";
-
-  while (true) {
-    if (!ids.has(id)) {
-      return id as Identifier;
-    }
-
-    const lastchar = id.slice(-1);
-    if (lastchar == "z") {
-      id = id.slice(0, -1) + "aa";
-    } else {
-      id = id.slice(0, -1) + nextChar(lastchar);
-    }
-  }
 }
 
 export const update: Update<Msg, Model> = (msg, model) => {
@@ -116,22 +81,13 @@ export const update: Update<Msg, Model> = (msg, model) => {
             throw new Error(`Unexpected measureId ${msg.measureId}`);
           }
 
-          draft.filters.push({
-            id: model.measureSelectionBox.id as Identifier,
-            model: immer.castDraft(
-              MinMaxFilter.initModel({
-                measureId: msg.measureId,
-                minValue: spec.defaultMinValue,
-                maxValue: spec.defaultMaxValue,
-              }),
-            ),
-          });
+          draft.filters.push(
+            immer.castDraft(Filter.initModel(spec.initialFilter)),
+          );
 
-          const id = getNextId(draft);
           draft.measureSelectionBox = immer.castDraft(
             MeasureSelectionBox.initModel({
               measureStats: model.measureStats,
-              id,
             }),
           );
         }),
@@ -140,7 +96,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "REMOVE_FILTER":
       return [
         immer.produce(model, (draft) => {
-          draft.filters = draft.filters.filter((f) => f.id !== msg.id);
+          draft.filters = draft.filters.filter(
+            (f) => f.model.measureId !== msg.measureId,
+          );
         }),
       ];
 
@@ -155,15 +113,18 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
 
-    case "MIN_MAX_FILTER_MSG":
+    case "FILTER_MSG":
       return [
         immer.produce(model, (draft) => {
-          const filter = draft.filters.find((f) => f.id === msg.id);
+          const filterIndex = draft.filters.findIndex(
+            (f) => f.model.measureId === msg.measureId,
+          );
+          const filter = draft.filters[filterIndex];
           if (!filter) {
-            throw new Error(`Unexpected filter id ${msg.id}`);
+            throw new Error(`Unexpected filter id ${msg.measureId}`);
           }
-          const [next] = MinMaxFilter.update(msg.msg, filter.model);
-          filter.model = immer.castDraft(next);
+          const [next] = Filter.update(msg.msg, filter);
+          draft.filters[filterIndex] = immer.castDraft(next);
         }),
       ];
     default:
@@ -176,7 +137,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     <div>
       {model.filters.map((filter) => (
         <FilterView
-          key={filter.id}
+          key={filter.model.measureId}
           filter={filter}
           dispatch={dispatch}
           model={model}
@@ -210,12 +171,12 @@ const FilterView = ({
   dispatch,
 }: {
   model: Model;
-  filter: Filter;
+  filter: Filter.Model;
   dispatch: Dispatch<Msg>;
 }) => {
   return (
     <div
-      key={filter.id}
+      key={filter.model.measureId}
       style={{
         margin: "10px 0",
         display: "flex",
@@ -225,17 +186,21 @@ const FilterView = ({
     >
       <strong>{filter.model.measureId}</strong>(
       {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
-      <MinMaxFilter.view
-        model={filter.model}
+      <Filter.view
+        model={filter}
         dispatch={(msg) =>
-          dispatch({ type: "MIN_MAX_FILTER_MSG", id: filter.id, msg })
+          dispatch({
+            type: "FILTER_MSG",
+            measureId: filter.model.measureId,
+            msg,
+          })
         }
       />
       <button
         onClick={() =>
           dispatch({
             type: "REMOVE_FILTER",
-            id: filter.id,
+            measureId: filter.model.measureId,
           })
         }
       >

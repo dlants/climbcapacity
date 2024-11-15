@@ -10,16 +10,24 @@ export const MEASURES: MeasureSpec[] = [
     name: "height",
     description: "Your height",
     units: ["m", "cm", "inch"],
-    defaultMinValue: { unit: "m", value: 1.53 },
-    defaultMaxValue: { unit: "m", value: 1.85 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "height" as MeasureId,
+      minValue: { unit: "m", value: 1.53 },
+      maxValue: { unit: "m", value: 1.85 },
+    },
   },
   {
     id: "armspan" as MeasureId,
     name: "Arm span",
     description: "Your arm span, fingertip to fingertip",
     units: ["m", "cm", "inch"],
-    defaultMinValue: { unit: "m", value: 1.53 },
-    defaultMaxValue: { unit: "m", value: 1.85 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "armspan" as MeasureId,
+      minValue: { unit: "m", value: 1.53 },
+      maxValue: { unit: "m", value: 1.85 },
+    },
   },
   {
     id: "standing-reach" as MeasureId,
@@ -27,8 +35,12 @@ export const MEASURES: MeasureSpec[] = [
     description:
       "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
     units: ["m", "cm", "inch"],
-    defaultMinValue: { unit: "m", value: 2.2 },
-    defaultMaxValue: { unit: "m", value: 2.8 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "standing-reach" as MeasureId,
+      minValue: { unit: "m", value: 2.2 },
+      maxValue: { unit: "m", value: 2.8 },
+    },
   },
 
   {
@@ -36,16 +48,23 @@ export const MEASURES: MeasureSpec[] = [
     name: "weight",
     description: "Your weight",
     units: ["kg", "lb"],
-    defaultMinValue: { unit: "kg", value: 39.7 },
-    defaultMaxValue: { unit: "kg", value: 115.5 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "weight" as MeasureId,
+      minValue: { unit: "kg", value: 39.7 },
+      maxValue: { unit: "kg", value: 115.5 },
+    },
   },
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
-    defaultMinValue: { unit: "sex-at-birth", value: "female" },
-    defaultMaxValue: { unit: "sex-at-birth", value: "male" },
+    initialFilter: {
+      type: "toggle",
+      measureId: "sex-at-birth" as MeasureId,
+      value: { unit: "sex-at-birth", value: "female" },
+    },
   },
   {
     id: "time-climbing" as MeasureId,
@@ -55,8 +74,12 @@ export const MEASURES: MeasureSpec[] = [
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
 `,
     units: ["year", "month"],
-    defaultMinValue: { unit: "year", value: 0 },
-    defaultMaxValue: { unit: "year", value: 15 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "time-climbing" as MeasureId,
+      minValue: { unit: "year", value: 0 },
+      maxValue: { unit: "year", value: 15 },
+    },
   },
   {
     id: "time-training" as MeasureId,
@@ -69,8 +92,12 @@ Examples that count as deliberate practice:
  - choosing one day a week to work on climbs of a specific style or difficulty level
 `,
     units: ["year", "month"],
-    defaultMinValue: { unit: "year", value: 0 },
-    defaultMaxValue: { unit: "year", value: 15 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "time-training" as MeasureId,
+      minValue: { unit: "year", value: 0 },
+      maxValue: { unit: "year", value: 15 },
+    },
   },
   {
     id: "time-strength-training" as MeasureId,
@@ -83,8 +110,12 @@ Examples of activities that count as strength training practice:
 - overloading the movements, so progressing the load over time.
 `,
     units: ["year", "month"],
-    defaultMinValue: { unit: "year", value: 0 },
-    defaultMaxValue: { unit: "year", value: 15 },
+    initialFilter: {
+      type: "minmax",
+      measureId: "time-strength-training" as MeasureId,
+      minValue: { unit: "year", value: 0 },
+      maxValue: { unit: "year", value: 15 },
+    },
   },
   ...DISTANCE_MEASURES,
   ...MOVEMENT_MEASURES,

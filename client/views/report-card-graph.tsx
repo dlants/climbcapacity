@@ -2,6 +2,7 @@ import React from "react";
 import { HydratedSnapshot } from "../types";
 import * as Plot from "./plot";
 import * as Filters from "./report-graph-filters";
+import * as Filter from "./filters/filter";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
@@ -172,10 +173,12 @@ function getPlots(model: Model) {
   const outputMeasureSpec = MEASURE_MAP[model.outputMeasure.id];
   for (const otherMeasure of otherMeasures) {
     const otherMeasureSpec = MEASURE_MAP[otherMeasure.id];
-    const initialMeasures: Filters.InitialMeasures = {};
+    const initialFilters: Filters.InitialFilters = {};
     if (model.mySnapshot) {
-      initialMeasures[model.outputMeasure.id] = {
+      initialFilters[model.outputMeasure.id] = {
         enabled: true,
+        type: "minmax",
+        measureId: model.outputMeasure.id,
         minValue: adjustGrade(
           model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
           -1,
@@ -186,23 +189,24 @@ function getPlots(model: Model) {
         ),
       };
     } else {
-      initialMeasures[model.outputMeasure.id] = {
+      initialFilters[model.outputMeasure.id] = {
         enabled: true,
-        minValue: outputMeasureSpec.defaultMinValue,
-        maxValue: outputMeasureSpec.defaultMaxValue,
+        ...outputMeasureSpec.initialFilter,
       };
     }
 
     if (otherMeasureSpec.trainingMeasureId) {
-      initialMeasures[otherMeasureSpec.trainingMeasureId] = {
+      initialFilters[otherMeasureSpec.trainingMeasureId] = {
         enabled: false,
+        type: "minmax",
+        measureId: otherMeasureSpec.trainingMeasureId,
         minValue: { unit: "month", value: 0 },
         maxValue: { unit: "month", value: 6 },
       };
     }
 
     const filterModel = Filters.initModel({
-      initialMeasures,
+      initialFilters: initialFilters,
       measureStats: model.measureStats,
     });
 
@@ -232,10 +236,10 @@ function getPlot({
   const data: { x: number; y: number }[] = [];
   const { mySnapshot, snapshots, outputMeasure } = model;
   const outputFilter = filterModel.filters.find(
-    (f) => f.model.measureId == outputMeasure.id,
+    (f) => f.model.model.measureId == outputMeasure.id,
   );
   const outputUnit = outputFilter
-    ? outputFilter.model.unitToggle.selectedUnit
+    ? outputFilter.model.model.unitToggle.selectedUnit
     : outputMeasure.toggle.selectedUnit;
 
   const myData =
@@ -268,32 +272,12 @@ function getPlot({
         return true;
       }
 
-      const snapshotValue = snapshot.measures[filter.model.measureId];
+      const snapshotValue = snapshot.measures[filter.model.model.measureId];
       if (!snapshotValue) {
         return false;
       }
-      const normalizedSnapshotValue = convertToStandardUnit(
-        snapshotValue as UnitValue,
-      );
 
-      const minInputModel = filter.model.minInput;
-      const maxInputModel = filter.model.maxInput;
-
-      if (minInputModel.parseResult.status == "success") {
-        const minValue = convertToStandardUnit(minInputModel.parseResult.value);
-        if (minValue > normalizedSnapshotValue) {
-          return false;
-        }
-      }
-
-      if (maxInputModel.parseResult.status == "success") {
-        const maxValue = convertToStandardUnit(maxInputModel.parseResult.value);
-        if (maxValue < normalizedSnapshotValue) {
-          return false;
-        }
-      }
-
-      return true;
+      return Filter.filterApplies(filter.model, snapshotValue as UnitValue);
     });
 
     if (!shouldKeep) {

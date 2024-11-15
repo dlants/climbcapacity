@@ -14,6 +14,7 @@ import * as ReportCardGraph from "./report-card-graph";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 import { InitialFilters } from "../views/select-filters";
+import * as Filter from "./filters/filter";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
@@ -193,13 +194,7 @@ function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
   const query: FilterQuery = {};
   const queryHashParts: string[] = [];
   filtersModel.filters.forEach((filter) => {
-    const minResult = filter.model.minInput.parseResult;
-    const maxResult = filter.model.maxInput.parseResult;
-
-    query[filter.model.measureId] = {
-      min: minResult.status == "success" ? minResult.value : undefined,
-      max: maxResult.status == "success" ? maxResult.value : undefined,
-    };
+    query[filter.model.measureId] = Filter.getQuery(filter);
     queryHashParts.push(
       filter.model.measureId +
         ":" +

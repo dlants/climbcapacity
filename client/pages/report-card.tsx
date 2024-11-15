@@ -16,7 +16,7 @@ import { INPUT_MEASURES } from "../../iso/measures";
 const produce = immer.produce;
 import lodash from "lodash";
 import { InitialFilters } from "../views/select-filters";
-import { MeasureId, UnitValue } from "../../iso/units";
+import { InitialFilter, MeasureId, UnitValue } from "../../iso/units";
 import {
   EWBANK,
   FONT,
@@ -131,11 +131,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
               if (measureCount < 100) {
                 continue;
               }
-              const value = myInputValues[measureId];
-              initialFilters[measureId] = {
-                minValue: getMinInputValue(value as UnitValue),
-                maxValue: getMaxInputValue(value as UnitValue),
-              };
+              initialFilters[measureId] = getInitialFilter(
+                measureId,
+                myInputValues[measureId] as UnitValue,
+              );
             }
 
             const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
@@ -245,6 +244,26 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
+
+function getInitialFilter(
+  measureId: MeasureId,
+  value: UnitValue,
+): InitialFilter {
+  if (value.unit == "sex-at-birth") {
+    return {
+      type: "toggle",
+      measureId,
+      value,
+    };
+  } else {
+    return {
+      type: "minmax",
+      measureId,
+      minValue: getMinInputValue(value),
+      maxValue: getMaxInputValue(value),
+    };
+  }
+}
 
 function getMinInputValue(value: UnitValue) {
   switch (value.unit) {

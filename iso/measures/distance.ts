@@ -11,8 +11,12 @@ const TIME_TRAINING_JUMP: MeasureSpec = {
   name: `Time training jumping movements`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:jump` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 
 const TIME_TRAINING_CAMPUS_REACH: MeasureSpec = {
@@ -20,8 +24,12 @@ const TIME_TRAINING_CAMPUS_REACH: MeasureSpec = {
   name: `Time training the campus reach`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:campus-reach` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 
 export const MEASURES: MeasureSpec[] = [
@@ -33,8 +41,12 @@ export const MEASURES: MeasureSpec[] = [
     name: `Vertical Jump`,
     description: ``,
     units: ["m", "cm", "inch"],
-    defaultMinValue: { unit: "m", value: 1 },
-    defaultMaxValue: { unit: "m", value: 3 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `distance:vertical-jump` as MeasureId,
+      minValue: { unit: "m", value: 1 },
+      maxValue: { unit: "m", value: 3 },
+    },
   },
   {
     id: `distance:horizontal-jump` as MeasureId,
@@ -42,8 +54,12 @@ export const MEASURES: MeasureSpec[] = [
     trainingMeasureId: TIME_TRAINING_JUMP.id,
     description: ``,
     units: ["m", "cm", "inch"],
-    defaultMinValue: { unit: "m", value: 1 },
-    defaultMaxValue: { unit: "m", value: 3 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `distance:horizontal-jump` as MeasureId,
+      minValue: { unit: "m", value: 1 },
+      maxValue: { unit: "m", value: 3 },
+    },
   },
 ];
 
@@ -74,8 +90,12 @@ for (const movement of UNILATERAL_DISTANCE_MOVEMENT) {
       name: `${movement} ${dominantSide}`,
       description: ``,
       units: ["m", "cm", "inch"],
-      defaultMinValue: { unit: "m", value: 0 },
-      defaultMaxValue: { unit: "m", value: 2 },
+      initialFilter: {
+        type: "minmax",
+        measureId: `distance:${movement}:${dominantSide}` as MeasureId,
+        minValue: { unit: "m", value: 0 },
+        maxValue: { unit: "m", value: 2 },
+      },
     });
   }
 }

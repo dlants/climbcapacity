@@ -1,10 +1,14 @@
 import React from "react";
-import { MeasureId, UnitValue } from "../../iso/units";
-import { Dispatch, Update } from "../tea";
-import * as UnitInput from "./unit-input";
-import * as UnitToggle from "./unit-toggle";
+import {
+  convertToStandardUnit,
+  MeasureId,
+  UnitValue,
+} from "../../../iso/units";
+import { Dispatch, Update } from "../../tea";
+import * as UnitInput from "../unit-input";
+import * as UnitToggle from "../unit-toggle";
 import * as immer from "immer";
-import { assertUnreachable } from "../util/utils";
+import { assertUnreachable } from "../../util/utils";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
@@ -17,6 +21,39 @@ export type Msg =
   | { type: "MAX_INPUT_MSG"; msg: UnitInput.Msg }
   | { type: "MIN_INPUT_MSG"; msg: UnitInput.Msg }
   | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggle.Msg };
+
+export function getQuery(model: Model) {
+  const minResult = model.minInput.parseResult;
+  const maxResult = model.maxInput.parseResult;
+
+  return {
+    min: minResult.status == "success" ? minResult.value : undefined,
+    max: maxResult.status == "success" ? maxResult.value : undefined,
+  };
+}
+
+export function filterApplies(model: Model, value: UnitValue): boolean {
+  const normalizedValue = convertToStandardUnit(value);
+
+  const minInputModel = model.minInput;
+  const maxInputModel = model.maxInput;
+
+  if (minInputModel.parseResult.status == "success") {
+    const minValue = convertToStandardUnit(minInputModel.parseResult.value);
+    if (minValue > normalizedValue) {
+      return false;
+    }
+  }
+
+  if (maxInputModel.parseResult.status == "success") {
+    const maxValue = convertToStandardUnit(maxInputModel.parseResult.value);
+    if (maxValue < normalizedValue) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 export function initModel({
   measureId,

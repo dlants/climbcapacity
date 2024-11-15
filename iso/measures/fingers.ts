@@ -26,8 +26,12 @@ const TIME_TRAINING_OPEN: MeasureSpec = {
   name: `Time training open grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:open` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_OPEN);
 
@@ -36,8 +40,12 @@ const TIME_TRAINING_HALF: MeasureSpec = {
   name: `Time training half-crimp grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:half-crimp` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_HALF);
 
@@ -46,8 +54,12 @@ const TIME_TRAINING_FULL: MeasureSpec = {
   name: `Time training full-crimp grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:full-crimp` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_FULL);
 
@@ -56,8 +68,12 @@ const TIME_TRAINING_PINCH: MeasureSpec = {
   name: `Time training pinch grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:pinch` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_PINCH);
 
@@ -108,8 +124,13 @@ So for example, if you weigh 70kg, and you removed 20kg, you would record 50kg.
 If you weigh 70kg, and you added 30kg, you'd record 100kg.
 `,
         units: ["kg", "lb"],
-        defaultMinValue: { unit: "kg", value: 10 },
-        defaultMaxValue: { unit: "kg", value: 100 },
+        initialFilter: {
+          type: "minmax",
+          measureId:
+            `maxhang:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
+          minValue: { unit: "kg", value: 10 },
+          maxValue: { unit: "kg", value: 100 },
+        },
       });
     }
   }
@@ -120,8 +141,12 @@ const TIME_TRAINING_REPEATERS_OPEN: MeasureSpec = {
   name: `Time training repeaters in open grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:repeaters:open` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_REPEATERS_OPEN);
 
@@ -130,8 +155,12 @@ const TIME_TRAINING_REPEATERS_HALF: MeasureSpec = {
   name: `Time training repeaters in half-crimp grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:repeaters:half-crimp` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_REPEATERS_HALF);
 
@@ -140,8 +169,12 @@ const TIME_TRAINING_REPEATERS_FULL: MeasureSpec = {
   name: `Time training repeaters in full-crimp grip`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:repeaters:full-crimp` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_REPEATERS_FULL);
 
@@ -174,8 +207,13 @@ for (const edgeSize of [18, 20]) {
       name: `7:3 repeaters on ${edgeSize}mm ${gripType}(bodyweight)`,
       description: ``,
       units: ["second"],
-      defaultMinValue: { unit: "second", value: 10 },
-      defaultMaxValue: { unit: "second", value: 200 },
+      initialFilter: {
+        type: "minmax",
+        measureId:
+          `duration:7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId,
+        minValue: { unit: "second", value: 10 },
+        maxValue: { unit: "second", value: 200 },
+      },
     });
   }
 }
@@ -195,8 +233,13 @@ Find a ${edgeSize}mm edge on a block pulling device, like a tension block. Using
 Record the maximum successful weight.
 `,
         units: ["kg", "lb"],
-        defaultMinValue: { unit: "kg", value: 10 },
-        defaultMaxValue: { unit: "kg", value: 100 },
+        initialFilter: {
+          type: "minmax",
+          measureId:
+            `blockpull:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
+          minValue: { unit: "kg", value: 10 },
+          maxValue: { unit: "kg", value: 100 },
+        },
       });
     }
   }
@@ -214,8 +257,12 @@ Warm up thoroughly.
 Find the smallest edge you can hang your bodyweight for ${duration}s using a ${gripType}.
 `,
       units: ["mm"],
-      defaultMinValue: { unit: "mm", value: 4 },
-      defaultMaxValue: { unit: "mm", value: 20 },
+      initialFilter: {
+        type: "minmax",
+        measureId: `min-edge-hang:${duration}s:${gripType}` as MeasureId,
+        minValue: { unit: "mm", value: 4 },
+        maxValue: { unit: "mm", value: 20 },
+      },
     });
   }
 }
@@ -234,7 +281,11 @@ for (const gripType of [
 
       If you need to reset your grip at the bottom that's ok, but you must control the descent. Avoid "jumping off" at the end of the pullup.`,
     units: ["mm"],
-    defaultMinValue: { unit: "mm", value: 4 },
-    defaultMaxValue: { unit: "mm", value: 20 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `min-edge-pullups:2rm:${gripType}` as MeasureId,
+      minValue: { unit: "mm", value: 4 },
+      maxValue: { unit: "mm", value: 20 },
+    },
   });
 }

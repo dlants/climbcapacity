@@ -1,3 +1,4 @@
+/*
 import React from "react";
 import * as MeasureExpressionBox from "./measure-expression-box";
 import * as Plot from "./plot";
@@ -234,3 +235,5 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
+
+*/

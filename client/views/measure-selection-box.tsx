@@ -8,14 +8,12 @@ import { MeasureStats } from "../../iso/protocol";
 
 export type Model = immer.Immutable<
   | {
-      id: string;
       measureStats: MeasureStats;
       state: "typing";
       query: string;
       measures: MeasureSpec[];
     }
   | {
-      id: string;
       measureStats: MeasureStats;
       state: "selected";
       measureId: MeasureId;
@@ -33,14 +31,11 @@ export type Msg =
     };
 
 export function initModel({
-  id,
   measureStats,
 }: {
-  id: string;
   measureStats: MeasureStats;
 }): Model {
   return {
-    id,
     measureStats,
     state: "typing",
     query: "",
@@ -53,7 +48,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "TYPE_QUERY":
       return [
         {
-          id: model.id,
           measureStats: model.measureStats,
           state: "typing",
           query: msg.query,
@@ -64,7 +58,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "SELECT_MEASURE":
       return [
         {
-          id: model.id,
           measureStats: model.measureStats,
           state: "selected",
           measureId: msg.measureId,

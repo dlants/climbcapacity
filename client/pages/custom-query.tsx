@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
 import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
 import {
@@ -293,3 +293,4 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     </div>
   );
 };
+*/

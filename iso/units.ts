@@ -31,6 +31,19 @@ export type MeasureId = string & { __brand: "measureId" };
  */
 export type NormedMeasure = { measureId: MeasureId; value: number };
 
+export type InitialFilter =
+  | {
+      type: "minmax";
+      measureId: MeasureId;
+      minValue: UnitValue;
+      maxValue: UnitValue;
+    }
+  | {
+      type: "toggle";
+      measureId: MeasureId;
+      value: UnitValue;
+    };
+
 export type MeasureSpec = {
   id: MeasureId;
   trainingMeasureId?: MeasureId;
@@ -39,8 +52,7 @@ export type MeasureSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
-  defaultMinValue: UnitValue;
-  defaultMaxValue: UnitValue;
+  initialFilter: InitialFilter;
 };
 
 export type MeasureValue = {

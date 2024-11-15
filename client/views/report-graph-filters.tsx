@@ -2,14 +2,14 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import { Identifier } from "../parser/types";
-import { MeasureId, UnitType, UnitValue } from "../../iso/units";
+import { InitialFilter, MeasureId, UnitType, UnitValue } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MeasureStats } from "../../iso/protocol";
-import * as MinMaxFilter from "./min-max-filter";
+import * as Filter from "./filters/filter";
 
-export type Filter = immer.Immutable<{
+export type ToggleableFilter = immer.Immutable<{
   enabled: boolean;
-  model: MinMaxFilter.Model;
+  model: Filter.Model;
 }>;
 
 export type FilterMapping = {
@@ -21,39 +21,31 @@ export type FilterMapping = {
 
 export type Model = immer.Immutable<{
   measureStats: MeasureStats;
-  filters: Filter[];
+  filters: ToggleableFilter[];
 }>;
 
 export type Msg =
   | { type: "TOGGLE_FILTER"; measureId: MeasureId; enabled: boolean }
-  | { type: "MIN_MAX_FILTER_MSG"; measureId: MeasureId; msg: MinMaxFilter.Msg };
+  | { type: "FILTER_MSG"; measureId: MeasureId; msg: Filter.Msg };
 
-export type InitialMeasures = {
-  [measureId: MeasureId]: {
-    enabled: boolean;
-    minValue: UnitValue;
-    maxValue: UnitValue;
-  };
+export type InitialFilters = {
+  [measureId: MeasureId]: InitialFilter & { enabled: boolean };
 };
 
 export function initModel({
-  initialMeasures,
+  initialFilters,
   measureStats,
 }: {
-  initialMeasures: InitialMeasures;
+  initialFilters: InitialFilters;
   measureStats: MeasureStats;
 }): Model {
-  const filters: Filter[] = [];
-  for (const measureIdStr in initialMeasures) {
+  const filters: ToggleableFilter[] = [];
+  for (const measureIdStr in initialFilters) {
     const measureId = measureIdStr as MeasureId;
-    const { enabled, minValue, maxValue } = initialMeasures[measureId];
+    const initialFilter = initialFilters[measureId];
     filters.push({
-      enabled,
-      model: MinMaxFilter.initModel({
-        measureId,
-        minValue,
-        maxValue,
-      }),
+      enabled: initialFilter.enabled,
+      model: Filter.initModel(initialFilter),
     });
   }
   return { measureStats, filters };
@@ -65,7 +57,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find(
-            (f) => f.model.measureId === msg.measureId,
+            (f) => f.model.model.measureId === msg.measureId,
           );
           if (!filter) {
             throw new Error(`Filter not found for measureId ${msg.measureId}`);
@@ -74,17 +66,17 @@ export const update: Update<Msg, Model> = (msg, model) => {
           }
         }),
       ];
-    case "MIN_MAX_FILTER_MSG":
+    case "FILTER_MSG":
       return [
         immer.produce(model, (draft) => {
           const filter = draft.filters.find(
-            (f) => f.model.measureId === msg.measureId,
+            (f) => f.model.model.measureId === msg.measureId,
           );
           if (!filter) {
             throw new Error(`Filter not found for measureId ${msg.measureId}`);
           }
 
-          const [next] = MinMaxFilter.update(msg.msg, filter.model);
+          const [next] = Filter.update(msg.msg, filter.model);
           filter.model = immer.castDraft(next);
         }),
       ];
@@ -98,7 +90,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     <div>
       {model.filters.map((filter) => (
         <FilterView
-          key={filter.model.measureId}
+          key={filter.model.model.measureId}
           filter={filter}
           dispatch={dispatch}
           model={model}
@@ -114,7 +106,7 @@ const FilterView = ({
   dispatch,
 }: {
   model: Model;
-  filter: Filter;
+  filter: ToggleableFilter;
   dispatch: Dispatch<Msg>;
 }) => {
   return (
@@ -132,18 +124,18 @@ const FilterView = ({
         onChange={(e) =>
           dispatch({
             type: "TOGGLE_FILTER",
-            measureId: filter.model.measureId,
+            measureId: filter.model.model.measureId,
             enabled: e.target.checked,
           })
         }
       />
-      <strong>{filter.model.measureId}</strong>{" "}
-      <MinMaxFilter.view
+      <strong>{filter.model.model.measureId}</strong>{" "}
+      <Filter.view
         model={filter.model}
         dispatch={(msg) =>
           dispatch({
-            type: "MIN_MAX_FILTER_MSG",
-            measureId: filter.model.measureId,
+            type: "FILTER_MSG",
+            measureId: filter.model.model.measureId,
             msg,
           })
         }

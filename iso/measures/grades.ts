@@ -72,12 +72,17 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
       context.type == "sport"
         ? ["ircra", "yds", "frenchsport", "ewbank"]
         : ["ircra", "vermin", "font"],
-    defaultMinValue: {unit: 'ircra', value: 1 as IRCRAGrade},
-    defaultMaxValue: {unit: 'ircra', value: 33 as IRCRAGrade}
+    initialFilter: {
+      type: "minmax",
+      measureId:
+        `grade:${context.type}:${context.location}:${stat}` as MeasureId,
+      minValue: { unit: "ircra", value: 1 as IRCRAGrade },
+      maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
+    },
   };
 }
 
-export const MEASURES: MeasureSpec[] = []
+export const MEASURES: MeasureSpec[] = [];
 
 for (const stat of STAT) {
   for (const location of SPORT_LOCATION) {
@@ -102,5 +107,3 @@ for (const stat of STAT) {
     );
   }
 }
-
-

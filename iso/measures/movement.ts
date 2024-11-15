@@ -33,8 +33,12 @@ const TIME_TRAINING_PRESS: MeasureSpec = {
   name: `Time training pressing movements (pushups, bench, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:press` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_PRESS);
 
@@ -43,8 +47,12 @@ const TIME_TRAINING_PULL: MeasureSpec = {
   name: `Time training pulling movements (pullups, rows, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:pull` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_PULL);
 
@@ -53,8 +61,12 @@ const TIME_TRAINING_HINGE: MeasureSpec = {
   name: `Time training hinge movements (kettlebell swings, deadlifts, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:hinge` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_HINGE);
 
@@ -63,8 +75,12 @@ const TIME_TRAINING_SQUAT: MeasureSpec = {
   name: `Time training squat movements (barbell squat, pistol squat, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:squat` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_SQUAT);
 
@@ -73,8 +89,12 @@ const TIME_TRAINING_CORE_FRONTAL: MeasureSpec = {
   name: `Time training frontal core movements (plank, veeup, hollow hold, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:core:frontal` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_CORE_FRONTAL);
 
@@ -83,11 +103,14 @@ const TIME_TRAINING_CORE_SAGITTAL: MeasureSpec = {
   name: `Time training sagittal core movements (sideplank, human flag, etc...)`,
   description: ``,
   units: ["year", "month"],
-  defaultMinValue: { unit: "year", value: 0 },
-  defaultMaxValue: { unit: "year", value: 5 },
+  initialFilter: {
+    type: "minmax",
+    measureId: `time-training:core:sagittal` as MeasureId,
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 5 },
+  },
 };
 MEASURES.push(TIME_TRAINING_CORE_SAGITTAL);
-
 const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
   {
     barbellsquat: TIME_TRAINING_SQUAT.id,
@@ -128,8 +151,12 @@ for (const movement of [
 So for example, for a pullup or a squat if you weigh 70kg and you added 30kg, you'd record 100kg.
 `,
     units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
-    defaultMinValue: { unit: "5RMkg", value: 0 },
-    defaultMaxValue: { unit: "5RMkg", value: 100 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `weighted:${movement}` as MeasureId,
+      minValue: { unit: "5RMkg", value: 0 },
+      maxValue: { unit: "5RMkg", value: 100 },
+    },
   });
 }
 
@@ -145,8 +172,12 @@ for (const movement of [
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
-    defaultMinValue: { unit: "count", value: 0 },
-    defaultMaxValue: { unit: "count", value: 20 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `max-rep:${movement}` as MeasureId,
+      minValue: { unit: "count", value: 0 },
+      maxValue: { unit: "count", value: 20 },
+    },
   });
 }
 
@@ -167,8 +198,13 @@ for (const movement of [
 So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd record 40kg.
 `,
       units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
-      defaultMinValue: { unit: "5RMkg", value: 0 },
-      defaultMaxValue: { unit: "5RMkg", value: 100 },
+      initialFilter: {
+        type: "minmax",
+        measureId:
+          `weighted-unilateral:${movement}:${dominantSide}` as MeasureId,
+        minValue: { unit: "5RMkg", value: 0 },
+        maxValue: { unit: "5RMkg", value: 100 },
+      },
     });
   }
 }
@@ -186,8 +222,12 @@ for (const movement of [
     name: `${movement} Max Duration`,
     description: ``,
     units: ["second"],
-    defaultMinValue: { unit: "second", value: 0 },
-    defaultMaxValue: { unit: "second", value: 120 },
+    initialFilter: {
+      type: "minmax",
+      measureId: `duration:${movement}` as MeasureId,
+      minValue: { unit: "second", value: 0 },
+      maxValue: { unit: "second", value: 120 },
+    },
   });
 }
 
@@ -199,8 +239,12 @@ for (const movement of ["pullup", "pushup", "pistolsquat"] as const) {
       name: `Unilateral ${movement} Max Reps ${dominantSide}`,
       description: `Maximum number of reps you can complete`,
       units: ["count"],
-      defaultMinValue: { unit: "count", value: 0 },
-      defaultMaxValue: { unit: "count", value: 20 },
+      initialFilter: {
+        type: "minmax",
+        measureId: `max-rep:${movement}:${dominantSide}` as MeasureId,
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 20 },
+      },
     });
   }
 }
@@ -213,8 +257,12 @@ for (const movement of ["sideplank"] as const) {
       name: `${movement} Max Duration ${dominantSide}`,
       description: ``,
       units: ["second"],
-      defaultMinValue: { unit: "second", value: 0 },
-      defaultMaxValue: { unit: "second", value: 120 },
+      initialFilter: {
+        type: "minmax",
+        measureId: `duration:${movement}:${dominantSide}` as MeasureId,
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 120 },
+      },
     });
   }
 }

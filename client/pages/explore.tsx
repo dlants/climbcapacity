@@ -29,10 +29,7 @@ export function initModel({
     if (count < 100) {
       continue;
     }
-    initialFilters[measure.id] = {
-      minValue: measure.defaultMinValue,
-      maxValue: measure.defaultMaxValue,
-    };
+    initialFilters[measure.id] = measure.initialFilter;
   }
 
   const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
