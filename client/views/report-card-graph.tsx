@@ -221,6 +221,12 @@ function getPlot({
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
   const { mySnapshot, snapshots, outputMeasure } = model;
+  const outputFilter = filterModel.filters.find(
+    (f) => f.model.measureId == outputMeasure.id,
+  );
+  const outputUnit = outputFilter
+    ? outputFilter.model.unitToggle.selectedUnit
+    : outputMeasure.toggle.selectedUnit;
 
   const myData =
     mySnapshot &&
@@ -229,7 +235,7 @@ function getPlot({
       inputMeasure,
       outputMeasure: {
         id: outputMeasure.id,
-        unit: outputMeasure.toggle.selectedUnit,
+        unit: outputUnit,
       },
     });
 
@@ -239,7 +245,7 @@ function getPlot({
       inputMeasure,
       outputMeasure: {
         id: outputMeasure.id,
-        unit: outputMeasure.toggle.selectedUnit,
+        unit: outputUnit,
       },
     });
 
@@ -295,7 +301,7 @@ function getPlot({
       xLabel: inputMeasure.id,
       xUnit: inputMeasure.unit,
       yLabel: outputMeasure.id,
-      yUnit: outputMeasure.toggle.selectedUnit,
+      yUnit: outputUnit,
     };
   } else {
     return {
@@ -305,7 +311,7 @@ function getPlot({
       xLabel: inputMeasure.id,
       xUnit: inputMeasure.unit,
       yLabel: outputMeasure.id,
-      yUnit: outputMeasure.toggle.selectedUnit,
+      yUnit: outputUnit,
     };
   }
 }
