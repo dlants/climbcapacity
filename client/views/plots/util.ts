@@ -55,7 +55,7 @@ export function tickFormatBins(
       return max ? `${displayInches(min)}-${displayInches(max)}` : ``;
     }
     case "ircra":
-      return binIndex.toString();
+      return Math.ceil(thresholds[binIndex]).toString();
     case "sex-at-birth":
       return ["female", "male"][binIndex];
     case "vermin":
