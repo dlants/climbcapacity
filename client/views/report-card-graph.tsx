@@ -23,6 +23,7 @@ import { Result } from "../../iso/utils";
 import { filterOutliersX } from "../util/stats";
 import { MEASURE_MAP } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
+import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
 
 const INPUT_MEASURE_IDS = INPUT_MEASURES.map((s) => s.id);
@@ -44,7 +45,10 @@ export type Model = immer.Immutable<{
   measureStats: MeasureStats;
   mySnapshot?: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
-  outputMeasure: MeasureWithUnit;
+  outputMeasure: {
+    id: MeasureId;
+    toggle: UnitToggle.Model;
+  };
   outputMeasures: MeasureWithUnit[];
   plots: PlotModel[];
 }>;
@@ -53,6 +57,10 @@ export type Msg =
   | {
       type: "SELECT_OUTPUT_MEASURE";
       measureId: MeasureId;
+    }
+  | {
+      type: "OUTPUT_MEASURE_TOGGLE_MSG";
+      msg: UnitToggle.Msg;
     }
   | {
       type: "FILTER_MSG";
@@ -96,13 +104,21 @@ export function initModel({
     };
   }
   const outputMeasure = outputMeasures[0];
+  const outputMeasureToggle: UnitToggle.Model = {
+    measureId: outputMeasure.id,
+    selectedUnit: outputMeasure.unit,
+    possibleUnits: MEASURE_MAP[outputMeasure.id].units,
+  };
 
   const model: Model = produce<Model>(
     {
       mySnapshot,
       measureStats,
       snapshots,
-      outputMeasure,
+      outputMeasure: {
+        id: outputMeasure.id,
+        toggle: outputMeasureToggle,
+      },
       outputMeasures,
       plots: [],
     },
@@ -211,14 +227,20 @@ function getPlot({
     extractDataPoint({
       measures: mySnapshot.measures as any,
       inputMeasure,
-      outputMeasure,
+      outputMeasure: {
+        id: outputMeasure.id,
+        unit: outputMeasure.toggle.selectedUnit,
+      },
     });
 
   for (const snapshot of snapshots) {
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
       inputMeasure,
-      outputMeasure,
+      outputMeasure: {
+        id: outputMeasure.id,
+        unit: outputMeasure.toggle.selectedUnit,
+      },
     });
 
     if (!dataPoint) {
@@ -273,7 +295,7 @@ function getPlot({
       xLabel: inputMeasure.id,
       xUnit: inputMeasure.unit,
       yLabel: outputMeasure.id,
-      yUnit: outputMeasure.unit,
+      yUnit: outputMeasure.toggle.selectedUnit,
     };
   } else {
     return {
@@ -283,7 +305,7 @@ function getPlot({
       xLabel: inputMeasure.id,
       xUnit: inputMeasure.unit,
       yLabel: outputMeasure.id,
-      yUnit: outputMeasure.unit,
+      yUnit: outputMeasure.toggle.selectedUnit,
     };
   }
 }
@@ -299,7 +321,15 @@ export function update(msg: Msg, model: Model): [Model] {
       }
       return [
         produce(model, (draft) => {
-          draft.outputMeasure = draft.outputMeasures[index];
+          const outputMeasure = draft.outputMeasures[index];
+          draft.outputMeasure = {
+            id: outputMeasure.id,
+            toggle: {
+              measureId: outputMeasure.id,
+              selectedUnit: outputMeasure.unit,
+              possibleUnits: MEASURE_MAP[outputMeasure.id].units,
+            },
+          };
           draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
@@ -321,6 +351,16 @@ export function update(msg: Msg, model: Model): [Model] {
               model,
             }),
           );
+        }),
+      ];
+
+    case "OUTPUT_MEASURE_TOGGLE_MSG":
+      return [
+        produce(model, (draft) => {
+          const outputMeasure = draft.outputMeasure;
+          const [next] = UnitToggle.update(msg.msg, outputMeasure.toggle);
+          outputMeasure.toggle = immer.castDraft(next);
+          draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
 
@@ -354,6 +394,12 @@ export function view({
           </option>
         ))}
       </select>
+      <UnitToggle.view
+        model={model.outputMeasure.toggle}
+        dispatch={(msg) => {
+          dispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg });
+        }}
+      />
       {model.plots.map((plot) => (
         <PlotWithControls
           key={plot.inputMeasure.id}

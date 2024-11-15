@@ -1,6 +1,5 @@
 import React from "react";
 import * as immer from "immer";
-import lodash from "lodash";
 const produce = immer.produce;
 
 import type { HydratedSnapshot } from "../types";
@@ -19,6 +18,7 @@ import {
   RequestStatusView,
 } from "../util/utils";
 import * as UnitInput from "./unit-input";
+import * as UnitToggle from "./unit-toggle";
 import {
   MeasureStats,
   SnapshotId,
@@ -495,7 +495,7 @@ function EditMeasureView({
       <label>{measure.name}</label>
       <UnitInput.UnitInput model={model} dispatch={dispatch} />
       {measure.units.length > 1 && (
-        <UnitInput.UnitToggle model={model} dispatch={dispatch} />
+        <UnitToggle.view model={model} dispatch={dispatch} />
       )}
     </div>
   );

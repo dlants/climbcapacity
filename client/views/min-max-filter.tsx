@@ -2,17 +2,21 @@ import React from "react";
 import { MeasureId, UnitValue } from "../../iso/units";
 import { Dispatch, Update } from "../tea";
 import * as UnitInput from "./unit-input";
+import * as UnitToggle from "./unit-toggle";
 import * as immer from "immer";
+import { assertUnreachable } from "../util/utils";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
   minInput: UnitInput.Model;
   maxInput: UnitInput.Model;
+  unitToggle: UnitToggle.Model;
 }>;
 
 export type Msg =
   | { type: "MAX_INPUT_MSG"; msg: UnitInput.Msg }
-  | { type: "MIN_INPUT_MSG"; msg: UnitInput.Msg };
+  | { type: "MIN_INPUT_MSG"; msg: UnitInput.Msg }
+  | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggle.Msg };
 
 export function initModel({
   measureId,
@@ -23,10 +27,16 @@ export function initModel({
   minValue: UnitValue;
   maxValue: UnitValue;
 }): Model {
+  const minInput = UnitInput.initModel(measureId, minValue);
   return {
     measureId,
-    minInput: UnitInput.initModel(measureId, minValue),
+    minInput,
     maxInput: UnitInput.initModel(measureId, maxValue),
+    unitToggle: {
+      measureId,
+      selectedUnit: minInput.selectedUnit,
+      possibleUnits: minInput.possibleUnits,
+    },
   };
 }
 
@@ -47,6 +57,28 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.maxInput = immer.castDraft(newModel);
         }),
       ];
+
+    case "UNIT_TOGGLE_MSG":
+      return [
+        immer.produce(model, (draft) => {
+          const [newModel] = UnitToggle.update(msg.msg, draft.unitToggle);
+          draft.unitToggle = immer.castDraft(newModel);
+          const [nextMin] = UnitInput.update(
+            { type: "SELECT_UNIT", unit: draft.unitToggle.selectedUnit },
+            draft.minInput,
+          );
+          draft.minInput = immer.castDraft(nextMin);
+
+          const [nextMax] = UnitInput.update(
+            { type: "SELECT_UNIT", unit: draft.unitToggle.selectedUnit },
+            draft.maxInput,
+          );
+          draft.maxInput = immer.castDraft(nextMax);
+        }),
+      ];
+
+    default:
+      assertUnreachable(msg);
   }
 };
 
@@ -70,11 +102,10 @@ export const view = ({
         dispatch={(msg) => dispatch({ type: "MAX_INPUT_MSG", msg })}
       />{" "}
       {model.minInput.possibleUnits.length > 1 && (
-        <UnitInput.UnitToggle
+        <UnitToggle.view
           model={model.maxInput}
           dispatch={(msg) => {
-            dispatch({ type: "MIN_INPUT_MSG", msg });
-            dispatch({ type: "MAX_INPUT_MSG", msg });
+            dispatch({ type: "UNIT_TOGGLE_MSG", msg });
           }}
         />
       )}

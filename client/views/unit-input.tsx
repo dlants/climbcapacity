@@ -427,34 +427,6 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   }
 }
 
-export const UnitToggle = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}) => {
-  const toggleId = useId(); // React 18+ feature
-
-  return (
-    <span>
-      {model.possibleUnits.map((unit) => (
-        <span key={unit}>
-          <input
-            type="radio"
-            id={toggleId + ":" + unit}
-            name={toggleId}
-            value={unit}
-            checked={unit === model.selectedUnit}
-            onChange={() => dispatch({ type: "SELECT_UNIT", unit })}
-          />
-          <label key={unit}>{unit}</label>
-        </span>
-      ))}
-    </span>
-  );
-};
-
 export const UnitInput = ({
   model,
   dispatch,
