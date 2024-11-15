@@ -6,8 +6,6 @@ import {
   assertUnreachable,
   GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
-  RequestStatusView,
-  RequestStatusViewMap,
 } from "../util/utils";
 import { FilterQuery, MeasureStats } from "../../iso/protocol";
 import * as SelectFilters from "../views/select-filters";

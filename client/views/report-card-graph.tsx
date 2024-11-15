@@ -149,6 +149,7 @@ function getPlots(model: Model) {
     const initialMeasures: Filters.InitialMeasures = {};
     if (model.mySnapshot) {
       initialMeasures[model.outputMeasure.id] = {
+        enabled: true,
         minValue: adjustGrade(
           model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
           -1,
@@ -160,6 +161,7 @@ function getPlots(model: Model) {
       };
     } else {
       initialMeasures[model.outputMeasure.id] = {
+        enabled: true,
         minValue: outputMeasureSpec.defaultMinValue,
         maxValue: outputMeasureSpec.defaultMaxValue,
       };
@@ -167,6 +169,7 @@ function getPlots(model: Model) {
 
     if (otherMeasureSpec.trainingMeasureId) {
       initialMeasures[otherMeasureSpec.trainingMeasureId] = {
+        enabled: false,
         minValue: { unit: "month", value: 0 },
         maxValue: { unit: "month", value: 6 },
       };

@@ -30,6 +30,7 @@ export type Msg =
 
 export type InitialMeasures = {
   [measureId: MeasureId]: {
+    enabled: boolean;
     minValue: UnitValue;
     maxValue: UnitValue;
   };
@@ -45,9 +46,9 @@ export function initModel({
   const filters: Filter[] = [];
   for (const measureIdStr in initialMeasures) {
     const measureId = measureIdStr as MeasureId;
-    const { minValue, maxValue } = initialMeasures[measureId];
+    const { enabled, minValue, maxValue } = initialMeasures[measureId];
     filters.push({
-      enabled: true,
+      enabled,
       model: MinMaxFilter.initModel({
         measureId,
         minValue,

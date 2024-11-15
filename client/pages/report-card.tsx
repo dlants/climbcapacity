@@ -127,6 +127,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
             for (const measureIdStr in myInputValues) {
               const measureId = measureIdStr as MeasureId;
+              const measureCount = model.measureStats.stats[measureId] || 0;
+              if (measureCount < 100) {
+                continue;
+              }
               const value = myInputValues[measureId];
               initialFilters[measureId] = {
                 minValue: getMinInputValue(value as UnitValue),
