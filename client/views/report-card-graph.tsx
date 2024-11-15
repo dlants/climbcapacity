@@ -150,11 +150,21 @@ function getPlots(model: Model) {
       }
     }
   } else {
+    const snapshotStats: { [measureId: MeasureId]: number } = {};
+    for (const snapshot of model.snapshots) {
+      for (const measureId in snapshot.measures) {
+        snapshotStats[measureId as MeasureId] =
+          (snapshotStats[measureId as MeasureId] || 0) + 1;
+      }
+    }
+
     for (const { id, units } of OTHER_MEASURES) {
-      otherMeasures.push({
-        id,
-        unit: units[0],
-      });
+      if (snapshotStats[id] > 0) {
+        otherMeasures.push({
+          id,
+          unit: units[0],
+        });
+      }
     }
   }
 
