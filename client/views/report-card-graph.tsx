@@ -7,6 +7,7 @@ import * as immer from "immer";
 import { Dispatch } from "../tea";
 import {
   INPUT_MEASURES,
+  MeasureId,
   OTHER_MEASURES,
   OUTPUT_MEASURES,
   TIME_TRAINING_MEASURES,
@@ -15,7 +16,6 @@ import {
   adjustGrade,
   convertToStandardUnit,
   extractDataPoint,
-  MeasureId,
   UnitType,
   UnitValue,
 } from "../../iso/units";

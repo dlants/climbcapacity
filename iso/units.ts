@@ -20,10 +20,9 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
+import { MeasureId } from "./measures/index.js";
 import { Snapshot } from "./protocol.js";
 import { assertUnreachable } from "./utils.js";
-
-export type MeasureId = string & { __brand: "measureId" };
 
 /** these are in standard units, used for search (so for example, all grades are in ircra, all distances are in meters);
  *
@@ -43,17 +42,6 @@ export type InitialFilter =
       measureId: MeasureId;
       value: UnitValue;
     };
-
-export type MeasureSpec = {
-  id: MeasureId;
-  trainingMeasureId?: MeasureId;
-  name: string;
-  description: string;
-  /** units[0] is the default
-   */
-  units: UnitType[];
-  initialFilter: InitialFilter;
-};
 
 export type MeasureValue = {
   id: MeasureId;

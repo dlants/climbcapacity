@@ -2,10 +2,11 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import { Identifier } from "../parser/types";
-import { InitialFilter, MeasureId, UnitType, UnitValue } from "../../iso/units";
+import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MeasureStats } from "../../iso/protocol";
 import * as Filter from "./filters/filter";
+import { MeasureId } from "../../iso/measures";
 
 export type ToggleableFilter = immer.Immutable<{
   enabled: boolean;

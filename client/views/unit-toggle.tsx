@@ -1,15 +1,10 @@
 import React, { useId } from "react";
 import * as immer from "immer";
 const produce = immer.produce;
-import {
-  MeasureId,
-  UnitType,
-  convertToStandardUnit,
-  convertToTargetUnit,
-  inchesToFeetAndInches,
-} from "../../iso/units";
+import { UnitType } from "../../iso/units";
 import { assertUnreachable } from "../../iso/utils";
 import { Update } from "../tea";
+import { MeasureId } from "../../iso/measures";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;

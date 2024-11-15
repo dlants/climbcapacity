@@ -1,4 +1,5 @@
-import type { MeasureId, UnitValue } from "./units.js";
+import { MeasureId } from "./measures/index.js";
+import type { UnitValue } from "./units.js";
 
 export type Snapshot = {
   _id: ProtocolObjectId;

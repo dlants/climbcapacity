@@ -2,7 +2,7 @@ import assert from "assert";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { MongoClient } from "mongodb";
 import { SnapshotsModel } from "./snapshots.js";
-import { MeasureId } from "../../iso/units.js";
+import { MeasureId } from "../../iso/measures/index.js";
 
 describe("SnapshotsModel", () => {
   let mongoServer: MongoMemoryServer;

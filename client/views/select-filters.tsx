@@ -2,11 +2,12 @@ import React, { Dispatch } from "react";
 import { Update, View } from "../tea";
 import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
-import { InitialFilter, MeasureId, UnitType, UnitValue } from "../../iso/units";
+import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
 import * as Filter from "./filters/filter";
+import { MeasureId } from "../../iso/measures";
 
 export type FilterMapping = {
   [measureId: MeasureId]: {

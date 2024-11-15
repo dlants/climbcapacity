@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Dispatch, Thunk } from "../tea";
-import { MeasureSpec } from "../../iso/units";
+import { MeasureSpec } from "../../iso/measures";
 
 export type LoadedRequest<T> = {
   status: "loaded";

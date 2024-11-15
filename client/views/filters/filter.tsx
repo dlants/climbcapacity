@@ -1,7 +1,7 @@
 import React from "react";
 import * as MinMaxFilter from "./min-max-filter";
 import * as ToggleFilter from "./toggle-filter";
-import { InitialFilter, MeasureId, UnitValue } from "../../../iso/units";
+import { InitialFilter, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 
 export type Model =

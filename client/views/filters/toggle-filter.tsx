@@ -2,7 +2,6 @@ import React from "react";
 import {
   convertToStandardUnit,
   convertToTargetUnit,
-  MeasureId,
   UnitValue,
 } from "../../../iso/units";
 import { Dispatch, Update } from "../../tea";
@@ -10,6 +9,7 @@ import * as immer from "immer";
 import { assertUnreachable } from "../../util/utils";
 import * as UnitToggle from "../unit-toggle";
 import { MEASURE_MAP } from "../../constants";
+import { MeasureId } from "../../../iso/measures";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;

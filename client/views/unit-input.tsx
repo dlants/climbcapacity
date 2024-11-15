@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React from "react";
 import * as immer from "immer";
 const produce = immer.produce;
 import {
@@ -14,7 +14,6 @@ import {
   YDS,
 } from "../../iso/grade";
 import {
-  MeasureId,
   UnitType,
   UnitValue,
   convertToStandardUnit,
@@ -24,6 +23,7 @@ import {
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
+import { MeasureId } from "../../iso/measures";
 
 type UnitInputMap = {
   second: string;

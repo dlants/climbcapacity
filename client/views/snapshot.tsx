@@ -6,8 +6,6 @@ import type { HydratedSnapshot } from "../types";
 import { Update, View, Dispatch } from "../tea";
 import {
   convertToStandardUnit,
-  MeasureId,
-  MeasureSpec,
   UnitValue,
   unitValueToString,
 } from "../../iso/units";
@@ -26,6 +24,8 @@ import {
 } from "../../iso/protocol";
 import {
   INPUT_MEASURES,
+  MeasureId,
+  MeasureSpec,
   OUTPUT_MEASURES,
   TIME_TRAINING_MEASURES,
 } from "../../iso/measures";

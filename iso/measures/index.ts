@@ -1,8 +1,21 @@
 import { MEASURES as FINGER_MEASURES } from "./fingers.js";
 import { MEASURES as GRADE_MEASURES } from "./grades.js";
 import { MEASURES as MOVEMENT_MEASURES } from "./movement.js";
-import { MeasureId, MeasureSpec } from "../units.js";
 import { MEASURES as DISTANCE_MEASURES } from "./distance.js";
+import { InitialFilter, UnitType } from "../units.js";
+
+export type MeasureId = string & { __brand: "measureId" };
+
+export type MeasureSpec = {
+  id: MeasureId;
+  trainingMeasureId?: MeasureId;
+  name: string;
+  description: string;
+  /** units[0] is the default
+   */
+  units: UnitType[];
+  initialFilter: InitialFilter;
+};
 
 export const MEASURES: MeasureSpec[] = [
   {

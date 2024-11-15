@@ -3,7 +3,7 @@ import * as immer from "immer";
 import { Update, View } from "../tea";
 import { MEASURES } from "../constants";
 import { assertUnreachable, filterMeasures } from "../util/utils";
-import { MeasureId, MeasureSpec } from "../../iso/units";
+import { MeasureId, MeasureSpec } from "../../iso/measures/index";
 import { MeasureStats } from "../../iso/protocol";
 
 export type Model = immer.Immutable<

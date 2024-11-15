@@ -1,5 +1,5 @@
 import * as Protocol from "../iso/protocol";
-import { MeasureId } from "../iso/units";
+import { MeasureId } from "../iso/measures";
 type FrontendObject<T> = { [K in keyof T]: Frontend<T[K]> };
 
 export type Frontend<T> = T extends Protocol.ProtocolObjectId

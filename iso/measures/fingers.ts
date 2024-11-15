@@ -1,4 +1,4 @@
-import { MeasureId, MeasureSpec } from "../units.js";
+import { MeasureId, MeasureSpec } from "./index.js";
 
 export const GRIPS = [
   "back-3-crimp",

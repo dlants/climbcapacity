@@ -1,14 +1,11 @@
 import React from "react";
-import {
-  convertToStandardUnit,
-  MeasureId,
-  UnitValue,
-} from "../../../iso/units";
+import { convertToStandardUnit, UnitValue } from "../../../iso/units";
 import { Dispatch, Update } from "../../tea";
 import * as UnitInput from "../unit-input";
 import * as UnitToggle from "../unit-toggle";
 import * as immer from "immer";
 import { assertUnreachable } from "../../util/utils";
+import { MeasureId } from "../../../iso/measures";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;

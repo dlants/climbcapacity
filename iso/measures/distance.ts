@@ -1,5 +1,5 @@
-import { MeasureId, MeasureSpec } from "../units.js";
 import { assertUnreachable } from "../utils.js";
+import { MeasureId, MeasureSpec } from "./index.js";
 import { DOMINANT_SIDE } from "./movement.js";
 
 export const DISTANCE_MOVEMENT = ["vertical-jump", "horizontal-jump"] as const;

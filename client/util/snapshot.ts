@@ -1,4 +1,5 @@
-import { convertToStandardUnit, MeasureId, UnitValue } from "../../iso/units";
+import { MeasureId } from "../../iso/measures";
+import { convertToStandardUnit, UnitValue } from "../../iso/units";
 import { HydratedSnapshot, Snapshot } from "../types";
 
 /** Hydrate the snapshot

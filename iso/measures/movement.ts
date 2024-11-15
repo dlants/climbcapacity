@@ -1,4 +1,4 @@
-import { MeasureId, MeasureSpec } from "../units.js";
+import { MeasureId, MeasureSpec } from "./index.js";
 
 const MOVEMENTS = [
   "barbellsquat",

@@ -12,11 +12,11 @@ import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
-import { INPUT_MEASURES } from "../../iso/measures";
+import { INPUT_MEASURES, MeasureId } from "../../iso/measures";
 const produce = immer.produce;
 import lodash from "lodash";
 import { InitialFilters } from "../views/select-filters";
-import { InitialFilter, MeasureId, UnitValue } from "../../iso/units";
+import { InitialFilter, UnitValue } from "../../iso/units";
 import {
   EWBANK,
   FONT,

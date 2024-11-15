@@ -5,12 +5,12 @@ import { SnapshotDoc } from "../backend/models/snapshots.js";
 import {
   convertToStandardUnit,
   encodeMeasureValue,
-  MeasureId,
   UnitValue,
 } from "../iso/units.js";
 import { Grip } from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade } from "../iso/grade.js";
 import mongodb from "mongodb";
+import { MeasureId } from "../iso/measures/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(

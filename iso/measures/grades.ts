@@ -1,5 +1,5 @@
 import { IRCRAGrade } from "../grade.js";
-import { MeasureId, MeasureSpec } from "../units.js";
+import { MeasureId, MeasureSpec } from "./index.js";
 
 export const BOULDER_LOCATION = [
   "gym",

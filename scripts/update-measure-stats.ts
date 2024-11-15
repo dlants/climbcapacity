@@ -1,6 +1,6 @@
 import mongodb from "mongodb";
 import { SnapshotDoc } from "../backend/models/snapshots.js";
-import { MeasureId } from "../iso/units.js";
+import { MeasureId } from "../iso/measures/index.js";
 
 type MeasureStatsDoc = {
   stats: { [measureId: MeasureId]: number };

@@ -3,10 +3,10 @@ import { Filter } from "../../iso/protocol.js";
 import { User } from "lucia";
 import {
   encodeMeasureValue,
-  MeasureId,
   NormedMeasure,
   UnitValue,
 } from "../../iso/units.js";
+import { MeasureId } from "../../iso/measures/index.js";
 
 export type SnapshotDoc = {
   _id: mongodb.ObjectId;
