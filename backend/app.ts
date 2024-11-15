@@ -19,7 +19,6 @@ import { MeasureId, UnitValue } from "../iso/units.js";
 import { fileURLToPath } from "url";
 import { apiRoute } from "./utils.js";
 import path from "path";
-import { addSyntheticTrailingComment } from "typescript";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +39,11 @@ async function run() {
 
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
+
+  app.get("/api/ip", (req, res) => {
+    res.send(req.ip);
+    return;
+  });
 
   app.get(
     "/api/measure-stats",
