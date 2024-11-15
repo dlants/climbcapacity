@@ -33,7 +33,7 @@ async function run() {
   const app = express();
 
   // we are sitting behind the render proxy. This should help the rate limiter work properly.
-  app.set("trust proxy", 1);
+  app.set("trust proxy", 2);
   app.get("/api/ip", (req, res) => {
     res.send(req.ip);
   });
