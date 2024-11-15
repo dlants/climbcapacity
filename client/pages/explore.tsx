@@ -1,19 +1,11 @@
 import React from "react";
-import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
-import {
-  assertUnreachable,
-  GetLoadedRequest as GetLoadedRequestType,
-  RequestStatus,
-  RequestStatusView,
-  RequestStatusViewMap,
-} from "../util/utils";
+import { Update, Thunk, View, wrapThunk } from "../tea";
+import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
-import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/select-filters";
-import { INPUT_MEASURES, OTHER_MEASURES } from "../../iso/measures";
+import { INPUT_MEASURES } from "../../iso/measures";
 const produce = immer.produce;
 
 export type Model = {
@@ -33,6 +25,10 @@ export function initModel({
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   const initialFilters: InitialFilters = {};
   for (const measure of INPUT_MEASURES) {
+    const count = measureStats.stats[measure.id] || 0;
+    if (count < 100) {
+      continue;
+    }
     initialFilters[measure.id] = {
       minValue: measure.defaultMinValue,
       maxValue: measure.defaultMaxValue,
