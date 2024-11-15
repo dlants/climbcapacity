@@ -29,7 +29,6 @@ export function asyncRoute(
     try {
       await fn(req, res);
     } catch (e) {
-      console.error(e);
       if (e instanceof HandledError) {
         res.status(e.status).send(e.message);
         return;
@@ -40,6 +39,7 @@ export function asyncRoute(
         return;
       }
 
+      console.error(e);
       res.status(500).send((e as Error).message || "Unexpected error");
     }
   };
