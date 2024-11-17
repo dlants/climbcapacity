@@ -240,12 +240,16 @@ So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd recor
   }
 }
 
-for (const movement of [
+export const MAX_REPS_MOVEMENTS = [
   "pullup",
   "pushup",
   "veeup",
   "bodyweightsquat",
-] as const) {
+] as const;
+
+export type MaxRepMovement = (typeof MAX_REPS_MOVEMENTS)[number];
+
+for (const movement of MAX_REPS_MOVEMENTS) {
   MEASURES.push({
     id: `max-rep:${movement}` as MeasureId,
     trainingMeasureId: TRAINING_MEASURE_MAP[movement],
@@ -261,29 +265,16 @@ for (const movement of [
   });
 }
 
-for (const movement of [
-  "lsit",
-  "frontlever",
-  "plank",
-  "hollowhold",
-  "barhang",
-] as const) {
-  MEASURES.push({
-    id: `duration:${movement}` as MeasureId,
-    trainingMeasureId: TRAINING_MEASURE_MAP[movement],
-    name: `${movement} Max Duration`,
-    description: ``,
-    units: ["second"],
-    initialFilter: {
-      type: "minmax",
-      measureId: `duration:${movement}` as MeasureId,
-      minValue: { unit: "second", value: 0 },
-      maxValue: { unit: "second", value: 120 },
-    },
-  });
-}
+export const UNILATERAL_MAX_REPS_MOVEMENTS = [
+  "pullup",
+  "pushup",
+  "pistolsquat",
+] as const;
 
-for (const movement of ["pullup", "pushup", "pistolsquat"] as const) {
+export type UnilateralMaxRepMovement =
+  (typeof UNILATERAL_MAX_REPS_MOVEMENTS)[number];
+
+for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
       id: `max-rep:${movement}:${dominantSide}` as MeasureId,
@@ -301,17 +292,97 @@ for (const movement of ["pullup", "pushup", "pistolsquat"] as const) {
   }
 }
 
-for (const movement of ["sideplank"] as const) {
+export const ISOMETRIC_MOVEMENTS = [
+  "lsit",
+  "frontlever",
+  "plank",
+  "hollowhold",
+  "barhang",
+] as const;
+
+export type IsometricMovement = (typeof ISOMETRIC_MOVEMENTS)[number];
+
+export const generateIsometricMovementMeasureId = (
+  movement: IsometricMovement,
+) => `isometric-duration:${movement}` as MeasureId;
+
+export const parseIsometricMovementMeasureId = (
+  measureId: MeasureId,
+): IsometricMovement => {
+  const prefix = "isometric-duration:";
+  if (measureId.startsWith(prefix)) {
+    const movement = measureId.substring(prefix.length);
+    if (ISOMETRIC_MOVEMENTS.includes(movement as IsometricMovement)) {
+      return movement as IsometricMovement;
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
+for (const movement of ISOMETRIC_MOVEMENTS) {
+  MEASURES.push({
+    id: generateIsometricMovementMeasureId(movement),
+    trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+    name: `${movement} Max Duration`,
+    description: ``,
+    units: ["second"],
+    initialFilter: {
+      type: "minmax",
+      measureId: generateIsometricMovementMeasureId(movement),
+      minValue: { unit: "second", value: 0 },
+      maxValue: { unit: "second", value: 120 },
+    },
+  });
+}
+
+export const ISOMETRIC_UNILATERAL_MOVEMENTS = ["sideplank"] as const;
+
+export type IsometricUnilateralMovement =
+  (typeof ISOMETRIC_UNILATERAL_MOVEMENTS)[number];
+
+export const generateIsometricUnilateralMeasureId = ({
+  movement,
+  dominantSide,
+}: {
+  movement: IsometricUnilateralMovement;
+  dominantSide: DominantSide;
+}) => `isometric-duration:${movement}:${dominantSide}` as MeasureId;
+
+export const parseIsometricUnilateralMovementMeasureId = (
+  measureId: MeasureId,
+): { movement: IsometricUnilateralMovement; dominantSide: DominantSide } => {
+  const prefix = "isometric-duration:";
+  if (measureId.startsWith(prefix)) {
+    const segments = measureId.substring(prefix.length).split(":");
+    if (
+      segments.length === 2 &&
+      ISOMETRIC_UNILATERAL_MOVEMENTS.includes(
+        segments[0] as IsometricUnilateralMovement,
+      )
+    ) {
+      return {
+        movement: segments[0] as IsometricUnilateralMovement,
+        dominantSide: segments[1] as DominantSide,
+      };
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
+for (const movement of ISOMETRIC_UNILATERAL_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
-      id: `duration:${movement}:${dominantSide}` as MeasureId,
+      id: generateIsometricUnilateralMeasureId({ movement, dominantSide }),
       trainingMeasureId: TRAINING_MEASURE_MAP[movement],
       name: `${movement} Max Duration ${dominantSide}`,
       description: ``,
       units: ["second"],
       initialFilter: {
         type: "minmax",
-        measureId: `duration:${movement}:${dominantSide}` as MeasureId,
+        measureId: generateIsometricUnilateralMeasureId({
+          movement,
+          dominantSide,
+        }),
         minValue: { unit: "second", value: 0 },
         maxValue: { unit: "second", value: 120 },
       },

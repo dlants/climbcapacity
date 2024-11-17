@@ -86,6 +86,17 @@ function getAllItems(): Item[] {
       ),
   );
 
+  const maxRepsMeasures = rest.filter((m) => m.id.startsWith("max-rep:"));
+  rest = rest.filter((m) => !m.id.startsWith("max-rep:"));
+
+  const isometricMeasures = rest.filter((m) =>
+    m.id.startsWith("isometric-duration:"),
+  );
+  rest = rest.filter((m) => !m.id.startsWith("isometric-duration"));
+
+  const powerMeasures = rest.filter((m) => m.id.startsWith("power:"));
+  rest = rest.filter((m) => !m.id.startsWith("power:"));
+
   rest = rest.filter((m) => !m.id.startsWith("time-training:"));
 
   const mapSpecToItem = (s: MeasureSpec) => ({
@@ -130,9 +141,25 @@ function getAllItems(): Item[] {
       measureClass: "weightedmovement",
       items: weightedMovementMeasures.map(mapSpecToItem),
     },
+    {
+      type: "measure-group",
+      measureClass: "maxrepsmovement",
+      items: maxRepsMeasures.map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      measureClass: "isometrichold",
+      items: isometricMeasures.map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      measureClass: "powermovement",
+      items: powerMeasures.map(mapSpecToItem),
+    },
     ...rest.map(mapSpecToItem),
   ];
 }
+
 function getItemsForSnapshot(snapshot: HydratedSnapshot) {
   const allItems = getAllItems();
   const outItems: Item[] = [];

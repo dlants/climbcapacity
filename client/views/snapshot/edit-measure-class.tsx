@@ -11,6 +11,9 @@ import * as Performance from "./measure-class/performance";
 import * as Repeaters from "./measure-class/repeaters";
 import * as EdgePullups from "./measure-class/edgepullups";
 import * as WeightedMovement from "./measure-class/weightedmovement";
+import * as MaxRepsMovement from "./measure-class/maxrepsmovement";
+import * as IsometricHold from "./measure-class/isometrichold";
+import * as PowerMovement from "./measure-class/powermovement";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
 
@@ -21,7 +24,10 @@ export type MeasureClass =
   | "performance"
   | "repeaters"
   | "edgepullups"
-  | "weightedmovement";
+  | "weightedmovement"
+  | "maxrepsmovement"
+  | "isometrichold"
+  | "powermovement";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -52,6 +58,18 @@ export type Model = immer.Immutable<{
     | {
         type: "weightedmovement";
         model: WeightedMovement.Model;
+      }
+    | {
+        type: "maxrepsmovement";
+        model: MaxRepsMovement.Model;
+      }
+    | {
+        type: "isometrichold";
+        model: IsometricHold.Model;
+      }
+    | {
+        type: "powermovement";
+        model: PowerMovement.Model;
       };
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
@@ -172,6 +190,51 @@ export const initModel = ({
         }),
       };
 
+    case "maxrepsmovement":
+      const maxRepsMovement = MaxRepsMovement.initModel(measureId);
+      return {
+        measureModel: {
+          type: "maxrepsmovement",
+          model: maxRepsMovement,
+        },
+        snapshot,
+        selectedMeasure: maxRepsMovement.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: maxRepsMovement.measureId,
+          snapshot,
+        }),
+      };
+
+    case "isometrichold":
+      const isometricHold = IsometricHold.initModel(measureId);
+      return {
+        measureModel: {
+          type: "isometrichold",
+          model: isometricHold,
+        },
+        snapshot,
+        selectedMeasure: isometricHold.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: isometricHold.measureId,
+          snapshot,
+        }),
+      };
+
+    case "powermovement":
+      const powerMovement = PowerMovement.initModel(measureId);
+      return {
+        measureModel: {
+          type: "powermovement",
+          model: powerMovement,
+        },
+        snapshot,
+        selectedMeasure: powerMovement.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: powerMovement.measureId,
+          snapshot,
+        }),
+      };
+
     default:
       assertUnreachable(measureClass);
   }
@@ -208,6 +271,18 @@ export type Msg =
         | {
             type: "weightedmovement";
             msg: WeightedMovement.Msg;
+          }
+        | {
+            type: "maxrepsmovement";
+            msg: MaxRepsMovement.Msg;
+          }
+        | {
+            type: "isometrichold";
+            msg: IsometricHold.Msg;
+          }
+        | {
+            type: "powermovement";
+            msg: PowerMovement.Msg;
           };
     }
   | {
@@ -290,6 +365,39 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = WeightedMovement.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "maxrepsmovement": {
+              if (msg.msg.type !== "maxrepsmovement") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = MaxRepsMovement.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "isometrichold": {
+              if (msg.msg.type !== "isometrichold") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = IsometricHold.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "powermovement": {
+              if (msg.msg.type !== "powermovement") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = PowerMovement.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -401,6 +509,36 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "weightedmovement", msg },
+                }),
+            });
+
+          case "maxrepsmovement":
+            return MaxRepsMovement.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "maxrepsmovement", msg },
+                }),
+            });
+
+          case "isometrichold":
+            return IsometricHold.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "isometrichold", msg },
+                }),
+            });
+
+          case "powermovement":
+            return PowerMovement.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "powermovement", msg },
                 }),
             });
 
