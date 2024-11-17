@@ -7,10 +7,20 @@ import {
   encodeMeasureValue,
   UnitValue,
 } from "../iso/units.js";
-import { Grip } from "../iso/measures/fingers.js";
+import {
+  Grip,
+  generateMaxhangId,
+  generateMinEdgeHangId,
+} from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade } from "../iso/grade.js";
 import mongodb from "mongodb";
 import { MeasureId } from "../iso/measures/index.js";
+import { generateGradeMeasureId } from "../iso/measures/grades.js";
+import {
+  generateIsometricMovementMeasureId,
+  generateMaxRepMeasureId,
+  generateWeightedMeasureId,
+} from "../iso/measures/movement.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
@@ -148,19 +158,31 @@ table.slice(1).forEach((row, idx) => {
   const hardestVGradeStr = row[7];
   try {
     const grade = parseVgrade(hardestVGradeStr);
-    addMeasure("grade:boulder:gym:max" as MeasureId, {
-      unit: "vermin",
-      value: grade,
-    });
+    addMeasure(
+      generateGradeMeasureId({
+        context: { type: "boulder", location: "gym" },
+        stat: "max",
+      }),
+      {
+        unit: "vermin",
+        value: grade,
+      },
+    );
   } catch {}
 
   const p90VGradeStr = row[9];
   try {
     const grade = parseVgrade(p90VGradeStr);
-    addMeasure("grade:boulder:gym:projectp90" as MeasureId, {
-      unit: "vermin",
-      value: grade,
-    });
+    addMeasure(
+      generateGradeMeasureId({
+        context: { type: "boulder", location: "gym" },
+        stat: "projectp90",
+      }),
+      {
+        unit: "vermin",
+        value: grade,
+      },
+    );
   } catch {}
 
   function parseEwbankGrade(str: string) {
@@ -174,19 +196,31 @@ table.slice(1).forEach((row, idx) => {
   const hardestRouteGrade = row[10];
   try {
     const grade = parseEwbankGrade(hardestRouteGrade);
-    addMeasure("grade:sport:gym:max" as MeasureId, {
-      unit: "ewbank",
-      value: grade,
-    });
+    addMeasure(
+      generateGradeMeasureId({
+        context: { type: "sport", location: "gym" },
+        stat: "max",
+      }),
+      {
+        unit: "ewbank",
+        value: grade,
+      },
+    );
   } catch {}
 
   const p90RouteGradeStr = row[12];
   try {
     const grade = parseEwbankGrade(p90RouteGradeStr);
-    addMeasure("grade:sport:gym:projectp90" as MeasureId, {
-      unit: "ewbank",
-      value: grade,
-    });
+    addMeasure(
+      generateGradeMeasureId({
+        context: { type: "sport", location: "gym" },
+        stat: "projectp90",
+      }),
+      {
+        unit: "ewbank",
+        value: grade,
+      },
+    );
   } catch {}
 
   const hangboardWeekFreqStr = row[16];
@@ -352,10 +386,17 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang:18mm:10s:half-crimp" as MeasureId, {
-        unit: "kg",
-        value: addedWeight,
-      });
+      addMeasure(
+        generateMaxhangId({
+          edgeSize: 18,
+          duration: 10,
+          gripType: "half-crimp",
+        }),
+        {
+          unit: "kg",
+          value: addedWeight,
+        },
+      );
     }
   }
 
@@ -363,10 +404,13 @@ table.slice(1).forEach((row, idx) => {
   {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
     if (!isNaN(addedWeight)) {
-      addMeasure("maxhang:18mm:10s:open" as MeasureId, {
-        unit: "kg",
-        value: addedWeight,
-      });
+      addMeasure(
+        generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+        {
+          unit: "kg",
+          value: addedWeight,
+        },
+      );
     }
   }
 
@@ -380,10 +424,13 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeHalfStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("min-edge-hang:10s:half-crimp" as MeasureId, {
-        unit: "mm",
-        value: edgeSize,
-      });
+      addMeasure(
+        generateMinEdgeHangId({ duration: 10, gripType: "half-crimp" }),
+        {
+          unit: "mm",
+          value: edgeSize,
+        },
+      );
     }
   }
 
@@ -391,7 +438,7 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeOpenStr);
     if (!isNaN(edgeSize)) {
-      addMeasure("min-edge-hang:10s:open" as MeasureId, {
+      addMeasure(generateMinEdgeHangId({ duration: 10, gripType: "open" }), {
         unit: "mm",
         value: edgeSize,
       });
@@ -504,7 +551,7 @@ table.slice(1).forEach((row, idx) => {
   const maxPullRepStr = row[31];
   const maxPulls = parseFloat(maxPullRepStr);
   if (!isNaN(maxPulls)) {
-    addMeasure("max-rep:pullup" as MeasureId, {
+    addMeasure(generateMaxRepMeasureId("pullup"), {
       unit: "count",
       value: maxPulls,
     });
@@ -524,7 +571,7 @@ table.slice(1).forEach((row, idx) => {
     }
 
     if (weight) {
-      addMeasure("weighted:pullup" as MeasureId, {
+      addMeasure(generateWeightedMeasureId("pullup"), {
         unit: "5RMkg",
         value: weightedPull5rm + weight,
       });
@@ -534,7 +581,7 @@ table.slice(1).forEach((row, idx) => {
   const maxPushupsStr = row[33];
   const maxPushups = parseFloat(maxPushupsStr);
   if (!isNaN(maxPushups)) {
-    addMeasure("max-rep:pushup" as MeasureId, {
+    addMeasure(generateMaxRepMeasureId("pushup"), {
       unit: "count",
       value: maxPushups,
     });
@@ -543,7 +590,7 @@ table.slice(1).forEach((row, idx) => {
   const maxLsitStr = row[34];
   const maxLsit = parseFloat(maxLsitStr);
   if (!isNaN(maxLsit)) {
-    addMeasure("duration:lsit" as MeasureId, {
+    addMeasure(generateIsometricMovementMeasureId("lsit"), {
       unit: "second",
       value: maxLsit,
     });

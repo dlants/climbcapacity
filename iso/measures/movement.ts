@@ -249,16 +249,30 @@ export const MAX_REPS_MOVEMENTS = [
 
 export type MaxRepMovement = (typeof MAX_REPS_MOVEMENTS)[number];
 
+export const generateMaxRepMeasureId = (movement: MaxRepMovement) =>
+  `max-rep:${movement}` as MeasureId;
+
+export const parseMaxRepMeasureId = (measureId: MeasureId): MaxRepMovement => {
+  const prefix = "max-rep:";
+  if (measureId.startsWith(prefix)) {
+    const movement = measureId.substring(prefix.length);
+    if (MAX_REPS_MOVEMENTS.includes(movement as MaxRepMovement)) {
+      return movement as MaxRepMovement;
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
 for (const movement of MAX_REPS_MOVEMENTS) {
   MEASURES.push({
-    id: `max-rep:${movement}` as MeasureId,
+    id: generateMaxRepMeasureId(movement),
     trainingMeasureId: TRAINING_MEASURE_MAP[movement],
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
     initialFilter: {
       type: "minmax",
-      measureId: `max-rep:${movement}` as MeasureId,
+      measureId: generateMaxRepMeasureId(movement),
       minValue: { unit: "count", value: 0 },
       maxValue: { unit: "count", value: 20 },
     },
@@ -274,24 +288,55 @@ export const UNILATERAL_MAX_REPS_MOVEMENTS = [
 export type UnilateralMaxRepMovement =
   (typeof UNILATERAL_MAX_REPS_MOVEMENTS)[number];
 
+export const generateUnilateralMaxRepMeasureId = ({
+  movement,
+  dominantSide,
+}: {
+  movement: UnilateralMaxRepMovement;
+  dominantSide: DominantSide;
+}) => `max-rep:${movement}:${dominantSide}` as MeasureId;
+
+export const parseUnilateralMaxRepMeasureId = (
+  measureId: MeasureId,
+): { movement: UnilateralMaxRepMovement; dominantSide: DominantSide } => {
+  const prefix = "max-rep:";
+  if (measureId.startsWith(prefix)) {
+    const segments = measureId.substring(prefix.length).split(":");
+    if (
+      segments.length === 2 &&
+      UNILATERAL_MAX_REPS_MOVEMENTS.includes(
+        segments[0] as UnilateralMaxRepMovement,
+      )
+    ) {
+      return {
+        movement: segments[0] as UnilateralMaxRepMovement,
+        dominantSide: segments[1] as DominantSide,
+      };
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
 for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
-      id: `max-rep:${movement}:${dominantSide}` as MeasureId,
+      id: generateUnilateralMaxRepMeasureId({ movement, dominantSide }),
       trainingMeasureId: TRAINING_MEASURE_MAP[movement],
       name: `Unilateral ${movement} Max Reps ${dominantSide}`,
       description: `Maximum number of reps you can complete`,
       units: ["count"],
       initialFilter: {
         type: "minmax",
-        measureId: `max-rep:${movement}:${dominantSide}` as MeasureId,
+        measureId: generateUnilateralMaxRepMeasureId({
+          movement,
+          dominantSide,
+        }),
         minValue: { unit: "count", value: 0 },
         maxValue: { unit: "count", value: 20 },
       },
     });
   }
 }
-
 export const ISOMETRIC_MOVEMENTS = [
   "lsit",
   "frontlever",

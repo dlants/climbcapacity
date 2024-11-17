@@ -11,6 +11,9 @@ import {
   DominantSide,
   MAX_REPS_MOVEMENTS,
   UNILATERAL_MAX_REPS_MOVEMENTS,
+  parseMaxRepMeasureId,
+  parseUnilateralMaxRepMeasureId,
+  generateMaxRepMeasureId,
 } from "../../../../iso/measures/movement";
 
 export type Model =
@@ -28,11 +31,23 @@ export type Model =
 
 export const initModel = (measureId?: MeasureId): Model => {
   if (measureId) {
-    return {
-      type: "bilateral",
-      movement: MAX_REPS_MOVEMENTS[0],
-      measureId,
-    };
+    try {
+      const movement = parseMaxRepMeasureId(measureId);
+      return {
+        type: "bilateral",
+        movement: movement,
+        measureId,
+      };
+    } catch {
+      const { movement, dominantSide } =
+        parseUnilateralMaxRepMeasureId(measureId);
+      return {
+        type: "unilateral",
+        movement: movement,
+        dominantSide: dominantSide,
+        measureId,
+      };
+    }
   } else {
     return {
       type: "bilateral",
@@ -63,7 +78,9 @@ export const update = (msg: Msg, model: Model): [Model] => {
               )
                 ? draft.movement
                 : MAX_REPS_MOVEMENTS[0],
-              measureId: `max-rep:${draft.movement}` as MeasureId,
+              measureId: generateMaxRepMeasureId(
+                draft.movement as MaxRepMovement,
+              ),
             } as Model;
           } else {
             return {
@@ -74,7 +91,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 ? draft.movement
                 : UNILATERAL_MAX_REPS_MOVEMENTS[0],
               dominantSide: "dominant",
-              measureId: `max-rep:benchrow:dominant` as MeasureId,
+              measureId: `max-rep:${draft.movement}:dominant` as MeasureId,
             } as Model;
           }
 
@@ -90,7 +107,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
             draft.movement = msg.movement;
             draft.measureId =
               draft.type === "bilateral"
-                ? (`max-rep:${draft.movement}` as MeasureId)
+                ? generateMaxRepMeasureId(draft.movement as MaxRepMovement)
                 : (`max-rep:${draft.movement}:${draft.dominantSide}` as MeasureId);
           }
           break;
