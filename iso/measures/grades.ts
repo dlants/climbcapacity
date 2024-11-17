@@ -25,27 +25,61 @@ export const STAT = [
 ] as const;
 export type Stat = (typeof STAT)[number];
 
+export type Context =
+  | {
+      type: "sport";
+      location: SportLocation;
+    }
+  | {
+      type: "boulder";
+      location: BoulderLocation;
+    };
+
 export type GradeMeasureType = {
   type: "grade";
-  context:
-    | {
-        type: "sport";
-        location: SportLocation;
-      }
-    | {
-        type: "boulder";
-        location: BoulderLocation;
-      };
-
+  context: Context;
   stat: Stat;
 };
+
+export function generateGradeMeasureId({
+  context,
+  stat,
+}: {
+  context: Context;
+  stat: Stat;
+}): MeasureId {
+  return `grade:${context.type}:${context.location}:${stat}` as MeasureId;
+}
+
+export function parseGradeMeasureId(id: MeasureId): {
+  context: Context;
+  stat: Stat;
+} {
+  const [_, type, location, stat] = id.split(":");
+
+  if (type === "sport" && SPORT_LOCATION.includes(location as SportLocation)) {
+    const context: Context = { type, location: location as SportLocation };
+    return { context, stat: stat as Stat };
+  } else if (
+    type === "boulder" &&
+    BOULDER_LOCATION.includes(location as BoulderLocation)
+  ) {
+    const context: Context = { type, location: location as BoulderLocation };
+    return { context, stat: stat as Stat };
+  }
+
+  throw new Error(`Invalid MeasureId: ${id}`);
+}
 
 export function synthesizeGradeMeasure(
   measureType: GradeMeasureType,
 ): MeasureSpec {
   const { context, stat } = measureType;
+
+  const measureId = generateGradeMeasureId({ context, stat });
+
   return {
-    id: `grade:${context.type}:${context.location}:${stat}` as MeasureId,
+    id: measureId,
     name: `${stat} ${context.type} grade, ${context.location}`,
     description: (() => {
       switch (stat) {
@@ -74,8 +108,7 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
         : ["ircra", "vermin", "font"],
     initialFilter: {
       type: "minmax",
-      measureId:
-        `grade:${context.type}:${context.location}:${stat}` as MeasureId,
+      measureId: measureId,
       minValue: { unit: "ircra", value: 1 as IRCRAGrade },
       maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
     },

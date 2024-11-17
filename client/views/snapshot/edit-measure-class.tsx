@@ -7,10 +7,11 @@ const produce = immer.produce;
 import * as MaxHang from "./measure-class/maxhang";
 import * as BlockPull from "./measure-class/blockpull";
 import * as MinEdge from "./measure-class/minedge";
+import * as Performance from "./measure-class/performance";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
 
-export type MeasureClass = "maxhang" | "blockpull" | "minedge";
+export type MeasureClass = "maxhang" | "blockpull" | "minedge" | "performance";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -25,6 +26,10 @@ export type Model = immer.Immutable<{
     | {
         type: "minedge";
         model: MinEdge.Model;
+      }
+    | {
+        type: "performance";
+        model: Performance.Model;
       };
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
@@ -85,6 +90,20 @@ export const initModel = ({
         }),
       };
 
+    case "performance":
+      const performance = Performance.initModel(measureId);
+      return {
+        measureModel: {
+          type: "performance",
+          model: performance,
+        },
+        snapshot,
+        selectedMeasure: performance.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: performance.measureId,
+          snapshot,
+        }),
+      };
     default:
       assertUnreachable(measureClass);
   }
@@ -105,6 +124,10 @@ export type Msg =
         | {
             type: "minedge";
             msg: MinEdge.Msg;
+          }
+        | {
+            type: "performance";
+            msg: Performance.Msg;
           };
     }
   | {
@@ -143,6 +166,17 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = MinEdge.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "performance": {
+              if (msg.msg.type !== "performance") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = Performance.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -214,6 +248,16 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "minedge", msg },
+                }),
+            });
+
+          case "performance":
+            return Performance.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "performance", msg },
                 }),
             });
 

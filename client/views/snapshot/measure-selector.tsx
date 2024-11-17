@@ -51,9 +51,13 @@ export function initModel({
 }
 
 function getAllItems(): Item[] {
-  let rest;
-  const maxhangMeasures = MEASURES.filter((m) => m.id.startsWith("maxhang:"));
-  rest = MEASURES.filter((m) => !m.id.startsWith("maxhang:"));
+  let rest = MEASURES;
+
+  const performanceMeasures = rest.filter((m) => m.id.startsWith("grade:"));
+  rest = rest.filter((m) => !m.id.startsWith("grade:"));
+
+  const maxhangMeasures = rest.filter((m) => m.id.startsWith("maxhang:"));
+  rest = rest.filter((m) => !m.id.startsWith("maxhang:"));
 
   const blockPullMeasures = rest.filter((m) => m.id.startsWith("blockpull:"));
   rest = rest.filter((m) => !m.id.startsWith("blockpull:"));
@@ -62,6 +66,14 @@ function getAllItems(): Item[] {
   rest = rest.filter((m) => !m.id.startsWith("min-edge-hang:"));
 
   return [
+    {
+      type: "measure-group",
+      measureClass: "performance",
+      items: performanceMeasures.map((s) => ({
+        type: "measure-item",
+        spec: s,
+      })),
+    },
     {
       type: "measure-group",
       measureClass: "maxhang",
