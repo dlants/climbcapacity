@@ -8,7 +8,7 @@ import { UnitValue, unitValueToString } from "../../../iso/units";
 import { MEASURES, MEASURE_MAP } from "../../constants";
 import { isSubsequence } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
-import { MeasureId, MeasureSpec } from "../../../iso/measures";
+import { ANTHRO_MEASURES, MeasureId, MeasureSpec } from "../../../iso/measures";
 import { assertUnreachable } from "../../../iso/utils";
 import { MeasureClass } from "./edit-measure-class";
 
@@ -51,7 +51,7 @@ export function initModel({
 }
 
 function getAllItems(): Item[] {
-  let rest = MEASURES;
+  let rest = MEASURES.filter((m) => !ANTHRO_MEASURES.includes(m));
 
   const performanceMeasures = rest.filter((m) => m.id.startsWith("grade:"));
   rest = rest.filter((m) => !m.id.startsWith("grade:"));
@@ -62,37 +62,47 @@ function getAllItems(): Item[] {
   const blockPullMeasures = rest.filter((m) => m.id.startsWith("blockpull:"));
   rest = rest.filter((m) => !m.id.startsWith("blockpull:"));
 
+  const repeatersMeasures = rest.filter((m) =>
+    m.id.startsWith("duration:7-3repeaters:"),
+  );
+  rest = rest.filter((m) => !m.id.startsWith("duration:7-3repeaters:"));
+
   const minedgeMeasures = rest.filter((m) => m.id.startsWith("min-edge-hang:"));
   rest = rest.filter((m) => !m.id.startsWith("min-edge-hang:"));
 
+  const mapSpecToItem = (s: MeasureSpec) => ({
+    type: "measure-item" as const,
+    spec: s,
+  });
+
   return [
+    ...ANTHRO_MEASURES.map(mapSpecToItem),
     {
       type: "measure-group",
       measureClass: "performance",
-      items: performanceMeasures.map((s) => ({
-        type: "measure-item",
-        spec: s,
-      })),
+      items: performanceMeasures.map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "maxhang",
-      items: maxhangMeasures.map((s) => ({ type: "measure-item", spec: s })),
+      items: maxhangMeasures.map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "blockpull",
-      items: blockPullMeasures.map((s) => ({ type: "measure-item", spec: s })),
+      items: blockPullMeasures.map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "minedge",
-      items: minedgeMeasures.map((s) => ({ type: "measure-item", spec: s })),
+      items: minedgeMeasures.map(mapSpecToItem),
     },
-    ...rest.map((s) => ({
-      type: "measure-item" as const,
-      spec: s,
-    })),
+    {
+      type: "measure-group",
+      measureClass: "repeaters",
+      items: repeatersMeasures.map(mapSpecToItem),
+    },
+    ...rest.map(mapSpecToItem),
   ];
 }
 
@@ -274,7 +284,7 @@ const MeasureView = ({
   return (
     <div key={measure.id} className="measure-item">
       <label>
-        {measure.name} ({measureStatsCount} snapshots)
+        {measure.name} ({measureStatsCount || 0} snapshots)
       </label>{" "}
       {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
       <button
@@ -327,7 +337,7 @@ const MeasureGroupView = ({
           <MeasureView
             key={item.spec.id}
             model={model}
-            measureStatsCount={model.measureStats.stats[item.spec.id]}
+            measureStatsCount={model.measureStats.stats[item.spec.id] || 0}
             dispatch={dispatch}
             measure={item.spec}
           />

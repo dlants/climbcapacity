@@ -211,7 +211,7 @@ const TIME_TRAINING_REPEATERS_FULL: MeasureSpec = {
 };
 MEASURES.push(TIME_TRAINING_REPEATERS_FULL);
 
-const REPEATERS_GRIPS = [
+export const REPEATERS_GRIPS = [
   "back-3-crimp",
   "back-3-drag",
   "front-3-crimp",
@@ -220,7 +220,7 @@ const REPEATERS_GRIPS = [
   "half-crimp",
   "open",
 ];
-type RepeatersGrip = (typeof REPEATERS_GRIPS)[number];
+export type RepeatersGrip = (typeof REPEATERS_GRIPS)[number];
 
 const REPEATER_MAP: { [grip in RepeatersGrip]: MeasureId } = {
   "back-3-crimp": TIME_TRAINING_REPEATERS_HALF.id,
@@ -232,18 +232,40 @@ const REPEATER_MAP: { [grip in RepeatersGrip]: MeasureId } = {
   open: TIME_TRAINING_REPEATERS_OPEN.id,
 };
 
-for (const edgeSize of [18, 20]) {
+export function generateRepeaterId({
+  edgeSize,
+  gripType,
+}: {
+  edgeSize: MaxHangEdgeSize;
+  gripType: RepeatersGrip;
+}): MeasureId {
+  return `duration:7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId;
+}
+
+export function parseRepeaterId(measureId: MeasureId) {
+  const match = measureId.match(/^duration:7-3repeaters:(\d+)mm:(.*)$/);
+  if (!match) {
+    throw new Error("Invalid repeater measureId format");
+  }
+  const [, edgeSize, gripType] = match;
+  return {
+    edgeSize: parseInt(edgeSize, 10) as MaxHangEdgeSize,
+    gripType: gripType as RepeatersGrip,
+  };
+}
+
+for (const edgeSize of MAXHANG_EDGE_SIZE) {
   for (const gripType of REPEATERS_GRIPS) {
+    const measureId = generateRepeaterId({ edgeSize, gripType });
     MEASURES.push({
-      id: `duration:7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId,
+      id: measureId,
       trainingMeasureId: REPEATER_MAP[gripType],
       name: `7:3 repeaters on ${edgeSize}mm ${gripType}(bodyweight)`,
       description: ``,
       units: ["second"],
       initialFilter: {
         type: "minmax",
-        measureId:
-          `duration:7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId,
+        measureId: measureId,
         minValue: { unit: "second", value: 10 },
         maxValue: { unit: "second", value: 200 },
       },
