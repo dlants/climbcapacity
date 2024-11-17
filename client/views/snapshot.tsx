@@ -4,50 +4,20 @@ const produce = immer.produce;
 
 import type { HydratedSnapshot } from "../types";
 import { Update, View, Dispatch } from "../tea";
-import {
-  convertToStandardUnit,
-  UnitValue,
-  unitValueToString,
-} from "../../iso/units";
-import { MEASURES, MEASURE_MAP } from "../constants";
-import {
-  filterMeasures,
-  RequestStatus,
-  RequestStatusView,
-} from "../util/utils";
-import * as UnitInput from "./unit-input";
-import * as UnitToggle from "./unit-toggle";
+import { convertToStandardUnit, UnitValue } from "../../iso/units";
+import { RequestStatus, RequestStatusView } from "../util/utils";
 import {
   MeasureStats,
   SnapshotId,
   SnapshotUpdateRequest,
 } from "../../iso/protocol";
-import {
-  ANTHRO_MEASURES,
-  MeasureId,
-  MeasureSpec,
-  PERFORMANCE_MEASURES,
-  TIME_TRAINING_MEASURES,
-} from "../../iso/measures";
-
-type CanSubmitEditingState = {
-  state: "can-submit";
-  measureId: MeasureId;
-  model: UnitInput.HasParseResultModel;
-  trainingMeasure?: {
-    measureId: MeasureId;
-    model: UnitInput.HasParseResultModel;
-  };
-};
+import { MeasureId } from "../../iso/measures";
+import * as MeasureSelector from "./snapshot/measure-selector";
+import * as EditMeasureOrClass from "./snapshot/edit-measure-or-class";
 
 type EditingEditingState = {
   state: "editing";
-  measureId: MeasureId;
-  model: UnitInput.Model;
-  trainingMeasure?: {
-    measureId: MeasureId;
-    model: UnitInput.Model;
-  };
+  model: EditMeasureOrClass.Model;
 };
 
 type SubmittingEditingState = {
@@ -63,7 +33,6 @@ type SubmittingEditingState = {
 
 type EditingState =
   | EditingEditingState
-  | CanSubmitEditingState
   | SubmittingEditingState
   | {
       state: "not-editing";
@@ -72,35 +41,9 @@ type EditingState =
 export type Model = immer.Immutable<{
   snapshot: HydratedSnapshot;
   measureStats: MeasureStats;
-  measureFilter: { query: string; measures: MeasureSpec[] };
+  measureSelector: MeasureSelector.Model;
   editingState: EditingState;
 }>;
-
-function sortBase(m: MeasureSpec) {
-  if (ANTHRO_MEASURES.includes(m)) {
-    return 30;
-  } else if (PERFORMANCE_MEASURES.includes(m)) {
-    return 20;
-  } else if (TIME_TRAINING_MEASURES.includes(m)) {
-    return 0;
-  } else {
-    return 10;
-  }
-}
-
-function sortedMeasures(measureStats: MeasureStats) {
-  return [...MEASURES].sort((a, b) => {
-    const baseA = sortBase(a);
-    const baseB = sortBase(b);
-    if (baseA == baseB) {
-      const statsA = measureStats.stats[a.id] || 0;
-      const statsB = measureStats.stats[b.id] || 0;
-      return statsB - statsA;
-    } else {
-      return baseB - baseA;
-    }
-  });
-}
 
 export function initModel({
   snapshot,
@@ -112,30 +55,19 @@ export function initModel({
   return {
     snapshot,
     measureStats,
-    measureFilter: {
-      query: "",
-      measures: sortedMeasures(measureStats),
-    },
+    measureSelector: MeasureSelector.initModel({ snapshot, measureStats }),
     editingState: { state: "not-editing" },
   };
 }
 
 export type Msg =
   | {
-      type: "SET_MEASURE_FILTER";
-      query: string;
+      type: "MEASURE_SELECTOR_MSG";
+      msg: MeasureSelector.Msg;
     }
   | {
-      type: "UNIT_INPUT_MSG";
-      msg: UnitInput.Msg;
-    }
-  | {
-      type: "TRAINING_UNIT_INPUT_MSG";
-      msg: UnitInput.Msg;
-    }
-  | {
-      type: "INIT_MEASURE_UPDATE";
-      measureId: MeasureId;
+      type: "EDIT_MEASURE_OR_CLASS_MSG";
+      msg: EditMeasureOrClass.Msg;
     }
   | {
       type: "SUBMIT_MEASURE_UPDATE";
@@ -150,49 +82,20 @@ export type Msg =
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
-    case "SET_MEASURE_FILTER":
+    case "MEASURE_SELECTOR_MSG":
       return [
         produce(model, (draft) => {
-          draft.measureFilter = {
-            query: msg.query,
-            measures: filterMeasures(
-              sortedMeasures(draft.measureStats),
-              msg.query,
-            ),
-          };
-        }),
-      ];
+          const [next] = MeasureSelector.update(msg.msg, draft.measureSelector);
+          draft.measureSelector = immer.castDraft(next);
 
-    case "INIT_MEASURE_UPDATE":
-      return [
-        produce(model, (draft) => {
-          const inputModel = immer.castDraft(
-            UnitInput.initModel(
-              msg.measureId,
-              draft.snapshot.measures[msg.measureId] as UnitValue | undefined,
-            ),
-          );
-          draft.editingState = {
-            state: "editing",
-            measureId: msg.measureId,
-            model: inputModel,
-          };
-
-          const measure = MEASURE_MAP[msg.measureId];
-          const trainingMeasureId = measure.trainingMeasureId;
-          if (trainingMeasureId) {
-            let trainingInputmodel = immer.castDraft(
-              UnitInput.initModel(
-                trainingMeasureId,
-                draft.snapshot.measures[trainingMeasureId] as
-                  | UnitValue
-                  | undefined,
-              ),
-            );
-            draft.editingState.trainingMeasure = {
-              measureId: trainingMeasureId,
-              model: trainingInputmodel,
-            };
+          if (msg.msg.type == "INIT_UPDATE") {
+            draft.editingState = immer.castDraft({
+              state: "editing",
+              model: EditMeasureOrClass.initModel({
+                init: msg.msg.update,
+                snapshot: model.snapshot,
+              }),
+            });
           }
         }),
       ];
@@ -256,93 +159,48 @@ export const update: Update<Msg, Model> = (msg, model) => {
       }
     }
 
-    case "UNIT_INPUT_MSG": {
+    case "EDIT_MEASURE_OR_CLASS_MSG":
       return [
         produce(model, (draft) => {
-          const editingState = draft.editingState;
-          if (
-            !(
-              editingState.state == "editing" ||
-              editingState.state == "can-submit"
-            )
-          ) {
-            throw new Error(
-              `Receivied UNIT_INPUT_MSG but measure was not being edited.`,
-            );
+          if (draft.editingState.state != "editing") {
+            throw new Error(`Unexpected editingState when editing`);
           }
-
-          const [next] = UnitInput.update(msg.msg, editingState.model);
-
-          editingState.model = immer.castDraft(next);
-          draft.editingState = immer.castDraft(
-            transitionEditableState(editingState),
-          );
-        }),
-      ];
-    }
-
-    case "TRAINING_UNIT_INPUT_MSG": {
-      return [
-        produce(model, (draft) => {
-          const editingState = draft.editingState;
-          if (
-            !(
-              (editingState.state == "editing" ||
-                editingState.state == "can-submit") &&
-              editingState.trainingMeasure
-            )
-          ) {
-            throw new Error(
-              `Receivied editing message but measure was not being edited.`,
-            );
-          }
-
-          const [next] = UnitInput.update(
+          const [next] = EditMeasureOrClass.update(
             msg.msg,
-            editingState.trainingMeasure.model,
+            draft.editingState.model,
           );
-
-          editingState.trainingMeasure.model = immer.castDraft(next);
-          draft.editingState = immer.castDraft(
-            transitionEditableState(editingState),
-          );
+          draft.editingState.model = immer.castDraft(next);
         }),
       ];
-    }
 
     case "SUBMIT_MEASURE_UPDATE": {
       const editingState = model.editingState;
-      if (editingState.state != "can-submit") {
+      if (!(editingState.state == "editing" && editingState.model.canSubmit)) {
         throw new Error(
           `Unexpected state for editingState upon submit ${JSON.stringify(editingState)}`,
         );
       }
 
-      const value = editingState.model.parseResult.value;
+      const canSubmit = editingState.model.canSubmit;
+
       const requestParams: SnapshotUpdateRequest = {
         snapshotId: model.snapshot._id as SnapshotId,
         updates: {
-          [editingState.measureId]: value,
+          [canSubmit.measureId]: canSubmit.value,
         },
       };
-      const trainingMeasure = editingState.trainingMeasure;
-      if (trainingMeasure) {
-        requestParams.updates[trainingMeasure.measureId] =
-          trainingMeasure.model.parseResult.value;
+      if (canSubmit.trainingMeasure) {
+        requestParams.updates[canSubmit.trainingMeasure.measureId] =
+          canSubmit.trainingMeasure.value;
       }
 
       return [
         produce(model, (draft) => {
           draft.editingState = {
             state: "submitting",
-            measureId: editingState.measureId,
-            value,
-            trainingMeasure: trainingMeasure
-              ? {
-                  measureId: trainingMeasure.measureId,
-                  value: trainingMeasure.model.parseResult.value,
-                }
-              : undefined,
+            measureId: canSubmit.measureId,
+            value: canSubmit.value,
+            trainingMeasure: canSubmit.trainingMeasure,
             writeRequest: { status: "loading" },
           };
         }),
@@ -375,30 +233,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-function transitionEditableState(
-  editingState: EditingEditingState | CanSubmitEditingState,
-): EditingEditingState | CanSubmitEditingState {
-  if (
-    editingState.model.parseResult.status == "success" &&
-    (!editingState.trainingMeasure ||
-      editingState.trainingMeasure.model.parseResult.status == "success")
-  ) {
-    return {
-      state: "can-submit",
-      measureId: editingState.measureId,
-      model: editingState.model,
-      trainingMeasure: editingState.trainingMeasure,
-    } as CanSubmitEditingState;
-  } else {
-    return {
-      state: "editing",
-      measureId: editingState.measureId,
-      model: editingState.model,
-      trainingMeasure: editingState.trainingMeasure,
-    } as EditingEditingState;
-  }
-}
-
 const FilterInput = React.memo(
   ({
     value,
@@ -425,13 +259,36 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
             return <NotEditingView model={model} dispatch={dispatch} />;
 
           case "editing":
-          case "can-submit":
             return (
-              <EditingView
-                editingState={model.editingState}
-                dispatch={dispatch}
-              />
+              <div>
+                <EditMeasureOrClass.view
+                  model={model.editingState.model}
+                  dispatch={(msg) =>
+                    dispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg })
+                  }
+                />
+                <button
+                  onClick={() => {
+                    dispatch({
+                      type: "SUBMIT_MEASURE_UPDATE",
+                    });
+                  }}
+                  disabled={model.editingState.model.canSubmit == undefined}
+                >
+                  Submit
+                </button>{" "}
+                <button
+                  onClick={() => {
+                    dispatch({
+                      type: "DISCARD_MEASURE_UPDATE",
+                    });
+                  }}
+                >
+                  Discard Changes
+                </button>
+              </div>
             );
+
           case "submitting":
             return (
               <RequestStatusView
@@ -460,121 +317,10 @@ function NotEditingView({
 }) {
   return (
     <div className="measures-list">
-      <FilterInput
-        value={model.measureFilter.query}
-        onChange={(e) =>
-          dispatch({ type: "SET_MEASURE_FILTER", query: e.target.value })
-        }
+      <MeasureSelector.view
+        model={model.measureSelector}
+        dispatch={(msg) => dispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
       />
-
-      {model.measureFilter.measures.map((measure) => (
-        <MeasureView
-          key={measure.id}
-          measureStatsCount={model.measureStats.stats[measure.id] || 0}
-          measure={measure}
-          dispatch={dispatch}
-          model={model}
-        />
-      ))}
     </div>
   );
 }
-
-function EditMeasureView({
-  model,
-  measureId,
-  dispatch,
-}: {
-  model: UnitInput.Model;
-  measureId: MeasureId;
-  dispatch: Dispatch<UnitInput.Msg>;
-}) {
-  const measure = MEASURE_MAP[measureId];
-  return (
-    <div className={`measure-item`}>
-      <label>{measure.name}</label>
-      <UnitInput.UnitInput model={model} dispatch={dispatch} />
-      {measure.units.length > 1 && (
-        <UnitToggle.view model={model} dispatch={dispatch} />
-      )}
-    </div>
-  );
-}
-
-function EditingView({
-  editingState,
-  dispatch,
-}: {
-  editingState: EditingEditingState | CanSubmitEditingState;
-  dispatch: Dispatch<Msg>;
-}) {
-  return (
-    <div>
-      <EditMeasureView
-        model={editingState.model}
-        measureId={editingState.measureId}
-        dispatch={(msg) => dispatch({ type: "UNIT_INPUT_MSG", msg })}
-      />
-      {editingState.trainingMeasure && (
-        <EditMeasureView
-          model={editingState.trainingMeasure.model}
-          measureId={editingState.trainingMeasure.measureId}
-          dispatch={(msg) => dispatch({ type: "TRAINING_UNIT_INPUT_MSG", msg })}
-        />
-      )}
-      <button
-        onClick={() => {
-          if (editingState.state == "can-submit") {
-            dispatch({
-              type: "SUBMIT_MEASURE_UPDATE",
-            });
-          }
-        }}
-        disabled={editingState.state != "can-submit"}
-      >
-        Submit
-      </button>{" "}
-      <button
-        onClick={() => {
-          dispatch({
-            type: "DISCARD_MEASURE_UPDATE",
-          });
-        }}
-      >
-        Discard Changes
-      </button>
-    </div>
-  );
-}
-
-const MeasureView = ({
-  model,
-  measureStatsCount,
-  dispatch,
-  measure,
-}: {
-  model: Model;
-  measureStatsCount: number;
-  dispatch: Dispatch<Msg>;
-  measure: immer.Immutable<MeasureSpec>;
-}) => {
-  const unitValue = model.snapshot.measures[measure.id];
-  return (
-    <div key={measure.id} className="measure-item">
-      <label>
-        {measure.name} ({measureStatsCount} snapshots)
-      </label>{" "}
-      {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
-      <button
-        onClick={() => {
-          dispatch({
-            type: "INIT_MEASURE_UPDATE",
-            measureId: measure.id,
-          });
-        }}
-      >
-        Edit
-      </button>
-    </div>
-  );
-};

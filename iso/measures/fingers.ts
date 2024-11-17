@@ -1,4 +1,5 @@
 import { MeasureId, MeasureSpec } from "./index.js";
+import { DOMINANT_SIDE, DominantSide } from "./movement.js";
 
 export const GRIPS = [
   "back-3-crimp",
@@ -96,19 +97,52 @@ const MEASURE_MAP: { [grip in Grip]: MeasureId } = {
   pinch: TIME_TRAINING_PINCH.id,
 };
 
-for (const edgeSize of [18, 20]) {
-  for (const duration of [7, 10]) {
-    for (const gripType of [
-      "back-3-crimp",
-      "back-3-drag",
-      "front-3-crimp",
-      "front-3-drag",
-      "full-crimp",
-      "half-crimp",
-      "open",
-    ] as const) {
+export const MAXHANG_GRIP_TYPE = [
+  "back-3-crimp",
+  "back-3-drag",
+  "front-3-crimp",
+  "front-3-drag",
+  "full-crimp",
+  "half-crimp",
+  "open",
+] as const;
+export type MaxHangGripType = (typeof MAXHANG_GRIP_TYPE)[number];
+export const MAXHANG_EDGE_SIZE = [18, 20] as const;
+export type MaxHangEdgeSize = (typeof MAXHANG_EDGE_SIZE)[number];
+export const MAXHANG_DURATION = [7, 10] as const;
+export type MaxHangDuration = (typeof MAXHANG_DURATION)[number];
+
+export function generateMaxhangId({
+  edgeSize,
+  duration,
+  gripType,
+}: {
+  edgeSize: MaxHangEdgeSize;
+  duration: MaxHangDuration;
+  gripType: MaxHangGripType;
+}): MeasureId {
+  return `maxhang:${edgeSize}mm:${duration}s:${gripType}` as MeasureId;
+}
+
+export function parseMaxhangId(measureId: MeasureId) {
+  const match = measureId.match(/^maxhang:(\d+)mm:(\d+)s:(.*)$/);
+  if (!match) {
+    throw new Error("Invalid measureId format");
+  }
+  const [, edgeSize, duration, gripType] = match;
+  return {
+    edgeSize: parseInt(edgeSize, 10) as MaxHangEdgeSize,
+    duration: parseInt(duration, 10) as MaxHangDuration,
+    gripType: gripType as MaxHangGripType,
+  };
+}
+
+for (const edgeSize of MAXHANG_EDGE_SIZE) {
+  for (const duration of MAXHANG_DURATION) {
+    for (const gripType of MAXHANG_GRIP_TYPE) {
+      const id = generateMaxhangId({ edgeSize, duration, gripType });
       MEASURES.push({
-        id: `maxhang:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
+        id,
         name: `MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
         trainingMeasureId: MEASURE_MAP[gripType],
         description: `\
@@ -126,8 +160,7 @@ If you weigh 70kg, and you added 30kg, you'd record 100kg.
         units: ["kg", "lb"],
         initialFilter: {
           type: "minmax",
-          measureId:
-            `maxhang:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
+          measureId: id,
           minValue: { unit: "kg", value: 10 },
           maxValue: { unit: "kg", value: 100 },
         },
@@ -218,37 +251,105 @@ for (const edgeSize of [18, 20]) {
   }
 }
 
-for (const edgeSize of [18, 20]) {
-  for (const duration of [7, 10]) {
+export function generateBlockPullId({
+  edgeSize,
+  duration,
+  gripType,
+  dominantSide,
+}: {
+  edgeSize: number;
+  duration: number;
+  gripType: Grip;
+  dominantSide: (typeof DOMINANT_SIDE)[number];
+}): MeasureId {
+  return `blockpull:${edgeSize}mm:${duration}s:${gripType}:${dominantSide}` as MeasureId;
+}
+
+export function parseBlockPullId(measureId: MeasureId) {
+  const match = measureId.match(/^blockpull:(\d+)mm:(\d+)s:(.*):(.*)$/);
+  if (!match) {
+    throw new Error("Invalid block pull measureId format");
+  }
+  const [, edgeSize, duration, gripType, dominantSide] = match;
+  return {
+    edgeSize: parseInt(edgeSize, 10) as MaxHangEdgeSize,
+    duration: parseInt(duration, 10) as MaxHangDuration,
+    gripType: gripType as Grip,
+    dominantSide: dominantSide as DominantSide,
+  };
+}
+
+for (const edgeSize of MAXHANG_EDGE_SIZE) {
+  for (const duration of MAXHANG_DURATION) {
     for (const gripType of GRIPS) {
-      MEASURES.push({
-        id: `blockpull:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
-        trainingMeasureId: MEASURE_MAP[gripType],
-        name: `Block Pull: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
-        description: `\
+      for (const dominantSide of DOMINANT_SIDE) {
+        const id = generateBlockPullId({
+          edgeSize,
+          duration,
+          gripType,
+          dominantSide,
+        });
+        MEASURES.push({
+          id,
+          trainingMeasureId: MEASURE_MAP[gripType],
+          name: `Block Pull: ${edgeSize}mm, ${duration}s, ${gripType} grip on the ${dominantSide} side`,
+          description: `\
 Warm up thoroughly.
 
-Find a ${edgeSize}mm edge on a block pulling device, like a tension block. Using a ${gripType} grip, pick it up for ${duration}s. If successful, increase weight and try again after at least a 5m rest.
+Find a ${edgeSize}mm edge on a block pulling device, like a tension block. Using a ${gripType} grip with your ${dominantSide} hand, pick it up for ${duration}s. If successful, increase weight and try again after at least a 5m rest.
 
 Record the maximum successful weight.
 `,
-        units: ["kg", "lb"],
-        initialFilter: {
-          type: "minmax",
-          measureId:
-            `blockpull:${edgeSize}mm:${duration}s:${gripType}` as MeasureId,
-          minValue: { unit: "kg", value: 10 },
-          maxValue: { unit: "kg", value: 100 },
-        },
-      });
+          units: ["kg", "lb"],
+          initialFilter: {
+            type: "minmax",
+            measureId: id,
+            minValue: { unit: "kg", value: 10 },
+            maxValue: { unit: "kg", value: 100 },
+          },
+        });
+      }
     }
   }
 }
 
-for (const duration of [7, 10]) {
-  for (const gripType of GRIPS) {
+export function generateMinEdgeHangId({
+  gripType,
+  duration,
+}: {
+  duration: MaxHangDuration;
+  gripType: MinEdgeGrip;
+}): MeasureId {
+  return `min-edge-hang:${duration}s:${gripType}` as MeasureId;
+}
+
+export function parseMinEdgeHangId(measureId: MeasureId) {
+  const match = measureId.match(/^min-edge-hang:(\d+)s:(.*)$/);
+  if (!match) {
+    throw new Error("Invalid min edge hang measureId format");
+  }
+  const [, duration, gripType] = match;
+  return {
+    duration: parseInt(duration, 10) as MaxHangDuration,
+    gripType: gripType as MinEdgeGrip,
+  };
+}
+
+export const MIN_EDGE_GRIPS = [
+  "back-3-crimp",
+  "back-3-drag",
+  "front-3-crimp",
+  "front-3-drag",
+  "full-crimp",
+  "half-crimp",
+  "open",
+] as const;
+export type MinEdgeGrip = (typeof MIN_EDGE_GRIPS)[number];
+
+for (const duration of MAXHANG_DURATION) {
+  for (const gripType of MIN_EDGE_GRIPS) {
     MEASURES.push({
-      id: `min-edge-hang:${duration}s:${gripType}` as MeasureId,
+      id: generateMinEdgeHangId({ duration, gripType }),
       trainingMeasureId: MEASURE_MAP[gripType],
       name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
       description: `\
@@ -259,14 +360,13 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
       units: ["mm"],
       initialFilter: {
         type: "minmax",
-        measureId: `min-edge-hang:${duration}s:${gripType}` as MeasureId,
+        measureId: generateMinEdgeHangId({ duration, gripType }),
         minValue: { unit: "mm", value: 4 },
         maxValue: { unit: "mm", value: 20 },
       },
     });
   }
 }
-
 for (const gripType of [
   "full-crimp",
   "half-crimp",

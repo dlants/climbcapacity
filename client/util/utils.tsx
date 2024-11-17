@@ -141,7 +141,7 @@ export function filterMeasures(
   });
 }
 
-function isSubsequence(query: string, str: string): boolean {
+export function isSubsequence(query: string, str: string): boolean {
   let i = 0;
   let j = 0;
   while (i < str.length && j < query.length) {
