@@ -134,16 +134,35 @@ const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
     veeup: TIME_TRAINING_CORE_FRONTAL.id,
   };
 
-for (const movement of [
+export const WEIGHTED_MOVEMENTS = [
   "barbellsquat",
   "benchpress",
   "deadlift",
   "overheadpress",
   "pullup",
   "standingrow",
-] as const) {
+] as const;
+export type WeightedMovement = (typeof WEIGHTED_MOVEMENTS)[number];
+
+export const generateWeightedMeasureId = (movement: WeightedMovement) =>
+  `weighted:${movement}` as MeasureId;
+
+export const parseWeightedMovementMeasureId = (
+  measureId: MeasureId,
+): WeightedMovement => {
+  const prefix = "weighted:";
+  if (measureId.startsWith(prefix)) {
+    const movement = measureId.substring(prefix.length);
+    if (WEIGHTED_MOVEMENTS.includes(movement as WeightedMovement)) {
+      return movement as WeightedMovement;
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
+for (const movement of WEIGHTED_MOVEMENTS) {
   MEASURES.push({
-    id: `weighted:${movement}` as MeasureId,
+    id: generateWeightedMeasureId(movement),
     trainingMeasureId: TRAINING_MEASURE_MAP[movement],
     name: `Weighted ${movement}`,
     description: `Record total weight, including bodyweight for relevant exercises.
@@ -153,11 +172,72 @@ So for example, for a pullup or a squat if you weigh 70kg and you added 30kg, yo
     units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
     initialFilter: {
       type: "minmax",
-      measureId: `weighted:${movement}` as MeasureId,
+      measureId: generateWeightedMeasureId(movement),
       minValue: { unit: "5RMkg", value: 0 },
       maxValue: { unit: "5RMkg", value: 100 },
     },
   });
+}
+
+export const UNILATERAL_WEIGHTED_MOVEMENTS = [
+  "benchrow",
+  "overheadpress",
+  "pistolsquat",
+  "pullup",
+  "dumbellpress",
+] as const;
+
+export type UnilateralWeightedMovement =
+  (typeof UNILATERAL_WEIGHTED_MOVEMENTS)[number];
+
+export const generateUnilateralMeasureId = ({
+  movement,
+  dominantSide,
+}: {
+  movement: UnilateralWeightedMovement;
+  dominantSide: DominantSide;
+}) => `weighted-unilateral:${movement}:${dominantSide}` as MeasureId;
+
+export const parseUnilateralWeightedMovementMeasureId = (
+  measureId: MeasureId,
+): { movement: UnilateralWeightedMovement; dominantSide: DominantSide } => {
+  const prefix = "weighted-unilateral:";
+  if (measureId.startsWith(prefix)) {
+    const segments = measureId.substring(prefix.length).split(":");
+    if (
+      segments.length === 2 &&
+      UNILATERAL_WEIGHTED_MOVEMENTS.includes(
+        segments[0] as UnilateralWeightedMovement,
+      )
+    ) {
+      return {
+        movement: segments[0] as UnilateralWeightedMovement,
+        dominantSide: segments[1] as DominantSide,
+      };
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
+for (const movement of UNILATERAL_WEIGHTED_MOVEMENTS) {
+  for (const dominantSide of DOMINANT_SIDE) {
+    MEASURES.push({
+      id: generateUnilateralMeasureId({ movement, dominantSide }),
+      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+      name: `Weighted unilateral ${movement} ${dominantSide}`,
+      description: `Record total weight, including bodyweight for relevant exercises.
+
+So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd record 40kg.
+`,
+      units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
+      initialFilter: {
+        type: "minmax",
+        measureId: generateUnilateralMeasureId({ movement, dominantSide }),
+        minValue: { unit: "5RMkg", value: 0 },
+        maxValue: { unit: "5RMkg", value: 100 },
+      },
+    });
+  }
 }
 
 for (const movement of [
@@ -179,34 +259,6 @@ for (const movement of [
       maxValue: { unit: "count", value: 20 },
     },
   });
-}
-
-for (const movement of [
-  "benchrow",
-  "overheadpress",
-  "pistolsquat",
-  "pullup",
-  "dumbellpress",
-] as const) {
-  for (const dominantSide of DOMINANT_SIDE) {
-    MEASURES.push({
-      id: `weighted-unilateral:${movement}:${dominantSide}` as MeasureId,
-      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
-      name: `Weighted unilateral ${movement} ${dominantSide}`,
-      description: `Record total weight, including bodyweight for relevant exercises.
-
-So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd record 40kg.
-`,
-      units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
-      initialFilter: {
-        type: "minmax",
-        measureId:
-          `weighted-unilateral:${movement}:${dominantSide}` as MeasureId,
-        minValue: { unit: "5RMkg", value: 0 },
-        maxValue: { unit: "5RMkg", value: 100 },
-      },
-    });
-  }
 }
 
 for (const movement of [

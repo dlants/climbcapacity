@@ -75,6 +75,17 @@ function getAllItems(): Item[] {
   );
   rest = rest.filter((m) => !m.id.startsWith("min-edge-pullups:"));
 
+  const weightedMovementMeasures = rest.filter(
+    (m) =>
+      m.id.startsWith("weighted:") || m.id.startsWith("weighted-unilateral:"),
+  );
+  rest = rest.filter(
+    (m) =>
+      !(
+        m.id.startsWith("weighted:") || m.id.startsWith("weighted-unilateral:")
+      ),
+  );
+
   const mapSpecToItem = (s: MeasureSpec) => ({
     type: "measure-item" as const,
     spec: s,
@@ -109,13 +120,17 @@ function getAllItems(): Item[] {
     },
     {
       type: "measure-group",
-      measureClass: "edgepullup",
+      measureClass: "edgepullups",
       items: edgePullupMeasures.map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      measureClass: "weightedmovement",
+      items: weightedMovementMeasures.map(mapSpecToItem),
     },
     ...rest.map(mapSpecToItem),
   ];
 }
-
 function getItemsForSnapshot(snapshot: HydratedSnapshot) {
   const allItems = getAllItems();
   const outItems: Item[] = [];

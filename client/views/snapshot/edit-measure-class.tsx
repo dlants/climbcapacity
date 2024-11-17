@@ -10,6 +10,7 @@ import * as MinEdge from "./measure-class/minedge";
 import * as Performance from "./measure-class/performance";
 import * as Repeaters from "./measure-class/repeaters";
 import * as EdgePullups from "./measure-class/edgepullups";
+import * as WeightedMovement from "./measure-class/weightedmovement";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
 
@@ -19,7 +20,8 @@ export type MeasureClass =
   | "minedge"
   | "performance"
   | "repeaters"
-  | "edgepullups";
+  | "edgepullups"
+  | "weightedmovement";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -46,6 +48,10 @@ export type Model = immer.Immutable<{
     | {
         type: "edgepullups";
         model: EdgePullups.Model;
+      }
+    | {
+        type: "weightedmovement";
+        model: WeightedMovement.Model;
       };
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
@@ -151,6 +157,21 @@ export const initModel = ({
         }),
       };
 
+    case "weightedmovement":
+      const weightedMovement = WeightedMovement.initModel(measureId);
+      return {
+        measureModel: {
+          type: "weightedmovement",
+          model: weightedMovement,
+        },
+        snapshot,
+        selectedMeasure: weightedMovement.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: weightedMovement.measureId,
+          snapshot,
+        }),
+      };
+
     default:
       assertUnreachable(measureClass);
   }
@@ -183,6 +204,10 @@ export type Msg =
         | {
             type: "edgepullups";
             msg: EdgePullups.Msg;
+          }
+        | {
+            type: "weightedmovement";
+            msg: WeightedMovement.Msg;
           };
     }
   | {
@@ -254,6 +279,17 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = EdgePullups.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "weightedmovement": {
+              if (msg.msg.type !== "weightedmovement") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = WeightedMovement.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -355,6 +391,16 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "edgepullups", msg },
+                }),
+            });
+
+          case "weightedmovement":
+            return WeightedMovement.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "weightedmovement", msg },
                 }),
             });
 
