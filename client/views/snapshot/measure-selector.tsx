@@ -86,6 +86,8 @@ function getAllItems(): Item[] {
       ),
   );
 
+  rest = rest.filter((m) => !m.id.startsWith("time-training:"));
+
   const mapSpecToItem = (s: MeasureSpec) => ({
     type: "measure-item" as const,
     spec: s,
