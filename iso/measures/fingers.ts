@@ -389,14 +389,35 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
     });
   }
 }
-for (const gripType of [
+
+export const MINEDGE_PULLUP_GRIPS = [
   "full-crimp",
   "half-crimp",
   "open",
   "front-3-drag",
-] as const) {
+] as const;
+export type MinEdgePullupGrip = (typeof MINEDGE_PULLUP_GRIPS)[number];
+
+export const generateMinEdgePullupId = ({
+  gripType,
+}: {
+  gripType: MinEdgePullupGrip;
+}): MeasureId => {
+  return `min-edge-pullups:2rm:${gripType}` as MeasureId;
+};
+
+export function parseMinEdgePullupId(measureId: MeasureId) {
+  const match = measureId.match(/^min-edge-pullups:2rm:(.*)$/);
+  if (!match) {
+    throw new Error("Invalid min edge pullup measureId format");
+  }
+  const [, gripType] = match;
+  return { gripType: gripType as MinEdgePullupGrip };
+}
+
+for (const gripType of MINEDGE_PULLUP_GRIPS) {
   MEASURES.push({
-    id: `min-edge-pullups:2rm:${gripType}` as MeasureId,
+    id: generateMinEdgePullupId({ gripType }),
     trainingMeasureId: MEASURE_MAP[gripType],
     name: `Smallest edge you can do 2 pullups on using ${gripType} grip.`,
     description: `Using a ${gripType} grip, find the smallest edge you can do 2 pullups on.
@@ -405,8 +426,8 @@ for (const gripType of [
     units: ["mm"],
     initialFilter: {
       type: "minmax",
-      measureId: `min-edge-pullups:2rm:${gripType}` as MeasureId,
-      minValue: { unit: "mm", value: 4 },
+      measureId: generateMinEdgePullupId({ gripType }),
+      minValue: { unit: "mm", value: 3 },
       maxValue: { unit: "mm", value: 20 },
     },
   });

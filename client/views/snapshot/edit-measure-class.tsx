@@ -9,6 +9,7 @@ import * as BlockPull from "./measure-class/blockpull";
 import * as MinEdge from "./measure-class/minedge";
 import * as Performance from "./measure-class/performance";
 import * as Repeaters from "./measure-class/repeaters";
+import * as EdgePullups from "./measure-class/edgepullups";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
 
@@ -17,7 +18,8 @@ export type MeasureClass =
   | "blockpull"
   | "minedge"
   | "performance"
-  | "repeaters";
+  | "repeaters"
+  | "edgepullups";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -40,6 +42,10 @@ export type Model = immer.Immutable<{
     | {
         type: "repeaters";
         model: Repeaters.Model;
+      }
+    | {
+        type: "edgepullups";
+        model: EdgePullups.Model;
       };
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
@@ -130,6 +136,21 @@ export const initModel = ({
         }),
       };
 
+    case "edgepullups":
+      const edgePullups = EdgePullups.initModel(measureId);
+      return {
+        measureModel: {
+          type: "edgepullups",
+          model: edgePullups,
+        },
+        snapshot,
+        selectedMeasure: edgePullups.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: edgePullups.measureId,
+          snapshot,
+        }),
+      };
+
     default:
       assertUnreachable(measureClass);
   }
@@ -158,6 +179,10 @@ export type Msg =
         | {
             type: "repeaters";
             msg: Repeaters.Msg;
+          }
+        | {
+            type: "edgepullups";
+            msg: EdgePullups.Msg;
           };
     }
   | {
@@ -218,6 +243,17 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = Repeaters.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "edgepullups": {
+              if (msg.msg.type !== "edgepullups") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = EdgePullups.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -309,6 +345,16 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "repeaters", msg },
+                }),
+            });
+
+          case "edgepullups":
+            return EdgePullups.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "edgepullups", msg },
                 }),
             });
 

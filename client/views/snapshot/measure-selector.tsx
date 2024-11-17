@@ -70,6 +70,11 @@ function getAllItems(): Item[] {
   const minedgeMeasures = rest.filter((m) => m.id.startsWith("min-edge-hang:"));
   rest = rest.filter((m) => !m.id.startsWith("min-edge-hang:"));
 
+  const edgePullupMeasures = rest.filter((m) =>
+    m.id.startsWith("min-edge-pullups:"),
+  );
+  rest = rest.filter((m) => !m.id.startsWith("min-edge-pullups:"));
+
   const mapSpecToItem = (s: MeasureSpec) => ({
     type: "measure-item" as const,
     spec: s,
@@ -101,6 +106,11 @@ function getAllItems(): Item[] {
       type: "measure-group",
       measureClass: "repeaters",
       items: repeatersMeasures.map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      measureClass: "edgepullup",
+      items: edgePullupMeasures.map(mapSpecToItem),
     },
     ...rest.map(mapSpecToItem),
   ];
