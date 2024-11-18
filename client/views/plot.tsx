@@ -35,8 +35,9 @@ export const view: View<never, Model> = ({ model }) => {
         assertUnreachable(model);
     }
     return () => {
-      svg.selectAll("*").remove();
-      d3.selectAll(".tooltip").remove();
+      if (containerRef.current) {
+        d3.select(containerRef.current).selectAll("*").remove();
+      }
     };
   }, [model]);
 
