@@ -68,13 +68,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
           const [newModel] = UnitToggle.update(msg.msg, draft.unitToggle);
           draft.unitToggle = immer.castDraft(newModel);
 
-          draft.value = immer.castDraft({
-            unit: draft.unitToggle.selectedUnit,
-            value: convertToTargetUnit(
+          draft.value = immer.castDraft(
+            convertToTargetUnit(
               convertToStandardUnit(draft.value),
               draft.unitToggle.selectedUnit,
             ),
-          }) as UnitValue;
+          );
         }),
       ];
 

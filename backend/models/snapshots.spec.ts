@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach } from "vitest";
 import assert from "assert";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { MongoClient } from "mongodb";
@@ -13,12 +14,11 @@ describe("SnapshotsModel", () => {
     id: "test-user-id",
   };
 
-  beforeEach(async function () {
-    this.timeout(10000);
+  beforeEach(async () => {
     mongoServer = await MongoMemoryServer.create();
     client = await MongoClient.connect(mongoServer.getUri());
     model = new SnapshotsModel({ client });
-  });
+  }, 5000);
 
   afterEach(async () => {
     await client.close();

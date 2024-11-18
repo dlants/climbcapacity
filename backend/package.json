@@ -15,12 +15,12 @@
     "mongodb": "^6.10.0",
     "oslo": "^1.2.1",
     "resend": "^4.0.1-alpha.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
   },
   "devDependencies": {
     "@types/chai": "^5.0.1",
     "@types/mocha": "^10.0.9",
-    "mocha": "^10.8.2",
     "mongodb-memory-server": "^10.1.2",
     "nodemon": "^3.1.7",
     "tsx": "^4.19.2"
@@ -35,6 +35,6 @@
   "scripts": {
     "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js",
     "build": "tsc --pretty false",
-    "test": "mocha -r tsx './models/**/*.spec.ts'"
+    "test": "mocha -r tsx './models/**/*.spec.ts' '../iso/**/*.spec.ts'"
   }
 }

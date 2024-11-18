@@ -43,6 +43,24 @@ export type InitialFilter =
       value: UnitValue;
     };
 
+export function castInitialFilter(filter: InitialFilter, targetUnit: UnitType) {
+  switch (filter.type) {
+    case "minmax":
+      return {
+        ...filter,
+        minValue: castUnit(filter.minValue, targetUnit),
+        maxValue: castUnit(filter.maxValue, targetUnit),
+      };
+    case "toggle":
+      return {
+        ...filter,
+        value: castUnit(filter.value, targetUnit),
+      };
+    default:
+      assertUnreachable(filter);
+  }
+}
+
 export type MeasureValue = {
   id: MeasureId;
   value: UnitValue;
@@ -126,59 +144,87 @@ export function convertToStandardUnit(unit: UnitValue): number {
 export function convertToTargetUnit(
   normalizedValue: number,
   targetUnit: UnitType,
-): number {
+): UnitValue {
   switch (targetUnit) {
     case "second":
-      return normalizedValue;
+      return { unit: "second", value: normalizedValue };
     case "year":
-      return normalizedValue;
+      return { unit: "year", value: normalizedValue };
     case "month":
-      return normalizedValue * 12;
+      return { unit: "month", value: normalizedValue * 12 };
     case "lb":
-      return normalizedValue / 0.45359237;
+      return { unit: "lb", value: normalizedValue / 0.45359237 };
     case "1RMlb":
-      return normalizedValue / 0.45359237;
+      return { unit: "1RMlb", value: normalizedValue / 0.45359237 };
     case "2RMlb":
-      return inverse_brzycki(normalizedValue, 2) / 0.45359237;
+      return {
+        unit: "2RMlb",
+        value: inverse_brzycki(normalizedValue, 2) / 0.45359237,
+      };
     case "5RMlb":
-      return inverse_brzycki(normalizedValue, 5) / 0.45359237;
+      return {
+        unit: "5RMlb",
+        value: inverse_brzycki(normalizedValue, 5) / 0.45359237,
+      };
     case "kg":
-      return normalizedValue;
+      return { unit: "kg", value: normalizedValue };
     case "1RMkg":
-      return normalizedValue;
+      return { unit: "1RMkg", value: normalizedValue };
     case "2RMkg":
-      return inverse_brzycki(normalizedValue, 2);
+      return { unit: "2RMkg", value: inverse_brzycki(normalizedValue, 2) };
     case "5RMkg":
-      return inverse_brzycki(normalizedValue, 5);
+      return { unit: "5RMkg", value: inverse_brzycki(normalizedValue, 5) };
     case "m":
-      return normalizedValue;
+      return { unit: "m", value: normalizedValue };
     case "cm":
-      return normalizedValue * 100;
+      return { unit: "cm", value: normalizedValue * 100 };
     case "mm":
-      return normalizedValue * 1000;
+      return { unit: "mm", value: normalizedValue * 1000 };
     case "inch":
-      return normalizedValue / 0.0254;
+      return { unit: "inch", value: normalizedValue / 0.0254 };
     case "vermin":
-      return VGRADE.indexOf(ircraToVGrade(normalizedValue as IRCRAGrade));
+      return {
+        unit: "vermin",
+        value: ircraToVGrade(normalizedValue as IRCRAGrade),
+      };
     case "ircra":
-      return normalizedValue;
+      return { unit: "ircra", value: normalizedValue as IRCRAGrade };
     case "font":
-      return FONT.indexOf(ircraToFont(normalizedValue as IRCRAGrade));
+      return {
+        unit: "font",
+        value: ircraToFont(normalizedValue as IRCRAGrade),
+      };
     case "frenchsport":
-      return FRENCH_SPORT.indexOf(
-        ircraToFrenchSport(normalizedValue as IRCRAGrade),
-      );
+      return {
+        unit: "frenchsport",
+        value: ircraToFrenchSport(normalizedValue as IRCRAGrade),
+      };
     case "yds":
-      return YDS.indexOf(ircraToYDS(normalizedValue as IRCRAGrade));
+      return {
+        unit: "yds",
+        value: ircraToYDS(normalizedValue as IRCRAGrade),
+      };
     case "ewbank":
-      return EWBANK.indexOf(ircraToEwbank(normalizedValue as IRCRAGrade));
+      return {
+        unit: "ewbank",
+        value: ircraToEwbank(normalizedValue as IRCRAGrade),
+      };
     case "sex-at-birth":
-      return normalizedValue;
+      return {
+        unit: "sex-at-birth",
+        value: normalizedValue === 0 ? "female" : "male",
+      };
     case "count":
-      return normalizedValue;
+      return { unit: "count", value: normalizedValue };
     default:
       assertUnreachable(targetUnit);
   }
+}
+export function castUnit(
+  unitValue: UnitValue,
+  targetUnit: UnitType,
+): UnitValue {
+  return convertToTargetUnit(convertToStandardUnit(unitValue), targetUnit);
 }
 
 export type UnitValue =
@@ -330,6 +376,43 @@ export function inchesToFeetAndInches(inches: number) {
   return { feet, inches: outInches };
 }
 
+export function toLinear(unitValue: UnitValue): number {
+  switch (unitValue.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "1RMlb":
+    case "2RMlb":
+    case "5RMlb":
+    case "kg":
+    case "1RMkg":
+    case "2RMkg":
+    case "5RMkg":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+    case "ircra":
+    case "count":
+      return unitValue.value;
+    case "vermin":
+      return VGRADE.indexOf(unitValue.value);
+    case "font":
+      return FONT.indexOf(unitValue.value);
+    case "frenchsport":
+      return FRENCH_SPORT.indexOf(unitValue.value);
+    case "yds":
+      return YDS.indexOf(unitValue.value);
+    case "ewbank":
+      return EWBANK.indexOf(unitValue.value);
+    case "sex-at-birth":
+      return ["female", "male"].indexOf(unitValue.value);
+    default:
+      assertUnreachable(unitValue);
+  }
+}
+
 export function extractDataPoint({
   measures,
   inputMeasure,
@@ -347,13 +430,14 @@ export function extractDataPoint({
   }
 
   return {
-    x: convertToTargetUnit(
-      convertToStandardUnit(inputValue),
-      inputMeasure.unit,
+    x: toLinear(
+      convertToTargetUnit(convertToStandardUnit(inputValue), inputMeasure.unit),
     ),
-    y: convertToTargetUnit(
-      convertToStandardUnit(outputValue),
-      outputMeasure.unit,
+    y: toLinear(
+      convertToTargetUnit(
+        convertToStandardUnit(outputValue),
+        outputMeasure.unit,
+      ),
     ),
   };
 }

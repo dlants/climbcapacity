@@ -102,6 +102,7 @@ export const EWBANK = [
 ] as const;
 export type EwbankGrade = (typeof EWBANK)[number];
 
+/** possible vlaues are 1 through 33 */
 export type IRCRAGrade = number & { __brand: "IRCRAGrade" };
 
 export function vGradeToIrcra(grade: VGrade): IRCRAGrade {
@@ -255,7 +256,7 @@ export function ircraToFrenchSport(grade: IRCRAGrade): FrenchSport {
     if (grade < 30) return "9a";
     if (grade < 31) return "9a+";
     if (grade < 32) return "9b";
-    if (grade <= 32) return "9b+";
+    if (grade <= 33) return "9b+";
     throw new Error(`Invalid IRCRA grade ${grade}`);
   })() as FrenchSport;
 }
@@ -338,7 +339,7 @@ export function ircraToFont(grade: IRCRAGrade): Font {
     if (grade < 29.5) return "8B";
     if (grade < 31) return "8B+";
     if (grade < 32) return "8C";
-    if (grade < 33) return "8C+";
+    if (grade <= 33) return "8C+";
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as Font;
 }
@@ -434,7 +435,7 @@ export function ircraToYDS(grade: IRCRAGrade): YDS {
     if (grade < 30) return "5.14d";
     if (grade < 31) return "5.15a";
     if (grade < 32) return "5.15b";
-    if (grade <= 32) return "5.15c";
+    if (grade <= 33) return "5.15c";
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as YDS;
 }
@@ -557,7 +558,7 @@ export function ircraToEwbank(grade: IRCRAGrade): EwbankGrade {
     if (grade < 30) return 35;
     if (grade < 31) return 36;
     if (grade < 32) return 37;
-    if (grade <= 32) return 38;
+    if (grade <= 33) return 38;
     throw new Error(`Unexpected IRCRA grade ${grade}`);
   })() as EwbankGrade;
 }

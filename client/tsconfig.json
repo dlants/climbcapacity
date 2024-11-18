@@ -24,6 +24,8 @@
     // Include browser APIs and modern JS features
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
 
+    "types": ["vitest/globals"],
+
     "jsx": "react"
   }
 }

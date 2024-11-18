@@ -14,6 +14,8 @@ import {
 } from "../../iso/measures";
 import {
   adjustGrade,
+  castInitialFilter,
+  castUnit,
   extractDataPoint,
   UnitType,
   UnitValue,
@@ -166,13 +168,17 @@ function getPlots(model: Model) {
     }
 
     for (const { id, units } of INPUT_MEASURES) {
-      if (snapshotStats[id] > 0) {
+      if (!id.startsWith("time-training:") && snapshotStats[id] > 0) {
         otherMeasures.push({
           id,
           unit: units[0],
         });
       }
     }
+
+    otherMeasures.sort(
+      (a, b) => (snapshotStats[b.id] || 0) - (snapshotStats[a.id] || 0),
+    );
   }
 
   const plots: PlotModel[] = [];
@@ -181,23 +187,34 @@ function getPlots(model: Model) {
     const otherMeasureSpec = MEASURE_MAP[otherMeasure.id];
     const initialFilters: Filters.InitialFilters = {};
     if (model.mySnapshot) {
+      const targetUnit = model.outputMeasure.toggle.selectedUnit;
+
       initialFilters[model.outputMeasure.id] = {
         enabled: true,
         type: "minmax",
         measureId: model.outputMeasure.id,
         minValue: adjustGrade(
-          model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+          castUnit(
+            model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+            targetUnit,
+          ),
           -1,
         ),
         maxValue: adjustGrade(
-          model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+          castUnit(
+            model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
+            targetUnit,
+          ),
           2,
         ),
       };
     } else {
       initialFilters[model.outputMeasure.id] = {
         enabled: true,
-        ...outputMeasureSpec.initialFilter,
+        ...castInitialFilter(
+          outputMeasureSpec.initialFilter,
+          model.outputMeasure.toggle.selectedUnit,
+        ),
       };
     }
 
@@ -339,6 +356,7 @@ export function update(msg: Msg, model: Model): [Model] {
           draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
+
     case "FILTER_MSG":
       return [
         produce(model, (draft) => {

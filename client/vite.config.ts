@@ -19,5 +19,10 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    // Add this block
+    globals: true,
+    environment: "jsdom", // You can specify 'happy-dom' if needed
+  },
   root: ".",
 });

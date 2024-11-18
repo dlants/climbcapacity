@@ -24,6 +24,7 @@ import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
 import { MeasureId } from "../../iso/measures";
+import { ExtractFromDisjointUnion } from "../util/utils";
 
 type UnitInputMap = {
   second: string;
@@ -158,10 +159,10 @@ function getInitialInput(
   targetUnit: UnitType,
   initialValue?: UnitValue,
 ): UnitInput {
-  const targetValue =
+  const targetValue: UnitValue | undefined =
     initialValue &&
     (initialValue.unit == targetUnit
-      ? initialValue.value
+      ? initialValue
       : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit));
 
   switch (targetUnit) {
@@ -186,14 +187,22 @@ function getInitialInput(
     case "ewbank":
     case "ircra":
     case "count":
-      return targetValue ? targetValue.toString() : "";
+      return targetValue ? targetValue.value.toString() : "";
     case "inch":
       const { feet, inches } = inchesToFeetAndInches(
-        (targetValue as number) || 0,
+        targetValue ? (targetValue.value as number) : 0,
       );
       return { feet: feet.toString(), inches: inches.toString() };
     case "sex-at-birth":
-      return targetValue as "female" | "male";
+      return targetValue
+        ? (
+            targetValue as ExtractFromDisjointUnion<
+              UnitValue,
+              "unit",
+              "sex-at-birth"
+            >
+          ).value
+        : "";
     default:
       assertUnreachable(targetUnit);
   }
@@ -252,6 +261,10 @@ export const update: Update<Msg, Model> = (msg, model) => {
               ? draft.parseResult.value
               : getDefaultValueFromUnitType(msg.unit),
           );
+          draft.parseResult = parseUnitValue(
+            draft.selectedUnit,
+            draft.unitInput,
+          );
         }),
       ];
     }
@@ -297,7 +310,8 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           return { status: "fail", error: "Nothing provided" };
         }
         const num = Number(input);
-        if (isNaN(num)) return { status: "fail", error: "Invalid number" };
+        if (isNaN(num))
+          return { status: "fail", error: `Invalid number ${input}` };
         return {
           status: "success",
           value: { unit, value: num } as Extract<UnitValue, { unit: UnitName }>,
@@ -310,7 +324,10 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         const inches = Number(inchesStr);
 
         if (isNaN(feet) || isNaN(inches))
-          return { status: "fail", error: "Invalid feet/inches format" };
+          return {
+            status: "fail",
+            error: `Invalid feet/inches format ${input}`,
+          };
         return {
           status: "success",
           value: { unit, value: feet * 12 + inches } as Extract<
@@ -321,7 +338,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
       case "sex-at-birth": {
         if (input !== "male" && input !== "female")
-          return { status: "fail", error: "Invalid sex" };
+          return { status: "fail", error: `Invalid sex ${input}` };
         return {
           status: "success",
           value: { unit, value: input } as Extract<
@@ -336,7 +353,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
             parseFloat(input as UnitInputMap["vermin"]) as VGrade,
           )
         ) {
-          return { status: "fail", error: "Invalid V grade" };
+          return { status: "fail", error: `Invalid V grade ${input}` };
         }
         return {
           status: "success",
@@ -352,7 +369,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
             parseFloat(input as UnitInputMap["ewbank"]) as EwbankGrade,
           )
         ) {
-          return { status: "fail", error: "Invalid Ewbank grade" };
+          return { status: "fail", error: `Invalid Ewbank grade ${input}` };
         }
         return {
           status: "success",
@@ -365,7 +382,8 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
 
       case "font": {
         if (!FONT.includes(input as UnitInputMap["font"] as Font)) {
-          return { status: "fail", error: "Invalid Font grade" };
+          debugger;
+          return { status: "fail", error: `Invalid Font grade ${input}` };
         }
         return {
           status: "success",
@@ -381,7 +399,10 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
             input as UnitInputMap["frenchsport"] as FrenchSport,
           )
         ) {
-          return { status: "fail", error: "Invalid French Sport grade" };
+          return {
+            status: "fail",
+            error: `Invalid French Sport grade ${input}`,
+          };
         }
         return {
           status: "success",
@@ -393,7 +414,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
       case "yds": {
         if (!YDS.includes(input as UnitInputMap["yds"] as YDS)) {
-          return { status: "fail", error: "Invalid YDS grade" };
+          return { status: "fail", error: `Invalid YDS grade ${input}` };
         }
         return {
           status: "success",
@@ -405,8 +426,8 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
       case "ircra": {
         const num = Number(input);
-        if (isNaN(num) || num < 6 || num > 32) {
-          return { status: "fail", error: "Invalid IRCRA grade" };
+        if (isNaN(num) || num < 1 || num > 33) {
+          return { status: "fail", error: `Invalid IRCRA grade ${num}` };
         }
         return {
           status: "success",
@@ -420,6 +441,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         assertUnreachable(unit);
     }
   } catch (e) {
+    console.warn(e);
     return {
       status: "fail",
       error: e instanceof Error ? e.message : "Unknown error",
