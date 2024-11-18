@@ -415,15 +415,15 @@ export function toLinear(unitValue: UnitValue): number {
 
 export function extractDataPoint({
   measures,
-  inputMeasure,
-  outputMeasure,
+  xMeasure,
+  yMeasure,
 }: {
   measures: Snapshot["measures"];
-  inputMeasure: { id: MeasureId; unit: UnitType };
-  outputMeasure: { id: MeasureId; unit: UnitType };
+  xMeasure: { id: MeasureId; unit: UnitType };
+  yMeasure: { id: MeasureId; unit: UnitType };
 }): { x: number; y: number } | undefined {
-  const inputValue = measures[inputMeasure.id];
-  const outputValue = measures[outputMeasure.id];
+  const inputValue = measures[xMeasure.id];
+  const outputValue = measures[yMeasure.id];
 
   if (!(inputValue && outputValue)) {
     return undefined;
@@ -431,13 +431,10 @@ export function extractDataPoint({
 
   return {
     x: toLinear(
-      convertToTargetUnit(convertToStandardUnit(inputValue), inputMeasure.unit),
+      convertToTargetUnit(convertToStandardUnit(inputValue), xMeasure.unit),
     ),
     y: toLinear(
-      convertToTargetUnit(
-        convertToStandardUnit(outputValue),
-        outputMeasure.unit,
-      ),
+      convertToTargetUnit(convertToStandardUnit(outputValue), yMeasure.unit),
     ),
   };
 }

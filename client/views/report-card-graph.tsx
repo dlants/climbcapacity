@@ -35,6 +35,7 @@ const OUTPUT_MEASURE_IDS = PERFORMANCE_MEASURES.map((s) => s.id);
 type PlotModel = {
   filterModel: Filters.Model;
   inputMeasure: MeasureWithUnit;
+  toggle: UnitToggle.Model;
   model: Plot.Model;
 };
 
@@ -68,6 +69,11 @@ export type Msg =
       type: "FILTER_MSG";
       measureId: MeasureId;
       msg: Filters.Msg;
+    }
+  | {
+      type: "TOGGLE_MSG";
+      measureId: MeasureId;
+      msg: UnitToggle.Msg;
     };
 
 export function initModel({
@@ -236,8 +242,13 @@ function getPlots(model: Model) {
     plots.push({
       inputMeasure: otherMeasure,
       filterModel,
+      toggle: {
+        measureId: otherMeasure.id,
+        selectedUnit: otherMeasure.unit,
+        possibleUnits: otherMeasureSpec.units,
+      },
       model: getPlot({
-        inputMeasure: otherMeasure,
+        xMeasure: otherMeasure,
         filterModel,
         model,
       }),
@@ -248,41 +259,41 @@ function getPlots(model: Model) {
 }
 
 function getPlot({
-  inputMeasure,
+  xMeasure,
   filterModel,
   model,
 }: {
-  inputMeasure: MeasureWithUnit;
+  xMeasure: MeasureWithUnit;
   filterModel: Filters.Model;
   model: Model;
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
-  const { mySnapshot, snapshots, outputMeasure } = model;
-  const outputFilter = filterModel.filters.find(
-    (f) => f.model.model.measureId == outputMeasure.id,
+  const { mySnapshot, snapshots, outputMeasure: yMeasure } = model;
+  const yFilter = filterModel.filters.find(
+    (f) => f.model.model.measureId == yMeasure.id,
   );
-  const outputUnit = outputFilter
-    ? outputFilter.model.model.unitToggle.selectedUnit
-    : outputMeasure.toggle.selectedUnit;
+  const yUnit = yFilter
+    ? yFilter.model.model.unitToggle.selectedUnit
+    : yMeasure.toggle.selectedUnit;
 
   const myData =
     mySnapshot &&
     extractDataPoint({
       measures: mySnapshot.measures as any,
-      inputMeasure,
-      outputMeasure: {
-        id: outputMeasure.id,
-        unit: outputUnit,
+      xMeasure: xMeasure,
+      yMeasure: {
+        id: yMeasure.id,
+        unit: yUnit,
       },
     });
 
   for (const snapshot of snapshots) {
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
-      inputMeasure,
-      outputMeasure: {
-        id: outputMeasure.id,
-        unit: outputUnit,
+      xMeasure: xMeasure,
+      yMeasure: {
+        id: yMeasure.id,
+        unit: yUnit,
       },
     });
 
@@ -315,20 +326,20 @@ function getPlot({
       style: "dotplot",
       data,
       myData,
-      xLabel: inputMeasure.id,
-      xUnit: inputMeasure.unit,
-      yLabel: outputMeasure.id,
-      yUnit: outputUnit,
+      xLabel: xMeasure.id,
+      xUnit: xMeasure.unit,
+      yLabel: yMeasure.id,
+      yUnit: yUnit,
     };
   } else {
     return {
       style: "heatmap",
       data: filterOutliersX(data),
       myData,
-      xLabel: inputMeasure.id,
-      xUnit: inputMeasure.unit,
-      yLabel: outputMeasure.id,
-      yUnit: outputUnit,
+      xLabel: xMeasure.id,
+      xUnit: xMeasure.unit,
+      yLabel: yMeasure.id,
+      yUnit: yUnit,
     };
   }
 }
@@ -371,7 +382,10 @@ export function update(msg: Msg, model: Model): [Model] {
           plot.model = immer.castDraft(
             getPlot({
               filterModel: next,
-              inputMeasure: plot.inputMeasure,
+              xMeasure: {
+                ...plot.inputMeasure,
+                unit: plot.toggle.selectedUnit,
+              },
               model,
             }),
           );
@@ -385,6 +399,30 @@ export function update(msg: Msg, model: Model): [Model] {
           const [next] = UnitToggle.update(msg.msg, outputMeasure.toggle);
           outputMeasure.toggle = immer.castDraft(next);
           draft.plots = immer.castDraft(getPlots(draft));
+        }),
+      ];
+
+    case "TOGGLE_MSG":
+      return [
+        produce(model, (draft) => {
+          const plot = draft.plots.find(
+            (p) => p.inputMeasure.id === msg.measureId,
+          );
+          if (!plot) {
+            throw new Error(`Cannot find plot for measure ${msg.measureId}`);
+          }
+          const [next] = UnitToggle.update(msg.msg, plot.toggle);
+          plot.toggle = immer.castDraft(next);
+          plot.model = immer.castDraft(
+            getPlot({
+              filterModel: plot.filterModel,
+              xMeasure: {
+                ...plot.inputMeasure,
+                unit: next.selectedUnit,
+              },
+              model,
+            }),
+          );
         }),
       ];
 
@@ -458,6 +496,18 @@ function PlotWithControls({
         }}
       />
       <Plot.view model={plot.model} dispatch={dispatch} />
+      {plot.toggle.possibleUnits.length > 1 && (
+        <UnitToggle.view
+          model={plot.toggle}
+          dispatch={(msg) => {
+            dispatch({
+              type: "TOGGLE_MSG",
+              measureId: plot.inputMeasure.id,
+              msg,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
