@@ -50,7 +50,7 @@ export type Model = immer.Immutable<{
   snapshots: HydratedSnapshot[];
   outputMeasure: {
     id: MeasureId;
-    toggle: UnitToggle.Model;
+    unit: UnitType;
   };
   plots: PlotModel[];
 }>;
@@ -140,7 +140,7 @@ function getPlots(model: Model) {
     const otherMeasureSpec = MEASURE_MAP[otherMeasure.id];
     const initialFilters: Filters.InitialFilters = {};
     if (model.mySnapshot) {
-      const targetUnit = model.outputMeasure.toggle.selectedUnit;
+      const targetUnit = model.outputMeasure.unit;
 
       initialFilters[model.outputMeasure.id] = {
         enabled: true,
@@ -166,7 +166,7 @@ function getPlots(model: Model) {
         enabled: true,
         ...castInitialFilter(
           outputMeasureSpec.initialFilter,
-          model.outputMeasure.toggle.selectedUnit,
+          model.outputMeasure.unit,
         ),
       };
     }
@@ -221,7 +221,7 @@ function getPlot({
   );
   const yUnit = yFilter
     ? yFilter.model.model.unitToggle.selectedUnit
-    : yMeasure.toggle.selectedUnit;
+    : yMeasure.unit;
 
   const myData =
     mySnapshot &&

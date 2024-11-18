@@ -22,17 +22,14 @@ import {
 } from "../../iso/measures";
 import * as UnitToggle from "./unit-toggle";
 import { UnitType } from "../../iso/units";
-import { Result } from "../../iso/utils";
-
-const PERFORMANCE_MEASURE_IDS = PERFORMANCE_MEASURES.map((s) => s.id);
+import * as Performance from "./snapshot/measure-class/performance";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
-  outputMeasures: MeasureWithUnit[];
-  outputMeasure: Result<{
-    id: MeasureId;
+  outputMeasure: {
+    selector: Performance.Model;
     toggle: UnitToggle.Model;
-  }>;
+  };
   measureStats: MeasureStats;
   query: {
     body: FilterQuery;
@@ -61,8 +58,8 @@ export type Msg =
       msg: ReportCardGraph.Msg;
     }
   | {
-      type: "SELECT_OUTPUT_MEASURE";
-      measureId: MeasureId;
+      type: "PERFORMANCE_MSG";
+      msg: Performance.Msg;
     }
   | {
       type: "OUTPUT_MEASURE_TOGGLE_MSG";
@@ -124,59 +121,39 @@ export function initModel({
   });
   const query = getQuery(filtersModel);
 
-  const outputMeasures: MeasureWithUnit[] = [];
+  const performanceMeasure = PERFORMANCE_MEASURES[0];
+  let initialMeasure = {
+    measureId: performanceMeasure.id,
+    unit: performanceMeasure.units[0],
+    possibleUnits: performanceMeasure.units,
+  };
+
   if (mySnapshot) {
-    for (const id in mySnapshot.measures) {
-      const measureId = id as MeasureId;
-      if (PERFORMANCE_MEASURE_IDS.includes(measureId)) {
-        outputMeasures.push({
-          id: measureId,
-          unit: mySnapshot.measures[measureId].unit,
-        });
-      }
-    }
-  } else {
-    for (const { id, units } of PERFORMANCE_MEASURES) {
-      outputMeasures.push({
-        id,
-        unit: units[0],
-      });
+    const performanceMeasure = PERFORMANCE_MEASURES.find(
+      (m) => mySnapshot.measures[m.id],
+    );
+    if (performanceMeasure) {
+      initialMeasure = {
+        measureId: performanceMeasure.id,
+        unit: mySnapshot.measures[performanceMeasure.id].unit,
+        possibleUnits: performanceMeasure.units,
+      };
     }
   }
 
-  let outputMeasure: Model["outputMeasure"];
-  if (outputMeasures.length == 0) {
-    outputMeasure = {
-      status: "fail",
-      error: `No output measures found. Try adding some grade data to your snapshot.`,
-    };
-  } else {
-    outputMeasures.sort((a, b) => {
-      const aCount = measureStats.stats[a.id] || 0;
-      const bCount = measureStats.stats[b.id] || 0;
-      return bCount - aCount;
-    });
-
-    const outputMeasureToggle: UnitToggle.Model = {
-      measureId: outputMeasures[0].id,
-      selectedUnit: outputMeasures[0].unit,
-      possibleUnits: MEASURE_MAP[outputMeasures[0].id].units,
-    };
-
-    outputMeasure = {
-      status: "success",
-      value: {
-        id: outputMeasures[0].id,
-        toggle: outputMeasureToggle,
-      },
-    };
-  }
+  const outputMeasure: Model["outputMeasure"] = {
+    selector: Performance.initModel(initialMeasure.measureId),
+    toggle: {
+      measureId: initialMeasure.measureId,
+      selectedUnit: initialMeasure.unit,
+      possibleUnits: initialMeasure.possibleUnits,
+    },
+  };
 
   const model: Model = {
     filtersModel,
     measureStats,
     outputMeasure,
-    outputMeasures,
     mySnapshot,
     query,
     dataRequest: { status: "loading", queryHash: query.hash },
@@ -195,17 +172,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            if (model.outputMeasure.status != "success") {
-              draft.dataRequest = {
-                status: "error",
-                error: model.outputMeasure.error,
-              };
-              return;
-            }
-
             const next = ReportCardGraph.initModel({
               snapshots: msg.request.response,
-              outputMeasure: model.outputMeasure.value,
+              outputMeasure: {
+                id: model.outputMeasure.selector.measureId,
+                unit: model.outputMeasure.toggle.selectedUnit,
+              },
               measureStats: model.measureStats,
               mySnapshot: draft.mySnapshot,
             });
@@ -266,33 +238,28 @@ export const update: Update<Msg, Model> = (msg, model) => {
       ];
     }
 
-    case "SELECT_OUTPUT_MEASURE":
-      const index = model.outputMeasures.findIndex(
-        (m) => m.id == msg.measureId,
-      );
-      if (index == -1) {
-        throw new Error(`Cannot select output measure ${msg.measureId}`);
-      }
-
+    case "PERFORMANCE_MSG":
       return [
         produce(model, (draft) => {
-          const outputMeasure = draft.outputMeasures[index];
-          draft.outputMeasure = {
-            status: "success",
-            value: {
-              id: outputMeasure.id,
-              toggle: {
-                measureId: outputMeasure.id,
-                selectedUnit: outputMeasure.unit,
-                possibleUnits: MEASURE_MAP[outputMeasure.id].units,
-              },
-            },
+          const [next] = Performance.update(
+            msg.msg,
+            draft.outputMeasure.selector,
+          );
+          draft.outputMeasure.selector = next;
+          const measure = MEASURE_MAP[next.measureId];
+          draft.outputMeasure.toggle = {
+            measureId: next.measureId,
+            selectedUnit: measure.units[0],
+            possibleUnits: measure.units,
           };
 
           if (draft.dataRequest.status == "loaded") {
             const next = ReportCardGraph.initModel({
               snapshots: draft.dataRequest.response.snapshots,
-              outputMeasure: draft.outputMeasure.value,
+              outputMeasure: {
+                id: draft.outputMeasure.selector.measureId,
+                unit: draft.outputMeasure.toggle.selectedUnit,
+              },
               measureStats: draft.measureStats,
               mySnapshot: draft.mySnapshot,
             });
@@ -304,22 +271,16 @@ export const update: Update<Msg, Model> = (msg, model) => {
     case "OUTPUT_MEASURE_TOGGLE_MSG":
       return [
         produce(model, (draft) => {
-          if (draft.outputMeasure.status != "success") {
-            throw new Error(
-              `Cannot toggle output measure when status is ${draft.outputMeasure.status}`,
-            );
-          }
-
-          const [next] = UnitToggle.update(
-            msg.msg,
-            draft.outputMeasure.value.toggle,
-          );
-          draft.outputMeasure.value.toggle = immer.castDraft(next);
+          const [next] = UnitToggle.update(msg.msg, draft.outputMeasure.toggle);
+          draft.outputMeasure.toggle = immer.castDraft(next);
 
           if (draft.dataRequest.status == "loaded") {
             const next = ReportCardGraph.initModel({
               snapshots: draft.dataRequest.response.snapshots,
-              outputMeasure: draft.outputMeasure.value,
+              outputMeasure: {
+                id: draft.outputMeasure.selector.measureId,
+                unit: draft.outputMeasure.toggle.selectedUnit,
+              },
               measureStats: draft.measureStats,
               mySnapshot: draft.mySnapshot,
             });
@@ -392,33 +353,17 @@ const OutputMeasureView = ({
   model: Model;
   dispatch: Dispatch<Msg>;
 }) => {
-  if (model.outputMeasure.status == "fail") {
-    return (
-      <div>Failed to load output measure: {model.outputMeasure.error}</div>
-    );
-  }
-
-  const outputMeasure = model.outputMeasure.value;
   return (
     <div>
       Output Measure:
-      <select
-        value={outputMeasure.id}
-        onChange={(e) =>
-          dispatch({
-            type: "SELECT_OUTPUT_MEASURE",
-            measureId: e.target.value as MeasureId,
-          })
-        }
-      >
-        {model.outputMeasures.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.id}({model.measureStats.stats[m.id] || 0})
-          </option>
-        ))}
-      </select>
+      <Performance.view
+        model={model.outputMeasure.selector}
+        dispatch={(msg) => {
+          dispatch({ type: "PERFORMANCE_MSG", msg });
+        }}
+      />
       <UnitToggle.view
-        model={outputMeasure.toggle}
+        model={model.outputMeasure.toggle}
         dispatch={(msg) => {
           dispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg });
         }}
