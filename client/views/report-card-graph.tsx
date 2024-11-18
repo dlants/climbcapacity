@@ -52,19 +52,10 @@ export type Model = immer.Immutable<{
     id: MeasureId;
     toggle: UnitToggle.Model;
   };
-  outputMeasures: MeasureWithUnit[];
   plots: PlotModel[];
 }>;
 
 export type Msg =
-  | {
-      type: "SELECT_OUTPUT_MEASURE";
-      measureId: MeasureId;
-    }
-  | {
-      type: "OUTPUT_MEASURE_TOGGLE_MSG";
-      msg: UnitToggle.Msg;
-    }
   | {
       type: "FILTER_MSG";
       measureId: MeasureId;
@@ -80,69 +71,25 @@ export function initModel({
   mySnapshot,
   measureStats,
   snapshots,
+  outputMeasure,
 }: {
   mySnapshot?: HydratedSnapshot;
   measureStats: MeasureStats;
   snapshots: HydratedSnapshot[];
-}): Result<Model> {
-  const outputMeasures: MeasureWithUnit[] = [];
-  if (mySnapshot) {
-    for (const id in mySnapshot.measures) {
-      const measureId = id as MeasureId;
-      if (OUTPUT_MEASURE_IDS.includes(measureId)) {
-        outputMeasures.push({
-          id: measureId,
-          unit: mySnapshot.measures[measureId].unit,
-        });
-      }
-    }
-  } else {
-    for (const { id, units } of PERFORMANCE_MEASURES) {
-      outputMeasures.push({
-        id,
-        unit: units[0],
-      });
-    }
-  }
-
-  if (outputMeasures.length == 0) {
-    return {
-      status: "fail",
-      error: `No output measures found. Try adding some grade data to your snapshot.`,
-    };
-  }
-
-  outputMeasures.sort((a, b) => {
-    const aCount = measureStats.stats[a.id] || 0;
-    const bCount = measureStats.stats[b.id] || 0;
-    return bCount - aCount;
-  });
-
-  const outputMeasure = outputMeasures[0];
-  const outputMeasureToggle: UnitToggle.Model = {
-    measureId: outputMeasure.id,
-    selectedUnit: outputMeasure.unit,
-    possibleUnits: MEASURE_MAP[outputMeasure.id].units,
-  };
-
-  const model: Model = produce<Model>(
+  outputMeasure: Model["outputMeasure"];
+}): Model {
+  return produce<Model>(
     {
       mySnapshot,
       measureStats,
       snapshots,
-      outputMeasure: {
-        id: outputMeasure.id,
-        toggle: outputMeasureToggle,
-      },
-      outputMeasures,
+      outputMeasure,
       plots: [],
     },
     (draft) => {
       draft.plots = immer.castDraft(getPlots(draft));
     },
   );
-
-  return { status: "success", value: model };
 }
 
 function getPlots(model: Model) {
@@ -346,28 +293,6 @@ function getPlot({
 
 export function update(msg: Msg, model: Model): [Model] {
   switch (msg.type) {
-    case "SELECT_OUTPUT_MEASURE":
-      const index = model.outputMeasures.findIndex(
-        (m) => m.id == msg.measureId,
-      );
-      if (index == -1) {
-        throw new Error(`Cannot select output measure ${msg.measureId}`);
-      }
-      return [
-        produce(model, (draft) => {
-          const outputMeasure = draft.outputMeasures[index];
-          draft.outputMeasure = {
-            id: outputMeasure.id,
-            toggle: {
-              measureId: outputMeasure.id,
-              selectedUnit: outputMeasure.unit,
-              possibleUnits: MEASURE_MAP[outputMeasure.id].units,
-            },
-          };
-          draft.plots = immer.castDraft(getPlots(draft));
-        }),
-      ];
-
     case "FILTER_MSG":
       return [
         produce(model, (draft) => {
@@ -389,16 +314,6 @@ export function update(msg: Msg, model: Model): [Model] {
               model,
             }),
           );
-        }),
-      ];
-
-    case "OUTPUT_MEASURE_TOGGLE_MSG":
-      return [
-        produce(model, (draft) => {
-          const outputMeasure = draft.outputMeasure;
-          const [next] = UnitToggle.update(msg.msg, outputMeasure.toggle);
-          outputMeasure.toggle = immer.castDraft(next);
-          draft.plots = immer.castDraft(getPlots(draft));
         }),
       ];
 
@@ -440,28 +355,6 @@ export function view({
 }) {
   return (
     <div>
-      Output Measure:
-      <select
-        value={model.outputMeasure.id}
-        onChange={(e) =>
-          dispatch({
-            type: "SELECT_OUTPUT_MEASURE",
-            measureId: e.target.value as MeasureId,
-          })
-        }
-      >
-        {model.outputMeasures.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.id}({model.measureStats.stats[m.id] || 0})
-          </option>
-        ))}
-      </select>
-      <UnitToggle.view
-        model={model.outputMeasure.toggle}
-        dispatch={(msg) => {
-          dispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg });
-        }}
-      />
       {model.plots.map((plot) => (
         <PlotWithControls
           key={plot.inputMeasure.id}
