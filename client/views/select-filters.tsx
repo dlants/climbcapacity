@@ -23,7 +23,6 @@ export type Model = immer.Immutable<{
 }>;
 
 export type Msg =
-  | { type: "ADD_FILTER"; measureId: MeasureId }
   | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
       type: "MEASURE_SELECTOR_MSG";
@@ -74,26 +73,6 @@ function nextChar(char: string) {
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
-    case "ADD_FILTER":
-      return [
-        immer.produce(model, (draft) => {
-          const spec = MEASURES.find((spec) => spec.id == msg.measureId);
-          if (!spec) {
-            throw new Error(`Unexpected measureId ${msg.measureId}`);
-          }
-
-          draft.filters.push(
-            immer.castDraft(Filter.initModel(spec.initialFilter)),
-          );
-
-          draft.measureSelectionBox = immer.castDraft(
-            MeasureSelectionBox.initModel({
-              measureStats: model.measureStats,
-            }),
-          );
-        }),
-      ];
-
     case "REMOVE_FILTER":
       return [
         immer.produce(model, (draft) => {
@@ -110,7 +89,24 @@ export const update: Update<Msg, Model> = (msg, model) => {
             msg.msg,
             model.measureSelectionBox,
           );
-          draft.measureSelectionBox = immer.castDraft(newModel);
+          if (newModel.state == "selected") {
+            const spec = MEASURES.find((spec) => spec.id == newModel.measureId);
+            if (!spec) {
+              throw new Error(`Unexpected measureId ${newModel.measureId}`);
+            }
+
+            draft.filters.push(
+              immer.castDraft(Filter.initModel(spec.initialFilter)),
+            );
+
+            draft.measureSelectionBox = immer.castDraft(
+              MeasureSelectionBox.initModel({
+                measureStats: model.measureStats,
+              }),
+            );
+          } else {
+            draft.measureSelectionBox = immer.castDraft(newModel);
+          }
         }),
       ];
 
@@ -148,22 +144,8 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
         model={model.measureSelectionBox}
         dispatch={(msg) => dispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
       />{" "}
-      <AddFilterButton model={model} dispatch={dispatch} />
     </div>
   );
-};
-
-export const AddFilterButton: View<Msg, Model> = ({ model, dispatch }) => {
-  if (model.measureSelectionBox.state == "selected") {
-    const measureId = model.measureSelectionBox.measureId;
-    return (
-      <button onClick={() => dispatch({ type: "ADD_FILTER", measureId })}>
-        Add Filter
-      </button>
-    );
-  } else {
-    return <button disabled>Add Filter</button>;
-  }
 };
 
 const FilterView = ({
