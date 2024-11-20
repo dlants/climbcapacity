@@ -587,12 +587,12 @@ table.slice(1).forEach((row, idx) => {
     });
   }
 
-  const maxLsitStr = row[34];
-  const maxLsit = parseFloat(maxLsitStr);
-  if (!isNaN(maxLsit)) {
-    addMeasure(generateIsometricMovementMeasureId("lsit"), {
+  const maxLhangStr = row[34];
+  const maxLhang = parseFloat(maxLhangStr);
+  if (!isNaN(maxLhang)) {
+    addMeasure(generateIsometricMovementMeasureId("lhang"), {
       unit: "second",
-      value: maxLsit,
+      value: maxLhang,
     });
   }
 

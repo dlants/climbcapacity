@@ -70,3 +70,5 @@ export type MeasureStats = {
     [measureId: MeasureId]: number;
   };
 };
+
+export type Dataset = "climbharderv3" | "powercompany";

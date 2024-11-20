@@ -36,8 +36,8 @@ export const initModel = (measureId?: MeasureId): Model => {
   } else {
     return {
       type: "bilateral",
-      movement: "lsit",
-      measureId: "isometric-duration:lsit" as MeasureId,
+      movement: "lhang",
+      measureId: "isometric-duration:lhang" as MeasureId,
     };
   }
 };

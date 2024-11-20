@@ -11,7 +11,7 @@ const MOVEMENTS = [
   "frontlever",
   "hollowhold",
   "humanflag",
-  "lsit",
+  "lhang",
   "overheadpress",
   "pistolsquat",
   "plank",
@@ -123,7 +123,7 @@ const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
     frontlever: TIME_TRAINING_CORE_FRONTAL.id,
     hollowhold: TIME_TRAINING_CORE_FRONTAL.id,
     humanflag: TIME_TRAINING_CORE_SAGITTAL.id,
-    lsit: TIME_TRAINING_CORE_FRONTAL.id,
+    lhang: TIME_TRAINING_CORE_FRONTAL.id,
     overheadpress: TIME_TRAINING_PRESS.id,
     pistolsquat: TIME_TRAINING_SQUAT.id,
     plank: TIME_TRAINING_CORE_FRONTAL.id,
@@ -337,8 +337,9 @@ for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
     });
   }
 }
+
 export const ISOMETRIC_MOVEMENTS = [
-  "lsit",
+  "lhang",
   "frontlever",
   "plank",
   "hollowhold",
@@ -433,4 +434,43 @@ for (const movement of ISOMETRIC_UNILATERAL_MOVEMENTS) {
       },
     });
   }
+}
+
+export const ENDURANCE_MOVEMENTS = [
+  "footoncampusshort",
+  "footoncampuslong",
+] as const;
+
+export type EnduranceMovement = (typeof ENDURANCE_MOVEMENTS)[number];
+
+export const generateEnduranceMovementMeasureId = (
+  movement: EnduranceMovement,
+) => `endurance:${movement}` as MeasureId;
+
+export const parseEnduranceMovementMeasureId = (
+  measureId: MeasureId,
+): EnduranceMovement => {
+  const prefix = "endurance:";
+  if (measureId.startsWith(prefix)) {
+    const movement = measureId.substring(prefix.length);
+    if (ENDURANCE_MOVEMENTS.includes(movement as EnduranceMovement)) {
+      return movement as EnduranceMovement;
+    }
+  }
+  throw new Error(`Invalid MeasureId: ${measureId}`);
+};
+
+for (const movement of ENDURANCE_MOVEMENTS) {
+  MEASURES.push({
+    id: generateEnduranceMovementMeasureId(movement),
+    name: `${movement} Max Duration`,
+    description: ``,
+    units: ["second"],
+    initialFilter: {
+      type: "minmax",
+      measureId: generateEnduranceMovementMeasureId(movement),
+      minValue: { unit: "second", value: 0 },
+      maxValue: { unit: "second", value: 120 },
+    },
+  });
 }

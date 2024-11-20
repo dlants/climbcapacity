@@ -102,7 +102,7 @@ function getPlots(model: Model) {
         !(
           INPUT_MEASURE_IDS.includes(id as MeasureId) ||
           OUTPUT_MEASURE_IDS.includes(id as MeasureId) ||
-          TIME_TRAINING_MEASURE_IDS.includes(id as MeasureId)
+          id.startsWith("time-training:")
         )
       ) {
         otherMeasures.push({

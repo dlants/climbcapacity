@@ -107,7 +107,7 @@ export const MAXHANG_GRIP_TYPE = [
   "open",
 ] as const;
 export type MaxHangGripType = (typeof MAXHANG_GRIP_TYPE)[number];
-export const MAXHANG_EDGE_SIZE = [18, 20] as const;
+export const MAXHANG_EDGE_SIZE = [10, 18, 20] as const;
 export type MaxHangEdgeSize = (typeof MAXHANG_EDGE_SIZE)[number];
 export const MAXHANG_DURATION = [7, 10] as const;
 export type MaxHangDuration = (typeof MAXHANG_DURATION)[number];
@@ -431,4 +431,52 @@ for (const gripType of MINEDGE_PULLUP_GRIPS) {
       maxValue: { unit: "mm", value: 20 },
     },
   });
+}
+
+export const CONTINUOUS_HANG = [
+  "full-crimp",
+  "half-crimp",
+  "open",
+  "front-3-drag",
+] as const;
+export type ContinuousHangGrip = (typeof CONTINUOUS_HANG)[number];
+
+export const generateContinuousHangId = ({
+  gripType,
+  edgeSize,
+}: {
+  gripType: ContinuousHangGrip;
+  edgeSize: MaxHangEdgeSize;
+}): MeasureId => {
+  return `continuous-hang:${gripType}:${edgeSize}mm` as MeasureId;
+};
+
+export function parseContinuousHangId(measureId: MeasureId) {
+  const match = measureId.match(/^continuous-hang:(.*):(\d+)mm$/);
+  if (!match) {
+    throw new Error("Invalid continuous hang measureId format");
+  }
+  const [, gripType, edgeSize] = match;
+  return {
+    gripType: gripType as ContinuousHangGrip,
+    edgeSize: parseInt(edgeSize, 10) as MaxHangEdgeSize,
+  };
+}
+
+for (const gripType of CONTINUOUS_HANG) {
+  for (const edgeSize of MAXHANG_EDGE_SIZE) {
+    MEASURES.push({
+      id: generateContinuousHangId({ gripType, edgeSize }),
+      trainingMeasureId: MEASURE_MAP[gripType],
+      name: `Longest continuous hang using ${gripType} grip.`,
+      description: `Using a ${gripType} grip, hang for as long as possible without releasing.`,
+      units: ["second"],
+      initialFilter: {
+        type: "minmax",
+        measureId: generateContinuousHangId({ gripType, edgeSize }),
+        minValue: { unit: "second", value: 10 },
+        maxValue: { unit: "second", value: 600 },
+      },
+    });
+  }
 }

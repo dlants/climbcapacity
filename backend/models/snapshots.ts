@@ -1,5 +1,5 @@
 import mongodb from "mongodb";
-import { Filter } from "../../iso/protocol.js";
+import { Dataset, Filter } from "../../iso/protocol.js";
 import { User } from "lucia";
 import {
   encodeMeasureValue,
@@ -24,7 +24,7 @@ export type SnapshotDoc = {
 
   createdAt: Date;
   lastUpdated: Date;
-  importSource?: "climbharderv3";
+  importSource?: Dataset;
 };
 
 export type MeasureStatsDoc = {
