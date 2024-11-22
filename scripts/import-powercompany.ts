@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { SnapshotDoc } from "../backend/models/snapshots.js";
 import {
-  convertToStandardUnit,
+  // convertToStandardUnit,
   encodeMeasureValue,
   UnitValue,
 } from "../iso/units.js";
@@ -11,7 +11,7 @@ import {
   Grip,
   generateContinuousHangId,
   generateMaxhangId,
-  generateMinEdgeHangId,
+  // generateMinEdgeHangId,
   generateRepeaterId,
 } from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade, FrenchSport, YDS } from "../iso/grade.js";
@@ -363,8 +363,8 @@ table.slice(1).forEach((row, idx) => {
   let weightedPull = parseFloat(weightedPullStr);
   if (!isNaN(weightedPull)) {
     if (weight) {
-      addMeasure(generateWeightedMeasureId("pullup"), {
-        unit: "1RMlb",
+      addMeasure(generateWeightedMeasureId({ movement: "pullup", repMax: 1 }), {
+        unit: "lb",
         value: weightedPull + weight,
       });
     }
@@ -409,31 +409,35 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateUnilateralMeasureId({
           movement: "overheadpress",
+          repMax: 1,
           dominantSide: "dominant",
         }),
-        { unit: "1RMlb", value: ohpl },
+        { unit: "lb", value: ohpl },
       );
       addMeasure(
         generateUnilateralMeasureId({
           movement: "overheadpress",
+          repMax: 1,
           dominantSide: "nondominant",
         }),
-        { unit: "1RMlb", value: ohpr },
+        { unit: "lb", value: ohpr },
       );
     } else {
       addMeasure(
         generateUnilateralMeasureId({
           movement: "overheadpress",
+          repMax: 1,
           dominantSide: "dominant",
         }),
-        { unit: "1RMlb", value: ohpr },
+        { unit: "lb", value: ohpr },
       );
       addMeasure(
         generateUnilateralMeasureId({
           movement: "overheadpress",
+          repMax: 1,
           dominantSide: "nondominant",
         }),
-        { unit: "1RMlb", value: ohpl },
+        { unit: "lb", value: ohpl },
       );
     }
   }
@@ -467,8 +471,8 @@ table.slice(1).forEach((row, idx) => {
   const dlStr = row[TSV_COLS.findIndex((c) => c == "dl")];
   const dl = parseFloat(dlStr);
   if (!isNaN(dl)) {
-    addMeasure(generateWeightedMeasureId("deadlift"), {
-      unit: "1RMlb",
+    addMeasure(generateWeightedMeasureId({ movement: "deadlift", repMax: 1 }), {
+      unit: "lb",
       value: dl,
     });
   }

@@ -15,36 +15,43 @@ import {
   DominantSide,
   WEIGHTED_MOVEMENTS,
   UNILATERAL_WEIGHTED_MOVEMENTS,
+  RepMax,
 } from "../../../../iso/measures/movement";
 
 export type Model =
   | {
       type: "bilateral";
       movement: WeightedMovement;
+      repMax: RepMax;
       measureId: MeasureId;
     }
   | {
       type: "unilateral";
       movement: UnilateralWeightedMovement;
+      repMax: RepMax;
       dominantSide: DominantSide;
       measureId: MeasureId;
     };
 
+const DEFAULT_REPMAX = 5;
+
 export const initModel = (measureId?: MeasureId): Model => {
   if (measureId) {
     try {
-      const movement = parseWeightedMovementMeasureId(measureId);
+      const { movement, repMax } = parseWeightedMovementMeasureId(measureId);
       return {
         type: "bilateral",
         movement,
+        repMax,
         measureId,
       };
     } catch (e) {
-      const { movement, dominantSide } =
+      const { movement, repMax, dominantSide } =
         parseUnilateralWeightedMovementMeasureId(measureId);
       return {
         type: "unilateral",
         movement,
+        repMax,
         dominantSide,
         measureId,
       };
@@ -53,7 +60,11 @@ export const initModel = (measureId?: MeasureId): Model => {
     return {
       type: "bilateral",
       movement: "benchpress",
-      measureId: generateWeightedMeasureId("benchpress"),
+      repMax: DEFAULT_REPMAX,
+      measureId: generateWeightedMeasureId({
+        movement: "benchpress",
+        repMax: DEFAULT_REPMAX,
+      }),
     };
   }
 };
@@ -64,7 +75,8 @@ export type Msg =
       type: "SET_MOVEMENT";
       movement: WeightedMovement | UnilateralWeightedMovement;
     }
-  | { type: "SET_DOMINANT_SIDE"; dominantSide: DominantSide };
+  | { type: "SET_DOMINANT_SIDE"; dominantSide: DominantSide }
+  | { type: "SET_REPMAX"; repMax: RepMax };
 
 export const update = (msg: Msg, model: Model): [Model] => {
   return [
@@ -79,9 +91,11 @@ export const update = (msg: Msg, model: Model): [Model] => {
               )
                 ? draft.movement
                 : WEIGHTED_MOVEMENTS[0],
-              measureId: generateWeightedMeasureId(
-                draft.movement as WeightedMovement,
-              ),
+              repMax: draft.repMax,
+              measureId: generateWeightedMeasureId({
+                movement: draft.movement as WeightedMovement,
+                repMax: draft.repMax,
+              }),
             } as Model;
           } else {
             return {
@@ -94,6 +108,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
               dominantSide: "dominant",
               measureId: generateUnilateralMeasureId({
                 movement: "benchrow",
+                repMax: draft.repMax,
                 dominantSide: "dominant",
               }),
             } as Model;
@@ -111,9 +126,13 @@ export const update = (msg: Msg, model: Model): [Model] => {
             draft.movement = msg.movement;
             draft.measureId =
               draft.type === "bilateral"
-                ? generateWeightedMeasureId(draft.movement as WeightedMovement)
+                ? generateWeightedMeasureId({
+                    movement: draft.movement as WeightedMovement,
+                    repMax: draft.repMax,
+                  })
                 : generateUnilateralMeasureId({
                     movement: draft.movement as UnilateralWeightedMovement,
+                    repMax: draft.repMax,
                     dominantSide: draft.dominantSide as DominantSide,
                   });
           }
@@ -125,9 +144,26 @@ export const update = (msg: Msg, model: Model): [Model] => {
             draft.measureId = generateUnilateralMeasureId({
               movement: draft.movement as UnilateralWeightedMovement,
               dominantSide: msg.dominantSide,
+              repMax: draft.repMax,
             });
           }
           break;
+
+        case "SET_REPMAX":
+          draft.repMax = msg.repMax;
+          draft.measureId =
+            draft.type === "bilateral"
+              ? generateWeightedMeasureId({
+                  movement: draft.movement as WeightedMovement,
+                  repMax: draft.repMax,
+                })
+              : generateUnilateralMeasureId({
+                  movement: draft.movement as UnilateralWeightedMovement,
+                  dominantSide: draft.dominantSide,
+                  repMax: draft.repMax,
+                });
+          break;
+
         default:
           assertUnreachable(msg);
       }
@@ -195,6 +231,17 @@ export const view = ({
           ))}
         </select>
       )}
+
+      <input
+        type="number"
+        value={model.repMax}
+        onChange={(e) =>
+          dispatch({
+            type: "SET_REPMAX",
+            repMax: Number(e.target.value) as RepMax,
+          })
+        }
+      />
     </div>
   );
 };

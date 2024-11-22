@@ -144,39 +144,55 @@ export const WEIGHTED_MOVEMENTS = [
 ] as const;
 export type WeightedMovement = (typeof WEIGHTED_MOVEMENTS)[number];
 
-export const generateWeightedMeasureId = (movement: WeightedMovement) =>
-  `weighted:${movement}` as MeasureId;
+const REP_MAX = [1, 2, 5];
+export type RepMax = (typeof REP_MAX)[number];
+
+export const generateWeightedMeasureId = ({
+  movement,
+  repMax,
+}: {
+  movement: WeightedMovement;
+  repMax: RepMax;
+}) => `weighted:${movement}:${repMax}rm` as MeasureId;
 
 export const parseWeightedMovementMeasureId = (
   measureId: MeasureId,
-): WeightedMovement => {
+): { movement: WeightedMovement; repMax: RepMax } => {
   const prefix = "weighted:";
   if (measureId.startsWith(prefix)) {
-    const movement = measureId.substring(prefix.length);
-    if (WEIGHTED_MOVEMENTS.includes(movement as WeightedMovement)) {
-      return movement as WeightedMovement;
+    const segments = measureId.substring(prefix.length).split(":");
+    if (
+      segments.length === 2 &&
+      WEIGHTED_MOVEMENTS.includes(segments[0] as WeightedMovement)
+    ) {
+      return {
+        movement: segments[0] as WeightedMovement,
+        repMax: parseInt(segments[1].replace("rm", "")) as RepMax,
+      };
     }
   }
   throw new Error(`Invalid MeasureId: ${measureId}`);
 };
 
 for (const movement of WEIGHTED_MOVEMENTS) {
-  MEASURES.push({
-    id: generateWeightedMeasureId(movement),
-    trainingMeasureId: TRAINING_MEASURE_MAP[movement],
-    name: `Weighted ${movement}`,
-    description: `Record total weight, including bodyweight for relevant exercises.
+  for (const repMax of REP_MAX) {
+    MEASURES.push({
+      id: generateWeightedMeasureId({ movement, repMax }),
+      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+      name: `Weighted ${movement}`,
+      description: `Record total weight, including bodyweight for relevant exercises.
 
 So for example, for a pullup or a squat if you weigh 70kg and you added 30kg, you'd record 100kg.
 `,
-    units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
-    initialFilter: {
-      type: "minmax",
-      measureId: generateWeightedMeasureId(movement),
-      minValue: { unit: "5RMkg", value: 0 },
-      maxValue: { unit: "5RMkg", value: 100 },
-    },
-  });
+      units: ["kg", "lb"],
+      initialFilter: {
+        type: "minmax",
+        measureId: generateWeightedMeasureId({ movement, repMax }),
+        minValue: { unit: "kg", value: 0 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    });
+  }
 }
 
 export const UNILATERAL_WEIGHTED_MOVEMENTS = [
@@ -192,51 +208,64 @@ export type UnilateralWeightedMovement =
 
 export const generateUnilateralMeasureId = ({
   movement,
+  repMax,
   dominantSide,
 }: {
   movement: UnilateralWeightedMovement;
+  repMax: RepMax;
   dominantSide: DominantSide;
-}) => `weighted-unilateral:${movement}:${dominantSide}` as MeasureId;
+}) =>
+  `weighted-unilateral:${movement}:${repMax}rm:${dominantSide}` as MeasureId;
 
 export const parseUnilateralWeightedMovementMeasureId = (
   measureId: MeasureId,
-): { movement: UnilateralWeightedMovement; dominantSide: DominantSide } => {
+): {
+  movement: UnilateralWeightedMovement;
+  repMax: RepMax;
+  dominantSide: DominantSide;
+} => {
   const prefix = "weighted-unilateral:";
   if (measureId.startsWith(prefix)) {
     const segments = measureId.substring(prefix.length).split(":");
     if (
-      segments.length === 2 &&
+      segments.length === 3 &&
       UNILATERAL_WEIGHTED_MOVEMENTS.includes(
         segments[0] as UnilateralWeightedMovement,
       )
     ) {
       return {
         movement: segments[0] as UnilateralWeightedMovement,
-        dominantSide: segments[1] as DominantSide,
+        repMax: parseInt(segments[1]) as RepMax,
+        dominantSide: segments[2] as DominantSide,
       };
     }
   }
   throw new Error(`Invalid MeasureId: ${measureId}`);
 };
-
 for (const movement of UNILATERAL_WEIGHTED_MOVEMENTS) {
-  for (const dominantSide of DOMINANT_SIDE) {
-    MEASURES.push({
-      id: generateUnilateralMeasureId({ movement, dominantSide }),
-      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
-      name: `Weighted unilateral ${movement} ${dominantSide}`,
-      description: `Record total weight, including bodyweight for relevant exercises.
+  for (const repMax of REP_MAX) {
+    for (const dominantSide of DOMINANT_SIDE) {
+      MEASURES.push({
+        id: generateUnilateralMeasureId({ movement, repMax, dominantSide }),
+        trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+        name: `Weighted unilateral ${movement} ${dominantSide}`,
+        description: `Record total weight, including bodyweight for relevant exercises.
 
 So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd record 40kg.
 `,
-      units: ["5RMkg", "1RMkg", "2RMkg", "1RMlb", "2RMlb", "5RMlb"],
-      initialFilter: {
-        type: "minmax",
-        measureId: generateUnilateralMeasureId({ movement, dominantSide }),
-        minValue: { unit: "5RMkg", value: 0 },
-        maxValue: { unit: "5RMkg", value: 100 },
-      },
-    });
+        units: ["kg", "lb"],
+        initialFilter: {
+          type: "minmax",
+          measureId: generateUnilateralMeasureId({
+            movement,
+            repMax,
+            dominantSide,
+          }),
+          minValue: { unit: "kg", value: 0 },
+          maxValue: { unit: "kg", value: 100 },
+        },
+      });
+    }
   }
 }
 

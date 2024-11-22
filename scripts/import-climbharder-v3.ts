@@ -571,8 +571,8 @@ table.slice(1).forEach((row, idx) => {
     }
 
     if (weight) {
-      addMeasure(generateWeightedMeasureId("pullup"), {
-        unit: "5RMkg",
+      addMeasure(generateWeightedMeasureId({ movement: "pullup", repMax: 5 }), {
+        unit: "kg",
         value: weightedPull5rm + weight,
       });
     }

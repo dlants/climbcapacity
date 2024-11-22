@@ -91,20 +91,8 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value / 12;
     case "lb":
       return unit.value * 0.45359237;
-    case "1RMlb":
-      return unit.value * 0.45359237;
-    case "2RMlb":
-      return brzycki(unit.value * 0.45359237, 2);
-    case "5RMlb":
-      return brzycki(unit.value * 0.45359237, 5);
     case "kg":
       return unit.value;
-    case "1RMkg":
-      return unit.value;
-    case "2RMkg":
-      return brzycki(unit.value, 2);
-    case "5RMkg":
-      return brzycki(unit.value, 5);
     case "m":
       return unit.value;
     case "cm":
@@ -154,26 +142,8 @@ export function convertToTargetUnit(
       return { unit: "month", value: normalizedValue * 12 };
     case "lb":
       return { unit: "lb", value: normalizedValue / 0.45359237 };
-    case "1RMlb":
-      return { unit: "1RMlb", value: normalizedValue / 0.45359237 };
-    case "2RMlb":
-      return {
-        unit: "2RMlb",
-        value: inverse_brzycki(normalizedValue, 2) / 0.45359237,
-      };
-    case "5RMlb":
-      return {
-        unit: "5RMlb",
-        value: inverse_brzycki(normalizedValue, 5) / 0.45359237,
-      };
     case "kg":
       return { unit: "kg", value: normalizedValue };
-    case "1RMkg":
-      return { unit: "1RMkg", value: normalizedValue };
-    case "2RMkg":
-      return { unit: "2RMkg", value: inverse_brzycki(normalizedValue, 2) };
-    case "5RMkg":
-      return { unit: "5RMkg", value: inverse_brzycki(normalizedValue, 5) };
     case "m":
       return { unit: "m", value: normalizedValue };
     case "cm":
@@ -245,31 +215,7 @@ export type UnitValue =
       value: number;
     }
   | {
-      unit: "1RMlb";
-      value: number;
-    }
-  | {
-      unit: "2RMlb";
-      value: number;
-    }
-  | {
-      unit: "5RMlb";
-      value: number;
-    }
-  | {
       unit: "kg";
-      value: number;
-    }
-  | {
-      unit: "1RMkg";
-      value: number;
-    }
-  | {
-      unit: "2RMkg";
-      value: number;
-    }
-  | {
-      unit: "5RMkg";
       value: number;
     }
   | {
@@ -332,14 +278,7 @@ export function unitValueToString(unitValue: UnitValue): string {
     case "month":
       return `${unitValue.value}mo`;
     case "lb":
-    case "1RMlb":
-    case "2RMlb":
-    case "5RMlb":
-      return `${unitValue.value}${unitValue.unit}`;
     case "kg":
-    case "1RMkg":
-    case "2RMkg":
-    case "5RMkg":
       return `${unitValue.value}${unitValue.unit}`;
     case "m":
       return `${unitValue.value}m`;
@@ -382,13 +321,7 @@ export function toLinear(unitValue: UnitValue): number {
     case "year":
     case "month":
     case "lb":
-    case "1RMlb":
-    case "2RMlb":
-    case "5RMlb":
     case "kg":
-    case "1RMkg":
-    case "2RMkg":
-    case "5RMkg":
     case "m":
     case "cm":
     case "mm":
