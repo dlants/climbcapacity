@@ -97,6 +97,11 @@ function getAllItems(): Item[] {
   const powerMeasures = rest.filter((m) => m.id.startsWith("power:"));
   rest = rest.filter((m) => !m.id.startsWith("power:"));
 
+  const continuousHangMeasures = rest.filter((m) =>
+    m.id.startsWith("continuoushang:"),
+  );
+  rest = rest.filter((m) => !m.id.startsWith("continuoushang:"));
+
   rest = rest.filter((m) => !m.id.startsWith("time-training:"));
 
   const mapSpecToItem = (s: MeasureSpec) => ({
@@ -155,6 +160,11 @@ function getAllItems(): Item[] {
       type: "measure-group",
       measureClass: "powermovement",
       items: powerMeasures.map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      measureClass: "continuoushang",
+      items: continuousHangMeasures.map(mapSpecToItem),
     },
     ...rest.map(mapSpecToItem),
   ];

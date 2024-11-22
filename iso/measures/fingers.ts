@@ -448,7 +448,7 @@ export const generateContinuousHangId = ({
   gripType: ContinuousHangGrip;
   edgeSize: MaxHangEdgeSize;
 }): MeasureId => {
-  return `continuous-hang:${gripType}:${edgeSize}mm` as MeasureId;
+  return `continuoushang:${gripType}:${edgeSize}mm` as MeasureId;
 };
 
 export function parseContinuousHangId(measureId: MeasureId) {

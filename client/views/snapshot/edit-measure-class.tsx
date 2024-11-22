@@ -14,6 +14,7 @@ import * as WeightedMovement from "./measure-class/weightedmovement";
 import * as MaxRepsMovement from "./measure-class/maxrepsmovement";
 import * as IsometricHold from "./measure-class/isometrichold";
 import * as PowerMovement from "./measure-class/powermovement";
+import * as ContinuousHang from "./measure-class/continuoushang";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
 
@@ -27,7 +28,8 @@ export type MeasureClass =
   | "weightedmovement"
   | "maxrepsmovement"
   | "isometrichold"
-  | "powermovement";
+  | "powermovement"
+  | "continuoushang";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -70,6 +72,10 @@ export type Model = immer.Immutable<{
     | {
         type: "powermovement";
         model: PowerMovement.Model;
+      }
+    | {
+        type: "continuoushang";
+        model: ContinuousHang.Model;
       };
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
@@ -235,6 +241,21 @@ export const initModel = ({
         }),
       };
 
+    case "continuoushang":
+      const continuousHang = ContinuousHang.initModel(measureId);
+      return {
+        measureModel: {
+          type: "continuoushang",
+          model: continuousHang,
+        },
+        snapshot,
+        selectedMeasure: continuousHang.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: continuousHang.measureId,
+          snapshot,
+        }),
+      };
+
     default:
       assertUnreachable(measureClass);
   }
@@ -283,6 +304,10 @@ export type Msg =
         | {
             type: "powermovement";
             msg: PowerMovement.Msg;
+          }
+        | {
+            type: "continuoushang";
+            msg: ContinuousHang.Msg;
           };
     }
   | {
@@ -398,6 +423,17 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = PowerMovement.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "continuoushang": {
+              if (msg.msg.type !== "continuoushang") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = ContinuousHang.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -539,6 +575,16 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "powermovement", msg },
+                }),
+            });
+
+          case "continuoushang":
+            return ContinuousHang.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "continuoushang", msg },
                 }),
             });
 
