@@ -232,8 +232,7 @@ export const view = ({
         </select>
       )}
 
-      <input
-        type="number"
+      <select
         value={model.repMax}
         onChange={(e) =>
           dispatch({
@@ -241,7 +240,13 @@ export const view = ({
             repMax: Number(e.target.value) as RepMax,
           })
         }
-      />
+      >
+        {[1, 2, 5].map((rep) => (
+          <option key={rep} value={rep}>
+            {rep} RM
+          </option>
+        ))}
+      </select>
     </div>
   );
 };
