@@ -268,7 +268,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                   }
                 />
                 <button
-                  onClick={() => {
+                  onPointerDown={() => {
                     dispatch({
                       type: "SUBMIT_MEASURE_UPDATE",
                     });
@@ -278,7 +278,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                   Submit
                 </button>{" "}
                 <button
-                  onClick={() => {
+                  onPointerDown={() => {
                     dispatch({
                       type: "DISCARD_MEASURE_UPDATE",
                     });

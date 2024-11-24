@@ -68,7 +68,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
       />
       <button
         disabled={model.signinRequest.status === "loading"}
-        onClick={() => dispatch({ type: "SEND_MAGIC_LINK" })}
+        onPointerDown={() => dispatch({ type: "SEND_MAGIC_LINK" })}
       >
         Send Magic Link
       </button>

@@ -85,7 +85,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
           {model.measures.map((measure) => (
             <li
               key={measure.id}
-              onClick={() =>
+              onPointerDown={() =>
                 dispatch({ type: "SELECT_MEASURE", measureId: measure.id })
               }
             >
@@ -100,7 +100,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
     return (
       <div className="measure-selection-box">
         <span
-          onClick={() =>
+          onPointerDown={() =>
             dispatch({ type: "TYPE_QUERY", query: model.measureId })
           }
         >

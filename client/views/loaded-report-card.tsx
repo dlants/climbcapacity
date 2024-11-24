@@ -316,7 +316,7 @@ const FetchButton = ({
   model: Model;
 }) => (
   <button
-    onClick={() => dispatch({ type: "REQUEST_DATA" })}
+    onPointerDown={() => dispatch({ type: "REQUEST_DATA" })}
     disabled={
       model.dataRequest.status === "loaded" &&
       model.dataRequest.queryHash === model.query.hash

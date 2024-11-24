@@ -59,7 +59,7 @@ async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
   } else {
     dispatch({
       type: "SNAPSHOT_RESPONSE",
-      request: { status: "error", error: await response.text()},
+      request: { status: "error", error: await response.text() },
     });
   }
 }
@@ -116,7 +116,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           } else {
             dispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
-              request: { status: "error", error: await response.text()},
+              request: { status: "error", error: await response.text() },
             });
           }
         },
@@ -167,7 +167,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             dispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
-              request: { status: "error", error: await response.text()},
+              request: { status: "error", error: await response.text() },
             });
           }
         },
@@ -202,7 +202,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   const NewSnapshot = () => {
     const NewSnapshotButton = () => (
-      <button onClick={() => dispatch({ type: "NEW_SNAPSHOT" })}>
+      <button onPointerDown={() => dispatch({ type: "NEW_SNAPSHOT" })}>
         Create New Snapshot
       </button>
     );
@@ -254,7 +254,9 @@ const SnapshotResponse = ({
   <div key={item.snapshot._id}>
     {new Date(item.snapshot.createdAt).toLocaleString()}
     <button
-      onClick={() => dispatch({ type: "SELECT_SNAPSHOT", snapshot: item })}
+      onPointerDown={() =>
+        dispatch({ type: "SELECT_SNAPSHOT", snapshot: item })
+      }
     >
       Edit
     </button>
@@ -269,7 +271,7 @@ const SnapshotResponse = ({
                 <span>{item.deleteRequest.error}</span>
               )}
               <button
-                onClick={() =>
+                onPointerDown={() =>
                   dispatch({
                     type: "DELETE_SNAPSHOT",
                     snapshotId: item.snapshot._id,

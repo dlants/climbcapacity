@@ -251,7 +251,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 };
 
 const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
-  <button onClick={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
+  <button onPointerDown={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
 );
 
 const viewMap: RequestStatusViewMap<

@@ -352,7 +352,7 @@ const MeasureView = ({
       </label>{" "}
       {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
       <button
-        onClick={() => {
+        onPointerDown={() => {
           dispatch({
             type: "INIT_UPDATE",
             update: {
@@ -382,7 +382,7 @@ const MeasureGroupView = ({
       <div>
         <strong>{measureGroup.measureClass}</strong>{" "}
         <button
-          onClick={() => {
+          onPointerDown={() => {
             dispatch({
               type: "INIT_UPDATE",
               update: {

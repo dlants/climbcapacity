@@ -198,7 +198,7 @@ const FilterView = ({
       </div>
       <div className={styles.item}>
         <button
-          onClick={() =>
+          onPointerDown={() =>
             dispatch({
               type: "REMOVE_FILTER",
               measureId: filter.model.measureId,
