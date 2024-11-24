@@ -24,32 +24,46 @@ import { Nav } from "./views/navigation";
 import * as immer from "immer";
 import * as typestyle from "typestyle";
 import * as csx from "csx";
+import * as csstips from "csstips";
 
 const produce = immer.produce;
 
 const styles = typestyle.stylesheet({
   root: {
-    maxWidth: csx.px(1200),
-    marginLeft: "auto",
-    marginRight: "auto",
+    ...csstips.vertical,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    marginTop: csx.em(1),
     fontSize: csx.em(1),
     $nest: {
-      "& input": {
-        maxWidth: csx.em(4),
-      },
       "@media (max-width: 600px)": {
         fontSize: csx.em(0.9),
-        padding: csx.rem(0.2),
-        $nest: {
-          "& input": {
-            maxWidth: csx.em(3.5),
-          },
-        },
       },
     },
   },
   page: {
-    margin: "0 auto",
+    ...csstips.vertical,
+    ...csstips.flex,
+    minHeight: 0,
+    width: csx.px(800),
+    marginLeft: "auto",
+    marginRight: "auto",
+    $nest: {
+      "@media (max-width: 800px)": {
+        width: csx.percent(100),
+      },
+    },
+  },
+  pageItem: {
+    ...csstips.content,
+  },
+  lastPageItem: {
+    ...csstips.flex,
+    minHeight: 0,
+    position: "relative",
   },
 });
 
@@ -452,14 +466,18 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
 const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className={styles.root}>
-      <Nav
-        loggedIn={
-          model.auth.status == "loaded" &&
-          model.auth.response.status == "logged in"
-        }
-      />
       <div className={styles.page}>
-        <Page model={model} dispatch={dispatch} />
+        <div className={styles.pageItem}>
+          <Nav
+            loggedIn={
+              model.auth.status == "loaded" &&
+              model.auth.response.status == "logged in"
+            }
+          />
+        </div>
+        <div className={styles.lastPageItem}>
+          <Page model={model} dispatch={dispatch} />
+        </div>
       </div>
     </div>
   );

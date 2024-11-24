@@ -9,6 +9,7 @@ import * as Filter from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
+import * as csx from "csx";
 
 export type ToggleableFilter = immer.Immutable<{
   enabled: boolean;
@@ -105,16 +106,24 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
 
 const styles = typestyle.stylesheet({
   filterView: {
-    ...csstips.horizontal,
+    width: csx.percent(100),
     margin: "10px 0",
     gap: "8px",
-    flexWrap: "wrap",
+    $nest: {
+      "@media (min-width: 800px)": {
+        ...csstips.horizontal,
+        ...csstips.wrap,
+      },
+      "@media (max-width: 800px)": {
+        ...csstips.vertical,
+      },
+    },
   },
   filterItem: {
     ...csstips.content,
+    maxWidth: csx.percent(100),
   },
 });
-
 const FilterView = ({
   model,
   filter,

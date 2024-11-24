@@ -65,11 +65,9 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <div>
-      <LoadedReportCard.view
-        model={model.model}
-        dispatch={(msg) => dispatch({ type: "LOADED_MSG", msg })}
-      />
-    </div>
+    <LoadedReportCard.view
+      model={model.model}
+      dispatch={(msg) => dispatch({ type: "LOADED_MSG", msg })}
+    />
   );
 };

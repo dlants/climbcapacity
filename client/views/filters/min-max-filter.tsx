@@ -8,6 +8,7 @@ import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
+import * as csx from "csx";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
@@ -121,8 +122,20 @@ export const update: Update<Msg, Model> = (msg, model) => {
 const styles = typestyle.stylesheet({
   container: {
     ...csstips.horizontal,
-    ...csstips.wrap,
-    gap: "10px",
+    width: csx.percent(100),
+    gap: csx.px(10),
+    $nest: {
+      "& input": {
+        width: "fit-content",
+        maxWidth: csx.em(4),
+      },
+      // "@media (min-width: 800px)": {
+      //   ...csstips.horizontal,
+      // },
+      // "@media (max-width: 800px)": {
+      //   ...csstips.vertical,
+      // },
+    },
   },
   item: {
     ...csstips.content,

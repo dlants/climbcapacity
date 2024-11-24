@@ -28,10 +28,6 @@ import * as csx from "csx";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
-  filterViewState: {
-    mode: "open" | "closed" | "auto";
-    collapsed: boolean;
-  };
   outputMeasure: {
     selector: Performance.Model;
     toggle: UnitToggle.Model;
@@ -74,14 +70,6 @@ export type Msg =
   | {
       type: "FILTERS_MSG";
       msg: SelectFilters.Msg;
-    }
-  | {
-      type: "SCROLL";
-      scrollTop: number;
-    }
-  | {
-      type: "TOGGLE_FILTER";
-      mode: Model["filterViewState"]["mode"];
     };
 
 function generateFetchThunk(model: Model) {
@@ -161,10 +149,6 @@ export function initModel({
 
   const model: Model = {
     filtersModel,
-    filterViewState: {
-      mode: "auto",
-      collapsed: false,
-    },
     measureStats,
     outputMeasure,
     mySnapshot,
@@ -302,34 +286,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
 
-    case "SCROLL":
-      return [
-        produce(model, (draft) => {
-          if (model.filterViewState.mode == "auto") {
-            draft.filterViewState.collapsed = msg.scrollTop !== 0;
-          }
-        }),
-      ];
-
-    case "TOGGLE_FILTER":
-      return [
-        produce(model, (draft) => {
-          draft.filterViewState.mode = msg.mode;
-          switch (msg.mode) {
-            case "open":
-              draft.filterViewState.collapsed = false;
-              break;
-            case "closed":
-              draft.filterViewState.collapsed = true;
-              break;
-            case "auto":
-              break;
-            default:
-              assertUnreachable(msg.mode);
-          }
-        }),
-      ];
-
     default:
       assertUnreachable(msg);
   }
@@ -387,6 +343,28 @@ function LoadedView({
   );
 }
 
+const styles = typestyle.stylesheet({
+  reportCardRoot: {
+    ...csstips.vertical,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+  filter: {
+    ...csstips.content,
+  },
+  graphs: {
+    ...csstips.flex,
+    minHeight: csx.px(200),
+  },
+  outputMeasureContainer: {
+    ...csstips.content,
+    ...csstips.horizontal,
+  },
+});
+
 const OutputMeasureView = ({
   model,
   dispatch,
@@ -395,7 +373,7 @@ const OutputMeasureView = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div>
+    <div className={styles.outputMeasureContainer}>
       Output Measure:
       <Performance.view
         model={model.outputMeasure.selector}
@@ -413,21 +391,6 @@ const OutputMeasureView = ({
   );
 };
 
-const styles = typestyle.stylesheet({
-  page: {
-    ...csstips.vertical,
-    height: csx.viewHeight(100),
-  },
-  filter: {
-    ...csstips.content,
-  },
-  graph: {
-    ...csstips.vertical,
-    minHeight: csx.px(200),
-    overflowY: "auto",
-  },
-});
-
 const SnapshotStatsView = ({ model }: { model: Model }) => {
   return (
     model.dataRequest.status == "loaded" && (
@@ -440,34 +403,16 @@ const SnapshotStatsView = ({ model }: { model: Model }) => {
 
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <div className={styles.page}>
-      {model.filterViewState.collapsed ? (
-        <div className={styles.filter}>
-          <SnapshotStatsView model={model} />
-          <OutputMeasureView model={model} dispatch={dispatch} />
-          <button
-            onClick={() => dispatch({ type: "TOGGLE_FILTER", mode: "open" })}
-          >
-            Show Filters
-          </button>
-        </div>
-      ) : (
-        <div className={styles.filter}>
-          <SelectFilters.view
-            model={model.filtersModel}
-            dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
-          />
+    <div className={styles.reportCardRoot}>
+      <div className={styles.filter}>
+        <SelectFilters.view
+          model={model.filtersModel}
+          dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
+        />
 
-          <SnapshotStatsView model={model} />
-          <OutputMeasureView model={model} dispatch={dispatch} />
-
-          <button
-            onClick={() => dispatch({ type: "TOGGLE_FILTER", mode: "closed" })}
-          >
-            Toggle Filters
-          </button>
-        </div>
-      )}
+        <SnapshotStatsView model={model} />
+        <OutputMeasureView model={model} dispatch={dispatch} />
+      </div>
       {(() => {
         switch (model.dataRequest.status) {
           case "not-sent":
@@ -478,15 +423,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
             return <div>Error: {model.dataRequest.error}</div>;
           case "loaded":
             return (
-              <div
-                className={styles.graph}
-                onScroll={(e) =>
-                  dispatch({
-                    type: "SCROLL",
-                    scrollTop: e.currentTarget.scrollTop,
-                  })
-                }
-              >
+              <div className={styles.graphs}>
                 <LoadedView
                   response={model.dataRequest.response}
                   dispatch={dispatch}

@@ -152,10 +152,17 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
 
 const styles = typestyle.stylesheet({
   container: {
-    ...csstips.horizontal,
     margin: "10px 0",
     gap: "8px",
     flexWrap: "wrap",
+    $nest: {
+      "@media (min-width: 800px)": {
+        ...csstips.horizontal,
+      },
+      "@media (max-width: 800px)": {
+        ...csstips.vertical,
+      },
+    },
   },
   item: {
     ...csstips.content,
