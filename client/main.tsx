@@ -22,8 +22,37 @@ import { NavigateMsg, parseRoute, Router } from "./router";
 import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import * as immer from "immer";
-import { GlobalStyles } from "./global-style";
+import { style } from "typestyle";
+import * as csstips from "csstips";
+import * as csx from "csx";
+
 const produce = immer.produce;
+
+const rootStyle = style({
+  maxWidth: csx.px(1200),
+  marginLeft: "auto",
+  marginRight: "auto",
+  padding: csx.rem(1),
+  fontSize: csx.em(1),
+  $nest: {
+    "& input": {
+      maxWidth: csx.em(4),
+    },
+    "@media (max-width: 600px)": {
+      fontSize: csx.em(0.9),
+      padding: csx.rem(0.5),
+      $nest: {
+        "& input": {
+          maxWidth: csx.em(3.5),
+        },
+      },
+    },
+  },
+});
+const pageStyle = style({
+  margin: "0 auto",
+  padding: csx.rem(1),
+});
 
 export type Model = {
   auth: RequestStatus<AuthStatus>;
@@ -423,15 +452,16 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
 
 const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <div>
-      <GlobalStyles />
+    <div className={rootStyle}>
       <Nav
         loggedIn={
           model.auth.status == "loaded" &&
           model.auth.response.status == "logged in"
         }
       />
-      <Page model={model} dispatch={dispatch} />
+      <div className={pageStyle}>
+        <Page model={model} dispatch={dispatch} />
+      </div>
     </div>
   );
 };

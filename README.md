@@ -1,10 +1,11 @@
 # TODO
-- extract the fuzzy-find filter to a separate view, use it in the explore page and the report card page
-- hook up unit selection for report card page & explore page
-- display measureStats next to measure filters
-- exclude empty or almost-empty filters from default input filters on the explore page
 - responsive ui for phones
+- collapsible filter
+- display measureStats next to measure class options
+- audit training measures
+- add options to toggle datasets
+- add & display measure desciptions
+- set up interpolation between 1rm/2rm/5rm and 18mm/20mm etc...
 
 # MAYBE
-- think about a different architecture other than ELM. Maybe something more self-contained, with message passing.
 - convert to mithril
