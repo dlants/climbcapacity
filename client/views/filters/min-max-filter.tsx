@@ -118,11 +118,16 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-const viewStyle = typestyle.style(csstips.horizontal, csstips.wrap, {
-  gap: "10px",
+const styles = typestyle.stylesheet({
+  container: {
+    ...csstips.horizontal,
+    ...csstips.wrap,
+    gap: "10px",
+  },
+  item: {
+    ...csstips.content,
+  },
 });
-
-const itemStyle = typestyle.style(csstips.content);
 
 export const view = ({
   model,
@@ -132,15 +137,15 @@ export const view = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div className={viewStyle}>
-      <div className={itemStyle}>
+    <div className={styles.container}>
+      <div className={styles.item}>
         min:{" "}
         <UnitInput.UnitInput
           model={model.minInput}
           dispatch={(msg) => dispatch({ type: "MIN_INPUT_MSG", msg })}
         />
       </div>
-      <div className={itemStyle}>
+      <div className={styles.item}>
         max:{" "}
         <UnitInput.UnitInput
           model={model.maxInput}
@@ -148,7 +153,7 @@ export const view = ({
         />
       </div>
       {model.minInput.possibleUnits.length > 1 && (
-        <div className={itemStyle}>
+        <div className={styles.item}>
           <UnitToggle.view
             model={model.maxInput}
             dispatch={(msg) => {

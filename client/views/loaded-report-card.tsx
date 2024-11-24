@@ -21,11 +21,17 @@ import {
   PERFORMANCE_MEASURES,
 } from "../../iso/measures";
 import * as UnitToggle from "./unit-toggle";
-import { UnitType } from "../../iso/units";
 import * as Performance from "./snapshot/measure-class/performance";
+import * as typestyle from "typestyle";
+import * as csstips from "csstips";
+import * as csx from "csx";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
+  filterViewState: {
+    mode: "open" | "closed" | "auto";
+    collapsed: boolean;
+  };
   outputMeasure: {
     selector: Performance.Model;
     toggle: UnitToggle.Model;
@@ -68,6 +74,14 @@ export type Msg =
   | {
       type: "FILTERS_MSG";
       msg: SelectFilters.Msg;
+    }
+  | {
+      type: "SCROLL";
+      scrollTop: number;
+    }
+  | {
+      type: "TOGGLE_FILTER";
+      mode: Model["filterViewState"]["mode"];
     };
 
 function generateFetchThunk(model: Model) {
@@ -100,11 +114,6 @@ function generateFetchThunk(model: Model) {
     }
   };
 }
-
-type MeasureWithUnit = {
-  id: MeasureId;
-  unit: UnitType;
-};
 
 export function initModel({
   initialFilters,
@@ -152,6 +161,10 @@ export function initModel({
 
   const model: Model = {
     filtersModel,
+    filterViewState: {
+      mode: "auto",
+      collapsed: false,
+    },
     measureStats,
     outputMeasure,
     mySnapshot,
@@ -289,6 +302,34 @@ export const update: Update<Msg, Model> = (msg, model) => {
         }),
       ];
 
+    case "SCROLL":
+      return [
+        produce(model, (draft) => {
+          if (model.filterViewState.mode == "auto") {
+            draft.filterViewState.collapsed = msg.scrollTop !== 0;
+          }
+        }),
+      ];
+
+    case "TOGGLE_FILTER":
+      return [
+        produce(model, (draft) => {
+          draft.filterViewState.mode = msg.mode;
+          switch (msg.mode) {
+            case "open":
+              draft.filterViewState.collapsed = false;
+              break;
+            case "closed":
+              draft.filterViewState.collapsed = true;
+              break;
+            case "auto":
+              break;
+            default:
+              assertUnreachable(msg.mode);
+          }
+        }),
+      ];
+
     default:
       assertUnreachable(msg);
   }
@@ -372,34 +413,86 @@ const OutputMeasureView = ({
   );
 };
 
+const styles = typestyle.stylesheet({
+  page: {
+    ...csstips.vertical,
+    height: csx.viewHeight(100),
+  },
+  filter: {
+    ...csstips.content,
+  },
+  graph: {
+    ...csstips.vertical,
+    minHeight: csx.px(200),
+    overflowY: "auto",
+  },
+});
+
+const SnapshotStatsView = ({ model }: { model: Model }) => {
+  return (
+    model.dataRequest.status == "loaded" && (
+      <span>
+        {model.dataRequest.response.snapshots.length} snapshots loaded.
+      </span>
+    )
+  );
+};
+
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <div>
-      <div style={{ position: "sticky", top: 0, background: "#fff" }}>
-        <SelectFilters.view
-          model={model.filtersModel}
-          dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
-        />
-        {model.dataRequest.status == "loaded" &&
-          `${model.dataRequest.response.snapshots.length} snapshots loaded.`}{" "}
-        <FetchButton dispatch={dispatch} model={model} />
-        <OutputMeasureView model={model} dispatch={dispatch} />
-      </div>
+    <div className={styles.page}>
+      {model.filterViewState.collapsed ? (
+        <div className={styles.filter}>
+          <SnapshotStatsView model={model} />
+          <OutputMeasureView model={model} dispatch={dispatch} />
+          <button
+            onClick={() => dispatch({ type: "TOGGLE_FILTER", mode: "open" })}
+          >
+            Show Filters
+          </button>
+        </div>
+      ) : (
+        <div className={styles.filter}>
+          <SelectFilters.view
+            model={model.filtersModel}
+            dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
+          />
+
+          <SnapshotStatsView model={model} />
+          <OutputMeasureView model={model} dispatch={dispatch} />
+
+          <button
+            onClick={() => dispatch({ type: "TOGGLE_FILTER", mode: "closed" })}
+          >
+            Toggle Filters
+          </button>
+        </div>
+      )}
       {(() => {
         switch (model.dataRequest.status) {
           case "not-sent":
-            return <div />;
+            return <FetchButton dispatch={dispatch} model={model} />;
           case "loading":
             return <div>Fetching...</div>;
           case "error":
             return <div>Error: {model.dataRequest.error}</div>;
           case "loaded":
             return (
-              <LoadedView
-                response={model.dataRequest.response}
-                dispatch={dispatch}
-                model={model}
-              />
+              <div
+                className={styles.graph}
+                onScroll={(e) =>
+                  dispatch({
+                    type: "SCROLL",
+                    scrollTop: e.currentTarget.scrollTop,
+                  })
+                }
+              >
+                <LoadedView
+                  response={model.dataRequest.response}
+                  dispatch={dispatch}
+                  model={model}
+                />
+              </div>
             );
           default:
             assertUnreachable(model.dataRequest);

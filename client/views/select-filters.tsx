@@ -150,13 +150,17 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   );
 };
 
-const filterViewStyle = typestyle.style(csstips.horizontal, {
-  margin: "10px 0",
-  gap: "8px",
-  flexWrap: "wrap",
+const styles = typestyle.stylesheet({
+  container: {
+    ...csstips.horizontal,
+    margin: "10px 0",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+  item: {
+    ...csstips.content,
+  },
 });
-
-const filterItemStyle = typestyle.style(csstips.content, {});
 
 const FilterView = ({
   model,
@@ -168,12 +172,12 @@ const FilterView = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div className={filterViewStyle}>
-      <div className={filterItemStyle}>
+    <div className={styles.container}>
+      <div className={styles.item}>
         <strong>{filter.model.measureId}</strong>(
         {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
       </div>
-      <div className={filterItemStyle}>
+      <div className={styles.item}>
         <Filter.view
           model={filter}
           dispatch={(msg) =>
@@ -185,7 +189,7 @@ const FilterView = ({
           }
         />
       </div>
-      <div className={filterItemStyle}>
+      <div className={styles.item}>
         <button
           onClick={() =>
             dispatch({

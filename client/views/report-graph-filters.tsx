@@ -103,13 +103,17 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   );
 };
 
-const filterViewStyle = typestyle.style(csstips.horizontal, {
-  margin: "10px 0",
-  gap: "8px",
-  flexWrap: "wrap",
+const styles = typestyle.stylesheet({
+  filterView: {
+    ...csstips.horizontal,
+    margin: "10px 0",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+  filterItem: {
+    ...csstips.content,
+  },
 });
-
-const filterItemStyle = typestyle.style(csstips.content, {});
 
 const FilterView = ({
   model,
@@ -121,8 +125,8 @@ const FilterView = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div className={filterViewStyle}>
-      <div className={filterItemStyle}>
+    <div className={styles.filterView}>
+      <div className={styles.filterItem}>
         <input
           type="checkbox"
           checked={filter.enabled}
@@ -135,10 +139,10 @@ const FilterView = ({
           }
         />
       </div>
-      <div className={filterItemStyle}>
+      <div className={styles.filterItem}>
         <strong>{filter.model.model.measureId}</strong>{" "}
       </div>
-      <div className={filterItemStyle}>
+      <div className={styles.filterItem}>
         <Filter.view
           model={filter.model}
           dispatch={(msg) =>

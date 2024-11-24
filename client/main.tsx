@@ -22,36 +22,35 @@ import { NavigateMsg, parseRoute, Router } from "./router";
 import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import * as immer from "immer";
-import { style } from "typestyle";
-import * as csstips from "csstips";
+import * as typestyle from "typestyle";
 import * as csx from "csx";
 
 const produce = immer.produce;
 
-const rootStyle = style({
-  maxWidth: csx.px(1200),
-  marginLeft: "auto",
-  marginRight: "auto",
-  padding: csx.rem(1),
-  fontSize: csx.em(1),
-  $nest: {
-    "& input": {
-      maxWidth: csx.em(4),
-    },
-    "@media (max-width: 600px)": {
-      fontSize: csx.em(0.9),
-      padding: csx.rem(0.5),
-      $nest: {
-        "& input": {
-          maxWidth: csx.em(3.5),
+const styles = typestyle.stylesheet({
+  root: {
+    maxWidth: csx.px(1200),
+    marginLeft: "auto",
+    marginRight: "auto",
+    fontSize: csx.em(1),
+    $nest: {
+      "& input": {
+        maxWidth: csx.em(4),
+      },
+      "@media (max-width: 600px)": {
+        fontSize: csx.em(0.9),
+        padding: csx.rem(0.2),
+        $nest: {
+          "& input": {
+            maxWidth: csx.em(3.5),
+          },
         },
       },
     },
   },
-});
-const pageStyle = style({
-  margin: "0 auto",
-  padding: csx.rem(1),
+  page: {
+    margin: "0 auto",
+  },
 });
 
 export type Model = {
@@ -452,14 +451,14 @@ function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
 
 const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
-    <div className={rootStyle}>
+    <div className={styles.root}>
       <Nav
         loggedIn={
           model.auth.status == "loaded" &&
           model.auth.response.status == "logged in"
         }
       />
-      <div className={pageStyle}>
+      <div className={styles.page}>
         <Page model={model} dispatch={dispatch} />
       </div>
     </div>
