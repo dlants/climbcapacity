@@ -6,6 +6,8 @@ import * as UnitToggle from "../unit-toggle";
 import * as immer from "immer";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
+import * as typestyle from "typestyle";
+import * as csstips from "csstips";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
@@ -116,6 +118,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
+const viewStyle = typestyle.style(csstips.horizontal, csstips.wrap, {
+  gap: "10px",
+});
+
+const itemStyle = typestyle.style(csstips.content);
+
 export const view = ({
   model,
   dispatch,
@@ -124,25 +132,31 @@ export const view = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <span>
-      min:{" "}
-      <UnitInput.UnitInput
-        model={model.minInput}
-        dispatch={(msg) => dispatch({ type: "MIN_INPUT_MSG", msg })}
-      />{" "}
-      max:{" "}
-      <UnitInput.UnitInput
-        model={model.maxInput}
-        dispatch={(msg) => dispatch({ type: "MAX_INPUT_MSG", msg })}
-      />{" "}
-      {model.minInput.possibleUnits.length > 1 && (
-        <UnitToggle.view
-          model={model.maxInput}
-          dispatch={(msg) => {
-            dispatch({ type: "UNIT_TOGGLE_MSG", msg });
-          }}
+    <div className={viewStyle}>
+      <div className={itemStyle}>
+        min:{" "}
+        <UnitInput.UnitInput
+          model={model.minInput}
+          dispatch={(msg) => dispatch({ type: "MIN_INPUT_MSG", msg })}
         />
+      </div>
+      <div className={itemStyle}>
+        max:{" "}
+        <UnitInput.UnitInput
+          model={model.maxInput}
+          dispatch={(msg) => dispatch({ type: "MAX_INPUT_MSG", msg })}
+        />
+      </div>
+      {model.minInput.possibleUnits.length > 1 && (
+        <div className={itemStyle}>
+          <UnitToggle.view
+            model={model.maxInput}
+            dispatch={(msg) => {
+              dispatch({ type: "UNIT_TOGGLE_MSG", msg });
+            }}
+          />
+        </div>
       )}
-    </span>
+    </div>
   );
 };

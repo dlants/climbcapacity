@@ -8,6 +8,8 @@ import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
 import * as Filter from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
+import * as typestyle from "typestyle";
+import * as csstips from "csstips";
 
 export type FilterMapping = {
   [measureId: MeasureId]: {
@@ -148,6 +150,14 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   );
 };
 
+const filterViewStyle = typestyle.style(csstips.horizontal, {
+  margin: "10px 0",
+  gap: "8px",
+  flexWrap: "wrap",
+});
+
+const filterItemStyle = typestyle.style(csstips.content, {});
+
 const FilterView = ({
   model,
   filter,
@@ -158,37 +168,35 @@ const FilterView = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div
-      key={filter.model.measureId}
-      style={{
-        margin: "10px 0",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
-      <strong>{filter.model.measureId}</strong>(
-      {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
-      <Filter.view
-        model={filter}
-        dispatch={(msg) =>
-          dispatch({
-            type: "FILTER_MSG",
-            measureId: filter.model.measureId,
-            msg,
-          })
-        }
-      />
-      <button
-        onClick={() =>
-          dispatch({
-            type: "REMOVE_FILTER",
-            measureId: filter.model.measureId,
-          })
-        }
-      >
-        Remove
-      </button>
+    <div className={filterViewStyle}>
+      <div className={filterItemStyle}>
+        <strong>{filter.model.measureId}</strong>(
+        {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
+      </div>
+      <div className={filterItemStyle}>
+        <Filter.view
+          model={filter}
+          dispatch={(msg) =>
+            dispatch({
+              type: "FILTER_MSG",
+              measureId: filter.model.measureId,
+              msg,
+            })
+          }
+        />
+      </div>
+      <div className={filterItemStyle}>
+        <button
+          onClick={() =>
+            dispatch({
+              type: "REMOVE_FILTER",
+              measureId: filter.model.measureId,
+            })
+          }
+        >
+          Remove
+        </button>
+      </div>
     </div>
   );
 };

@@ -45,8 +45,10 @@ export const view: View<never, Model> = ({ model }) => {
     <svg
       className="plot-container"
       ref={containerRef}
-      width="600"
-      height="400"
+      width="100%"
+      height="auto"
+      viewBox="0 0 600 400"
+      preserveAspectRatio="xMidYMid meet"
     ></svg>
   );
 };

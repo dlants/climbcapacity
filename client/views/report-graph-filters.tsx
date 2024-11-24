@@ -7,6 +7,8 @@ import { assertUnreachable } from "../util/utils";
 import { MeasureStats } from "../../iso/protocol";
 import * as Filter from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
+import * as typestyle from "typestyle";
+import * as csstips from "csstips";
 
 export type ToggleableFilter = immer.Immutable<{
   enabled: boolean;
@@ -101,6 +103,14 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   );
 };
 
+const filterViewStyle = typestyle.style(csstips.horizontal, {
+  margin: "10px 0",
+  gap: "8px",
+  flexWrap: "wrap",
+});
+
+const filterItemStyle = typestyle.style(csstips.content, {});
+
 const FilterView = ({
   model,
   filter,
@@ -111,36 +121,35 @@ const FilterView = ({
   dispatch: Dispatch<Msg>;
 }) => {
   return (
-    <div
-      style={{
-        margin: "10px 0",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
-      <input
-        type="checkbox"
-        checked={filter.enabled}
-        onChange={(e) =>
-          dispatch({
-            type: "TOGGLE_FILTER",
-            measureId: filter.model.model.measureId,
-            enabled: e.target.checked,
-          })
-        }
-      />
-      <strong>{filter.model.model.measureId}</strong>{" "}
-      <Filter.view
-        model={filter.model}
-        dispatch={(msg) =>
-          dispatch({
-            type: "FILTER_MSG",
-            measureId: filter.model.model.measureId,
-            msg,
-          })
-        }
-      />
+    <div className={filterViewStyle}>
+      <div className={filterItemStyle}>
+        <input
+          type="checkbox"
+          checked={filter.enabled}
+          onChange={(e) =>
+            dispatch({
+              type: "TOGGLE_FILTER",
+              measureId: filter.model.model.measureId,
+              enabled: e.target.checked,
+            })
+          }
+        />
+      </div>
+      <div className={filterItemStyle}>
+        <strong>{filter.model.model.measureId}</strong>{" "}
+      </div>
+      <div className={filterItemStyle}>
+        <Filter.view
+          model={filter.model}
+          dispatch={(msg) =>
+            dispatch({
+              type: "FILTER_MSG",
+              measureId: filter.model.model.measureId,
+              msg,
+            })
+          }
+        />
+      </div>
     </div>
   );
 };
