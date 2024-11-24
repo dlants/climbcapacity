@@ -92,8 +92,7 @@ export const view = ({
           </option>
         ))}
       </select>
-      <input
-        type="number"
+      <select
         value={model.edgeSize}
         onChange={(e) =>
           dispatch({
@@ -101,7 +100,13 @@ export const view = ({
             edgeSize: parseInt(e.target.value, 10) as MaxHangEdgeSize,
           })
         }
-      />
+      >
+        {MAXHANG_EDGE_SIZE.map((size) => (
+          <option key={size} value={size}>
+            {size}mm
+          </option>
+        ))}
+      </select>
     </div>
   );
 };
