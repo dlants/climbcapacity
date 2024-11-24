@@ -141,6 +141,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
           produce(model, (draft) => {
             draft.snapshot = nextSnapshot;
             draft.editingState = { state: "not-editing" };
+            draft.measureSelector = immer.castDraft(
+              MeasureSelector.initModel({
+                snapshot: nextSnapshot,
+                measureStats: model.measureStats,
+              }),
+            );
           }),
         ];
       } else {
