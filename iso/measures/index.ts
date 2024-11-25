@@ -130,7 +130,7 @@ export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
     name: `Training: ${spec.name}`,
     description: `How experienced are you with this or similar measures?
 
-1 - never tried it or only tried it sporadically
+1 - never or barely tried it
 2 - trained it on and off
 3 - trained it regularly
 4 - highly trained in it

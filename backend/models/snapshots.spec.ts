@@ -4,6 +4,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import { MongoClient } from "mongodb";
 import { SnapshotsModel } from "./snapshots.js";
 import { MeasureId } from "../../iso/measures/index.js";
+import { SnapshotId } from "../../iso/protocol.js";
 
 describe("SnapshotsModel", () => {
   let mongoServer: MongoMemoryServer;
@@ -53,93 +54,136 @@ describe("SnapshotsModel", () => {
     );
   });
 
-  it("should update a measure", async () => {
-    await model.newSnapshot(mockUser);
-    const [snapshot] = await model.getUsersSnapshots(mockUser.id);
+  describe("updateMeasure", () => {
+    it("should update a measure", async () => {
+      await model.newSnapshot(mockUser);
+      const [snapshot] = await model.getUsersSnapshots(mockUser.id);
 
-    const updateCount = await model.updateMeasure({
-      snapshotId: snapshot._id,
-      userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 70, unit: "kg" },
-      },
+      const updateCount = await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
+
+      assert.strictEqual(updateCount, true, "snapshot updated");
+
+      const updated = await model.getSnapshot(snapshot._id);
+      assert.deepStrictEqual(updated?.measures["weight" as MeasureId], {
+        value: 70,
+        unit: "kg",
+      });
     });
 
-    assert.strictEqual(updateCount, true, "snapshot updated");
+    it("should update measure and normedMeasures", async () => {
+      await model.newSnapshot(mockUser);
+      const [snapshot] = await model.getUsersSnapshots(mockUser.id);
 
-    const updated = await model.getSnapshot(snapshot._id);
-    assert.deepStrictEqual(updated?.measures["weight" as MeasureId], {
-      value: 70,
-      unit: "kg",
-    });
-  });
+      const updateCount = await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
 
-  it("should update measure and normedMeasures", async () => {
-    await model.newSnapshot(mockUser);
-    const [snapshot] = await model.getUsersSnapshots(mockUser.id);
+      assert.strictEqual(updateCount, true, "snapshot updated");
 
-    const updateCount = await model.updateMeasure({
-      snapshotId: snapshot._id,
-      userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 70, unit: "kg" },
-      },
-    });
-
-    assert.strictEqual(updateCount, true, "snapshot updated");
-
-    const updated = await model.getSnapshot(snapshot._id);
-    assert.deepStrictEqual(updated?.measures["weight" as MeasureId], {
-      value: 70,
-      unit: "kg",
-    });
-    // Verify normedMeasures array contains encoded value
-    assert.strictEqual(updated?.normedMeasures.length, 1);
-    assert.deepStrictEqual(updated?.normedMeasures[0], {
-      measureId: "weight",
-      value: 70, // assuming encodeMeasureValue returns this format
-    });
-  });
-
-  it("should replace existing normedMeasures when updating", async () => {
-    await model.newSnapshot(mockUser);
-    const [snapshot] = await model.getUsersSnapshots(mockUser.id);
-
-    await model.updateMeasure({
-      snapshotId: snapshot._id,
-      userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 70, unit: "kg" },
-      },
+      const updated = await model.getSnapshot(snapshot._id);
+      assert.deepStrictEqual(updated?.measures["weight" as MeasureId], {
+        value: 70,
+        unit: "kg",
+      });
+      // Verify normedMeasures array contains encoded value
+      assert.strictEqual(updated?.normedMeasures.length, 1);
+      assert.deepStrictEqual(updated?.normedMeasures[0], {
+        measureId: "weight",
+        value: 70, // assuming encodeMeasureValue returns this format
+      });
     });
 
-    await model.updateMeasure({
-      snapshotId: snapshot._id,
-      userId: mockUser.id,
-      updates: {
-        ["height" as MeasureId]: { value: 1.7, unit: "m" },
-      },
+    it("should replace existing normedMeasures when updating", async () => {
+      await model.newSnapshot(mockUser);
+      const [snapshot] = await model.getUsersSnapshots(mockUser.id);
+
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
+
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["height" as MeasureId]: { value: 1.7, unit: "m" },
+          },
+        },
+      });
+
+      // Second update
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 75, unit: "kg" },
+          },
+        },
+      });
+
+      const updated = await model.getSnapshot(snapshot._id);
+      assert.strictEqual(updated?.normedMeasures.length, 2);
+      assert.deepStrictEqual(updated?.normedMeasures[0], {
+        measureId: "height",
+        value: 1.7,
+      });
+
+      assert.deepStrictEqual(updated?.normedMeasures[1], {
+        measureId: "weight",
+        value: 75,
+      });
     });
 
-    // Second update
-    await model.updateMeasure({
-      snapshotId: snapshot._id,
-      userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 75, unit: "kg" },
-      },
-    });
+    it("should handle deleting measures", async () => {
+      await model.newSnapshot(mockUser);
+      const [snapshot] = await model.getUsersSnapshots(mockUser.id);
 
-    const updated = await model.getSnapshot(snapshot._id);
-    assert.strictEqual(updated?.normedMeasures.length, 2);
-    assert.deepStrictEqual(updated?.normedMeasures[0], {
-      measureId: "height",
-      value: 1.7,
-    });
+      // First add a measure
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
 
-    assert.deepStrictEqual(updated?.normedMeasures[1], {
-      measureId: "weight",
-      value: 75,
+      // Then delete it
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot._id.toHexString() as SnapshotId,
+          deletes: {
+            ["weight" as MeasureId]: true,
+          },
+        },
+      });
+
+      const updated = await model.getSnapshot(snapshot._id);
+      assert.strictEqual(updated?.measures["weight" as MeasureId], undefined);
+      assert.strictEqual(updated?.normedMeasures.length, 0);
     });
   });
 
@@ -153,24 +197,30 @@ describe("SnapshotsModel", () => {
         mockUser.id,
       );
       await model.updateMeasure({
-        snapshotId: snapshot1._id,
         userId: mockUser.id,
-        updates: { ["weight" as MeasureId]: { value: 70, unit: "kg" } },
-      });
-
-      await model.updateMeasure({
-        snapshotId: snapshot2._id,
-        userId: mockUser.id,
-        updates: {
-          ["weight" as MeasureId]: { value: 80, unit: "kg" },
+        requestParams: {
+          snapshotId: snapshot1._id.toHexString() as SnapshotId,
+          updates: { ["weight" as MeasureId]: { value: 70, unit: "kg" } },
         },
       });
 
       await model.updateMeasure({
-        snapshotId: snapshot3._id,
         userId: mockUser.id,
-        updates: {
-          ["weight" as MeasureId]: { value: 90, unit: "kg" },
+        requestParams: {
+          snapshotId: snapshot2._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 80, unit: "kg" },
+          },
+        },
+      });
+
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot3._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 90, unit: "kg" },
+          },
         },
       });
 
@@ -197,18 +247,22 @@ describe("SnapshotsModel", () => {
       const [snapshot1, snapshot2] = await model.getUsersSnapshots(mockUser.id);
 
       await model.updateMeasure({
-        snapshotId: snapshot1._id,
         userId: mockUser.id,
-        updates: {
-          ["weight" as MeasureId]: { value: 154, unit: "lb" },
+        requestParams: {
+          snapshotId: snapshot1._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 154, unit: "lb" },
+          },
         },
       });
 
       await model.updateMeasure({
-        snapshotId: snapshot2._id,
         userId: mockUser.id,
-        updates: {
-          ["weight" as MeasureId]: { value: -5, unit: "kg" },
+        requestParams: {
+          snapshotId: snapshot2._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: -5, unit: "kg" },
+          },
         },
       });
 
@@ -237,18 +291,22 @@ describe("SnapshotsModel", () => {
     const [snapshot1] = await model.getUsersSnapshots(mockUser.id);
 
     await model.updateMeasure({
-      snapshotId: snapshot1._id,
       userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 70, unit: "kg" },
+      requestParams: {
+        snapshotId: snapshot1._id.toHexString() as SnapshotId,
+        updates: {
+          ["weight" as MeasureId]: { value: 70, unit: "kg" },
+        },
       },
     });
 
     await model.updateMeasure({
-      snapshotId: snapshot1._id,
       userId: mockUser.id,
-      updates: {
-        ["height" as MeasureId]: { value: 180, unit: "cm" },
+      requestParams: {
+        snapshotId: snapshot1._id.toHexString() as SnapshotId,
+        updates: {
+          ["height" as MeasureId]: { value: 180, unit: "cm" },
+        },
       },
     });
 
@@ -256,17 +314,21 @@ describe("SnapshotsModel", () => {
     await model.newSnapshot(mockUser);
     const [_, snapshot2] = await model.getUsersSnapshots(mockUser.id);
     await model.updateMeasure({
-      snapshotId: snapshot2._id,
       userId: mockUser.id,
-      updates: {
-        ["weight" as MeasureId]: { value: 70, unit: "kg" },
+      requestParams: {
+        snapshotId: snapshot2._id.toHexString() as SnapshotId,
+        updates: {
+          ["weight" as MeasureId]: { value: 70, unit: "kg" },
+        },
       },
     });
     await model.updateMeasure({
-      snapshotId: snapshot2._id,
       userId: mockUser.id,
-      updates: {
-        ["height" as MeasureId]: { value: 170, unit: "cm" }, // Different height
+      requestParams: {
+        snapshotId: snapshot2._id.toHexString() as SnapshotId,
+        updates: {
+          ["height" as MeasureId]: { value: 170, unit: "cm" }, // Different height
+        },
       },
     });
 

@@ -261,6 +261,10 @@ export type Msg =
             type: "measureClass";
             measureClass: MeasureClass;
           };
+    }
+  | {
+      type: "DELETE_MEASURE";
+      measureId: MeasureId;
     };
 
 export const update: Update<Msg, Model> = (msg, model) => {
@@ -272,6 +276,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.items = getItems(draft);
         }),
       ];
+    case "DELETE_MEASURE":
     case "INIT_UPDATE":
       // do nothing since we will cover this in the parent component
       return [model];
@@ -364,6 +369,18 @@ const MeasureView = ({
       >
         Edit
       </button>
+      {model.snapshot.measures[measure.id] ? (
+        <button
+          onPointerDown={() => {
+            dispatch({
+              type: "DELETE_MEASURE",
+              measureId: measure.id,
+            });
+          }}
+        >
+          Delete
+        </button>
+      ) : undefined}
     </div>
   );
 };

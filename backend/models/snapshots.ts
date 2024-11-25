@@ -1,5 +1,5 @@
 import mongodb from "mongodb";
-import { Dataset, Filter } from "../../iso/protocol.js";
+import { Dataset, Filter, SnapshotUpdateRequest } from "../../iso/protocol.js";
 import { User } from "lucia";
 import {
   encodeMeasureValue,
@@ -59,51 +59,62 @@ export class SnapshotsModel {
       lastUpdated: new Date(),
     });
   }
-
   async updateMeasure({
-    snapshotId,
     userId,
-    updates,
+    requestParams,
   }: {
-    snapshotId: mongodb.ObjectId;
     userId: string;
-    updates: {
-      [measureId: MeasureId]: UnitValue;
-    };
+    requestParams: SnapshotUpdateRequest;
   }) {
-    for (const measureIdStr in updates) {
-      const measureId = measureIdStr as MeasureId;
-      const value = updates[measureId];
+    const updates: mongodb.MatchKeysAndValues<SnapshotDoc> = {};
+    const normedUpdates: NormedMeasure[] = [];
+    const unsets: string[] = [];
 
-      await this.snapshotCollection.findOneAndUpdate(
-        { _id: snapshotId, userId },
-        [
-          {
-            $set: {
-              [`measures.${measureId}`]: value,
-              normedMeasures: {
-                $concatArrays: [
-                  {
-                    $filter: {
-                      input: "$normedMeasures",
-                      cond: {
-                        $ne: ["$$this.measureId", measureId],
+    for (const measureIdStr in requestParams.updates || {}) {
+      const measureId = measureIdStr as MeasureId;
+      const value = requestParams.updates![measureId];
+      updates[`measures.${measureId}`] = value;
+      normedUpdates.push(encodeMeasureValue({ id: measureId, value }));
+    }
+
+    for (const measureIdStr in requestParams.deletes || {}) {
+      const measureId = measureIdStr as MeasureId;
+      updates[`measures.${measureId}`] = null;
+      unsets.push(`measures.${measureId}`);
+    }
+
+    await this.snapshotCollection.findOneAndUpdate(
+      { _id: new mongodb.ObjectId(requestParams.snapshotId), userId },
+      [
+        {
+          $set: {
+            ...updates,
+            normedMeasures: {
+              $concatArrays: [
+                {
+                  $filter: {
+                    input: "$normedMeasures",
+                    cond: {
+                      $not: {
+                        $in: [
+                          "$$this.measureId",
+                          [
+                            ...Object.keys(requestParams.updates || {}),
+                            ...Object.keys(requestParams.deletes || {}),
+                          ],
+                        ],
                       },
                     },
                   },
-                  [
-                    encodeMeasureValue({
-                      id: measureId,
-                      value,
-                    }),
-                  ],
-                ],
-              } as unknown as NormedMeasure[],
+                },
+                normedUpdates,
+              ],
             },
           },
-        ],
-      );
-    }
+        },
+        ...(unsets.length ? [{ $unset: unsets }] : []),
+      ],
+    );
 
     return true;
   }

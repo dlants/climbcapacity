@@ -207,19 +207,35 @@ async function run() {
         "string",
         "Must provide snapshotId of type string",
       );
-      assert.equal(
-        typeof body.updates,
-        "object",
-        "Must provide updates which is a string",
+
+      if (body.updates) {
+        assert.equal(
+          typeof body.updates,
+          "object",
+          "updates must be an object",
+        );
+      }
+
+      if (body.deletes) {
+        assert.equal(
+          typeof body.deletes,
+          "object",
+          "deletes must be an object",
+        );
+      }
+
+      assert.ok(
+        body.updates || body.deletes,
+        "must provide either updates or deletes object",
       );
 
-      for (const measureId in body.updates) {
+      for (const measureId in body.updates || {}) {
         assert.ok(
           MEASURES.findIndex((m) => m.id == measureId) > -1,
-          `Measure had invalid id ${measureId}`,
+          `updates has invalid key ${measureId}`,
         );
 
-        const update = body.updates[measureId as MeasureId];
+        const update = body.updates![measureId as MeasureId];
         const value: UnitValue = update;
         assert.equal(
           typeof value,
@@ -228,10 +244,23 @@ async function run() {
         );
       }
 
+      for (const measureId in body.deletes || {}) {
+        assert.ok(
+          MEASURES.findIndex((m) => m.id == measureId) > -1,
+          `deletes has invalid key ${measureId}`,
+        );
+
+        const value = body.deletes![measureId as MeasureId];
+        assert.equal(value, true, "all deletes keys must be 'true'");
+      }
+
       const updated = await snapshotModel.updateMeasure({
         userId: user.id,
-        snapshotId: new mongodb.ObjectId(body.snapshotId),
-        updates: body.updates,
+        requestParams: {
+          snapshotId: body.snapshotId,
+          updates: body.updates,
+          deletes: body.deletes,
+        },
       });
 
       if (updated) {

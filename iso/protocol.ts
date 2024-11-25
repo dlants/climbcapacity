@@ -60,8 +60,11 @@ export type AuthStatus =
 
 export type SnapshotUpdateRequest = {
   snapshotId: SnapshotId;
-  updates: {
+  updates?: {
     [measureId: MeasureId]: UnitValue;
+  };
+  deletes?: {
+    [measureId: MeasureId]: true;
   };
 };
 

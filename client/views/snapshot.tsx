@@ -3,7 +3,7 @@ import * as immer from "immer";
 const produce = immer.produce;
 
 import type { HydratedSnapshot } from "../types";
-import { Update, View, Dispatch } from "../tea";
+import { Update, View, Dispatch, Thunk } from "../tea";
 import { convertToStandardUnit, UnitValue } from "../../iso/units";
 import { RequestStatus, RequestStatusView } from "../util/utils";
 import {
@@ -11,7 +11,12 @@ import {
   SnapshotId,
   SnapshotUpdateRequest,
 } from "../../iso/protocol";
-import { MeasureId } from "../../iso/measures";
+import {
+  generateTrainingMeasure,
+  generateTrainingMeasureId,
+  MEASURE_MAP,
+  MeasureId,
+} from "../../iso/measures";
 import * as MeasureSelector from "./snapshot/measure-selector";
 import * as EditMeasureOrClass from "./snapshot/edit-measure-or-class";
 
@@ -22,12 +27,7 @@ type EditingEditingState = {
 
 type SubmittingEditingState = {
   state: "submitting";
-  measureId: MeasureId;
-  value: UnitValue;
-  trainingMeasure?: {
-    measureId: MeasureId;
-    value: UnitValue;
-  };
+  requestParams: SnapshotUpdateRequest;
   writeRequest: RequestStatus<void>;
 };
 
@@ -83,22 +83,67 @@ export type Msg =
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "MEASURE_SELECTOR_MSG":
-      return [
-        produce(model, (draft) => {
-          const [next] = MeasureSelector.update(msg.msg, draft.measureSelector);
-          draft.measureSelector = immer.castDraft(next);
+      const [next] = MeasureSelector.update(msg.msg, model.measureSelector);
+      let thunk: Thunk<Msg> | undefined;
+      const nextModel = produce(model, (draft) => {
+        draft.measureSelector = immer.castDraft(next);
 
-          if (msg.msg.type == "INIT_UPDATE") {
-            draft.editingState = immer.castDraft({
-              state: "editing",
-              model: EditMeasureOrClass.initModel({
-                init: msg.msg.update,
-                snapshot: model.snapshot,
-              }),
-            });
+        if (msg.msg.type == "INIT_UPDATE") {
+          draft.editingState = immer.castDraft({
+            state: "editing",
+            model: EditMeasureOrClass.initModel({
+              init: msg.msg.update,
+              snapshot: model.snapshot,
+            }),
+          });
+        } else if (msg.msg.type == "DELETE_MEASURE") {
+          const requestParams: SnapshotUpdateRequest = {
+            snapshotId: model.snapshot._id as SnapshotId,
+            deletes: {
+              [msg.msg.measureId]: true,
+            },
+          };
+
+          draft.editingState = immer.castDraft({
+            state: "submitting",
+            requestParams,
+            writeRequest: { status: "loading" },
+          });
+
+          const measure = MEASURE_MAP[msg.msg.measureId];
+          if (measure.includeTrainingMeasure) {
+            requestParams.deletes![generateTrainingMeasureId(measure.id)] =
+              true;
           }
-        }),
-      ];
+
+          thunk = async (dispatch) => {
+            const response = await fetch("/api/snapshots/update", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestParams),
+            });
+
+            if (response.ok) {
+              dispatch({
+                type: "MEASURE_REQUEST_UPDATE",
+                request: {
+                  status: "loaded",
+                  response: void 0,
+                },
+              });
+            } else {
+              dispatch({
+                type: "MEASURE_REQUEST_UPDATE",
+                request: { status: "error", error: await response.text() },
+              });
+            }
+          };
+        }
+      });
+
+      return [nextModel, thunk];
 
     case "DISCARD_MEASURE_UPDATE":
       return [
@@ -119,20 +164,21 @@ export const update: Update<Msg, Model> = (msg, model) => {
         const nextSnapshot: HydratedSnapshot = produce(
           model.snapshot,
           (draft) => {
-            draft.measures[editingState.measureId] = immer.castDraft(
-              editingState.value,
-            );
-            draft.normalizedMeasures[editingState.measureId] = immer.castDraft(
-              convertToStandardUnit(editingState.value),
-            );
+            for (const measureIdStr in editingState.requestParams.updates ||
+              {}) {
+              const measureId = measureIdStr as MeasureId;
+              const value = editingState.requestParams.updates![measureId];
+              draft.measures[measureId] = immer.castDraft(value);
 
-            if (editingState.trainingMeasure) {
-              draft.measures[editingState.trainingMeasure.measureId] =
-                immer.castDraft(editingState.trainingMeasure.value);
-              draft.normalizedMeasures[editingState.trainingMeasure.measureId] =
-                immer.castDraft(
-                  convertToStandardUnit(editingState.trainingMeasure.value),
-                );
+              draft.normalizedMeasures[measureId] = immer.castDraft(
+                convertToStandardUnit(value),
+              );
+            }
+            for (const measureIdStr in editingState.requestParams.deletes ||
+              {}) {
+              const measureId = measureIdStr as MeasureId;
+              delete draft.measures[measureId];
+              delete draft.normalizedMeasures[measureId];
             }
           },
         );
@@ -196,7 +242,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         },
       };
       if (canSubmit.trainingMeasure) {
-        requestParams.updates[canSubmit.trainingMeasure.measureId] =
+        requestParams.updates![canSubmit.trainingMeasure.measureId] =
           canSubmit.trainingMeasure.value;
       }
 
@@ -204,9 +250,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         produce(model, (draft) => {
           draft.editingState = {
             state: "submitting",
-            measureId: canSubmit.measureId,
-            value: canSubmit.value,
-            trainingMeasure: canSubmit.trainingMeasure,
+            requestParams,
             writeRequest: { status: "loading" },
           };
         }),
@@ -239,23 +283,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-const FilterInput = React.memo(
-  ({
-    value,
-    onChange,
-  }: {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <input
-      type="text"
-      placeholder="Filter measures..."
-      value={value}
-      onChange={onChange}
-    />
-  ),
-);
-
 export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className="snapshot-view">
@@ -265,6 +292,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
             return <NotEditingView model={model} dispatch={dispatch} />;
 
           case "editing":
+            const editingState = model.editingState;
             return (
               <div>
                 <EditMeasureOrClass.view
@@ -275,11 +303,13 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                 />
                 <button
                   onPointerDown={() => {
-                    dispatch({
-                      type: "SUBMIT_MEASURE_UPDATE",
-                    });
+                    if (editingState.model.canSubmit) {
+                      dispatch({
+                        type: "SUBMIT_MEASURE_UPDATE",
+                      });
+                    }
                   }}
-                  disabled={model.editingState.model.canSubmit == undefined}
+                  disabled={editingState.model.canSubmit == undefined}
                 >
                   Submit
                 </button>{" "}
