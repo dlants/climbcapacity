@@ -13,9 +13,38 @@ import { InitialFilter, UnitType } from "../units.js";
 
 export type MeasureId = string & { __brand: "measureId" };
 
+export type MeasureClass =
+  | "blockpull"
+  | "continuoushang"
+  | "edgepullups"
+  | "endurance"
+  | "isometrichold"
+  | "maxhang"
+  | "maxrepsmovement"
+  | "minedge"
+  | "performance"
+  | "powermovement"
+  | "repeaters"
+  | "weightedmovement";
+
+export type MeasureType =
+  | {
+      type: "performance";
+    }
+  | {
+      type: "anthro";
+    }
+  | {
+      type: "input";
+      measureClass: MeasureClass;
+    }
+  | {
+      type: "training";
+    };
+
 export type MeasureSpec = {
   id: MeasureId;
-  includeTrainingMeasure: boolean;
+  type: MeasureType;
   name: string;
   description: string;
   /** units[0] is the default
@@ -31,17 +60,11 @@ export const MEASURES = [
   ...POWER_MEASURES,
 ];
 
-export const INPUT_MEASURES = [
-  ...FINGER_MEASURES,
-  ...MOVEMENT_MEASURES,
-  ...POWER_MEASURES,
-];
-
-export const ANTHRO_MEASURES: MeasureSpec[] = [
+const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
+    type: { type: "anthro" },
     name: "height",
-    includeTrainingMeasure: false,
     description: "Your height",
     units: ["m", "cm", "inch"],
     initialFilter: {
@@ -52,8 +75,8 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   },
   {
     id: "armspan" as MeasureId,
+    type: { type: "anthro" },
     name: "Arm span",
-    includeTrainingMeasure: false,
     description: "Your arm span, fingertip to fingertip",
     units: ["m", "cm", "inch"],
     initialFilter: {
@@ -64,8 +87,8 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   },
   {
     id: "standing-reach" as MeasureId,
+    type: { type: "anthro" },
     name: "standing reach",
-    includeTrainingMeasure: false,
     description:
       "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
     units: ["m", "cm", "inch"],
@@ -78,9 +101,9 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
 
   {
     id: "weight" as MeasureId,
+    type: { type: "anthro" },
     name: "weight",
     description: "Your weight",
-    includeTrainingMeasure: false,
     units: ["kg", "lb"],
     initialFilter: {
       type: "minmax",
@@ -91,7 +114,7 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
-    includeTrainingMeasure: false,
+    type: { type: "anthro" },
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
     initialFilter: {
@@ -105,7 +128,7 @@ MEASURES.push(...ANTHRO_MEASURES);
 
 MEASURES.push({
   id: "time-climbing" as MeasureId,
-  includeTrainingMeasure: false,
+  type: { type: "training" },
   name: "How long have you been climbing?",
   description: `Count time during which you've been going at least once a week.
 
@@ -126,7 +149,7 @@ export function generateTrainingMeasureId(id: MeasureId): MeasureId {
 export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
   return {
     id: generateTrainingMeasureId(spec.id),
-    includeTrainingMeasure: false,
+    type: { type: "training" },
     name: `Training: ${spec.name}`,
     description: `How experienced are you with this or similar measures?
 
@@ -145,7 +168,7 @@ export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
 }
 
 for (const measure of [...MEASURES]) {
-  if (measure.includeTrainingMeasure) {
+  if (measure.type.type == "input") {
     MEASURES.push(generateTrainingMeasure(measure));
   }
 }

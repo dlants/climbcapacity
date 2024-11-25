@@ -28,7 +28,10 @@ export function parsePowerMeasureId(measureId: MeasureId): PowerMovement {
 function createMeasureSpec(movement: PowerMovement): MeasureSpec {
   return {
     id: generatePowerMeasureId(movement),
-    includeTrainingMeasure: true,
+    type: {
+      type: "input",
+      measureClass: "powermovement",
+    },
     name: `Maximum distance`,
     description: ``,
     units: ["m", "cm", "inch"],
@@ -85,7 +88,10 @@ function createUnilateralMeasureSpec(
 ): MeasureSpec {
   return {
     id: generateUnilateralPowerMeasureId(movement, dominantSide),
-    includeTrainingMeasure: true,
+    type: {
+      type: "input",
+      measureClass: "powermovement",
+    },
     name: `${movement} ${dominantSide}`,
     description: ``,
     units: ["m", "cm", "inch"],

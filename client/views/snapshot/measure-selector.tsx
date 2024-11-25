@@ -8,9 +8,8 @@ import { UnitValue, unitValueToString } from "../../../iso/units";
 import { MEASURES, MEASURE_MAP } from "../../constants";
 import { isSubsequence } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
-import { ANTHRO_MEASURES, MeasureId, MeasureSpec } from "../../../iso/measures";
+import { MeasureClass, MeasureId, MeasureSpec } from "../../../iso/measures";
 import { assertUnreachable } from "../../../iso/utils";
-import { MeasureClass } from "./edit-measure-class";
 
 type MeasureItem = {
   type: "measure-item";
@@ -51,125 +50,97 @@ export function initModel({
 }
 
 function getAllItems(): Item[] {
-  let rest = MEASURES.filter((m) => !ANTHRO_MEASURES.includes(m));
-
-  const performanceMeasures = rest.filter((m) => m.id.startsWith("grade:"));
-  rest = rest.filter((m) => !m.id.startsWith("grade:"));
-
-  const maxhangMeasures = rest.filter((m) => m.id.startsWith("maxhang:"));
-  rest = rest.filter((m) => !m.id.startsWith("maxhang:"));
-
-  const blockPullMeasures = rest.filter((m) => m.id.startsWith("blockpull:"));
-  rest = rest.filter((m) => !m.id.startsWith("blockpull:"));
-
-  const repeatersMeasures = rest.filter((m) =>
-    m.id.startsWith("duration:7-3repeaters:"),
-  );
-  rest = rest.filter((m) => !m.id.startsWith("duration:7-3repeaters:"));
-
-  const minedgeMeasures = rest.filter((m) => m.id.startsWith("min-edge-hang:"));
-  rest = rest.filter((m) => !m.id.startsWith("min-edge-hang:"));
-
-  const edgePullupMeasures = rest.filter((m) =>
-    m.id.startsWith("min-edge-pullups:"),
-  );
-  rest = rest.filter((m) => !m.id.startsWith("min-edge-pullups:"));
-
-  const weightedMovementMeasures = rest.filter(
-    (m) =>
-      m.id.startsWith("weighted:") || m.id.startsWith("weighted-unilateral:"),
-  );
-  rest = rest.filter(
-    (m) =>
-      !(
-        m.id.startsWith("weighted:") || m.id.startsWith("weighted-unilateral:")
-      ),
-  );
-
-  const maxRepsMeasures = rest.filter((m) => m.id.startsWith("max-rep:"));
-  rest = rest.filter((m) => !m.id.startsWith("max-rep:"));
-
-  const isometricMeasures = rest.filter((m) =>
-    m.id.startsWith("isometric-duration:"),
-  );
-  rest = rest.filter((m) => !m.id.startsWith("isometric-duration"));
-
-  const powerMeasures = rest.filter((m) => m.id.startsWith("power:"));
-  rest = rest.filter((m) => !m.id.startsWith("power:"));
-
-  const continuousHangMeasures = rest.filter((m) =>
-    m.id.startsWith("continuoushang:"),
-  );
-  rest = rest.filter((m) => !m.id.startsWith("continuoushang:"));
-
-  rest = rest.filter((m) => !m.id.startsWith("time-training:"));
-
   const mapSpecToItem = (s: MeasureSpec) => ({
     type: "measure-item" as const,
     spec: s,
   });
 
   return [
-    ...ANTHRO_MEASURES.map(mapSpecToItem),
+    ...MEASURES.filter((s) => s.type.type == "anthro").map(mapSpecToItem),
     {
       type: "measure-group",
       measureClass: "performance",
-      items: performanceMeasures.map(mapSpecToItem),
+      items: MEASURES.filter((s) => s.type.type == "performance").map(
+        mapSpecToItem,
+      ),
     },
     {
       type: "measure-group",
       measureClass: "maxhang",
-      items: maxhangMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) => s.type.type === "input" && s.type.measureClass === "maxhang",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "blockpull",
-      items: blockPullMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) => s.type.type === "input" && s.type.measureClass === "blockpull",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "minedge",
-      items: minedgeMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) => s.type.type === "input" && s.type.measureClass === "minedge",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "repeaters",
-      items: repeatersMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) => s.type.type === "input" && s.type.measureClass === "repeaters",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "edgepullups",
-      items: edgePullupMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) => s.type.type === "input" && s.type.measureClass === "edgepullups",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "weightedmovement",
-      items: weightedMovementMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) =>
+          s.type.type === "input" && s.type.measureClass === "weightedmovement",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "maxrepsmovement",
-      items: maxRepsMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) =>
+          s.type.type === "input" && s.type.measureClass === "maxrepsmovement",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "isometrichold",
-      items: isometricMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) =>
+          s.type.type === "input" && s.type.measureClass === "isometrichold",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "powermovement",
-      items: powerMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) =>
+          s.type.type === "input" && s.type.measureClass === "powermovement",
+      ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
       measureClass: "continuoushang",
-      items: continuousHangMeasures.map(mapSpecToItem),
+      items: MEASURES.filter(
+        (s) =>
+          s.type.type === "input" && s.type.measureClass === "continuoushang",
+      ).map(mapSpecToItem),
     },
-    ...rest.map(mapSpecToItem),
   ];
 }
-
 function getItemsForSnapshot(snapshot: HydratedSnapshot) {
   const allItems = getAllItems();
   const outItems: Item[] = [];

@@ -70,7 +70,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
       MEASURES.push({
         id,
         name: `MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
-        includeTrainingMeasure: true,
+        type: { type: "input", measureClass: "maxhang" },
         description: `\
 Warm up thoroughly.
 
@@ -137,7 +137,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
         MEASURES.push({
           id,
           name: `Unilateral MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip, ${dominantSide} hand`,
-          includeTrainingMeasure: true,
+          type: { type: "input", measureClass: "maxhang" },
           description: `\
 Warm up thoroughly.
 
@@ -200,7 +200,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
     const measureId = generateRepeaterId({ edgeSize, gripType });
     MEASURES.push({
       id: measureId,
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "repeaters" },
       name: `7:3 repeaters on ${edgeSize}mm ${gripType}(bodyweight)`,
       description: ``,
       units: ["second"],
@@ -253,7 +253,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
         });
         MEASURES.push({
           id,
-          includeTrainingMeasure: true,
+          type: { type: "input", measureClass: "blockpull" },
           name: `Block Pull: ${edgeSize}mm, ${duration}s, ${gripType} grip on the ${dominantSide} side`,
           description: `\
 Warm up thoroughly.
@@ -311,7 +311,7 @@ for (const duration of MAXHANG_DURATION) {
   for (const gripType of MIN_EDGE_GRIPS) {
     MEASURES.push({
       id: generateMinEdgeHangId({ duration, gripType }),
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "minedge" },
       name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
       description: `\
 Warm up thoroughly.
@@ -356,7 +356,7 @@ export function parseMinEdgePullupId(measureId: MeasureId) {
 for (const gripType of MINEDGE_PULLUP_GRIPS) {
   MEASURES.push({
     id: generateMinEdgePullupId({ gripType }),
-    includeTrainingMeasure: true,
+    type: { type: "input", measureClass: "edgepullups" },
     name: `Smallest edge you can do 2 pullups on using ${gripType} grip.`,
     description: `Using a ${gripType} grip, find the smallest edge you can do 2 pullups on.
 
@@ -404,7 +404,7 @@ for (const gripType of CONTINUOUS_HANG) {
   for (const edgeSize of MAXHANG_EDGE_SIZE) {
     MEASURES.push({
       id: generateContinuousHangId({ gripType, edgeSize }),
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "continuoushang" },
       name: `Longest continuous hang using ${gripType} grip.`,
       description: `Using a ${gripType} grip, hang for as long as possible without releasing.`,
       units: ["second"],

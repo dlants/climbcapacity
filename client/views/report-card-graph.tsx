@@ -5,13 +5,7 @@ import * as Filters from "./report-graph-filters";
 import * as Filter from "./filters/filter";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
-import {
-  ANTHRO_MEASURES,
-  MeasureId,
-  INPUT_MEASURES,
-  PERFORMANCE_MEASURES,
-  generateTrainingMeasureId,
-} from "../../iso/measures";
+import { MeasureId, generateTrainingMeasureId } from "../../iso/measures";
 import {
   adjustGrade,
   castInitialFilter,
@@ -23,13 +17,10 @@ import {
 import { assertUnreachable } from "../util/utils";
 import { Result } from "../../iso/utils";
 import { filterOutliersX } from "../util/stats";
-import { MEASURE_MAP } from "../constants";
+import { MEASURES, MEASURE_MAP } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
 import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
-
-const INPUT_MEASURE_IDS = ANTHRO_MEASURES.map((s) => s.id);
-const OUTPUT_MEASURE_IDS = PERFORMANCE_MEASURES.map((s) => s.id);
 
 type PlotModel = {
   filterModel: Filters.Model;
@@ -92,19 +83,14 @@ export function initModel({
 }
 
 function getPlots(model: Model) {
-  const otherMeasures: MeasureWithUnit[] = [];
+  const inputMeasures: MeasureWithUnit[] = [];
 
   if (model.mySnapshot) {
     for (const id in model.mySnapshot.measures) {
       const measureId = id as MeasureId;
-      if (
-        !(
-          INPUT_MEASURE_IDS.includes(id as MeasureId) ||
-          OUTPUT_MEASURE_IDS.includes(id as MeasureId) ||
-          id.startsWith("time-training:")
-        )
-      ) {
-        otherMeasures.push({
+      const spec = MEASURE_MAP[measureId];
+      if (spec.type.type == "input") {
+        inputMeasures.push({
           id: measureId,
           unit: model.mySnapshot.measures[measureId].unit,
         });
@@ -119,24 +105,24 @@ function getPlots(model: Model) {
       }
     }
 
-    for (const { id, units } of INPUT_MEASURES) {
-      if (!id.startsWith("time-training:") && snapshotStats[id] > 0) {
-        otherMeasures.push({
-          id,
-          unit: units[0],
-        });
-      }
+    for (const { id, units } of MEASURES.filter(
+      (s) => s.type.type == "input",
+    )) {
+      inputMeasures.push({
+        id,
+        unit: units[0],
+      });
     }
 
-    otherMeasures.sort(
+    inputMeasures.sort(
       (a, b) => (snapshotStats[b.id] || 0) - (snapshotStats[a.id] || 0),
     );
   }
 
   const plots: PlotModel[] = [];
   const outputMeasureSpec = MEASURE_MAP[model.outputMeasure.id];
-  for (const otherMeasure of otherMeasures) {
-    const otherMeasureSpec = MEASURE_MAP[otherMeasure.id];
+  for (const inputMeasure of inputMeasures) {
+    const inputMeasureSpec = MEASURE_MAP[inputMeasure.id];
     const initialFilters: Filters.InitialFilters = {};
     if (model.mySnapshot) {
       const targetUnit = model.outputMeasure.unit;
@@ -169,12 +155,12 @@ function getPlots(model: Model) {
       };
     }
 
-    if (otherMeasureSpec.includeTrainingMeasure) {
-      initialFilters[generateTrainingMeasureId(otherMeasureSpec.id)] = {
+    if (inputMeasureSpec.type.type == "input") {
+      const trainingMeasureId = generateTrainingMeasureId(inputMeasureSpec.id);
+      const trainingSpec = MEASURE_MAP[trainingMeasureId];
+      initialFilters[trainingMeasureId] = {
         enabled: false,
-        type: "minmax",
-        minValue: { unit: "month", value: 0 },
-        maxValue: { unit: "month", value: 6 },
+        ...trainingSpec.initialFilter,
       };
     }
 
@@ -184,15 +170,15 @@ function getPlots(model: Model) {
     });
 
     plots.push({
-      inputMeasure: otherMeasure,
+      inputMeasure: inputMeasure,
       filterModel,
       toggle: {
-        measureId: otherMeasure.id,
-        selectedUnit: otherMeasure.unit,
-        possibleUnits: otherMeasureSpec.units,
+        measureId: inputMeasure.id,
+        selectedUnit: inputMeasure.unit,
+        possibleUnits: inputMeasureSpec.units,
       },
       model: getPlot({
-        xMeasure: otherMeasure,
+        xMeasure: inputMeasure,
         filterModel,
         model,
       }),

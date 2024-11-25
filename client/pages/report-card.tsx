@@ -12,7 +12,7 @@ import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
-import { ANTHRO_MEASURES, MeasureId } from "../../iso/measures";
+import { MeasureId } from "../../iso/measures";
 const produce = immer.produce;
 import lodash from "lodash";
 import { InitialFilters } from "../views/select-filters";
@@ -25,6 +25,7 @@ import {
   VGRADE,
   YDS,
 } from "../../iso/grade";
+import { MEASURES } from "../constants";
 
 export type Model = {
   userId: string;
@@ -121,7 +122,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
             let myInputValues = lodash.pick(
               mySnapshot.measures,
-              ANTHRO_MEASURES.map((m) => m.id),
+              MEASURES.filter((s) => s.type.type == "anthro").map((m) => m.id),
             );
             const initialFilters: InitialFilters = {};
 

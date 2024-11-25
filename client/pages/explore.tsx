@@ -5,7 +5,7 @@ import * as immer from "immer";
 import * as LoadedReportCard from "../views/loaded-report-card";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/select-filters";
-import { ANTHRO_MEASURES } from "../../iso/measures";
+import { MEASURES } from "../constants";
 const produce = immer.produce;
 
 export type Model = {
@@ -24,7 +24,7 @@ export function initModel({
   measureStats: MeasureStats;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   const initialFilters: InitialFilters = {};
-  for (const measure of ANTHRO_MEASURES) {
+  for (const measure of MEASURES.filter((s) => s.type.type == "anthro")) {
     const count = measureStats.stats[measure.id] || 0;
     if (count < 100) {
       continue;

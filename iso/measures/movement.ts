@@ -72,7 +72,7 @@ for (const movement of WEIGHTED_MOVEMENTS) {
   for (const repMax of REP_MAX) {
     MEASURES.push({
       id: generateWeightedMeasureId({ movement, repMax }),
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "weightedmovement" },
       name: `Weighted ${movement}`,
       description: `Record total weight, including bodyweight for relevant exercises.
 
@@ -141,7 +141,7 @@ for (const movement of UNILATERAL_WEIGHTED_MOVEMENTS) {
     for (const dominantSide of DOMINANT_SIDE) {
       MEASURES.push({
         id: generateUnilateralMeasureId({ movement, repMax, dominantSide }),
-        includeTrainingMeasure: true,
+        type: { type: "input", measureClass: "weightedmovement" },
         name: `Weighted unilateral ${movement} ${dominantSide}`,
         description: `Record total weight, including bodyweight for relevant exercises.
 
@@ -184,7 +184,7 @@ export const parseMaxRepMeasureId = (measureId: MeasureId): MaxRepMovement => {
 for (const movement of MAX_REPS_MOVEMENTS) {
   MEASURES.push({
     id: generateMaxRepMeasureId(movement),
-    includeTrainingMeasure: true,
+    type: { type: "input", measureClass: "maxrepsmovement" },
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
@@ -238,7 +238,7 @@ for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
       id: generateUnilateralMaxRepMeasureId({ movement, dominantSide }),
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "maxrepsmovement" },
       name: `Unilateral ${movement} Max Reps ${dominantSide}`,
       description: `Maximum number of reps you can complete`,
       units: ["count"],
@@ -281,8 +281,8 @@ export const parseIsometricMovementMeasureId = (
 for (const movement of ISOMETRIC_MOVEMENTS) {
   MEASURES.push({
     id: generateIsometricMovementMeasureId(movement),
-    includeTrainingMeasure: true,
-    name: `${movement} Max Duration`,
+    type: { type: "input", measureClass: "isometrichold" },
+    name: `${movement} Isometric Hold`,
     description: ``,
     units: ["second"],
     initialFilter: {
@@ -331,7 +331,7 @@ for (const movement of ISOMETRIC_UNILATERAL_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
       id: generateIsometricUnilateralMeasureId({ movement, dominantSide }),
-      includeTrainingMeasure: true,
+      type: { type: "input", measureClass: "isometrichold" },
       name: `${movement} Max Duration ${dominantSide}`,
       description: ``,
       units: ["second"],
@@ -372,7 +372,7 @@ for (const movement of ENDURANCE_MOVEMENTS) {
   MEASURES.push({
     id: generateEnduranceMovementMeasureId(movement),
     name: `${movement} Max Duration`,
-    includeTrainingMeasure: true,
+    type: { type: "input", measureClass: "endurance" },
     description: ``,
     units: ["second"],
     initialFilter: {

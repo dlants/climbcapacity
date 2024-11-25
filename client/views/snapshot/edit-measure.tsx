@@ -74,7 +74,7 @@ export const initModel = ({
 
   const measure = MEASURE_MAP[measureId];
   let trainingMeasure;
-  if (measure.includeTrainingMeasure) {
+  if (measure.type.type == "input") {
     const trainingMeasureId = generateTrainingMeasureId(measureId);
     let trainingInputmodel = immer.castDraft(
       UnitInput.initModel(

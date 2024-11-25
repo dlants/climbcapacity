@@ -111,7 +111,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           });
 
           const measure = MEASURE_MAP[msg.msg.measureId];
-          if (measure.includeTrainingMeasure) {
+          if (measure.type.type == "input") {
             requestParams.deletes![generateTrainingMeasureId(measure.id)] =
               true;
           }

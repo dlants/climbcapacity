@@ -1,5 +1,5 @@
 import React from "react";
-import { MeasureId } from "../../../iso/measures";
+import { MeasureClass, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import * as immer from "immer";
 import { Dispatch } from "../../tea";
@@ -15,21 +15,9 @@ import * as MaxRepsMovement from "./measure-class/maxrepsmovement";
 import * as IsometricHold from "./measure-class/isometrichold";
 import * as PowerMovement from "./measure-class/powermovement";
 import * as ContinuousHang from "./measure-class/continuoushang";
+import * as Endurance from "./measure-class/endurance";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
-
-export type MeasureClass =
-  | "maxhang"
-  | "blockpull"
-  | "minedge"
-  | "performance"
-  | "repeaters"
-  | "edgepullups"
-  | "weightedmovement"
-  | "maxrepsmovement"
-  | "isometrichold"
-  | "powermovement"
-  | "continuoushang";
 
 export type Model = immer.Immutable<{
   measureModel:
@@ -76,7 +64,12 @@ export type Model = immer.Immutable<{
     | {
         type: "continuoushang";
         model: ContinuousHang.Model;
+      }
+    | {
+        type: "endurance";
+        model: Endurance.Model;
       };
+
   snapshot: HydratedSnapshot;
   selectedMeasure: MeasureId;
   editMeasure: EditMeasure.Model;
@@ -256,6 +249,21 @@ export const initModel = ({
         }),
       };
 
+    case "endurance":
+      const endurance = Endurance.initModel(measureId);
+      return {
+        measureModel: {
+          type: "endurance",
+          model: endurance,
+        },
+        snapshot,
+        selectedMeasure: endurance.measureId,
+        editMeasure: EditMeasure.initModel({
+          measureId: endurance.measureId,
+          snapshot,
+        }),
+      };
+
     default:
       assertUnreachable(measureClass);
   }
@@ -308,6 +316,10 @@ export type Msg =
         | {
             type: "continuoushang";
             msg: ContinuousHang.Msg;
+          }
+        | {
+            type: "endurance";
+            msg: Endurance.Msg;
           };
     }
   | {
@@ -434,6 +446,17 @@ export const update = (msg: Msg, model: Model): [Model] => {
                 throw new Error("Wrong message type");
               }
               const [next] = ContinuousHang.update(
+                msg.msg.msg,
+                draft.measureModel.model,
+              );
+              draft.measureModel.model = immer.castDraft(next);
+              break;
+            }
+            case "endurance": {
+              if (msg.msg.type !== "endurance") {
+                throw new Error("Wrong message type");
+              }
+              const [next] = Endurance.update(
                 msg.msg.msg,
                 draft.measureModel.model,
               );
@@ -585,6 +608,16 @@ export function view({
                 dispatch({
                   type: "CHILD_MSG",
                   msg: { type: "continuoushang", msg },
+                }),
+            });
+
+          case "endurance":
+            return Endurance.view({
+              model: model.measureModel.model,
+              dispatch: (msg) =>
+                dispatch({
+                  type: "CHILD_MSG",
+                  msg: { type: "endurance", msg },
                 }),
             });
 
