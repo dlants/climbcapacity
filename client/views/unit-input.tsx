@@ -169,7 +169,6 @@ function getInitialInput(
     case "month":
     case "year":
     case "lb":
-
     case "kg":
     case "m":
     case "cm":
@@ -342,9 +341,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
 
       case "training": {
-        if (
-          ["1", "2", "3", "4", "5"].includes(input as UnitInputMap["training"])
-        )
+        if (["1", "2", "3", "4"].includes(input as UnitInputMap["training"]))
           return { status: "fail", error: `Invalid training value ${input}` };
         return {
           status: "success",
@@ -515,7 +512,7 @@ const InnerUnitInput = ({
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           >
-            {[1, 2, 3, 4, 5].map((val) => (
+            {["", "1", "2", "3", "4"].map((val) => (
               <option key={val} value={val}>
                 {val}
               </option>
@@ -548,9 +545,12 @@ const InnerUnitInput = ({
     case "sex-at-birth":
       return (
         <select
-          value={model.unitInput as "female" | "male"}
-          onChange={(e) => handleChange(e.target.value as "female" | "male")}
+          value={model.unitInput as "female" | "male" | ""}
+          onChange={(e) =>
+            handleChange(e.target.value as "" | "female" | "male")
+          }
         >
+          <option value=""></option>
           <option value="female">Female</option>
           <option value="male">Male</option>
         </select>
