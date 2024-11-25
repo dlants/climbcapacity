@@ -145,7 +145,6 @@ function getPlots(model: Model) {
       initialFilters[model.outputMeasure.id] = {
         enabled: true,
         type: "minmax",
-        measureId: model.outputMeasure.id,
         minValue: adjustGrade(
           castUnit(
             model.mySnapshot.measures[model.outputMeasure.id] as UnitValue,
@@ -175,7 +174,6 @@ function getPlots(model: Model) {
       initialFilters[otherMeasureSpec.trainingMeasureId] = {
         enabled: false,
         type: "minmax",
-        measureId: otherMeasureSpec.trainingMeasureId,
         minValue: { unit: "month", value: 0 },
         maxValue: { unit: "month", value: 6 },
       };

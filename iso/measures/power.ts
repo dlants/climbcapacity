@@ -11,7 +11,6 @@ const TIME_TRAINING_JUMP: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:jump` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -24,7 +23,6 @@ const TIME_TRAINING_CAMPUS_REACH: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:campus-reach` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -69,7 +67,6 @@ function createMeasureSpec(movement: PowerMovement): MeasureSpec {
     units: ["m", "cm", "inch"],
     initialFilter: {
       type: "minmax",
-      measureId: generatePowerMeasureId(movement),
       minValue: { unit: "m", value: 1 },
       maxValue: { unit: "m", value: 2 },
     },
@@ -135,7 +132,6 @@ function createUnilateralMeasureSpec(
     units: ["m", "cm", "inch"],
     initialFilter: {
       type: "minmax",
-      measureId: generateUnilateralPowerMeasureId(movement, dominantSide),
       minValue: { unit: "m", value: 0 },
       maxValue: { unit: "m", value: 2 },
     },

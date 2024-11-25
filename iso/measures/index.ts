@@ -45,7 +45,6 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["m", "cm", "inch"],
     initialFilter: {
       type: "minmax",
-      measureId: "height" as MeasureId,
       minValue: { unit: "m", value: 1.53 },
       maxValue: { unit: "m", value: 1.85 },
     },
@@ -57,7 +56,6 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["m", "cm", "inch"],
     initialFilter: {
       type: "minmax",
-      measureId: "armspan" as MeasureId,
       minValue: { unit: "m", value: 1.53 },
       maxValue: { unit: "m", value: 1.85 },
     },
@@ -70,7 +68,6 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["m", "cm", "inch"],
     initialFilter: {
       type: "minmax",
-      measureId: "standing-reach" as MeasureId,
       minValue: { unit: "m", value: 2.2 },
       maxValue: { unit: "m", value: 2.8 },
     },
@@ -83,7 +80,6 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["kg", "lb"],
     initialFilter: {
       type: "minmax",
-      measureId: "weight" as MeasureId,
       minValue: { unit: "kg", value: 39.7 },
       maxValue: { unit: "kg", value: 115.5 },
     },
@@ -95,7 +91,6 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["sex-at-birth"],
     initialFilter: {
       type: "toggle",
-      measureId: "sex-at-birth" as MeasureId,
       value: { unit: "sex-at-birth", value: "female" },
     },
   },
@@ -114,7 +109,6 @@ For example, if you climbed for a year, then took a year off, then climbed for a
     units: ["year", "month"],
     initialFilter: {
       type: "minmax",
-      measureId: "time-climbing" as MeasureId,
       minValue: { unit: "year", value: 0 },
       maxValue: { unit: "year", value: 15 },
     },
@@ -132,7 +126,6 @@ Examples that count as deliberate practice:
     units: ["year", "month"],
     initialFilter: {
       type: "minmax",
-      measureId: "time-training" as MeasureId,
       minValue: { unit: "year", value: 0 },
       maxValue: { unit: "year", value: 15 },
     },
@@ -150,7 +143,6 @@ Examples of activities that count as strength training practice:
     units: ["year", "month"],
     initialFilter: {
       type: "minmax",
-      measureId: "time-strength-training" as MeasureId,
       minValue: { unit: "year", value: 0 },
       maxValue: { unit: "year", value: 15 },
     },

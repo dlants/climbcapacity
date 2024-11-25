@@ -33,13 +33,11 @@ export type NormedMeasure = { measureId: MeasureId; value: number };
 export type InitialFilter =
   | {
       type: "minmax";
-      measureId: MeasureId;
       minValue: UnitValue;
       maxValue: UnitValue;
     }
   | {
       type: "toggle";
-      measureId: MeasureId;
       value: UnitValue;
     };
 

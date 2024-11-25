@@ -252,13 +252,11 @@ function getInitialFilter(
   if (value.unit == "sex-at-birth") {
     return {
       type: "toggle",
-      measureId,
       value,
     };
   } else {
     return {
       type: "minmax",
-      measureId,
       minValue: getMinInputValue(value),
       maxValue: getMaxInputValue(value),
     };

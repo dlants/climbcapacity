@@ -47,8 +47,9 @@ export function initModel({
   for (const measureIdStr in initialFilters) {
     const measureId = measureIdStr as MeasureId;
     const initialFilter = initialFilters[measureId];
-    filters.push(Filter.initModel(initialFilter));
+    filters.push(Filter.initModel({ measureId, initialFilter }));
   }
+
   return {
     measureStats,
     filters,
@@ -98,7 +99,12 @@ export const update: Update<Msg, Model> = (msg, model) => {
             }
 
             draft.filters.push(
-              immer.castDraft(Filter.initModel(spec.initialFilter)),
+              immer.castDraft(
+                Filter.initModel({
+                  measureId: newModel.measureId,
+                  initialFilter: spec.initialFilter,
+                }),
+              ),
             );
 
             draft.measureSelectionBox = immer.castDraft(

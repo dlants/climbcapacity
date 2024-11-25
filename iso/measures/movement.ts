@@ -35,7 +35,6 @@ const TIME_TRAINING_PRESS: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:press` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -49,7 +48,6 @@ const TIME_TRAINING_PULL: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:pull` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -63,7 +61,6 @@ const TIME_TRAINING_HINGE: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:hinge` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -77,7 +74,6 @@ const TIME_TRAINING_SQUAT: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:squat` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -91,7 +87,6 @@ const TIME_TRAINING_CORE_FRONTAL: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:core:frontal` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -105,7 +100,6 @@ const TIME_TRAINING_CORE_SAGITTAL: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:core:sagittal` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -187,7 +181,6 @@ So for example, for a pullup or a squat if you weigh 70kg and you added 30kg, yo
       units: ["kg", "lb"],
       initialFilter: {
         type: "minmax",
-        measureId: generateWeightedMeasureId({ movement, repMax }),
         minValue: { unit: "kg", value: 0 },
         maxValue: { unit: "kg", value: 100 },
       },
@@ -256,11 +249,6 @@ So for example, for a pullup if you weigh 70kg and you removed 30kg, you'd recor
         units: ["kg", "lb"],
         initialFilter: {
           type: "minmax",
-          measureId: generateUnilateralMeasureId({
-            movement,
-            repMax,
-            dominantSide,
-          }),
           minValue: { unit: "kg", value: 0 },
           maxValue: { unit: "kg", value: 100 },
         },
@@ -301,7 +289,6 @@ for (const movement of MAX_REPS_MOVEMENTS) {
     units: ["count"],
     initialFilter: {
       type: "minmax",
-      measureId: generateMaxRepMeasureId(movement),
       minValue: { unit: "count", value: 0 },
       maxValue: { unit: "count", value: 20 },
     },
@@ -356,10 +343,6 @@ for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
       units: ["count"],
       initialFilter: {
         type: "minmax",
-        measureId: generateUnilateralMaxRepMeasureId({
-          movement,
-          dominantSide,
-        }),
         minValue: { unit: "count", value: 0 },
         maxValue: { unit: "count", value: 20 },
       },
@@ -403,7 +386,6 @@ for (const movement of ISOMETRIC_MOVEMENTS) {
     units: ["second"],
     initialFilter: {
       type: "minmax",
-      measureId: generateIsometricMovementMeasureId(movement),
       minValue: { unit: "second", value: 0 },
       maxValue: { unit: "second", value: 120 },
     },
@@ -454,10 +436,6 @@ for (const movement of ISOMETRIC_UNILATERAL_MOVEMENTS) {
       units: ["second"],
       initialFilter: {
         type: "minmax",
-        measureId: generateIsometricUnilateralMeasureId({
-          movement,
-          dominantSide,
-        }),
         minValue: { unit: "second", value: 0 },
         maxValue: { unit: "second", value: 120 },
       },
@@ -497,7 +475,6 @@ for (const movement of ENDURANCE_MOVEMENTS) {
     units: ["second"],
     initialFilter: {
       type: "minmax",
-      measureId: generateEnduranceMovementMeasureId(movement),
       minValue: { unit: "second", value: 0 },
       maxValue: { unit: "second", value: 120 },
     },

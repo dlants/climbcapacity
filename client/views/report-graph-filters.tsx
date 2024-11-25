@@ -49,7 +49,7 @@ export function initModel({
     const initialFilter = initialFilters[measureId];
     filters.push({
       enabled: initialFilter.enabled,
-      model: Filter.initModel(initialFilter),
+      model: Filter.initModel({ measureId, initialFilter }),
     });
   }
   return { measureStats, filters };

@@ -108,7 +108,6 @@ For example, if you've only ever done one V5, 2V4s and 2V3s, this would be V3`;
         : ["ircra", "vermin", "font"],
     initialFilter: {
       type: "minmax",
-      measureId: measureId,
       minValue: { unit: "ircra", value: 1 as IRCRAGrade },
       maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
     },

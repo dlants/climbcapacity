@@ -22,33 +22,31 @@ export const GRIPS = [
 export type Grip = (typeof GRIPS)[number];
 
 export const MEASURES: MeasureSpec[] = [];
-const TIME_TRAINING_OPEN: MeasureSpec = {
-  id: `time-training:open` as MeasureId,
-  name: `Time training open grip`,
+const TIME_TRAINING_STRENGTH_OPEN: MeasureSpec = {
+  id: `time-training:strength:open` as MeasureId,
+  name: `Time training open grip strength`,
   description: ``,
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:open` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
 };
-MEASURES.push(TIME_TRAINING_OPEN);
+MEASURES.push(TIME_TRAINING_STRENGTH_OPEN);
 
-const TIME_TRAINING_HALF: MeasureSpec = {
-  id: `time-training:half-crimp` as MeasureId,
-  name: `Time training half-crimp grip`,
+const TIME_TRAINING_STRENGTH_HALF: MeasureSpec = {
+  id: `time-training:strength:half-crimp` as MeasureId,
+  name: `Time training half-crimp grip strength`,
   description: ``,
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:half-crimp` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
 };
-MEASURES.push(TIME_TRAINING_HALF);
+MEASURES.push(TIME_TRAINING_STRENGTH_HALF);
 
 const TIME_TRAINING_FULL: MeasureSpec = {
   id: `time-training:full-crimp` as MeasureId,
@@ -57,7 +55,6 @@ const TIME_TRAINING_FULL: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:full-crimp` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -71,7 +68,6 @@ const TIME_TRAINING_PINCH: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:pinch` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -79,21 +75,21 @@ const TIME_TRAINING_PINCH: MeasureSpec = {
 MEASURES.push(TIME_TRAINING_PINCH);
 
 const MEASURE_MAP: { [grip in Grip]: MeasureId } = {
-  "back-3-crimp": TIME_TRAINING_HALF.id,
-  "back-3-drag": TIME_TRAINING_OPEN.id,
-  "front-3-crimp": TIME_TRAINING_HALF.id,
-  "front-3-drag": TIME_TRAINING_OPEN.id,
+  "back-3-crimp": TIME_TRAINING_STRENGTH_HALF.id,
+  "back-3-drag": TIME_TRAINING_STRENGTH_OPEN.id,
+  "front-3-crimp": TIME_TRAINING_STRENGTH_HALF.id,
+  "front-3-drag": TIME_TRAINING_STRENGTH_OPEN.id,
   "full-crimp": TIME_TRAINING_FULL.id,
-  "half-crimp": TIME_TRAINING_HALF.id,
+  "half-crimp": TIME_TRAINING_STRENGTH_HALF.id,
   "mono-index-crimp": TIME_TRAINING_FULL.id,
-  "mono-index-drag": TIME_TRAINING_OPEN.id,
-  "mono-middle-crimp": TIME_TRAINING_HALF.id,
-  "mono-middle-drag": TIME_TRAINING_OPEN.id,
-  "mono-pinky-crimp": TIME_TRAINING_HALF.id,
-  "mono-pinky-drag": TIME_TRAINING_OPEN.id,
-  "mono-ring-crimp": TIME_TRAINING_HALF.id,
-  "mono-ring-drag": TIME_TRAINING_OPEN.id,
-  open: TIME_TRAINING_OPEN.id,
+  "mono-index-drag": TIME_TRAINING_STRENGTH_OPEN.id,
+  "mono-middle-crimp": TIME_TRAINING_STRENGTH_HALF.id,
+  "mono-middle-drag": TIME_TRAINING_STRENGTH_OPEN.id,
+  "mono-pinky-crimp": TIME_TRAINING_STRENGTH_HALF.id,
+  "mono-pinky-drag": TIME_TRAINING_STRENGTH_OPEN.id,
+  "mono-ring-crimp": TIME_TRAINING_STRENGTH_HALF.id,
+  "mono-ring-drag": TIME_TRAINING_STRENGTH_OPEN.id,
+  open: TIME_TRAINING_STRENGTH_OPEN.id,
   pinch: TIME_TRAINING_PINCH.id,
 };
 
@@ -160,7 +156,6 @@ If you weigh 70kg, and you added 30kg, you'd record 100kg.
         units: ["kg", "lb"],
         initialFilter: {
           type: "minmax",
-          measureId: id,
           minValue: { unit: "kg", value: 10 },
           maxValue: { unit: "kg", value: 100 },
         },
@@ -176,7 +171,6 @@ const TIME_TRAINING_REPEATERS_OPEN: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:repeaters:open` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -190,7 +184,6 @@ const TIME_TRAINING_REPEATERS_HALF: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:repeaters:half-crimp` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -204,7 +197,6 @@ const TIME_TRAINING_REPEATERS_FULL: MeasureSpec = {
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    measureId: `time-training:repeaters:full-crimp` as MeasureId,
     minValue: { unit: "year", value: 0 },
     maxValue: { unit: "year", value: 5 },
   },
@@ -265,7 +257,6 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
       units: ["second"],
       initialFilter: {
         type: "minmax",
-        measureId: measureId,
         minValue: { unit: "second", value: 10 },
         maxValue: { unit: "second", value: 200 },
       },
@@ -325,7 +316,6 @@ Record the maximum successful weight.
           units: ["kg", "lb"],
           initialFilter: {
             type: "minmax",
-            measureId: id,
             minValue: { unit: "kg", value: 10 },
             maxValue: { unit: "kg", value: 100 },
           },
@@ -382,7 +372,6 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
       units: ["mm"],
       initialFilter: {
         type: "minmax",
-        measureId: generateMinEdgeHangId({ duration, gripType }),
         minValue: { unit: "mm", value: 4 },
         maxValue: { unit: "mm", value: 20 },
       },
@@ -426,7 +415,6 @@ for (const gripType of MINEDGE_PULLUP_GRIPS) {
     units: ["mm"],
     initialFilter: {
       type: "minmax",
-      measureId: generateMinEdgePullupId({ gripType }),
       minValue: { unit: "mm", value: 3 },
       maxValue: { unit: "mm", value: 20 },
     },
@@ -473,7 +461,6 @@ for (const gripType of CONTINUOUS_HANG) {
       units: ["second"],
       initialFilter: {
         type: "minmax",
-        measureId: generateContinuousHangId({ gripType, edgeSize }),
         minValue: { unit: "second", value: 10 },
         maxValue: { unit: "second", value: 600 },
       },

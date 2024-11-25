@@ -3,6 +3,7 @@ import * as MinMaxFilter from "./min-max-filter";
 import * as ToggleFilter from "./toggle-filter";
 import { InitialFilter, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
+import { MeasureId } from "../../../iso/measures";
 
 export type Model =
   | {
@@ -54,13 +55,32 @@ export type Msg =
   | { type: "MINMAX_FILTER_MSG"; msg: MinMaxFilter.Msg }
   | { type: "TOGGLE_FILTER_MSG"; msg: ToggleFilter.Msg };
 
-export function initModel(initialFilter: InitialFilter): Model {
+export function initModel({
+  measureId,
+  initialFilter,
+}: {
+  measureId: MeasureId;
+  initialFilter: InitialFilter;
+}): Model {
   switch (initialFilter.type) {
     case "minmax":
-      return { type: "minmax", model: MinMaxFilter.initModel(initialFilter) };
+      return {
+        type: "minmax",
+        model: MinMaxFilter.initModel({
+          measureId,
+          minValue: initialFilter.minValue,
+          maxValue: initialFilter.maxValue,
+        }),
+      };
 
     case "toggle":
-      return { type: "toggle", model: ToggleFilter.initModel(initialFilter) };
+      return {
+        type: "toggle",
+        model: ToggleFilter.initModel({
+          measureId,
+          value: initialFilter.value,
+        }),
+      };
 
     default:
       assertUnreachable(initialFilter);
