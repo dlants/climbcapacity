@@ -167,6 +167,7 @@ function EditMeasureView({
   return (
     <div className={`measure-item`}>
       <label>{measure.name}</label>
+      <pre>{measure.description}</pre>
       <UnitInput.UnitInput model={model} dispatch={dispatch} />
       {measure.units.length > 1 && (
         <UnitToggle.view model={model} dispatch={dispatch} />
