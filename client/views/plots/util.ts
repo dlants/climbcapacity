@@ -40,6 +40,7 @@ export function tickFormatBins(
     case "mm":
     case "month":
     case "year":
+    case "training":
     case "count": {
       const min = thresholds[binIndex];
       const max = thresholds[binIndex + 1];
@@ -123,6 +124,8 @@ export function generateBinThresholds(
     case "ewbank":
     case "ircra":
       return lodash.range(min, max + 2).map((d) => d - 0.5);
+    case "training":
+      return [0.5, 1.5, 2.5, 3.5, 4.5];
     default:
       assertUnreachable(unit);
   }

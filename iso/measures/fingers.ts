@@ -23,41 +23,6 @@ export type Grip = (typeof GRIPS)[number];
 
 export const MEASURES: MeasureSpec[] = [];
 
-function createTimeTrainingStrengthMeasure(gripType: Grip): MeasureSpec {
-  return {
-    id: `time-training:strength:${gripType}` as MeasureId,
-    name: `Time training ${gripType} grip strength`,
-    description: ``,
-    units: ["year", "month"],
-    initialFilter: {
-      type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 5 },
-    },
-  };
-}
-
-const STRENGTH_TRAINING_MEASURE_MAP: { [grip in Grip]: MeasureSpec } = {
-  "back-3-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "back-3-drag": createTimeTrainingStrengthMeasure("open"),
-  "front-3-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "front-3-drag": createTimeTrainingStrengthMeasure("open"),
-  "full-crimp": createTimeTrainingStrengthMeasure("full-crimp"),
-  "half-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "mono-index-crimp": createTimeTrainingStrengthMeasure("full-crimp"),
-  "mono-index-drag": createTimeTrainingStrengthMeasure("open"),
-  "mono-middle-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "mono-middle-drag": createTimeTrainingStrengthMeasure("open"),
-  "mono-pinky-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "mono-pinky-drag": createTimeTrainingStrengthMeasure("open"),
-  "mono-ring-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  "mono-ring-drag": createTimeTrainingStrengthMeasure("open"),
-  open: createTimeTrainingStrengthMeasure("open"),
-  pinch: createTimeTrainingStrengthMeasure("pinch"),
-};
-
-MEASURES.push(...Object.values(STRENGTH_TRAINING_MEASURE_MAP));
-
 export const MAXHANG_GRIP_TYPE = [
   "back-3-crimp",
   "back-3-drag",
@@ -105,7 +70,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
       MEASURES.push({
         id,
         name: `MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip`,
-        trainingMeasureId: STRENGTH_TRAINING_MEASURE_MAP[gripType].id,
+        includeTrainingMeasure: true,
         description: `\
 Warm up thoroughly.
 
@@ -140,11 +105,13 @@ export function generateUnilateralMaxhangId({
   gripType: MaxHangGripType;
   dominantSide: DominantSide;
 }): MeasureId {
-  return `maxhang:${edgeSize}mm:${duration}s:${gripType}:${dominantSide}` as MeasureId;
+  return `maxhang-unilateral:${edgeSize}mm:${duration}s:${gripType}:${dominantSide}` as MeasureId;
 }
 
 export function parseUnilateralMaxhangId(measureId: MeasureId) {
-  const match = measureId.match(/^maxhang:(\d+)mm:(\d+)s:(.*):(.*)$/);
+  const match = measureId.match(
+    /^maxhang-unilateral:(\d+)mm:(\d+)s:(.*):(.*)$/,
+  );
   if (!match) {
     throw new Error("Invalid measureId format");
   }
@@ -170,7 +137,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
         MEASURES.push({
           id,
           name: `Unilateral MaxHang: ${edgeSize}mm, ${duration}s, ${gripType} grip, ${dominantSide} hand`,
-          trainingMeasureId: STRENGTH_TRAINING_MEASURE_MAP[gripType].id,
+          includeTrainingMeasure: true,
           description: `\
 Warm up thoroughly.
 
@@ -195,22 +162,6 @@ If you weigh 70kg, and you added 30kg, you'd record 100kg.
   }
 }
 
-function createTimeTrainingEnduranceMeasure(
-  gripType: RepeatersGrip,
-): MeasureSpec {
-  return {
-    id: `time-training:repeaters:${gripType}` as MeasureId,
-    name: `Time training repeaters in ${gripType} grip`,
-    description: ``,
-    units: ["year", "month"],
-    initialFilter: {
-      type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 5 },
-    },
-  };
-}
-
 export const REPEATERS_GRIPS = [
   "back-3-crimp",
   "back-3-drag",
@@ -222,19 +173,6 @@ export const REPEATERS_GRIPS = [
 ];
 export type RepeatersGrip = (typeof REPEATERS_GRIPS)[number];
 
-const ENDURANCE_TRAINING_MEASURE_MAP: { [grip in RepeatersGrip]: MeasureSpec } =
-  {
-    "back-3-crimp": createTimeTrainingEnduranceMeasure("back-3-crimp"),
-    "back-3-drag": createTimeTrainingEnduranceMeasure("back-3-drag"),
-    "front-3-crimp": createTimeTrainingEnduranceMeasure("front-3-crimp"),
-    "front-3-drag": createTimeTrainingEnduranceMeasure("front-3-drag"),
-    "full-crimp": createTimeTrainingEnduranceMeasure("full-crimp"),
-    "half-crimp": createTimeTrainingEnduranceMeasure("half-crimp"),
-    open: createTimeTrainingEnduranceMeasure("open"),
-  };
-
-MEASURES.push(...Object.values(ENDURANCE_TRAINING_MEASURE_MAP));
-
 export function generateRepeaterId({
   edgeSize,
   gripType,
@@ -242,11 +180,11 @@ export function generateRepeaterId({
   edgeSize: MaxHangEdgeSize;
   gripType: RepeatersGrip;
 }): MeasureId {
-  return `duration:7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId;
+  return `7-3repeaters:${edgeSize}mm:${gripType}` as MeasureId;
 }
 
 export function parseRepeaterId(measureId: MeasureId) {
-  const match = measureId.match(/^duration:7-3repeaters:(\d+)mm:(.*)$/);
+  const match = measureId.match(/^7-3repeaters:(\d+)mm:(.*)$/);
   if (!match) {
     throw new Error("Invalid repeater measureId format");
   }
@@ -262,7 +200,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
     const measureId = generateRepeaterId({ edgeSize, gripType });
     MEASURES.push({
       id: measureId,
-      trainingMeasureId: ENDURANCE_TRAINING_MEASURE_MAP[gripType].id,
+      includeTrainingMeasure: true,
       name: `7:3 repeaters on ${edgeSize}mm ${gripType}(bodyweight)`,
       description: ``,
       units: ["second"],
@@ -315,7 +253,7 @@ for (const edgeSize of MAXHANG_EDGE_SIZE) {
         });
         MEASURES.push({
           id,
-          trainingMeasureId: STRENGTH_TRAINING_MEASURE_MAP[gripType].id,
+          includeTrainingMeasure: true,
           name: `Block Pull: ${edgeSize}mm, ${duration}s, ${gripType} grip on the ${dominantSide} side`,
           description: `\
 Warm up thoroughly.
@@ -336,32 +274,6 @@ Record the maximum successful weight.
   }
 }
 
-function createTimeTrainingMinEdgeMeasure(gripType: MinEdgeGrip): MeasureSpec {
-  return {
-    id: `time-training:min-edge:${gripType}` as MeasureId,
-    name: `Time training min edge in ${gripType} grip`,
-    description: ``,
-    units: ["year", "month"],
-    initialFilter: {
-      type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 5 },
-    },
-  };
-}
-
-const MIN_EDGE_TRAINING_MEASURE_MAP: { [grip in MinEdgeGrip]: MeasureSpec } = {
-  "back-3-crimp": createTimeTrainingMinEdgeMeasure("back-3-crimp"),
-  "back-3-drag": createTimeTrainingMinEdgeMeasure("back-3-drag"),
-  "front-3-crimp": createTimeTrainingMinEdgeMeasure("front-3-crimp"),
-  "front-3-drag": createTimeTrainingMinEdgeMeasure("front-3-drag"),
-  "full-crimp": createTimeTrainingMinEdgeMeasure("full-crimp"),
-  "half-crimp": createTimeTrainingMinEdgeMeasure("half-crimp"),
-  open: createTimeTrainingMinEdgeMeasure("open"),
-};
-
-MEASURES.push(...Object.values(MIN_EDGE_TRAINING_MEASURE_MAP));
-
 export function generateMinEdgeHangId({
   gripType,
   duration,
@@ -369,11 +281,11 @@ export function generateMinEdgeHangId({
   duration: MaxHangDuration;
   gripType: MinEdgeGrip;
 }): MeasureId {
-  return `min-edge-hang:${duration}s:${gripType}` as MeasureId;
+  return `min-edge:${duration}s:${gripType}` as MeasureId;
 }
 
 export function parseMinEdgeHangId(measureId: MeasureId) {
-  const match = measureId.match(/^min-edge-hang:(\d+)s:(.*)$/);
+  const match = measureId.match(/^min-edge:(\d+)s:(.*)$/);
   if (!match) {
     throw new Error("Invalid min edge hang measureId format");
   }
@@ -399,7 +311,7 @@ for (const duration of MAXHANG_DURATION) {
   for (const gripType of MIN_EDGE_GRIPS) {
     MEASURES.push({
       id: generateMinEdgeHangId({ duration, gripType }),
-      trainingMeasureId: MIN_EDGE_TRAINING_MEASURE_MAP[gripType].id,
+      includeTrainingMeasure: true,
       name: `Min Edge Hang: ${duration}s, ${gripType} grip`,
       description: `\
 Warm up thoroughly.
@@ -415,17 +327,6 @@ Find the smallest edge you can hang your bodyweight for ${duration}s using a ${g
     });
   }
 }
-
-const MIN_EDGE_PULLUPS_TRAINING_MEASURE_MAP: {
-  [grip in MinEdgePullupGrip]: MeasureSpec;
-} = {
-  "full-crimp": createTimeTrainingStrengthMeasure("full-crimp"),
-  "half-crimp": createTimeTrainingStrengthMeasure("half-crimp"),
-  open: createTimeTrainingStrengthMeasure("open"),
-  "front-3-drag": createTimeTrainingStrengthMeasure("open"),
-};
-
-MEASURES.push(...Object.values(MIN_EDGE_PULLUPS_TRAINING_MEASURE_MAP));
 
 export const MINEDGE_PULLUP_GRIPS = [
   "full-crimp",
@@ -455,7 +356,7 @@ export function parseMinEdgePullupId(measureId: MeasureId) {
 for (const gripType of MINEDGE_PULLUP_GRIPS) {
   MEASURES.push({
     id: generateMinEdgePullupId({ gripType }),
-    trainingMeasureId: MIN_EDGE_PULLUPS_TRAINING_MEASURE_MAP[gripType].id,
+    includeTrainingMeasure: true,
     name: `Smallest edge you can do 2 pullups on using ${gripType} grip.`,
     description: `Using a ${gripType} grip, find the smallest edge you can do 2 pullups on.
 
@@ -488,7 +389,7 @@ export const generateContinuousHangId = ({
 };
 
 export function parseContinuousHangId(measureId: MeasureId) {
-  const match = measureId.match(/^continuous-hang:(.*):(\d+)mm$/);
+  const match = measureId.match(/^continuoushang:(.*):(\d+)mm$/);
   if (!match) {
     throw new Error("Invalid continuous hang measureId format");
   }
@@ -503,7 +404,7 @@ for (const gripType of CONTINUOUS_HANG) {
   for (const edgeSize of MAXHANG_EDGE_SIZE) {
     MEASURES.push({
       id: generateContinuousHangId({ gripType, edgeSize }),
-      trainingMeasureId: ENDURANCE_TRAINING_MEASURE_MAP[gripType].id,
+      includeTrainingMeasure: true,
       name: `Longest continuous hang using ${gripType} grip.`,
       description: `Using a ${gripType} grip, hang for as long as possible without releasing.`,
       units: ["second"],

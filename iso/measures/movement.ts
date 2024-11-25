@@ -28,106 +28,6 @@ export type DominantSide = (typeof DOMINANT_SIDE)[number];
 
 export const MEASURES: MeasureSpec[] = [];
 
-const TIME_TRAINING_PRESS: MeasureSpec = {
-  id: `time-training:press` as MeasureId,
-  name: `Time training pressing movements (pushups, bench, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_PRESS);
-
-const TIME_TRAINING_PULL: MeasureSpec = {
-  id: `time-training:pull` as MeasureId,
-  name: `Time training pulling movements (pullups, rows, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_PULL);
-
-const TIME_TRAINING_HINGE: MeasureSpec = {
-  id: `time-training:hinge` as MeasureId,
-  name: `Time training hinge movements (kettlebell swings, deadlifts, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_HINGE);
-
-const TIME_TRAINING_SQUAT: MeasureSpec = {
-  id: `time-training:squat` as MeasureId,
-  name: `Time training squat movements (barbell squat, pistol squat, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_SQUAT);
-
-const TIME_TRAINING_CORE_FRONTAL: MeasureSpec = {
-  id: `time-training:core:frontal` as MeasureId,
-  name: `Time training frontal core movements (plank, veeup, hollow hold, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_CORE_FRONTAL);
-
-const TIME_TRAINING_CORE_SAGITTAL: MeasureSpec = {
-  id: `time-training:core:sagittal` as MeasureId,
-  name: `Time training sagittal core movements (sideplank, human flag, etc...)`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-MEASURES.push(TIME_TRAINING_CORE_SAGITTAL);
-const TRAINING_MEASURE_MAP: { [movement in Movement]: MeasureId | undefined } =
-  {
-    barbellsquat: TIME_TRAINING_SQUAT.id,
-    barhang: undefined,
-    benchpress: TIME_TRAINING_PRESS.id,
-    benchrow: TIME_TRAINING_PULL.id,
-    bodyweightsquat: TIME_TRAINING_SQUAT.id,
-    deadlift: TIME_TRAINING_HINGE.id,
-    dumbellpress: TIME_TRAINING_PRESS.id,
-    frontlever: TIME_TRAINING_CORE_FRONTAL.id,
-    hollowhold: TIME_TRAINING_CORE_FRONTAL.id,
-    humanflag: TIME_TRAINING_CORE_SAGITTAL.id,
-    lhang: TIME_TRAINING_CORE_FRONTAL.id,
-    overheadpress: TIME_TRAINING_PRESS.id,
-    pistolsquat: TIME_TRAINING_SQUAT.id,
-    plank: TIME_TRAINING_CORE_FRONTAL.id,
-    pullup: TIME_TRAINING_PULL.id,
-    pushup: TIME_TRAINING_PRESS.id,
-    sideplank: TIME_TRAINING_CORE_SAGITTAL.id,
-    standingrow: TIME_TRAINING_PULL.id,
-    veeup: TIME_TRAINING_CORE_FRONTAL.id,
-  };
-
 export const WEIGHTED_MOVEMENTS = [
   "barbellsquat",
   "benchpress",
@@ -172,7 +72,7 @@ for (const movement of WEIGHTED_MOVEMENTS) {
   for (const repMax of REP_MAX) {
     MEASURES.push({
       id: generateWeightedMeasureId({ movement, repMax }),
-      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+      includeTrainingMeasure: true,
       name: `Weighted ${movement}`,
       description: `Record total weight, including bodyweight for relevant exercises.
 
@@ -235,12 +135,13 @@ export const parseUnilateralWeightedMovementMeasureId = (
   }
   throw new Error(`Invalid MeasureId: ${measureId}`);
 };
+
 for (const movement of UNILATERAL_WEIGHTED_MOVEMENTS) {
   for (const repMax of REP_MAX) {
     for (const dominantSide of DOMINANT_SIDE) {
       MEASURES.push({
         id: generateUnilateralMeasureId({ movement, repMax, dominantSide }),
-        trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+        includeTrainingMeasure: true,
         name: `Weighted unilateral ${movement} ${dominantSide}`,
         description: `Record total weight, including bodyweight for relevant exercises.
 
@@ -283,7 +184,7 @@ export const parseMaxRepMeasureId = (measureId: MeasureId): MaxRepMovement => {
 for (const movement of MAX_REPS_MOVEMENTS) {
   MEASURES.push({
     id: generateMaxRepMeasureId(movement),
-    trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+    includeTrainingMeasure: true,
     name: `${movement} Max Reps`,
     description: `Maximum number of reps you can complete`,
     units: ["count"],
@@ -310,12 +211,12 @@ export const generateUnilateralMaxRepMeasureId = ({
 }: {
   movement: UnilateralMaxRepMovement;
   dominantSide: DominantSide;
-}) => `max-rep:${movement}:${dominantSide}` as MeasureId;
+}) => `max-rep-unilateral:${movement}:${dominantSide}` as MeasureId;
 
 export const parseUnilateralMaxRepMeasureId = (
   measureId: MeasureId,
 ): { movement: UnilateralMaxRepMovement; dominantSide: DominantSide } => {
-  const prefix = "max-rep:";
+  const prefix = "max-rep-unilateral:";
   if (measureId.startsWith(prefix)) {
     const segments = measureId.substring(prefix.length).split(":");
     if (
@@ -337,7 +238,7 @@ for (const movement of UNILATERAL_MAX_REPS_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
       id: generateUnilateralMaxRepMeasureId({ movement, dominantSide }),
-      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+      includeTrainingMeasure: true,
       name: `Unilateral ${movement} Max Reps ${dominantSide}`,
       description: `Maximum number of reps you can complete`,
       units: ["count"],
@@ -362,12 +263,12 @@ export type IsometricMovement = (typeof ISOMETRIC_MOVEMENTS)[number];
 
 export const generateIsometricMovementMeasureId = (
   movement: IsometricMovement,
-) => `isometric-duration:${movement}` as MeasureId;
+) => `isometric-hold:${movement}` as MeasureId;
 
 export const parseIsometricMovementMeasureId = (
   measureId: MeasureId,
 ): IsometricMovement => {
-  const prefix = "isometric-duration:";
+  const prefix = "isometric-hold:";
   if (measureId.startsWith(prefix)) {
     const movement = measureId.substring(prefix.length);
     if (ISOMETRIC_MOVEMENTS.includes(movement as IsometricMovement)) {
@@ -380,7 +281,7 @@ export const parseIsometricMovementMeasureId = (
 for (const movement of ISOMETRIC_MOVEMENTS) {
   MEASURES.push({
     id: generateIsometricMovementMeasureId(movement),
-    trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+    includeTrainingMeasure: true,
     name: `${movement} Max Duration`,
     description: ``,
     units: ["second"],
@@ -403,12 +304,12 @@ export const generateIsometricUnilateralMeasureId = ({
 }: {
   movement: IsometricUnilateralMovement;
   dominantSide: DominantSide;
-}) => `isometric-duration:${movement}:${dominantSide}` as MeasureId;
+}) => `isometric-hold-unilateral:${movement}:${dominantSide}` as MeasureId;
 
 export const parseIsometricUnilateralMovementMeasureId = (
   measureId: MeasureId,
 ): { movement: IsometricUnilateralMovement; dominantSide: DominantSide } => {
-  const prefix = "isometric-duration:";
+  const prefix = "isometric-hold-unilateral:";
   if (measureId.startsWith(prefix)) {
     const segments = measureId.substring(prefix.length).split(":");
     if (
@@ -430,7 +331,7 @@ for (const movement of ISOMETRIC_UNILATERAL_MOVEMENTS) {
   for (const dominantSide of DOMINANT_SIDE) {
     MEASURES.push({
       id: generateIsometricUnilateralMeasureId({ movement, dominantSide }),
-      trainingMeasureId: TRAINING_MEASURE_MAP[movement],
+      includeTrainingMeasure: true,
       name: `${movement} Max Duration ${dominantSide}`,
       description: ``,
       units: ["second"],
@@ -471,6 +372,7 @@ for (const movement of ENDURANCE_MOVEMENTS) {
   MEASURES.push({
     id: generateEnduranceMovementMeasureId(movement),
     name: `${movement} Max Duration`,
+    includeTrainingMeasure: true,
     description: ``,
     units: ["second"],
     initialFilter: {

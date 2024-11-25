@@ -10,7 +10,7 @@ import {
   MeasureId,
   INPUT_MEASURES,
   PERFORMANCE_MEASURES,
-  TIME_TRAINING_MEASURES,
+  generateTrainingMeasureId,
 } from "../../iso/measures";
 import {
   adjustGrade,
@@ -29,7 +29,6 @@ import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
 
 const INPUT_MEASURE_IDS = ANTHRO_MEASURES.map((s) => s.id);
-const TIME_TRAINING_MEASURE_IDS = TIME_TRAINING_MEASURES.map((s) => s.id);
 const OUTPUT_MEASURE_IDS = PERFORMANCE_MEASURES.map((s) => s.id);
 
 type PlotModel = {
@@ -170,8 +169,8 @@ function getPlots(model: Model) {
       };
     }
 
-    if (otherMeasureSpec.trainingMeasureId) {
-      initialFilters[otherMeasureSpec.trainingMeasureId] = {
+    if (otherMeasureSpec.includeTrainingMeasure) {
+      initialFilters[generateTrainingMeasureId(otherMeasureSpec.id)] = {
         enabled: false,
         type: "minmax",
         minValue: { unit: "month", value: 0 },

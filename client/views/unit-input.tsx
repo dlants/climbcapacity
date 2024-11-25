@@ -51,6 +51,7 @@ type UnitInputMap = {
   ircra: string;
   "sex-at-birth": "female" | "male";
   count: string;
+  training: string;
 };
 
 type UnitInput = UnitInputMap[UnitType];
@@ -142,6 +143,12 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
         unit,
         value: "female",
       };
+
+    case "training":
+      return {
+        unit,
+        value: 1,
+      };
     default:
       assertUnreachable(unit);
   }
@@ -174,6 +181,7 @@ function getInitialInput(
     case "ewbank":
     case "ircra":
     case "count":
+    case "training":
       return targetValue ? targetValue.value.toString() : "";
     case "inch":
       const { feet, inches } = inchesToFeetAndInches(
@@ -332,6 +340,21 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
           >,
         };
       }
+
+      case "training": {
+        if (
+          ["1", "2", "3", "4", "5"].includes(input as UnitInputMap["training"])
+        )
+          return { status: "fail", error: `Invalid training value ${input}` };
+        return {
+          status: "success",
+          value: {
+            unit,
+            value: parseInt(input as UnitInputMap["training"]),
+          } as Extract<UnitValue, { unit: UnitName }>,
+        };
+      }
+
       case "vermin": {
         if (
           !VGRADE.includes(
@@ -481,6 +504,23 @@ const InnerUnitInput = ({
             value={model.unitInput as string}
             onChange={(e) => handleChange(e.target.value)}
           />
+          <span>{model.selectedUnit}</span>
+        </span>
+      );
+
+    case "training":
+      return (
+        <span>
+          <select
+            value={model.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {[1, 2, 3, 4, 5].map((val) => (
+              <option key={val} value={val}>
+                {val}
+              </option>
+            ))}
+          </select>
           <span>{model.selectedUnit}</span>
         </span>
       );

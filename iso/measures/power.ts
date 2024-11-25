@@ -4,40 +4,7 @@ import { DOMINANT_SIDE, DominantSide } from "./movement.js";
 export const POWER_MOVEMENT = ["verticaljump", "horizontaljump"] as const;
 export type PowerMovement = (typeof POWER_MOVEMENT)[number];
 
-const TIME_TRAINING_JUMP: MeasureSpec = {
-  id: `time-training:jump` as MeasureId,
-  name: `Time training jumping movements`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-
-const TIME_TRAINING_CAMPUS_REACH: MeasureSpec = {
-  id: `time-training:campus-reach` as MeasureId,
-  name: `Time training the campus reach`,
-  description: ``,
-  units: ["year", "month"],
-  initialFilter: {
-    type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 5 },
-  },
-};
-
-const POWER_MOVEMENT_TRAINING_MAP: { [movement in PowerMovement]: MeasureId } =
-  {
-    verticaljump: TIME_TRAINING_JUMP.id,
-    horizontaljump: TIME_TRAINING_JUMP.id,
-  };
-
-export const MEASURES: MeasureSpec[] = [
-  TIME_TRAINING_JUMP,
-  TIME_TRAINING_CAMPUS_REACH,
-];
+export const MEASURES: MeasureSpec[] = [];
 
 for (const movement of POWER_MOVEMENT) {
   MEASURES.push(createMeasureSpec(movement));
@@ -61,7 +28,7 @@ export function parsePowerMeasureId(measureId: MeasureId): PowerMovement {
 function createMeasureSpec(movement: PowerMovement): MeasureSpec {
   return {
     id: generatePowerMeasureId(movement),
-    trainingMeasureId: POWER_MOVEMENT_TRAINING_MAP[movement],
+    includeTrainingMeasure: true,
     name: `Maximum distance`,
     description: ``,
     units: ["m", "cm", "inch"],
@@ -82,26 +49,18 @@ export const UNILATERAL_POWER_MOVEMENT = [
 export type UnilateralPowerMovement =
   (typeof UNILATERAL_POWER_MOVEMENT)[number];
 
-const UNILATERAL_POWER_MOVEMENT_TRAINING_MAP: {
-  [movement in (typeof UNILATERAL_POWER_MOVEMENT)[number]]: MeasureId;
-} = {
-  verticaljump: TIME_TRAINING_JUMP.id,
-  horizontaljump: TIME_TRAINING_JUMP.id,
-  campusreach: TIME_TRAINING_CAMPUS_REACH.id,
-};
-
 export function generateUnilateralPowerMeasureId(
   movement: (typeof UNILATERAL_POWER_MOVEMENT)[number],
   dominantSide: (typeof DOMINANT_SIDE)[number],
 ): MeasureId {
-  return `power:${movement}:${dominantSide}` as MeasureId;
+  return `power-unilateral:${movement}:${dominantSide}` as MeasureId;
 }
 
 export function parseUnilateralPowerMeasureId(measureId: MeasureId): {
   movement: (typeof UNILATERAL_POWER_MOVEMENT)[number];
   dominantSide: (typeof DOMINANT_SIDE)[number];
 } {
-  const prefix = "power:";
+  const prefix = "power-unilateral:";
   if (measureId.startsWith(prefix)) {
     const segments = measureId.substring(prefix.length).split(":");
     if (
@@ -126,7 +85,7 @@ function createUnilateralMeasureSpec(
 ): MeasureSpec {
   return {
     id: generateUnilateralPowerMeasureId(movement, dominantSide),
-    trainingMeasureId: UNILATERAL_POWER_MOVEMENT_TRAINING_MAP[movement],
+    includeTrainingMeasure: true,
     name: `${movement} ${dominantSide}`,
     description: ``,
     units: ["m", "cm", "inch"],

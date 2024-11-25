@@ -15,7 +15,7 @@ export type MeasureId = string & { __brand: "measureId" };
 
 export type MeasureSpec = {
   id: MeasureId;
-  trainingMeasureId?: MeasureId;
+  includeTrainingMeasure: boolean;
   name: string;
   description: string;
   /** units[0] is the default
@@ -41,6 +41,7 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
     name: "height",
+    includeTrainingMeasure: false,
     description: "Your height",
     units: ["m", "cm", "inch"],
     initialFilter: {
@@ -52,6 +53,7 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "armspan" as MeasureId,
     name: "Arm span",
+    includeTrainingMeasure: false,
     description: "Your arm span, fingertip to fingertip",
     units: ["m", "cm", "inch"],
     initialFilter: {
@@ -62,7 +64,8 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   },
   {
     id: "standing-reach" as MeasureId,
-    name: "vertical reach",
+    name: "standing reach",
+    includeTrainingMeasure: false,
     description:
       "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
     units: ["m", "cm", "inch"],
@@ -77,6 +80,7 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
     id: "weight" as MeasureId,
     name: "weight",
     description: "Your weight",
+    includeTrainingMeasure: false,
     units: ["kg", "lb"],
     initialFilter: {
       type: "minmax",
@@ -87,6 +91,7 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "sex-at-birth" as MeasureId,
     name: "Sex assigned at birth",
+    includeTrainingMeasure: false,
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
     initialFilter: {
@@ -98,57 +103,52 @@ export const ANTHRO_MEASURES: MeasureSpec[] = [
 
 MEASURES.push(...ANTHRO_MEASURES);
 
-export const TIME_TRAINING_MEASURES: MeasureSpec[] = [
-  {
-    id: "time-climbing" as MeasureId,
-    name: "How long have you been climbing?",
-    description: `Count time during which you've been going at least once a week.
+MEASURES.push({
+  id: "time-climbing" as MeasureId,
+  includeTrainingMeasure: false,
+  name: "How long have you been climbing?",
+  description: `Count time during which you've been going at least once a week.
 
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
 `,
-    units: ["year", "month"],
-    initialFilter: {
-      type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 15 },
-    },
+  units: ["year", "month"],
+  initialFilter: {
+    type: "minmax",
+    minValue: { unit: "year", value: 0 },
+    maxValue: { unit: "year", value: 15 },
   },
-  {
-    id: "time-training" as MeasureId,
-    name: "How long have you been training for climbing?",
-    description: `Count time during which you've been engaging in consistent deliberate practice at least once a week.
+});
 
-Examples that count as deliberate practice:
- - hangboarding as part of your warmup
- - doing supplemental stretching or strength training exercise
- - choosing one day a week to work on climbs of a specific style or difficulty level
-`,
-    units: ["year", "month"],
-    initialFilter: {
-      type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 15 },
-    },
-  },
-  {
-    id: "time-strength-training" as MeasureId,
-    name: "Time spent strength training.",
-    description: `Count time during which you were consistently practicing strength training at least once a week.
+export function generateTrainingMeasureId(id: MeasureId): MeasureId {
+  return ("training:" + id) as MeasureId;
+}
 
-Examples of activities that count as strength training practice:
-- doing movements with weights (dumbells, kettlebells, barbells) like presses, lifts, etc.
-- doing movements at high intensity (1-10RM).
-- overloading the movements, so progressing the load over time.
+export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
+  return {
+    id: generateTrainingMeasureId(spec.id),
+    includeTrainingMeasure: false,
+    name: `Training: ${spec.name}`,
+    description: `How experienced are you with this or similar measures?
+
+1 - never tried it or only tried it sporadically
+2 - trained it on and off
+3 - trained it regularly
+4 - highly trained in it
 `,
-    units: ["year", "month"],
+    units: ["training"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "year", value: 0 },
-      maxValue: { unit: "year", value: 15 },
+      minValue: { unit: "training", value: 1 },
+      maxValue: { unit: "training", value: 4 },
     },
-  },
-];
-MEASURES.push(...TIME_TRAINING_MEASURES);
+  };
+}
+
+for (const measure of [...MEASURES]) {
+  if (measure.includeTrainingMeasure) {
+    MEASURES.push(generateTrainingMeasure(measure));
+  }
+}
 
 export const MEASURE_MAP: {
   [measureId: MeasureId]: MeasureSpec;

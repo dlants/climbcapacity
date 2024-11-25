@@ -1,5 +1,9 @@
 import React from "react";
-import { MEASURE_MAP, MeasureId } from "../../../iso/measures";
+import {
+  generateTrainingMeasureId,
+  MEASURE_MAP,
+  MeasureId,
+} from "../../../iso/measures";
 import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
 import * as UnitInput from "../unit-input";
@@ -69,9 +73,9 @@ export const initModel = ({
   );
 
   const measure = MEASURE_MAP[measureId];
-  const trainingMeasureId = measure.trainingMeasureId;
   let trainingMeasure;
-  if (trainingMeasureId) {
+  if (measure.includeTrainingMeasure) {
+    const trainingMeasureId = generateTrainingMeasureId(measureId);
     let trainingInputmodel = immer.castDraft(
       UnitInput.initModel(
         trainingMeasureId,

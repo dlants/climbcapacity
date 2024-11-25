@@ -316,6 +316,7 @@ function getMinInputValue(value: UnitValue) {
         value: (value.value * 0.9) as IRCRAGrade,
       };
     case "sex-at-birth":
+    case "training":
       return value;
     default:
       assertUnreachable(value);
@@ -383,6 +384,7 @@ function getMaxInputValue(value: UnitValue) {
         value: (value.value * 1.1) as IRCRAGrade,
       };
     case "sex-at-birth":
+    case "training":
       return value;
     default:
       assertUnreachable(value);

@@ -120,6 +120,8 @@ export function convertToStandardUnit(unit: UnitValue): number {
         default:
           assertUnreachable(unit);
       }
+    case "training":
+      return unit.value;
     case "count":
       return unit.value;
     default:
@@ -184,6 +186,9 @@ export function convertToTargetUnit(
       };
     case "count":
       return { unit: "count", value: normalizedValue };
+    case "training":
+      return { unit: "training", value: normalizedValue as Training };
+
     default:
       assertUnreachable(targetUnit);
   }
@@ -195,6 +200,7 @@ export function castUnit(
   return convertToTargetUnit(convertToStandardUnit(unitValue), targetUnit);
 }
 
+export type Training = 1 | 2 | 3 | 4;
 export type UnitValue =
   | {
       unit: "second";
@@ -261,6 +267,10 @@ export type UnitValue =
       value: "female" | "male";
     }
   | {
+      unit: "training";
+      value: Training;
+    }
+  | {
       unit: "count";
       value: number;
     };
@@ -302,6 +312,8 @@ export function unitValueToString(unitValue: UnitValue): string {
       return unitValue.value;
     case "count":
       return unitValue.value.toString();
+    case "training":
+      return unitValue.value.toString();
     default:
       assertUnreachable(unitValue);
   }
@@ -339,6 +351,8 @@ export function toLinear(unitValue: UnitValue): number {
       return EWBANK.indexOf(unitValue.value);
     case "sex-at-birth":
       return ["female", "male"].indexOf(unitValue.value);
+    case "training":
+      return unitValue.value;
     default:
       assertUnreachable(unitValue);
   }

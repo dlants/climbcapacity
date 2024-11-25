@@ -47,6 +47,8 @@ export function generateDotplotTicks(
     case "year":
     case "count":
       return null;
+    case "training":
+      return [1, 2, 3, 4];
     case "vermin":
     case "font":
     case "frenchsport":
@@ -176,6 +178,7 @@ export function formatTicks(value: number, unit: UnitType | undefined): string {
     case "mm":
     case "month":
     case "year":
+    case "training":
     case "count": {
       return fmt.format(value);
     }

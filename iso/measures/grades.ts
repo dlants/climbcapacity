@@ -80,6 +80,7 @@ export function synthesizeGradeMeasure(
 
   return {
     id: measureId,
+    includeTrainingMeasure: false,
     name: `${stat} ${context.type} grade, ${context.location}`,
     description: (() => {
       switch (stat) {

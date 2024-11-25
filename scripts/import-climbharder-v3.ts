@@ -11,10 +11,11 @@ import {
   Grip,
   generateMaxhangId,
   generateMinEdgeHangId,
+  generateRepeaterId,
 } from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade } from "../iso/grade.js";
 import mongodb from "mongodb";
-import { MeasureId } from "../iso/measures/index.js";
+import { generateTrainingMeasureId, MeasureId } from "../iso/measures/index.js";
 import { generateGradeMeasureId } from "../iso/measures/grades.js";
 import {
   generateIsometricMovementMeasureId,
@@ -223,165 +224,6 @@ table.slice(1).forEach((row, idx) => {
     );
   } catch {}
 
-  const hangboardWeekFreqStr = row[16];
-  const hangboardWeekFreq = parseFloat(hangboardWeekFreqStr);
-  const hangboardGripsStr = row[17];
-  const gripsUsed: Grip[] = [];
-  if (hangboardGripsStr.match(/open/i)) {
-    gripsUsed.push("open");
-  }
-
-  if (hangboardGripsStr.match(/half/i)) {
-    gripsUsed.push("half-crimp");
-  }
-
-  if (hangboardGripsStr.match(/full/i)) {
-    gripsUsed.push("full-crimp");
-  }
-
-  if (hangboardGripsStr.match(/pinch/i)) {
-    gripsUsed.push("pinch");
-  }
-
-  const hangboardStyleStr = row[18];
-  const hangboardStyle: ("maxweight" | "minedge" | "repeater")[] = [];
-  if (hangboardStyleStr.match(/weight/i)) {
-    hangboardStyle.push("maxweight");
-  }
-  if (hangboardStyleStr.match(/min/i)) {
-    hangboardStyle.push("minedge");
-  }
-  if (hangboardStyleStr.match(/repeater/i)) {
-    hangboardStyle.push("repeater");
-  }
-
-  if (!isNaN(hangboardWeekFreq)) {
-    if (hangboardWeekFreq == 0 || isNaN(climbingAge)) {
-      addMeasure(`time-training:open` as MeasureId, { unit: "year", value: 0 });
-      addMeasure(`time-training:half-crimp` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:full-crimp` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:pinch` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:repeaters:open` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:repeaters:half-crimp` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:repeaters:full-crimp` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-    } else {
-      const trainingAge = climbingAge / 2;
-      if (hangboardStyle.includes("maxweight") && gripsUsed.includes("open")) {
-        addMeasure(`time-training:open` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:open` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (
-        hangboardStyle.includes("maxweight") &&
-        gripsUsed.includes("half-crimp")
-      ) {
-        addMeasure(`time-training:half-crimp` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:half-crimp` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (
-        hangboardStyle.includes("maxweight") &&
-        gripsUsed.includes("full-crimp")
-      ) {
-        addMeasure(`time-training:full-crimp` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:full-crimp` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (hangboardStyle.includes("maxweight") && gripsUsed.includes("pinch")) {
-        addMeasure(`time-training:pinch` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:pinch` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (hangboardStyle.includes("repeater") && gripsUsed.includes("open")) {
-        addMeasure(`time-training:repeaters:open` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:repeaters:open` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (
-        hangboardStyle.includes("repeater") &&
-        gripsUsed.includes("half-crimp")
-      ) {
-        addMeasure(`time-training:repeaters:half-crimp` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:repeaters:half-crimp` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-
-      if (
-        hangboardStyle.includes("repeater") &&
-        gripsUsed.includes("full-crimp")
-      ) {
-        addMeasure(`time-training:repeaters:full-crimp` as MeasureId, {
-          unit: "year",
-          value: trainingAge,
-        });
-      } else {
-        addMeasure(`time-training:repeaters:full-crimp` as MeasureId, {
-          unit: "year",
-          value: 0,
-        });
-      }
-    }
-  }
-
   const maxWeight18mmHalfStr = row[19];
   {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
@@ -399,7 +241,6 @@ table.slice(1).forEach((row, idx) => {
       );
     }
   }
-
   const maxWeight18mmOpenStr = row[20];
   {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
@@ -441,109 +282,6 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(generateMinEdgeHangId({ duration: 10, gripType: "open" }), {
         unit: "mm",
         value: edgeSize,
-      });
-    }
-  }
-
-  const strengthTrainingTypeStr = row[29];
-  const strengthTrainingStyle: (
-    | "antagonist"
-    | "pull"
-    | "push"
-    | "legs"
-    | "core"
-  )[] = [];
-  if (strengthTrainingTypeStr.match(/antagonist/i)) {
-    strengthTrainingStyle.push("antagonist");
-  }
-  if (strengthTrainingTypeStr.match(/pulling/i)) {
-    strengthTrainingStyle.push("pull");
-  }
-  if (strengthTrainingTypeStr.match(/pushing/i)) {
-    strengthTrainingStyle.push("push");
-  }
-  if (strengthTrainingTypeStr.match(/legs/i)) {
-    strengthTrainingStyle.push("legs");
-  }
-  if (strengthTrainingTypeStr.match(/core/i)) {
-    strengthTrainingStyle.push("core");
-  }
-
-  if (strengthTrainingStyle.length == 0) {
-    addMeasure(`time-training:press` as MeasureId, { unit: "year", value: 0 });
-    addMeasure(`time-training:pull` as MeasureId, { unit: "year", value: 0 });
-    addMeasure(`time-training:hinge` as MeasureId, { unit: "year", value: 0 });
-    addMeasure(`time-training:squat` as MeasureId, { unit: "year", value: 0 });
-    addMeasure(`time-training:core:frontal` as MeasureId, {
-      unit: "year",
-      value: 0,
-    });
-    addMeasure(`time-training:core:sagittal` as MeasureId, {
-      unit: "year",
-      value: 0,
-    });
-  } else if (!isNaN(climbingAge)) {
-    const trainingAge = climbingAge / 2;
-    if (
-      strengthTrainingStyle.includes("antagonist") ||
-      strengthTrainingStyle.includes("push")
-    ) {
-      addMeasure(`time-training:press` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    } else {
-      addMeasure(`time-training:press` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    }
-
-    if (strengthTrainingStyle.includes("pull")) {
-      addMeasure(`time-training:pull` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    } else {
-      addMeasure(`time-training:pull` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    }
-
-    if (strengthTrainingStyle.includes("legs")) {
-      addMeasure(`time-training:squat` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-      addMeasure(`time-training:hinge` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    } else {
-      addMeasure(`time-training:squat` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:hinge` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-    }
-
-    if (strengthTrainingStyle.includes("core")) {
-      addMeasure(`time-training:core:frontal` as MeasureId, {
-        unit: "year",
-        value: trainingAge,
-      });
-    } else {
-      addMeasure(`time-training:core:frontal` as MeasureId, {
-        unit: "year",
-        value: 0,
-      });
-      addMeasure(`time-training:core:sagittal` as MeasureId, {
-        unit: "year",
-        value: 0,
       });
     }
   }
@@ -594,6 +332,255 @@ table.slice(1).forEach((row, idx) => {
       unit: "second",
       value: maxLhang,
     });
+  }
+
+  const hangboardWeekFreqStr = row[16];
+  const hangboardWeekFreq = parseFloat(hangboardWeekFreqStr);
+  const hangboardGripsStr = row[17];
+  const gripsUsed: Grip[] = [];
+  if (hangboardGripsStr.match(/open/i)) {
+    gripsUsed.push("open");
+  }
+
+  if (hangboardGripsStr.match(/half/i)) {
+    gripsUsed.push("half-crimp");
+  }
+
+  if (hangboardGripsStr.match(/full/i)) {
+    gripsUsed.push("full-crimp");
+  }
+
+  if (hangboardGripsStr.match(/pinch/i)) {
+    gripsUsed.push("pinch");
+  }
+
+  const hangboardStyleStr = row[18];
+  const hangboardStyle: ("maxweight" | "minedge" | "repeater")[] = [];
+  if (hangboardStyleStr.match(/weight/i)) {
+    hangboardStyle.push("maxweight");
+  }
+  if (hangboardStyleStr.match(/min/i)) {
+    hangboardStyle.push("minedge");
+  }
+  if (hangboardStyleStr.match(/repeater/i)) {
+    hangboardStyle.push("repeater");
+  }
+
+  if (!isNaN(hangboardWeekFreq)) {
+    if (hangboardWeekFreq == 0 || isNaN(climbingAge)) {
+      addMeasure(
+        generateTrainingMeasureId(
+          generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+      addMeasure(
+        generateTrainingMeasureId(
+          generateMaxhangId({
+            edgeSize: 18,
+            duration: 10,
+            gripType: "half-crimp",
+          }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+      addMeasure(
+        generateTrainingMeasureId(
+          generateRepeaterId({ edgeSize: 18, gripType: "open" }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+      addMeasure(
+        generateTrainingMeasureId(
+          generateRepeaterId({ edgeSize: 18, gripType: "half-crimp" }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+    } else {
+      const trainingLevel = 2; // Assuming a default training level of 2 for simplicity
+      if (hangboardStyle.includes("maxweight") && gripsUsed.includes("open")) {
+        addMeasure(
+          generateTrainingMeasureId(
+            generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+          ),
+          {
+            unit: "training",
+            value: trainingLevel,
+          },
+        );
+      } else {
+        addMeasure(
+          generateTrainingMeasureId(
+            generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+          ),
+          {
+            unit: "training",
+            value: 1,
+          },
+        );
+      }
+
+      if (
+        hangboardStyle.includes("maxweight") &&
+        gripsUsed.includes("half-crimp")
+      ) {
+        addMeasure(
+          generateTrainingMeasureId(
+            generateMaxhangId({
+              edgeSize: 18,
+              duration: 10,
+              gripType: "half-crimp",
+            }),
+          ),
+          {
+            unit: "training",
+            value: trainingLevel,
+          },
+        );
+      } else {
+        addMeasure(
+          generateTrainingMeasureId(
+            generateMaxhangId({
+              edgeSize: 18,
+              duration: 10,
+              gripType: "half-crimp",
+            }),
+          ),
+          {
+            unit: "training",
+            value: 1,
+          },
+        );
+      }
+    }
+  }
+
+  const strengthTrainingTypeStr = row[29];
+  const strengthTrainingStyle: (
+    | "antagonist"
+    | "pull"
+    | "push"
+    | "legs"
+    | "core"
+  )[] = [];
+  if (strengthTrainingTypeStr.match(/antagonist/i)) {
+    strengthTrainingStyle.push("antagonist");
+  }
+  if (strengthTrainingTypeStr.match(/pulling/i)) {
+    strengthTrainingStyle.push("pull");
+  }
+  if (strengthTrainingTypeStr.match(/pushing/i)) {
+    strengthTrainingStyle.push("push");
+  }
+  if (strengthTrainingTypeStr.match(/legs/i)) {
+    strengthTrainingStyle.push("legs");
+  }
+  if (strengthTrainingTypeStr.match(/core/i)) {
+    strengthTrainingStyle.push("core");
+  }
+
+  if (strengthTrainingStyle.length == 0) {
+    addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
+      unit: "training",
+      value: 1,
+    });
+    addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
+      unit: "training",
+      value: 1,
+    });
+    addMeasure(
+      generateTrainingMeasureId(
+        generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+      ),
+      {
+        unit: "training",
+        value: 1,
+      },
+    );
+    addMeasure(
+      generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+      {
+        unit: "training",
+        value: 1,
+      },
+    );
+  } else if (!isNaN(climbingAge)) {
+    const trainingLevel = 2; // Assuming a default training level of 2 for simplicity
+
+    if (
+      strengthTrainingStyle.includes("antagonist") ||
+      strengthTrainingStyle.includes("push")
+    ) {
+      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
+        unit: "training",
+        value: trainingLevel,
+      });
+    } else {
+      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
+        unit: "training",
+        value: 1,
+      });
+    }
+
+    if (strengthTrainingStyle.includes("pull")) {
+      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
+        unit: "training",
+        value: trainingLevel,
+      });
+      addMeasure(
+        generateTrainingMeasureId(
+          generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+        ),
+        {
+          unit: "training",
+          value: trainingLevel,
+        },
+      );
+    } else {
+      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
+        unit: "training",
+        value: 1,
+      });
+      addMeasure(
+        generateTrainingMeasureId(
+          generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+    }
+
+    if (strengthTrainingStyle.includes("core")) {
+      addMeasure(
+        generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+        {
+          unit: "training",
+          value: trainingLevel,
+        },
+      );
+    } else {
+      addMeasure(
+        generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+    }
   }
 
   snapshots.push(snapshot);
