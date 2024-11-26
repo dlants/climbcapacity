@@ -116,7 +116,9 @@ export function initModel({
   });
   const query = getQuery(filtersModel);
 
-  const performanceMeasure = MEASURES.find((s) => s.type == "performance");
+  const performanceMeasure = MEASURES.find(
+    (s) => s.id == "grade-boulder:gym:max",
+  );
   if (!performanceMeasure) {
     throw new Error(`No performance measures found`);
   }

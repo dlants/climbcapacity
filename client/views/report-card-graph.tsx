@@ -42,6 +42,7 @@ export type Model = immer.Immutable<{
   measureStats: MeasureStats;
   mySnapshot?: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
+  snapshotStats: { [measureId: MeasureId]: number };
   outputMeasure: {
     id: MeasureId;
     unit: UnitType;
@@ -72,11 +73,22 @@ export function initModel({
   snapshots: HydratedSnapshot[];
   outputMeasure: Model["outputMeasure"];
 }): Model {
+  const snapshotStats: {
+    [measureId: MeasureId]: number;
+  } = {};
+  for (const snapshot of snapshots) {
+    for (const measureIdStr in snapshot.measures) {
+      const measureId = measureIdStr as MeasureId;
+      snapshotStats[measureId] = (snapshotStats[measureId] || 0) + 1;
+    }
+  }
+
   return produce<Model>(
     {
       mySnapshot,
       measureStats,
       snapshots,
+      snapshotStats,
       outputMeasure,
       plots: [],
     },
@@ -109,7 +121,9 @@ function getPlots(model: Model) {
       }
     }
 
-    for (const { id, units } of MEASURES.filter((s) => s.type == "input")) {
+    for (const { id, units } of MEASURES.filter(
+      (s) => s.type == "input" && model.snapshotStats[s.id] > 0,
+    )) {
       inputMeasures.push({
         id,
         unit: units[0],
