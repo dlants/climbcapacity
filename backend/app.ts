@@ -3,7 +3,7 @@ import { connect } from "./db/connect.js";
 import { readEnv } from "./env.js";
 import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
-import { SnapshotsModel } from "./models/snapshots.js";
+import { MeasureStatsDoc, SnapshotsModel } from "./models/snapshots.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
@@ -50,7 +50,8 @@ async function run() {
   app.get(
     "/api/measure-stats",
     asyncRoute(async (req, res) => {
-      const stats: MeasureStats = await snapshotModel.getMeasureStats();
+      const statsDoc: MeasureStatsDoc = await snapshotModel.getMeasureStats();
+      const stats: MeasureStats = statsDoc.stats;
 
       const etag = `"${Buffer.from(JSON.stringify(stats)).toString("base64")}"`;
       if (req.header("If-None-Match") === etag) {

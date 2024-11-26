@@ -23,7 +23,7 @@ export function measureStatsToCountTree<PropType extends string>(
 ): CountTree {
   const root: CountTree = { count: 0, children: {} };
 
-  for (const [measureId, count] of Object.entries(measureStats.stats)) {
+  for (const [measureId, count] of Object.entries(measureStats)) {
     let currentNode = root;
     try {
       const parsed = parseMeasureId(measureId as MeasureId);

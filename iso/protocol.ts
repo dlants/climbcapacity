@@ -69,9 +69,7 @@ export type SnapshotUpdateRequest = {
 };
 
 export type MeasureStats = {
-  stats: {
-    [measureId: MeasureId]: number;
-  };
+  [measureId: MeasureId]: number;
 };
 
 export type Dataset = "climbharderv3" | "powercompany";

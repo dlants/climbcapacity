@@ -126,7 +126,10 @@ function getPlots(model: Model) {
   for (const inputMeasure of inputMeasures) {
     const inputMeasureSpec = getSpec(inputMeasure.id);
     const initialFilters: Filters.InitialFilters = {};
-    if (model.mySnapshot) {
+    if (
+      model.mySnapshot &&
+      model.mySnapshot.measures[model.outputMeasure.id] != undefined
+    ) {
       const targetUnit = model.outputMeasure.unit;
 
       initialFilters[model.outputMeasure.id] = {

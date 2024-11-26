@@ -131,6 +131,7 @@ export function initModel({
     const performanceMeasure = MEASURES.find(
       (m) => m.type == "performance" && mySnapshot.measures[m.id],
     );
+
     if (performanceMeasure) {
       initialMeasure = {
         measureId: performanceMeasure.id,
@@ -252,7 +253,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.outputMeasure.selector = immer.castDraft(next);
           const measure = getSpec(next.selected.measureId);
           draft.outputMeasure.toggle = {
-            measureId: next.selected.measureId,
+            measureId: measure.id,
             selectedUnit: measure.units[0],
             possibleUnits: measure.units,
           };

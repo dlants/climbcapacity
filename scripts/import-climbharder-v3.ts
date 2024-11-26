@@ -704,12 +704,13 @@ async function run() {
   const db = client.db();
   const snapshotsCollection = db.collection<SnapshotDoc>("snapshots");
   await snapshotsCollection.deleteMany({ importSource: "climbharderv3" });
-  await snapshotsCollection.insertMany(snapshots as SnapshotDoc[]);
+  const res = await snapshotsCollection.insertMany(snapshots as SnapshotDoc[]);
+  return res.insertedCount;
 }
 
 run().then(
-  () => {
-    console.log("success");
+  (insertedCount) => {
+    console.log(`success. ${insertedCount} docs inserted`);
     process.exit(0);
   },
   (err) => {

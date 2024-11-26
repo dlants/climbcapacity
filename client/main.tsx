@@ -536,9 +536,7 @@ async function run() {
   if (measureStatsResponse.ok) {
     measureStats = (await measureStatsResponse.json()) as MeasureStats;
   } else {
-    measureStats = {
-      stats: {},
-    };
+    measureStats = {};
   }
 
   let initialModel: Model = {

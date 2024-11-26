@@ -9,19 +9,19 @@ export const maxhangClass: MeasureClassSpec = {
     {
       name: "gripType",
       values: [
+        "half-crimp",
+        "open",
+        "full-crimp",
         "back-3-crimp",
         "back-3-drag",
         "front-3-crimp",
         "front-3-drag",
-        "full-crimp",
-        "half-crimp",
-        "open",
       ],
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["10", "18", "20"],
+      values: ["20", "18", "10"],
       suffix: "mm",
     },
     {
@@ -44,19 +44,19 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
     {
       name: "gripType",
       values: [
+        "half-crimp",
+        "open",
+        "full-crimp",
         "back-3-crimp",
         "back-3-drag",
         "front-3-crimp",
         "front-3-drag",
-        "full-crimp",
-        "half-crimp",
-        "open",
       ],
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["10", "18", "20"],
+      values: ["20", "18", "10"],
       suffix: "mm",
     },
     {
@@ -89,12 +89,12 @@ export const repeatersClass: MeasureClassSpec = {
     },
     {
       name: "gripType",
-      values: ["half-crimp", "full-crimp", "open"],
+      values: ["half-crimp", "open", "full-crimp"],
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["10", "18", "20"],
+      values: ["20", "18", "10"],
       suffix: "mm",
     },
   ],
@@ -114,8 +114,8 @@ export const blockPullClass: MeasureClassSpec = {
       name: "gripType",
       values: [
         "half-crimp",
-        "full-crimp",
         "open",
+        "full-crimp",
         "mono-index-crimp",
         "mono-index-drag",
         "mono-middle-crimp",
@@ -124,13 +124,12 @@ export const blockPullClass: MeasureClassSpec = {
         "mono-ring-drag",
         "mono-pinky-crimp",
         "mono-pinky-drag",
-        "pinch",
       ],
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["10", "18", "20"],
+      values: ["20", "18", "10"],
       suffix: "mm",
     },
     {
@@ -187,9 +186,9 @@ export const minEdgePullupsClass: MeasureClassSpec = {
     {
       name: "gripType",
       values: [
-        "full-crimp",
         "half-crimp",
         "open",
+        "full-crimp",
         "back-3-crimp",
         "back-3-drag",
         "front-3-crimp",
@@ -213,19 +212,19 @@ export const continuousHangClass: MeasureClassSpec = {
     {
       name: "gripType",
       values: [
+        "half-crimp",
+        "open",
+        "full-crimp",
         "back-3-crimp",
         "back-3-drag",
         "front-3-crimp",
         "front-3-drag",
-        "full-crimp",
-        "half-crimp",
-        "open",
       ],
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["10", "18", "20"],
+      values: ["20", "18", "10"],
       suffix: "mm",
     },
   ],

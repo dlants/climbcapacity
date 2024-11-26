@@ -188,7 +188,7 @@ const FilterView = ({
     <div className={styles.container}>
       <div className={styles.item}>
         <strong>{filter.model.measureId}</strong>(
-        {model.measureStats.stats[filter.model.measureId] || 0} snapshots)
+        {model.measureStats[filter.model.measureId] || 0} snapshots)
       </div>
       <div className={styles.item}>
         <Filter.view

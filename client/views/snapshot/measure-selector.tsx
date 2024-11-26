@@ -331,7 +331,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
               <MeasureView
                 key={i.spec.id}
                 model={model}
-                measureStatsCount={model.measureStats.stats[i.spec.id]}
+                measureStatsCount={model.measureStats[i.spec.id]}
                 dispatch={dispatch}
                 measure={i.spec}
               />
@@ -433,7 +433,7 @@ const MeasureGroupView = ({
           <MeasureView
             key={item.spec.id}
             model={model}
-            measureStatsCount={model.measureStats.stats[item.spec.id] || 0}
+            measureStatsCount={model.measureStats[item.spec.id] || 0}
             dispatch={dispatch}
             measure={item.spec}
           />

@@ -331,7 +331,7 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       }
 
       case "training": {
-        if (["1", "2", "3", "4"].includes(input as UnitInputMap["training"]))
+        if (![1, 2, 3, 4].includes(parseInt(input as UnitInputMap["training"])))
           return { status: "fail", error: `Invalid training value ${input}` };
         return {
           status: "success",

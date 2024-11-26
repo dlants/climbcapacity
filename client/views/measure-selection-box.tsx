@@ -89,8 +89,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
                 dispatch({ type: "SELECT_MEASURE", measureId: measure.id })
               }
             >
-              {measure.id}({model.measureStats.stats[measure.id] || 0}{" "}
-              snapshots)
+              {measure.id}({model.measureStats[measure.id] || 0} snapshots)
             </li>
           ))}
         </ul>
