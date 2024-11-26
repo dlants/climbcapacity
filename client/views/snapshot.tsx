@@ -13,7 +13,7 @@ import {
 } from "../../iso/protocol";
 import {
   generateTrainingMeasureId,
-  MEASURE_MAP,
+  getSpec,
   MeasureId,
 } from "../../iso/measures";
 import * as MeasureSelector from "./snapshot/measure-selector";
@@ -110,8 +110,8 @@ export const update: Update<Msg, Model> = (msg, model) => {
             writeRequest: { status: "loading" },
           });
 
-          const measure = MEASURE_MAP[msg.msg.measureId];
-          if (measure.type.type == "input") {
+          const measure = getSpec(msg.msg.measureId);
+          if (measure.type == "input") {
             requestParams.deletes![generateTrainingMeasureId(measure.id)] =
               true;
           }

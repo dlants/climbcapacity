@@ -15,21 +15,19 @@ import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
 import { InitialFilters } from "../views/select-filters";
 import * as Filter from "./filters/filter";
-import {
-  MEASURE_MAP,
-  MeasureId,
-  PERFORMANCE_MEASURES,
-} from "../../iso/measures";
+import * as SelectMeasureClass from "./snapshot/select-measure-class";
 import * as UnitToggle from "./unit-toggle";
-import * as Performance from "./snapshot/measure-class/performance";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
+import { MEASURES } from "../constants";
+import { boulderGradeClass, sportGradeClass } from "../../iso/measures/grades";
+import { getSpec } from "../../iso/measures";
 
 export type Model = immer.Immutable<{
   filtersModel: SelectFilters.Model;
   outputMeasure: {
-    selector: Performance.Model;
+    selector: SelectMeasureClass.Model;
     toggle: UnitToggle.Model;
   };
   measureStats: MeasureStats;
@@ -60,8 +58,8 @@ export type Msg =
       msg: ReportCardGraph.Msg;
     }
   | {
-      type: "PERFORMANCE_MSG";
-      msg: Performance.Msg;
+      type: "SELECT_MEASURE_CLASS_MSG";
+      msg: SelectMeasureClass.Msg;
     }
   | {
       type: "OUTPUT_MEASURE_TOGGLE_MSG";
@@ -118,7 +116,11 @@ export function initModel({
   });
   const query = getQuery(filtersModel);
 
-  const performanceMeasure = PERFORMANCE_MEASURES[0];
+  const performanceMeasure = MEASURES.find((s) => s.type == "performance");
+  if (!performanceMeasure) {
+    throw new Error(`No performance measures found`);
+  }
+
   let initialMeasure = {
     measureId: performanceMeasure.id,
     unit: performanceMeasure.units[0],
@@ -126,8 +128,8 @@ export function initModel({
   };
 
   if (mySnapshot) {
-    const performanceMeasure = PERFORMANCE_MEASURES.find(
-      (m) => mySnapshot.measures[m.id],
+    const performanceMeasure = MEASURES.find(
+      (m) => m.type == "performance" && mySnapshot.measures[m.id],
     );
     if (performanceMeasure) {
       initialMeasure = {
@@ -139,7 +141,12 @@ export function initModel({
   }
 
   const outputMeasure: Model["outputMeasure"] = {
-    selector: Performance.initModel(initialMeasure.measureId),
+    selector: SelectMeasureClass.initModel({
+      measureClasses: [boulderGradeClass, sportGradeClass],
+      measureStats,
+      measureId: initialMeasure.measureId,
+    }),
+
     toggle: {
       measureId: initialMeasure.measureId,
       selectedUnit: initialMeasure.unit,
@@ -172,7 +179,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             const next = ReportCardGraph.initModel({
               snapshots: msg.request.response,
               outputMeasure: {
-                id: model.outputMeasure.selector.measureId,
+                id: model.outputMeasure.selector.selected.measureId,
                 unit: model.outputMeasure.toggle.selectedUnit,
               },
               measureStats: model.measureStats,
@@ -235,17 +242,17 @@ export const update: Update<Msg, Model> = (msg, model) => {
       ];
     }
 
-    case "PERFORMANCE_MSG":
+    case "SELECT_MEASURE_CLASS_MSG":
       return [
         produce(model, (draft) => {
-          const [next] = Performance.update(
+          const [next] = SelectMeasureClass.update(
             msg.msg,
             draft.outputMeasure.selector,
           );
-          draft.outputMeasure.selector = next;
-          const measure = MEASURE_MAP[next.measureId];
+          draft.outputMeasure.selector = immer.castDraft(next);
+          const measure = getSpec(next.selected.measureId);
           draft.outputMeasure.toggle = {
-            measureId: next.measureId,
+            measureId: next.selected.measureId,
             selectedUnit: measure.units[0],
             possibleUnits: measure.units,
           };
@@ -254,7 +261,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             const next = ReportCardGraph.initModel({
               snapshots: draft.dataRequest.response.snapshots,
               outputMeasure: {
-                id: draft.outputMeasure.selector.measureId,
+                id: draft.outputMeasure.selector.selected.measureId,
                 unit: draft.outputMeasure.toggle.selectedUnit,
               },
               measureStats: draft.measureStats,
@@ -275,7 +282,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             const next = ReportCardGraph.initModel({
               snapshots: draft.dataRequest.response.snapshots,
               outputMeasure: {
-                id: draft.outputMeasure.selector.measureId,
+                id: draft.outputMeasure.selector.selected.measureId,
                 unit: draft.outputMeasure.toggle.selectedUnit,
               },
               measureStats: draft.measureStats,
@@ -375,10 +382,10 @@ const OutputMeasureView = ({
   return (
     <div className={styles.outputMeasureContainer}>
       Output Measure:
-      <Performance.view
+      <SelectMeasureClass.view
         model={model.outputMeasure.selector}
         dispatch={(msg) => {
-          dispatch({ type: "PERFORMANCE_MSG", msg });
+          dispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg });
         }}
       />
       <UnitToggle.view

@@ -5,11 +5,39 @@ const produce = immer.produce;
 import type { HydratedSnapshot } from "../../types";
 import { Update, View, Dispatch } from "../../tea";
 import { UnitValue, unitValueToString } from "../../../iso/units";
-import { MEASURES, MEASURE_MAP } from "../../constants";
+import { MEASURES } from "../../constants";
 import { isSubsequence } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
-import { MeasureClass, MeasureId, MeasureSpec } from "../../../iso/measures";
+import {
+  MeasureClassSpec,
+  MeasureId,
+  MeasureSpec,
+} from "../../../iso/measures";
 import { assertUnreachable } from "../../../iso/utils";
+import {
+  boulderGradeClass,
+  sportGradeClass,
+} from "../../../iso/measures/grades";
+import {
+  blockPullClass,
+  continuousHangClass,
+  maxhangClass,
+  minEdgeClass,
+  minEdgePullupsClass,
+  repeatersClass,
+  unilateralMaxhangClass,
+} from "../../../iso/measures/fingers";
+import {
+  enduranceClass,
+  isometricClass,
+  maxRepsClass,
+  unilateralIsometricClass,
+  unilateralMaxRepsClass,
+  unilateralWeightedClass,
+  weightedClass,
+} from "../../../iso/measures/movement";
+import { powerClass, unilateralPowerClass } from "../../../iso/measures/power";
+import { InitOptions } from "./edit-measure-or-class";
 
 type MeasureItem = {
   type: "measure-item";
@@ -18,7 +46,8 @@ type MeasureItem = {
 
 type MeasureGroup = {
   type: "measure-group";
-  measureClass: MeasureClass;
+  name: string;
+  measureClasses: MeasureClassSpec[];
   items: MeasureItem[];
 };
 
@@ -56,87 +85,107 @@ function getAllItems(): Item[] {
   });
 
   return [
-    ...MEASURES.filter((s) => s.type.type == "anthro").map(mapSpecToItem),
+    ...MEASURES.filter((s) => s.type == "anthro").map(mapSpecToItem),
     {
       type: "measure-group",
-      measureClass: "performance",
-      items: MEASURES.filter((s) => s.type.type == "performance").map(
-        mapSpecToItem,
-      ),
+      name: "performance",
+      measureClasses: [boulderGradeClass, sportGradeClass],
+      items: MEASURES.filter((s) => s.type == "performance").map(mapSpecToItem),
     },
     {
       type: "measure-group",
-      measureClass: "maxhang",
-      items: MEASURES.filter(
-        (s) => s.type.type === "input" && s.type.measureClass === "maxhang",
-      ).map(mapSpecToItem),
-    },
-    {
-      type: "measure-group",
-      measureClass: "blockpull",
-      items: MEASURES.filter(
-        (s) => s.type.type === "input" && s.type.measureClass === "blockpull",
-      ).map(mapSpecToItem),
-    },
-    {
-      type: "measure-group",
-      measureClass: "minedge",
-      items: MEASURES.filter(
-        (s) => s.type.type === "input" && s.type.measureClass === "minedge",
-      ).map(mapSpecToItem),
-    },
-    {
-      type: "measure-group",
-      measureClass: "repeaters",
-      items: MEASURES.filter(
-        (s) => s.type.type === "input" && s.type.measureClass === "repeaters",
-      ).map(mapSpecToItem),
-    },
-    {
-      type: "measure-group",
-      measureClass: "edgepullups",
-      items: MEASURES.filter(
-        (s) => s.type.type === "input" && s.type.measureClass === "edgepullups",
-      ).map(mapSpecToItem),
-    },
-    {
-      type: "measure-group",
-      measureClass: "weightedmovement",
+      name: "maxhangs",
+      measureClasses: [maxhangClass, unilateralMaxhangClass],
       items: MEASURES.filter(
         (s) =>
-          s.type.type === "input" && s.type.measureClass === "weightedmovement",
+          s.spec?.className === maxhangClass.className ||
+          s.spec?.className === unilateralMaxhangClass.className,
       ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
-      measureClass: "maxrepsmovement",
+      name: "block pulls",
+      measureClasses: [blockPullClass],
       items: MEASURES.filter(
-        (s) =>
-          s.type.type === "input" && s.type.measureClass === "maxrepsmovement",
+        (s) => s.spec?.className === blockPullClass.className,
       ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
-      measureClass: "isometrichold",
+      name: "minimum edge",
+      measureClasses: [minEdgeClass],
       items: MEASURES.filter(
-        (s) =>
-          s.type.type === "input" && s.type.measureClass === "isometrichold",
+        (s) => s.spec?.className === minEdgeClass.className,
       ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
-      measureClass: "powermovement",
+      name: "repeaters",
+      measureClasses: [repeatersClass],
       items: MEASURES.filter(
-        (s) =>
-          s.type.type === "input" && s.type.measureClass === "powermovement",
+        (s) => s.spec?.className === repeatersClass.className,
       ).map(mapSpecToItem),
     },
     {
       type: "measure-group",
-      measureClass: "continuoushang",
+      name: "minimum edge pullups",
+      measureClasses: [minEdgePullupsClass],
+      items: MEASURES.filter(
+        (s) => s.spec?.className === minEdgePullupsClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "weighted",
+      measureClasses: [weightedClass, unilateralWeightedClass],
       items: MEASURES.filter(
         (s) =>
-          s.type.type === "input" && s.type.measureClass === "continuoushang",
+          s.spec?.className === weightedClass.className ||
+          s.spec?.className === unilateralWeightedClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "max reps",
+      measureClasses: [maxRepsClass, unilateralMaxRepsClass],
+      items: MEASURES.filter(
+        (s) =>
+          s.spec?.className === maxRepsClass.className ||
+          s.spec?.className === unilateralMaxRepsClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "isometric",
+      measureClasses: [isometricClass, unilateralIsometricClass],
+      items: MEASURES.filter(
+        (s) =>
+          s.spec?.className === isometricClass.className ||
+          s.spec?.className === unilateralIsometricClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "power",
+      measureClasses: [powerClass, unilateralPowerClass],
+      items: MEASURES.filter(
+        (s) => s.spec?.className === powerClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "continuous hang",
+      measureClasses: [continuousHangClass],
+      items: MEASURES.filter(
+        (s) => s.spec?.className === continuousHangClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "endurance",
+      measureClasses: [enduranceClass],
+      items: MEASURES.filter(
+        (s) => s.spec?.className === enduranceClass.className,
       ).map(mapSpecToItem),
     },
   ];
@@ -193,13 +242,16 @@ function getItems(model: Omit<Model, "items">): Item[] {
       }
 
       case "measure-group": {
-        const measureClass = item.measureClass;
-        const type = measureClass.toLowerCase();
+        const measureClasses = item.measureClasses;
+        const types = measureClasses.map((c) => c.className.toLowerCase());
         const matchingChildren = item.items.filter((i) => specMatches(i.spec));
 
         const isMatch =
           matchingChildren.length ||
-          queryTerms.every((term) => isSubsequence(term, type));
+          queryTerms.every((term) =>
+            types.some((type) => isSubsequence(term, type)),
+          );
+
         if (isMatch) {
           outItems.push({
             ...item,
@@ -223,15 +275,7 @@ export type Msg =
     }
   | {
       type: "INIT_UPDATE";
-      update:
-        | {
-            type: "measure";
-            measureId: MeasureId;
-          }
-        | {
-            type: "measureClass";
-            measureClass: MeasureClass;
-          };
+      update: InitOptions;
     }
   | {
       type: "DELETE_MEASURE";
@@ -295,7 +339,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
           case "measure-group":
             return (
               <MeasureGroupView
-                key={i.measureClass}
+                key={i.name}
                 model={model}
                 measureGroup={i}
                 dispatch={dispatch}
@@ -368,14 +412,14 @@ const MeasureGroupView = ({
   return (
     <div className="measure-class">
       <div>
-        <strong>{measureGroup.measureClass}</strong>{" "}
+        <strong>{measureGroup.name}</strong>{" "}
         <button
           onPointerDown={() => {
             dispatch({
               type: "INIT_UPDATE",
               update: {
-                type: "measureClass",
-                measureClass: measureGroup.measureClass,
+                type: "measureClasses",
+                measureClasses: immer.castDraft(measureGroup.measureClasses),
               },
             });
           }}

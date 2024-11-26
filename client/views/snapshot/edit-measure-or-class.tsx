@@ -3,7 +3,7 @@ import * as immer from "immer";
 const produce = immer.produce;
 import * as EditMeasure from "./edit-measure";
 import * as EditMeasureClass from "./edit-measure-class";
-import { MeasureClass, MeasureId } from "../../../iso/measures";
+import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import { Dispatch, Update } from "../../tea";
 import { assertUnreachable } from "../../util/utils";
@@ -28,20 +28,22 @@ export type Model = immer.Immutable<
     }
 >;
 
+export type InitOptions =
+  | {
+      type: "measure";
+      measureId: MeasureId;
+    }
+  | {
+      type: "measureClasses";
+      measureClasses: MeasureClassSpec[];
+    };
+
 export function initModel({
   init,
   snapshot,
   measureStats,
 }: {
-  init:
-    | {
-        type: "measure";
-        measureId: MeasureId;
-      }
-    | {
-        type: "measureClass";
-        measureClass: MeasureClass;
-      };
+  init: InitOptions;
   snapshot: HydratedSnapshot;
   measureStats: MeasureStats;
 }): Model {
@@ -62,9 +64,9 @@ export function initModel({
       };
     }
 
-    case "measureClass": {
+    case "measureClasses": {
       const model = EditMeasureClass.initModel({
-        measureClass: init.measureClass,
+        measureClasses: init.measureClasses,
         measureStats,
         snapshot,
       });
@@ -73,7 +75,7 @@ export function initModel({
         model,
         measureStats,
         canSubmit: model.editMeasure.canSubmit,
-        measureId: model.selectedMeasure,
+        measureId: model.editMeasure.model.measureId,
         trainingMeasureId: model.editMeasure.trainingMeasure?.measureId,
       };
     }
@@ -115,7 +117,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         const [next] = EditMeasureClass.update(msg.msg, draft.model);
         draft.model = immer.castDraft(next);
         draft.canSubmit = draft.model.editMeasure.canSubmit;
-        draft.measureId = draft.model.selectedMeasure;
+        draft.measureId = draft.model.editMeasure.model.measureId;
         draft.trainingMeasureId =
           draft.model.editMeasure.trainingMeasure?.measureId;
       });

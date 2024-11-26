@@ -5,7 +5,11 @@ import * as Filters from "./report-graph-filters";
 import * as Filter from "./filters/filter";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
-import { MeasureId, generateTrainingMeasureId } from "../../iso/measures";
+import {
+  MeasureId,
+  generateTrainingMeasureId,
+  getSpec,
+} from "../../iso/measures";
 import {
   adjustGrade,
   castInitialFilter,
@@ -17,7 +21,7 @@ import {
 import { assertUnreachable } from "../util/utils";
 import { Result } from "../../iso/utils";
 import { filterOutliersX } from "../util/stats";
-import { MEASURES, MEASURE_MAP } from "../constants";
+import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
 import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
@@ -88,8 +92,8 @@ function getPlots(model: Model) {
   if (model.mySnapshot) {
     for (const id in model.mySnapshot.measures) {
       const measureId = id as MeasureId;
-      const spec = MEASURE_MAP[measureId];
-      if (spec.type.type == "input") {
+      const spec = getSpec(measureId);
+      if (spec.type == "input") {
         inputMeasures.push({
           id: measureId,
           unit: model.mySnapshot.measures[measureId].unit,
@@ -105,9 +109,7 @@ function getPlots(model: Model) {
       }
     }
 
-    for (const { id, units } of MEASURES.filter(
-      (s) => s.type.type == "input",
-    )) {
+    for (const { id, units } of MEASURES.filter((s) => s.type == "input")) {
       inputMeasures.push({
         id,
         unit: units[0],
@@ -120,9 +122,9 @@ function getPlots(model: Model) {
   }
 
   const plots: PlotModel[] = [];
-  const outputMeasureSpec = MEASURE_MAP[model.outputMeasure.id];
+  const outputMeasureSpec = getSpec(model.outputMeasure.id);
   for (const inputMeasure of inputMeasures) {
-    const inputMeasureSpec = MEASURE_MAP[inputMeasure.id];
+    const inputMeasureSpec = getSpec(inputMeasure.id);
     const initialFilters: Filters.InitialFilters = {};
     if (model.mySnapshot) {
       const targetUnit = model.outputMeasure.unit;
@@ -155,9 +157,9 @@ function getPlots(model: Model) {
       };
     }
 
-    if (inputMeasureSpec.type.type == "input") {
+    if (inputMeasureSpec.type == "input") {
       const trainingMeasureId = generateTrainingMeasureId(inputMeasureSpec.id);
-      const trainingSpec = MEASURE_MAP[trainingMeasureId];
+      const trainingSpec = getSpec(trainingMeasureId);
       initialFilters[trainingMeasureId] = {
         enabled: false,
         ...trainingSpec.initialFilter,

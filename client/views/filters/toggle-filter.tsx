@@ -8,8 +8,7 @@ import { Dispatch, Update } from "../../tea";
 import * as immer from "immer";
 import { assertUnreachable } from "../../util/utils";
 import * as UnitToggle from "../unit-toggle";
-import { MEASURE_MAP } from "../../constants";
-import { MeasureId } from "../../../iso/measures";
+import { getSpec, MeasureId } from "../../../iso/measures";
 
 export type Model = immer.Immutable<{
   measureId: MeasureId;
@@ -28,7 +27,7 @@ export function initModel({
   measureId: MeasureId;
   value: UnitValue;
 }): Model {
-  const measure = MEASURE_MAP[measureId];
+  const measure = getSpec(measureId);
   return {
     measureId,
     value,

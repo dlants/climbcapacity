@@ -122,7 +122,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
 
             let myInputValues = lodash.pick(
               mySnapshot.measures,
-              MEASURES.filter((s) => s.type.type == "anthro").map((m) => m.id),
+              MEASURES.filter((s) => s.type == "anthro").map((m) => m.id),
             );
             const initialFilters: InitialFilters = {};
 

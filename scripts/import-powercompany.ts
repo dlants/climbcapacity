@@ -2,30 +2,14 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { SnapshotDoc } from "../backend/models/snapshots.js";
-import {
-  // convertToStandardUnit,
-  encodeMeasureValue,
-  UnitValue,
-} from "../iso/units.js";
-import {
-  Grip,
-  generateContinuousHangId,
-  generateMaxhangId,
-  // generateMinEdgeHangId,
-  generateRepeaterId,
-} from "../iso/measures/fingers.js";
-import { VGrade, EWBANK, EwbankGrade, FrenchSport, YDS } from "../iso/grade.js";
+import { encodeMeasureValue, UnitValue } from "../iso/units.js";
+import { VGrade, YDS } from "../iso/grade.js";
 import mongodb from "mongodb";
-import { MeasureId } from "../iso/measures/index.js";
-import { generateGradeMeasureId } from "../iso/measures/grades.js";
-import {
-  generateEnduranceMovementMeasureId,
-  generateIsometricMovementMeasureId,
-  generateMaxRepMeasureId,
-  generateUnilateralMeasureId,
-  generateWeightedMeasureId,
-} from "../iso/measures/movement.js";
-import { generateUnilateralPowerMeasureId } from "../iso/measures/power.js";
+import { MeasureId, generateId } from "../iso/measures/index.js";
+import * as Fingers from "../iso/measures/fingers.js";
+import * as Movement from "../iso/measures/movement.js";
+import * as Power from "../iso/measures/power.js";
+import * as Grades from "../iso/measures/grades.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
@@ -167,8 +151,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseSportGrade(maxSportStr);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "sport", location: "gym" },
+      generateId(Grades.sportGradeClass, {
+        location: "gym",
         stat: "max",
       }),
       {
@@ -217,8 +201,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseVgrade(maxBoulderStr);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "boulder", location: "gym" },
+      generateId(Grades.boulderGradeClass, {
+        location: "gym",
         stat: "max",
       }),
       {
@@ -297,28 +281,38 @@ table.slice(1).forEach((row, idx) => {
   const maxPullRepStr = row[TSV_COLS.findIndex((c) => c == "pullup")];
   const maxPulls = parseFloat(maxPullRepStr);
   if (!isNaN(maxPulls)) {
-    addMeasure(generateMaxRepMeasureId("pullup"), {
-      unit: "count",
-      value: maxPulls,
-    });
+    addMeasure(
+      generateId(Movement.maxRepsClass, {
+        movement: "pullup",
+      }),
+      {
+        unit: "count",
+        value: maxPulls,
+      },
+    );
   }
 
   const maxPushupsStr = row[TSV_COLS.findIndex((c) => c == "pushup")];
   const maxPushups = parseFloat(maxPushupsStr);
   if (!isNaN(maxPushups)) {
-    addMeasure(generateMaxRepMeasureId("pushup"), {
-      unit: "count",
-      value: maxPushups,
-    });
+    addMeasure(
+      generateId(Movement.maxRepsClass, {
+        movement: "pushup",
+      }),
+      {
+        unit: "count",
+        value: maxPushups,
+      },
+    );
   }
 
   const continuousHangStr = row[TSV_COLS.findIndex((c) => c == "continuous")];
   const continuousHang = parseFloat(continuousHangStr);
   if (!isNaN(continuousHang)) {
     addMeasure(
-      generateContinuousHangId({
+      generateId(Fingers.continuousHangClass, {
         gripType: "half-crimp",
-        edgeSize: 20,
+        edgeSize: "20",
       }),
       {
         unit: "second",
@@ -331,10 +325,10 @@ table.slice(1).forEach((row, idx) => {
   const maxHang = parseFloat(maxHangStr);
   if (!isNaN(maxHang)) {
     addMeasure(
-      generateMaxhangId({
+      generateId(Fingers.maxhangClass, {
         gripType: "half-crimp",
-        edgeSize: 20,
-        duration: 10,
+        edgeSize: "20",
+        duration: "10",
       }),
       {
         unit: "lb",
@@ -343,30 +337,20 @@ table.slice(1).forEach((row, idx) => {
     );
   }
 
-  // const maxHang10mmStr = row[TSV_COLS.findIndex((c) => c == "maxhang")];
-  // const maxHang10mm = parseFloat(maxHang10mmStr);
-  // if (!isNaN(maxHang)) {
-  //   addMeasure(
-  //     generateMaxhangId({
-  //       gripType: "half-crimp",
-  //       edgeSize: 10,
-  //       duration: 10,
-  //     }),
-  //     {
-  //       unit: "lb",
-  //       value: maxHang10mm,
-  //     },
-  //   );
-  // }
-
   const weightedPullStr = row[TSV_COLS.findIndex((c) => c == "weightedpull")];
   let weightedPull = parseFloat(weightedPullStr);
   if (!isNaN(weightedPull)) {
     if (weight) {
-      addMeasure(generateWeightedMeasureId({ movement: "pullup", repMax: 1 }), {
-        unit: "lb",
-        value: weightedPull + weight,
-      });
+      addMeasure(
+        generateId(Movement.weightedClass, {
+          movement: "pullup",
+          repMax: "1",
+        }),
+        {
+          unit: "lb",
+          value: weightedPull + weight,
+        },
+      );
     }
   }
 
@@ -374,29 +358,46 @@ table.slice(1).forEach((row, idx) => {
   const repeaters = parseFloat(repeatersStr);
   if (!isNaN(repeaters)) {
     if (weight) {
-      addMeasure(generateRepeaterId({ edgeSize: 20, gripType: "half-crimp" }), {
-        unit: "second",
-        value: repeaters,
-      });
+      addMeasure(
+        generateId(Fingers.repeatersClass, {
+          timing: "7-3",
+          edgeSize: "20",
+          gripType: "half-crimp",
+        }),
+        {
+          unit: "second",
+          value: repeaters,
+        },
+      );
     }
   }
 
   const longCampStr = row[TSV_COLS.findIndex((c) => c == "longcamp")];
   const longCamp = parseFloat(longCampStr);
   if (!isNaN(longCamp)) {
-    addMeasure(generateEnduranceMovementMeasureId("footoncampuslong"), {
-      unit: "second",
-      value: longCamp,
-    });
+    addMeasure(
+      generateId(Movement.enduranceClass, {
+        movement: "footoncampuslong",
+      }),
+      {
+        unit: "second",
+        value: longCamp,
+      },
+    );
   }
 
   const shortCampStr = row[TSV_COLS.findIndex((c) => c == "shortcamp")];
   const shortCamp = parseFloat(shortCampStr);
   if (!isNaN(shortCamp)) {
-    addMeasure(generateEnduranceMovementMeasureId("footoncampusshort"), {
-      unit: "second",
-      value: shortCamp,
-    });
+    addMeasure(
+      generateId(Movement.enduranceClass, {
+        movement: "footoncampusshort",
+      }),
+      {
+        unit: "second",
+        value: shortCamp,
+      },
+    );
   }
 
   const ohplStr = row[TSV_COLS.findIndex((c) => c == "ohpl")];
@@ -407,40 +408,41 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(ohpl) && !isNaN(ohpr)) {
     if (ohpl > ohpr) {
       addMeasure(
-        generateUnilateralMeasureId({
+        generateId(Movement.unilateralWeightedClass, {
           movement: "overheadpress",
-          repMax: 1,
+          repMax: "1",
           dominantSide: "dominant",
         }),
         { unit: "lb", value: ohpl },
       );
       addMeasure(
-        generateUnilateralMeasureId({
+        generateId(Movement.unilateralWeightedClass, {
           movement: "overheadpress",
-          repMax: 1,
+          repMax: "1",
           dominantSide: "nondominant",
         }),
         { unit: "lb", value: ohpr },
       );
     } else {
       addMeasure(
-        generateUnilateralMeasureId({
+        generateId(Movement.unilateralWeightedClass, {
           movement: "overheadpress",
-          repMax: 1,
+          repMax: "1",
           dominantSide: "dominant",
         }),
         { unit: "lb", value: ohpr },
       );
       addMeasure(
-        generateUnilateralMeasureId({
+        generateId(Movement.unilateralWeightedClass, {
           movement: "overheadpress",
-          repMax: 1,
+          repMax: "1",
           dominantSide: "nondominant",
         }),
         { unit: "lb", value: ohpl },
       );
     }
   }
+
   const powlStr = row[TSV_COLS.findIndex((c) => c == "powl")];
   const powrStr = row[TSV_COLS.findIndex((c) => c == "powr")];
   const powl = parseFloat(powlStr);
@@ -448,21 +450,39 @@ table.slice(1).forEach((row, idx) => {
 
   if (!isNaN(powl) && !isNaN(powr)) {
     if (powl > powr) {
-      addMeasure(generateUnilateralPowerMeasureId("campusreach", "dominant"), {
-        unit: "inch",
-        value: powl,
-      });
       addMeasure(
-        generateUnilateralPowerMeasureId("campusreach", "nondominant"),
+        generateId(Power.unilateralPowerClass, {
+          movement: "campusreach",
+          dominantSide: "dominant",
+        }),
+        {
+          unit: "inch",
+          value: powl,
+        },
+      );
+      addMeasure(
+        generateId(Power.unilateralPowerClass, {
+          movement: "campusreach",
+          dominantSide: "nondominant",
+        }),
         { unit: "inch", value: powr },
       );
     } else {
-      addMeasure(generateUnilateralPowerMeasureId("campusreach", "dominant"), {
-        unit: "inch",
-        value: powr,
-      });
       addMeasure(
-        generateUnilateralPowerMeasureId("campusreach", "nondominant"),
+        generateId(Power.unilateralPowerClass, {
+          movement: "campusreach",
+          dominantSide: "dominant",
+        }),
+        {
+          unit: "inch",
+          value: powr,
+        },
+      );
+      addMeasure(
+        generateId(Power.unilateralPowerClass, {
+          movement: "campusreach",
+          dominantSide: "nondominant",
+        }),
         { unit: "inch", value: powl },
       );
     }
@@ -471,19 +491,30 @@ table.slice(1).forEach((row, idx) => {
   const dlStr = row[TSV_COLS.findIndex((c) => c == "dl")];
   const dl = parseFloat(dlStr);
   if (!isNaN(dl)) {
-    addMeasure(generateWeightedMeasureId({ movement: "deadlift", repMax: 1 }), {
-      unit: "lb",
-      value: dl,
-    });
+    addMeasure(
+      generateId(Movement.weightedClass, {
+        movement: "deadlift",
+        repMax: "1",
+      }),
+      {
+        unit: "lb",
+        value: dl,
+      },
+    );
   }
 
   const lhangStr = row[TSV_COLS.findIndex((c) => c == "lhang")];
   const lhang = parseFloat(lhangStr);
   if (!isNaN(lhang)) {
-    addMeasure(generateIsometricMovementMeasureId("lhang"), {
-      unit: "second",
-      value: lhang,
-    });
+    addMeasure(
+      generateId(Movement.isometricClass, {
+        movement: "lhang",
+      }),
+      {
+        unit: "second",
+        value: lhang,
+      },
+    );
   }
 
   snapshots.push(snapshot);

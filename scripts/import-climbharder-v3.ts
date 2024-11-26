@@ -7,21 +7,16 @@ import {
   encodeMeasureValue,
   UnitValue,
 } from "../iso/units.js";
-import {
-  Grip,
-  generateMaxhangId,
-  generateMinEdgeHangId,
-  generateRepeaterId,
-} from "../iso/measures/fingers.js";
+import * as Fingers from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade } from "../iso/grade.js";
 import mongodb from "mongodb";
-import { generateTrainingMeasureId, MeasureId } from "../iso/measures/index.js";
-import { generateGradeMeasureId } from "../iso/measures/grades.js";
 import {
-  generateIsometricMovementMeasureId,
-  generateMaxRepMeasureId,
-  generateWeightedMeasureId,
-} from "../iso/measures/movement.js";
+  generateTrainingMeasureId,
+  MeasureId,
+  generateId,
+} from "../iso/measures/index.js";
+import * as Grades from "../iso/measures/grades.js";
+import * as Movement from "../iso/measures/movement.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
@@ -160,8 +155,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseVgrade(hardestVGradeStr);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "boulder", location: "gym" },
+      generateId(Grades.boulderGradeClass, {
+        location: "gym",
         stat: "max",
       }),
       {
@@ -175,8 +170,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseVgrade(p90VGradeStr);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "boulder", location: "gym" },
+      generateId(Grades.boulderGradeClass, {
+        location: "gym",
         stat: "projectp90",
       }),
       {
@@ -198,8 +193,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseEwbankGrade(hardestRouteGrade);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "sport", location: "gym" },
+      generateId(Grades.sportGradeClass, {
+        location: "gym",
         stat: "max",
       }),
       {
@@ -213,8 +208,8 @@ table.slice(1).forEach((row, idx) => {
   try {
     const grade = parseEwbankGrade(p90RouteGradeStr);
     addMeasure(
-      generateGradeMeasureId({
-        context: { type: "sport", location: "gym" },
+      generateId(Grades.sportGradeClass, {
+        location: "gym",
         stat: "projectp90",
       }),
       {
@@ -229,9 +224,9 @@ table.slice(1).forEach((row, idx) => {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
     if (!isNaN(addedWeight)) {
       addMeasure(
-        generateMaxhangId({
-          edgeSize: 18,
-          duration: 10,
+        generateId(Fingers.maxhangClass, {
+          edgeSize: "18",
+          duration: "10",
           gripType: "half-crimp",
         }),
         {
@@ -246,7 +241,11 @@ table.slice(1).forEach((row, idx) => {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
     if (!isNaN(addedWeight)) {
       addMeasure(
-        generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+        generateId(Fingers.maxhangClass, {
+          edgeSize: "18",
+          duration: "10",
+          gripType: "open",
+        }),
         {
           unit: "kg",
           value: addedWeight,
@@ -266,7 +265,10 @@ table.slice(1).forEach((row, idx) => {
     const edgeSize = parseEdgeSize(minEdgeHalfStr);
     if (!isNaN(edgeSize)) {
       addMeasure(
-        generateMinEdgeHangId({ duration: 10, gripType: "half-crimp" }),
+        generateId(Fingers.minEdgeClass, {
+          duration: "10",
+          gripType: "half-crimp",
+        }),
         {
           unit: "mm",
           value: edgeSize,
@@ -279,20 +281,31 @@ table.slice(1).forEach((row, idx) => {
   {
     const edgeSize = parseEdgeSize(minEdgeOpenStr);
     if (!isNaN(edgeSize)) {
-      addMeasure(generateMinEdgeHangId({ duration: 10, gripType: "open" }), {
-        unit: "mm",
-        value: edgeSize,
-      });
+      addMeasure(
+        generateId(Fingers.minEdgeClass, {
+          duration: "10",
+          gripType: "open",
+        }),
+        {
+          unit: "mm",
+          value: edgeSize,
+        },
+      );
     }
   }
 
   const maxPullRepStr = row[31];
   const maxPulls = parseFloat(maxPullRepStr);
   if (!isNaN(maxPulls)) {
-    addMeasure(generateMaxRepMeasureId("pullup"), {
-      unit: "count",
-      value: maxPulls,
-    });
+    addMeasure(
+      generateId(Movement.maxRepsClass, {
+        movement: "pullup",
+      }),
+      {
+        unit: "count",
+        value: maxPulls,
+      },
+    );
   }
 
   const weightedPull5rmStr = row[32];
@@ -309,35 +322,51 @@ table.slice(1).forEach((row, idx) => {
     }
 
     if (weight) {
-      addMeasure(generateWeightedMeasureId({ movement: "pullup", repMax: 5 }), {
-        unit: "kg",
-        value: weightedPull5rm + weight,
-      });
+      addMeasure(
+        generateId(Movement.weightedClass, {
+          movement: "pullup",
+          repMax: "5",
+        }),
+        {
+          unit: "kg",
+          value: weightedPull5rm + weight,
+        },
+      );
     }
   }
 
   const maxPushupsStr = row[33];
   const maxPushups = parseFloat(maxPushupsStr);
   if (!isNaN(maxPushups)) {
-    addMeasure(generateMaxRepMeasureId("pushup"), {
-      unit: "count",
-      value: maxPushups,
-    });
+    addMeasure(
+      generateId(Movement.maxRepsClass, {
+        movement: "pushup",
+      }),
+      {
+        unit: "count",
+        value: maxPushups,
+      },
+    );
   }
 
   const maxLhangStr = row[34];
   const maxLhang = parseFloat(maxLhangStr);
   if (!isNaN(maxLhang)) {
-    addMeasure(generateIsometricMovementMeasureId("lhang"), {
-      unit: "second",
-      value: maxLhang,
-    });
+    addMeasure(
+      generateId(Movement.isometricClass, {
+        movement: "lhang",
+      }),
+      {
+        unit: "second",
+        value: maxLhang,
+      },
+    );
   }
 
   const hangboardWeekFreqStr = row[16];
   const hangboardWeekFreq = parseFloat(hangboardWeekFreqStr);
   const hangboardGripsStr = row[17];
-  const gripsUsed: Grip[] = [];
+  const gripsUsed = [];
   if (hangboardGripsStr.match(/open/i)) {
     gripsUsed.push("open");
   }
@@ -370,7 +399,11 @@ table.slice(1).forEach((row, idx) => {
     if (hangboardWeekFreq == 0 || isNaN(climbingAge)) {
       addMeasure(
         generateTrainingMeasureId(
-          generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+          generateId(Fingers.maxhangClass, {
+            edgeSize: "18",
+            duration: "10",
+            gripType: "open",
+          }),
         ),
         {
           unit: "training",
@@ -379,9 +412,9 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateTrainingMeasureId(
-          generateMaxhangId({
-            edgeSize: 18,
-            duration: 10,
+          generateId(Fingers.maxhangClass, {
+            edgeSize: "18",
+            duration: "10",
             gripType: "half-crimp",
           }),
         ),
@@ -392,7 +425,11 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateTrainingMeasureId(
-          generateRepeaterId({ edgeSize: 18, gripType: "open" }),
+          generateId(Fingers.repeatersClass, {
+            edgeSize: "18",
+            gripType: "open",
+            timing: "7-3",
+          }),
         ),
         {
           unit: "training",
@@ -401,7 +438,11 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateTrainingMeasureId(
-          generateRepeaterId({ edgeSize: 18, gripType: "half-crimp" }),
+          generateId(Fingers.repeatersClass, {
+            edgeSize: "18",
+            gripType: "half-crimp",
+            timing: "7-3",
+          }),
         ),
         {
           unit: "training",
@@ -413,7 +454,11 @@ table.slice(1).forEach((row, idx) => {
       if (hangboardStyle.includes("maxweight") && gripsUsed.includes("open")) {
         addMeasure(
           generateTrainingMeasureId(
-            generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+            generateId(Fingers.maxhangClass, {
+              edgeSize: "18",
+              duration: "10",
+              gripType: "open",
+            }),
           ),
           {
             unit: "training",
@@ -423,7 +468,11 @@ table.slice(1).forEach((row, idx) => {
       } else {
         addMeasure(
           generateTrainingMeasureId(
-            generateMaxhangId({ edgeSize: 18, duration: 10, gripType: "open" }),
+            generateId(Fingers.maxhangClass, {
+              edgeSize: "18",
+              duration: "10",
+              gripType: "open",
+            }),
           ),
           {
             unit: "training",
@@ -438,9 +487,9 @@ table.slice(1).forEach((row, idx) => {
       ) {
         addMeasure(
           generateTrainingMeasureId(
-            generateMaxhangId({
-              edgeSize: 18,
-              duration: 10,
+            generateId(Fingers.maxhangClass, {
+              edgeSize: "18",
+              duration: "10",
               gripType: "half-crimp",
             }),
           ),
@@ -452,9 +501,9 @@ table.slice(1).forEach((row, idx) => {
       } else {
         addMeasure(
           generateTrainingMeasureId(
-            generateMaxhangId({
-              edgeSize: 18,
-              duration: 10,
+            generateId(Fingers.maxhangClass, {
+              edgeSize: "18",
+              duration: "10",
               gripType: "half-crimp",
             }),
           ),
@@ -492,17 +541,11 @@ table.slice(1).forEach((row, idx) => {
   }
 
   if (strengthTrainingStyle.length == 0) {
-    addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
-      unit: "training",
-      value: 1,
-    });
-    addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
-      unit: "training",
-      value: 1,
-    });
     addMeasure(
       generateTrainingMeasureId(
-        generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+        generateId(Movement.maxRepsClass, {
+          movement: "pushup",
+        }),
       ),
       {
         unit: "training",
@@ -510,7 +553,34 @@ table.slice(1).forEach((row, idx) => {
       },
     );
     addMeasure(
-      generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+      generateTrainingMeasureId(
+        generateId(Movement.maxRepsClass, {
+          movement: "pullup",
+        }),
+      ),
+      {
+        unit: "training",
+        value: 1,
+      },
+    );
+    addMeasure(
+      generateTrainingMeasureId(
+        generateId(Movement.weightedClass, {
+          movement: "pullup",
+          repMax: "5",
+        }),
+      ),
+      {
+        unit: "training",
+        value: 1,
+      },
+    );
+    addMeasure(
+      generateTrainingMeasureId(
+        generateId(Movement.isometricClass, {
+          movement: "lhang",
+        }),
+      ),
       {
         unit: "training",
         value: 1,
@@ -523,25 +593,11 @@ table.slice(1).forEach((row, idx) => {
       strengthTrainingStyle.includes("antagonist") ||
       strengthTrainingStyle.includes("push")
     ) {
-      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
-        unit: "training",
-        value: trainingLevel,
-      });
-    } else {
-      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pushup")), {
-        unit: "training",
-        value: 1,
-      });
-    }
-
-    if (strengthTrainingStyle.includes("pull")) {
-      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
-        unit: "training",
-        value: trainingLevel,
-      });
       addMeasure(
         generateTrainingMeasureId(
-          generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+          generateId(Movement.maxRepsClass, {
+            movement: "pushup",
+          }),
         ),
         {
           unit: "training",
@@ -549,13 +605,61 @@ table.slice(1).forEach((row, idx) => {
         },
       );
     } else {
-      addMeasure(generateTrainingMeasureId(generateMaxRepMeasureId("pullup")), {
-        unit: "training",
-        value: 1,
-      });
       addMeasure(
         generateTrainingMeasureId(
-          generateWeightedMeasureId({ movement: "pullup", repMax: 5 }),
+          generateId(Movement.maxRepsClass, {
+            movement: "pushup",
+          }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+    }
+
+    if (strengthTrainingStyle.includes("pull")) {
+      addMeasure(
+        generateTrainingMeasureId(
+          generateId(Movement.maxRepsClass, {
+            movement: "pullup",
+          }),
+        ),
+        {
+          unit: "training",
+          value: trainingLevel,
+        },
+      );
+      addMeasure(
+        generateTrainingMeasureId(
+          generateId(Movement.weightedClass, {
+            movement: "pullup",
+            repMax: "5",
+          }),
+        ),
+        {
+          unit: "training",
+          value: trainingLevel,
+        },
+      );
+    } else {
+      addMeasure(
+        generateTrainingMeasureId(
+          generateId(Movement.maxRepsClass, {
+            movement: "pullup",
+          }),
+        ),
+        {
+          unit: "training",
+          value: 1,
+        },
+      );
+      addMeasure(
+        generateTrainingMeasureId(
+          generateId(Movement.weightedClass, {
+            movement: "pullup",
+            repMax: "5",
+          }),
         ),
         {
           unit: "training",
@@ -566,7 +670,11 @@ table.slice(1).forEach((row, idx) => {
 
     if (strengthTrainingStyle.includes("core")) {
       addMeasure(
-        generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+        generateTrainingMeasureId(
+          generateId(Movement.isometricClass, {
+            movement: "lhang",
+          }),
+        ),
         {
           unit: "training",
           value: trainingLevel,
@@ -574,7 +682,11 @@ table.slice(1).forEach((row, idx) => {
       );
     } else {
       addMeasure(
-        generateTrainingMeasureId(generateIsometricMovementMeasureId("lhang")),
+        generateTrainingMeasureId(
+          generateId(Movement.isometricClass, {
+            movement: "lhang",
+          }),
+        ),
         {
           unit: "training",
           value: 1,

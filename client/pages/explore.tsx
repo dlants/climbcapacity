@@ -24,7 +24,7 @@ export function initModel({
   measureStats: MeasureStats;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
   const initialFilters: InitialFilters = {};
-  for (const measure of MEASURES.filter((s) => s.type.type == "anthro")) {
+  for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
     const count = measureStats.stats[measure.id] || 0;
     if (count < 100) {
       continue;

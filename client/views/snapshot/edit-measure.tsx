@@ -1,7 +1,7 @@
 import React from "react";
 import {
   generateTrainingMeasureId,
-  MEASURE_MAP,
+  getSpec,
   MeasureId,
 } from "../../../iso/measures";
 import { UnitValue } from "../../../iso/units";
@@ -78,9 +78,9 @@ export const initModel = ({
     ),
   );
 
-  const measure = MEASURE_MAP[measureId];
+  const measure = getSpec(measureId);
   let trainingMeasure;
-  if (measure.type.type == "input") {
+  if (measure.type == "input") {
     const trainingMeasureId = generateTrainingMeasureId(measureId);
     let trainingInputmodel = immer.castDraft(
       UnitInput.initModel(
@@ -170,7 +170,7 @@ function EditMeasureView({
   model: UnitInput.Model;
   dispatch: Dispatch<UnitInput.Msg>;
 }) {
-  const measure = MEASURE_MAP[model.measureId];
+  const measure = getSpec(model.measureId);
   return (
     <div className={`measure-item`}>
       <label>{measure.name}</label>

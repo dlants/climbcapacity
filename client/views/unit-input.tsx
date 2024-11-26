@@ -21,9 +21,8 @@ import {
   inchesToFeetAndInches,
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
-import { MEASURE_MAP } from "../constants";
 import { Update } from "../tea";
-import { MeasureId } from "../../iso/measures";
+import { getSpec, MeasureId } from "../../iso/measures";
 import { ExtractFromDisjointUnion } from "../util/utils";
 
 type UnitInputMap = {
@@ -74,11 +73,7 @@ export function initModel(
   measureId: MeasureId,
   initialValue?: UnitValue,
 ): Model {
-  const measureSpec = MEASURE_MAP[measureId];
-  if (!measureSpec) {
-    throw new Error(`Unexpected measureId ${measureId}`);
-  }
-
+  const measureSpec = getSpec(measureId);
   const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
   const initialInput = getInitialInput(defaultUnit, initialValue);
 
@@ -226,11 +221,6 @@ export type Msg =
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
     case "MEASURE_TYPED": {
-      const measureSpec = MEASURE_MAP[msg.measureId];
-      if (!measureSpec) {
-        throw new Error(`Unexpected measureId ${msg.measureId}`);
-      }
-
       const parseResult = parseUnitValue(model.selectedUnit, msg.unitInput);
       return [
         produce(model, (draft) => {

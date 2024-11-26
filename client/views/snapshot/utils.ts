@@ -1,5 +1,5 @@
-import { MeasureId } from "../../../../iso/measures";
-import { MeasureStats } from "../../../../iso/protocol";
+import { MeasureId } from "../../../iso/measures";
+import { MeasureStats } from "../../../iso/protocol";
 
 export type CountTree = {
   count: number;
