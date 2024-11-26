@@ -9,13 +9,13 @@ import {
   RequestStatusViewMap,
 } from "../util/utils";
 import * as immer from "immer";
-import * as LoadedReportCard from "../views/loaded-report-card";
+import * as LoadedReportCard from "../views/report-card";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";
 const produce = immer.produce;
 import lodash from "lodash";
-import { InitialFilters } from "../views/select-filters";
+import { InitialFilters } from "../views/edit-query";
 import { InitialFilter, UnitValue } from "../../iso/units";
 import {
   EWBANK,

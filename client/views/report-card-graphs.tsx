@@ -1,7 +1,7 @@
 import React from "react";
 import { HydratedSnapshot } from "../types";
 import * as Plot from "./plot";
-import * as Filters from "./report-graph-filters";
+import * as ReportCardFilter from "./report-card-filter";
 import * as Filter from "./filters/filter";
 import * as immer from "immer";
 import { Dispatch } from "../tea";
@@ -27,7 +27,7 @@ import * as UnitToggle from "./unit-toggle";
 const { produce } = immer;
 
 type PlotModel = {
-  filterModel: Filters.Model;
+  filterModel: ReportCardFilter.Model;
   inputMeasure: MeasureWithUnit;
   toggle: UnitToggle.Model;
   model: Plot.Model;
@@ -54,7 +54,7 @@ export type Msg =
   | {
       type: "FILTER_MSG";
       measureId: MeasureId;
-      msg: Filters.Msg;
+      msg: ReportCardFilter.Msg;
     }
   | {
       type: "TOGGLE_MSG";
@@ -139,7 +139,7 @@ function getPlots(model: Model) {
   const outputMeasureSpec = getSpec(model.outputMeasure.id);
   for (const inputMeasure of inputMeasures) {
     const inputMeasureSpec = getSpec(inputMeasure.id);
-    const initialFilters: Filters.InitialFilters = {};
+    const initialFilters: ReportCardFilter.InitialFilters = {};
     if (
       model.mySnapshot &&
       model.mySnapshot.measures[model.outputMeasure.id] != undefined
@@ -183,7 +183,7 @@ function getPlots(model: Model) {
       };
     }
 
-    const filterModel = Filters.initModel({
+    const filterModel = ReportCardFilter.initModel({
       initialFilters: initialFilters,
       measureStats: model.measureStats,
     });
@@ -213,7 +213,7 @@ function getPlot({
   model,
 }: {
   xMeasure: MeasureWithUnit;
-  filterModel: Filters.Model;
+  filterModel: ReportCardFilter.Model;
   model: Model;
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
@@ -304,7 +304,7 @@ export function update(msg: Msg, model: Model): [Model] {
           if (!plot) {
             throw new Error(`Cannot find plot for measure ${msg.measureId}`);
           }
-          const [next] = Filters.update(msg.msg, plot.filterModel);
+          const [next] = ReportCardFilter.update(msg.msg, plot.filterModel);
           plot.filterModel = immer.castDraft(next);
           plot.model = immer.castDraft(
             getPlot({
@@ -380,7 +380,7 @@ function PlotWithControls({
       style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
     >
       <h1>{plot.inputMeasure.id}</h1>
-      <Filters.view
+      <ReportCardFilter.view
         model={plot.filterModel}
         dispatch={(msg) => {
           dispatch({

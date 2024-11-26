@@ -2,9 +2,9 @@ import React from "react";
 import { Update, Thunk, View, wrapThunk } from "../tea";
 import { assertUnreachable } from "../util/utils";
 import * as immer from "immer";
-import * as LoadedReportCard from "../views/loaded-report-card";
+import * as LoadedReportCard from "../views/report-card";
 import { MeasureStats } from "../../iso/protocol";
-import { InitialFilters } from "../views/select-filters";
+import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../constants";
 const produce = immer.produce;
 

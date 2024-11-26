@@ -124,6 +124,7 @@ const styles = typestyle.stylesheet({
     maxWidth: csx.percent(100),
   },
 });
+
 const FilterView = ({
   model,
   filter,

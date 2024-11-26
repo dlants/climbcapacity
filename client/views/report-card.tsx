@@ -8,12 +8,11 @@ import {
   RequestStatus,
 } from "../util/utils";
 import { FilterQuery, MeasureStats } from "../../iso/protocol";
-import * as SelectFilters from "../views/select-filters";
+import * as EditQuery from "../views/edit-query";
 import * as immer from "immer";
-import * as ReportCardGraph from "./report-card-graph";
+import * as ReportCardGraphs from "./report-card-graphs";
 import { hydrateSnapshot } from "../util/snapshot";
 const produce = immer.produce;
-import { InitialFilters } from "../views/select-filters";
 import * as Filter from "./filters/filter";
 import * as SelectMeasureClass from "./snapshot/select-measure-class";
 import * as UnitToggle from "./unit-toggle";
@@ -25,7 +24,7 @@ import { boulderGradeClass, sportGradeClass } from "../../iso/measures/grades";
 import { getSpec } from "../../iso/measures";
 
 export type Model = immer.Immutable<{
-  filtersModel: SelectFilters.Model;
+  filtersModel: EditQuery.Model;
   outputMeasure: {
     selector: SelectMeasureClass.Model;
     toggle: UnitToggle.Model;
@@ -39,7 +38,7 @@ export type Model = immer.Immutable<{
   dataRequest: RequestStatus<
     {
       snapshots: HydratedSnapshot[];
-      reportCardModel: ReportCardGraph.Model;
+      reportCardModel: ReportCardGraphs.Model;
     },
     { queryHash: string }
   >;
@@ -55,7 +54,7 @@ export type Msg =
     }
   | {
       type: "REPORT_CARD_MSG";
-      msg: ReportCardGraph.Msg;
+      msg: ReportCardGraphs.Msg;
     }
   | {
       type: "SELECT_MEASURE_CLASS_MSG";
@@ -67,7 +66,7 @@ export type Msg =
     }
   | {
       type: "FILTERS_MSG";
-      msg: SelectFilters.Msg;
+      msg: EditQuery.Msg;
     };
 
 function generateFetchThunk(model: Model) {
@@ -106,11 +105,11 @@ export function initModel({
   measureStats,
   mySnapshot,
 }: {
-  initialFilters: InitialFilters;
+  initialFilters: EditQuery.InitialFilters;
   measureStats: MeasureStats;
   mySnapshot?: HydratedSnapshot;
 }): [Model] | [Model, Thunk<Msg> | undefined] {
-  const filtersModel = SelectFilters.initModel({
+  const filtersModel = EditQuery.initModel({
     measureStats,
     initialFilters: initialFilters,
   });
@@ -179,7 +178,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             draft.dataRequest = msg.request;
             return;
           case "loaded":
-            const next = ReportCardGraph.initModel({
+            const next = ReportCardGraphs.initModel({
               snapshots: msg.request.response,
               outputMeasure: {
                 id: model.outputMeasure.selector.selected.measureId,
@@ -216,7 +215,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
         console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
         return [model];
       }
-      const [nextReportCardModel] = ReportCardGraph.update(
+      const [nextReportCardModel] = ReportCardGraphs.update(
         msg.msg,
         model.dataRequest.response.reportCardModel,
       );
@@ -230,10 +229,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       ];
 
     case "FILTERS_MSG": {
-      const [nextFiltersModel] = SelectFilters.update(
-        msg.msg,
-        model.filtersModel,
-      );
+      const [nextFiltersModel] = EditQuery.update(msg.msg, model.filtersModel);
       return [
         produce(model, (draft) => {
           draft.filtersModel = immer.castDraft(nextFiltersModel);
@@ -261,7 +257,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           };
 
           if (draft.dataRequest.status == "loaded") {
-            const next = ReportCardGraph.initModel({
+            const next = ReportCardGraphs.initModel({
               snapshots: draft.dataRequest.response.snapshots,
               outputMeasure: {
                 id: draft.outputMeasure.selector.selected.measureId,
@@ -282,7 +278,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.outputMeasure.toggle = immer.castDraft(next);
 
           if (draft.dataRequest.status == "loaded") {
-            const next = ReportCardGraph.initModel({
+            const next = ReportCardGraphs.initModel({
               snapshots: draft.dataRequest.response.snapshots,
               outputMeasure: {
                 id: draft.outputMeasure.selector.selected.measureId,
@@ -301,7 +297,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
   }
 };
 
-function getQuery(filtersModel: SelectFilters.Model): Model["query"] {
+function getQuery(filtersModel: EditQuery.Model): Model["query"] {
   const query: FilterQuery = {};
   const queryHashParts: string[] = [];
   filtersModel.filters.forEach((filter) => {
@@ -346,7 +342,7 @@ function LoadedView({
   model: Model;
 }) {
   return (
-    <ReportCardGraph.view
+    <ReportCardGraphs.view
       model={response.reportCardModel}
       dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
     />
@@ -415,7 +411,7 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   return (
     <div className={styles.reportCardRoot}>
       <div className={styles.filter}>
-        <SelectFilters.view
+        <EditQuery.view
           model={model.filtersModel}
           dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
         />
