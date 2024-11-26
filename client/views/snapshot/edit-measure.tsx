@@ -11,9 +11,11 @@ import * as immer from "immer";
 import { Dispatch } from "../../tea";
 const produce = immer.produce;
 import * as UnitToggle from "../unit-toggle";
+import { MeasureStats } from "../../../iso/protocol";
 
 export type Model = immer.Immutable<{
   model: UnitInput.Model;
+  measureStats: MeasureStats;
   trainingMeasure?: {
     measureId: MeasureId;
     model: UnitInput.Model;
@@ -32,7 +34,9 @@ export type Model = immer.Immutable<{
 
 export type CanSubmit = Model["canSubmit"];
 
-function canSubmit(model: Omit<Model, "canSubmit">): Model["canSubmit"] {
+function canSubmit(
+  model: Omit<Model, "canSubmit" | "measureStats">,
+): Model["canSubmit"] {
   let value;
   if (model.model.parseResult.status == "success") {
     value = model.model.parseResult.value;
@@ -60,9 +64,11 @@ function canSubmit(model: Omit<Model, "canSubmit">): Model["canSubmit"] {
 
 export const initModel = ({
   measureId,
+  measureStats,
   snapshot,
 }: {
   measureId: MeasureId;
+  measureStats: MeasureStats;
   snapshot: HydratedSnapshot;
 }): Model => {
   const inputModel = immer.castDraft(
@@ -90,6 +96,7 @@ export const initModel = ({
 
   return {
     model: inputModel,
+    measureStats,
     trainingMeasure,
     canSubmit: canSubmit({ model: inputModel, trainingMeasure }),
   };

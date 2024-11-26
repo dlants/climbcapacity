@@ -7,11 +7,13 @@ import { MeasureClass, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import { Dispatch, Update } from "../../tea";
 import { assertUnreachable } from "../../util/utils";
+import { MeasureStats } from "../../../iso/protocol";
 
 export type Model = immer.Immutable<
   | {
       type: "measure";
       model: EditMeasure.Model;
+      measureStats: MeasureStats;
       canSubmit: EditMeasure.CanSubmit;
       measureId: MeasureId;
       trainingMeasureId?: MeasureId;
@@ -19,6 +21,7 @@ export type Model = immer.Immutable<
   | {
       type: "measureClass";
       model: EditMeasureClass.Model;
+      measureStats: MeasureStats;
       canSubmit: EditMeasure.CanSubmit;
       measureId: MeasureId;
       trainingMeasureId?: MeasureId;
@@ -28,6 +31,7 @@ export type Model = immer.Immutable<
 export function initModel({
   init,
   snapshot,
+  measureStats,
 }: {
   init:
     | {
@@ -39,16 +43,19 @@ export function initModel({
         measureClass: MeasureClass;
       };
   snapshot: HydratedSnapshot;
+  measureStats: MeasureStats;
 }): Model {
   switch (init.type) {
     case "measure": {
       const model = EditMeasure.initModel({
         measureId: init.measureId,
+        measureStats,
         snapshot,
       });
       return {
         type: "measure",
         model,
+        measureStats,
         canSubmit: model.canSubmit,
         measureId: model.model.measureId,
         trainingMeasureId: model.trainingMeasure?.measureId,
@@ -58,11 +65,13 @@ export function initModel({
     case "measureClass": {
       const model = EditMeasureClass.initModel({
         measureClass: init.measureClass,
+        measureStats,
         snapshot,
       });
       return {
         type: "measureClass",
         model,
+        measureStats,
         canSubmit: model.editMeasure.canSubmit,
         measureId: model.selectedMeasure,
         trainingMeasureId: model.editMeasure.trainingMeasure?.measureId,

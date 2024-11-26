@@ -12,7 +12,6 @@ import {
   SnapshotUpdateRequest,
 } from "../../iso/protocol";
 import {
-  generateTrainingMeasure,
   generateTrainingMeasureId,
   MEASURE_MAP,
   MeasureId,
@@ -94,6 +93,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
             model: EditMeasureOrClass.initModel({
               init: msg.msg.update,
               snapshot: model.snapshot,
+              measureStats: model.measureStats,
             }),
           });
         } else if (msg.msg.type == "DELETE_MEASURE") {

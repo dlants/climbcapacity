@@ -13,8 +13,13 @@ import {
 } from "../../../../iso/measures/fingers";
 import { MeasureId } from "../../../../iso/measures";
 import { DOMINANT_SIDE, DominantSide } from "../../../../iso/measures/movement";
+import { MeasureStats } from "../../../../iso/protocol";
+import { CountTree, getFromCountTree, measureStatsToCountTree } from "./utils";
+import { build } from "vite";
 
 export type Model = {
+  bilateralCountTree: CountTree;
+  unilateralCountTree: CountTree;
   gripType: MaxHangGripType;
   edgeSize: MaxHangEdgeSize;
   duration: MaxHangDuration;
@@ -23,11 +28,28 @@ export type Model = {
   measureId: MeasureId;
 };
 
-export const initModel = (measureId?: MeasureId): Model => {
+export const initModel = (
+  measureStats: MeasureStats,
+  measureId?: MeasureId,
+): Model => {
+  const bilateralPropCounts = measureStatsToCountTree(
+    measureStats,
+    parseMaxhangId,
+    ["gripType", "edgeSize", "duration"],
+  );
+
+  const unilateralPropCounts = measureStatsToCountTree(
+    measureStats,
+    parseUnilateralMaxhangId,
+    ["gripType", "edgeSize", "duration", "dominantSide"],
+  );
+
   if (measureId) {
     try {
       const { gripType, edgeSize, duration } = parseMaxhangId(measureId);
       return {
+        bilateralCountTree: bilateralPropCounts,
+        unilateralCountTree: unilateralPropCounts,
         gripType,
         edgeSize,
         duration,
@@ -38,6 +60,8 @@ export const initModel = (measureId?: MeasureId): Model => {
       const { gripType, edgeSize, duration, dominantSide } =
         parseUnilateralMaxhangId(measureId);
       return {
+        bilateralCountTree: bilateralPropCounts,
+        unilateralCountTree: unilateralPropCounts,
         gripType,
         edgeSize,
         duration,
@@ -48,6 +72,8 @@ export const initModel = (measureId?: MeasureId): Model => {
     }
   } else {
     return {
+      bilateralCountTree: bilateralPropCounts,
+      unilateralCountTree: unilateralPropCounts,
       gripType: MAXHANG_GRIP_TYPE[0],
       edgeSize: MAXHANG_EDGE_SIZE[0],
       duration: MAXHANG_DURATION[0],
@@ -179,6 +205,12 @@ export const view = ({
   model: Model;
   dispatch: (msg: Msg) => void;
 }) => {
+  function getStat(keys: string[]) {
+    return model.isUnilateral
+      ? getFromCountTree(model.unilateralCountTree, keys)
+      : getFromCountTree(model.bilateralCountTree, keys);
+  }
+
   return (
     <div>
       <select
@@ -190,8 +222,8 @@ export const view = ({
         }
         value={model.isUnilateral.toString()}
       >
-        <option value="false">Bilateral</option>
-        <option value="true">Unilateral</option>
+        <option value="false">Bilateral {getStat([])}</option>
+        <option value="true">Unilateral {getStat([])}</option>
       </select>
 
       <select
@@ -205,7 +237,7 @@ export const view = ({
       >
         {MAXHANG_GRIP_TYPE.map((grip) => (
           <option key={grip} value={grip}>
-            {grip}
+            {grip} {getStat([grip])}
           </option>
         ))}
       </select>
@@ -221,7 +253,7 @@ export const view = ({
       >
         {MAXHANG_EDGE_SIZE.map((size) => (
           <option key={size} value={size}>
-            {size}mm
+            {size}mm {getStat([model.gripType, size.toString()])}
           </option>
         ))}
       </select>
@@ -237,7 +269,12 @@ export const view = ({
       >
         {MAXHANG_DURATION.map((duration) => (
           <option key={duration} value={duration}>
-            {duration}s
+            {duration}s{" "}
+            {getStat([
+              model.gripType,
+              model.edgeSize.toString(),
+              duration.toString(),
+            ])}
           </option>
         ))}
       </select>
@@ -254,7 +291,13 @@ export const view = ({
         >
           {DOMINANT_SIDE.map((side) => (
             <option key={side} value={side}>
-              {side}
+              {side}{" "}
+              {getStat([
+                model.gripType,
+                model.edgeSize.toString(),
+                model.duration.toString(),
+                side,
+              ])}
             </option>
           ))}
         </select>

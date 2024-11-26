@@ -18,8 +18,10 @@ import * as ContinuousHang from "./measure-class/continuoushang";
 import * as Endurance from "./measure-class/endurance";
 import * as EditMeasure from "./edit-measure";
 import { assertUnreachable } from "../../../iso/utils";
+import { MeasureStats } from "../../../iso/protocol";
 
 export type Model = immer.Immutable<{
+  measureStats: MeasureStats;
   measureModel:
     | {
         type: "maxhang";
@@ -78,24 +80,28 @@ export type Model = immer.Immutable<{
 export const initModel = ({
   measureClass,
   measureId,
+  measureStats,
   snapshot,
 }: {
   measureClass: MeasureClass;
   measureId?: MeasureId;
+  measureStats: MeasureStats;
   snapshot: HydratedSnapshot;
 }): Model => {
   switch (measureClass) {
     case "maxhang":
-      const maxHang = MaxHang.initModel(measureId);
+      const maxHang = MaxHang.initModel(measureStats, measureId);
       return {
         measureModel: {
           type: "maxhang",
           model: maxHang,
         },
         snapshot,
+        measureStats,
         selectedMeasure: maxHang.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: maxHang.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -106,10 +112,12 @@ export const initModel = ({
           type: "blockpull",
           model: blockPull,
         },
+        measureStats,
         snapshot,
         selectedMeasure: blockPull.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: blockPull.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -121,10 +129,12 @@ export const initModel = ({
           type: "minedge",
           model: minEdge,
         },
+        measureStats,
         snapshot,
         selectedMeasure: minEdge.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: minEdge.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -136,10 +146,12 @@ export const initModel = ({
           type: "performance",
           model: performance,
         },
+        measureStats,
         snapshot,
         selectedMeasure: performance.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: performance.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -151,10 +163,12 @@ export const initModel = ({
           type: "repeaters",
           model: repeaters,
         },
+        measureStats,
         snapshot,
         selectedMeasure: repeaters.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: repeaters.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -166,10 +180,12 @@ export const initModel = ({
           type: "edgepullups",
           model: edgePullups,
         },
+        measureStats,
         snapshot,
         selectedMeasure: edgePullups.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: edgePullups.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -177,6 +193,7 @@ export const initModel = ({
     case "weightedmovement":
       const weightedMovement = WeightedMovement.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "weightedmovement",
           model: weightedMovement,
@@ -185,6 +202,7 @@ export const initModel = ({
         selectedMeasure: weightedMovement.measureId,
         editMeasure: EditMeasure.initModel({
           measureId: weightedMovement.measureId,
+          measureStats,
           snapshot,
         }),
       };
@@ -192,6 +210,7 @@ export const initModel = ({
     case "maxrepsmovement":
       const maxRepsMovement = MaxRepsMovement.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "maxrepsmovement",
           model: maxRepsMovement,
@@ -199,6 +218,7 @@ export const initModel = ({
         snapshot,
         selectedMeasure: maxRepsMovement.measureId,
         editMeasure: EditMeasure.initModel({
+          measureStats,
           measureId: maxRepsMovement.measureId,
           snapshot,
         }),
@@ -207,6 +227,7 @@ export const initModel = ({
     case "isometrichold":
       const isometricHold = IsometricHold.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "isometrichold",
           model: isometricHold,
@@ -214,6 +235,7 @@ export const initModel = ({
         snapshot,
         selectedMeasure: isometricHold.measureId,
         editMeasure: EditMeasure.initModel({
+          measureStats,
           measureId: isometricHold.measureId,
           snapshot,
         }),
@@ -222,6 +244,7 @@ export const initModel = ({
     case "powermovement":
       const powerMovement = PowerMovement.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "powermovement",
           model: powerMovement,
@@ -229,6 +252,7 @@ export const initModel = ({
         snapshot,
         selectedMeasure: powerMovement.measureId,
         editMeasure: EditMeasure.initModel({
+          measureStats,
           measureId: powerMovement.measureId,
           snapshot,
         }),
@@ -237,6 +261,7 @@ export const initModel = ({
     case "continuoushang":
       const continuousHang = ContinuousHang.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "continuoushang",
           model: continuousHang,
@@ -244,6 +269,7 @@ export const initModel = ({
         snapshot,
         selectedMeasure: continuousHang.measureId,
         editMeasure: EditMeasure.initModel({
+          measureStats,
           measureId: continuousHang.measureId,
           snapshot,
         }),
@@ -252,6 +278,7 @@ export const initModel = ({
     case "endurance":
       const endurance = Endurance.initModel(measureId);
       return {
+        measureStats,
         measureModel: {
           type: "endurance",
           model: endurance,
@@ -259,6 +286,7 @@ export const initModel = ({
         snapshot,
         selectedMeasure: endurance.measureId,
         editMeasure: EditMeasure.initModel({
+          measureStats,
           measureId: endurance.measureId,
           snapshot,
         }),
@@ -470,6 +498,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
           if (draft.selectedMeasure != model.selectedMeasure) {
             draft.editMeasure = immer.castDraft(
               EditMeasure.initModel({
+                measureStats: model.measureStats,
                 measureId: draft.selectedMeasure,
                 snapshot: draft.snapshot,
               }),
