@@ -1,5 +1,10 @@
 import mongodb from "mongodb";
-import { Dataset, Filter, SnapshotUpdateRequest } from "../../iso/protocol.js";
+import {
+  Dataset,
+  MeasureFilter,
+  SnapshotQuery,
+  SnapshotUpdateRequest,
+} from "../../iso/protocol.js";
 import { User } from "lucia";
 import {
   encodeMeasureValue,
@@ -31,10 +36,6 @@ export type MeasureStatsDoc = {
   stats: { [measureId: MeasureId]: number };
 };
 
-export type MeasurementQuery = {
-  [measureId: MeasureId]: Filter;
-};
-
 export class SnapshotsModel {
   private snapshotCollection: mongodb.Collection<SnapshotDoc>;
   private statsCollection: mongodb.Collection<MeasureStatsDoc>;
@@ -46,18 +47,28 @@ export class SnapshotsModel {
       .collection<MeasureStatsDoc>("measureStats");
   }
 
-  async newSnapshot(user: User): Promise<void> {
-    await (
-      this.snapshotCollection as unknown as mongodb.Collection<
-        Omit<SnapshotDoc, "_id">
-      >
-    ).insertOne({
+  async newSnapshot(
+    user: User,
+    importSource?: Dataset | undefined,
+  ): Promise<void> {
+    const doc: Omit<SnapshotDoc, "_id"> = {
       userId: user.id,
       measures: {},
       normedMeasures: [],
       createdAt: new Date(),
       lastUpdated: new Date(),
-    });
+    };
+
+    // it's important to not set importSource if it's undefined, since we're going to be using an $exists query later
+    if (importSource) {
+      doc.importSource = importSource;
+    }
+
+    await (
+      this.snapshotCollection as unknown as mongodb.Collection<
+        Omit<SnapshotDoc, "_id">
+      >
+    ).insertOne(doc);
   }
   async updateMeasure({
     userId,
@@ -182,11 +193,11 @@ export class SnapshotsModel {
     );
   }
 
-  async querySnapshots(query: MeasurementQuery): Promise<SnapshotDoc[]> {
+  async querySnapshots(query: SnapshotQuery): Promise<SnapshotDoc[]> {
     const findQueryClauses: mongodb.Filter<SnapshotDoc>[] = [];
-    for (const measureIdStr in query) {
+    for (const measureIdStr in query.measures) {
       const measureId = measureIdStr as MeasureId;
-      const queryParams = query[measureId];
+      const queryParams = query.measures[measureId];
       if (queryParams.min == undefined && queryParams.max == undefined) {
         findQueryClauses.push({ [`measures.${measureId}`]: { $exists: true } });
       } else {
@@ -211,11 +222,22 @@ export class SnapshotsModel {
       }
     }
 
+    const datasets = Object.entries(query.datasets)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([dataset]) => dataset);
+
     const findQuery: mongodb.Filter<SnapshotDoc> = {
-      $and: findQueryClauses,
+      $and: [
+        ...findQueryClauses,
+        {
+          $or: [
+            { importSource: { $in: datasets } },
+            { importSource: { $exists: false } },
+          ],
+        },
+      ].filter(Boolean),
     };
 
-    console.log(JSON.stringify(findQuery, null, 2));
     return this.snapshotCollection.find(findQuery).toArray();
   }
 }

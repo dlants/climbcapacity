@@ -5,7 +5,12 @@ import * as MeasureSelectionBox from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
-import { MeasureStats } from "../../iso/protocol";
+import {
+  SnapshotQuery,
+  MeasureStats,
+  Dataset,
+  DATASETS,
+} from "../../iso/protocol";
 import * as Filter from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
@@ -21,6 +26,9 @@ export type FilterMapping = {
 export type Model = immer.Immutable<{
   measureStats: MeasureStats;
   filters: Filter.Model[];
+  datasets: {
+    [dataset in Dataset]: boolean;
+  };
   measureSelectionBox: MeasureSelectionBox.Model;
 }>;
 
@@ -29,6 +37,11 @@ export type Msg =
   | {
       type: "MEASURE_SELECTOR_MSG";
       msg: MeasureSelectionBox.Msg;
+    }
+  | {
+      type: "TOGGLE_DATASET";
+      dataset: Dataset;
+      include: boolean;
     }
   | { type: "FILTER_MSG"; measureId: MeasureId; msg: Filter.Msg };
 
@@ -52,6 +65,10 @@ export function initModel({
 
   return {
     measureStats,
+    datasets: {
+      powercompany: true,
+      climbharder: true,
+    },
     filters,
     measureSelectionBox: MeasureSelectionBox.initModel({
       measureStats,
@@ -68,6 +85,35 @@ export function generateFiltersMap(model: Model): FilterMapping {
     };
   }
   return filterMapping;
+}
+
+export function getQuery(filtersModel: Model): {
+  body: SnapshotQuery;
+  hash: string;
+} {
+  const query: SnapshotQuery = {
+    datasets: {},
+    measures: {},
+  };
+  const queryHashParts: string[] = [];
+  filtersModel.filters.forEach((filter) => {
+    query.measures[filter.model.measureId] = Filter.getQuery(filter);
+    queryHashParts.push(
+      filter.model.measureId +
+        ":" +
+        JSON.stringify(query.measures[filter.model.measureId]),
+    );
+  });
+
+  for (const dataset in filtersModel.datasets) {
+    query.datasets[dataset] = filtersModel.datasets[dataset];
+    queryHashParts.push(`dataset:${filtersModel.datasets[dataset]}`);
+  }
+
+  return {
+    body: query,
+    hash: queryHashParts.join(","),
+  };
 }
 
 function nextChar(char: string) {
@@ -132,6 +178,14 @@ export const update: Update<Msg, Model> = (msg, model) => {
           draft.filters[filterIndex] = immer.castDraft(next);
         }),
       ];
+
+    case "TOGGLE_DATASET":
+      return [
+        immer.produce(model, (draft) => {
+          draft.datasets[msg.dataset] = msg.include;
+        }),
+      ];
+
     default:
       assertUnreachable(msg);
   }
@@ -152,6 +206,24 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
         model={model.measureSelectionBox}
         dispatch={(msg) => dispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
       />{" "}
+      {DATASETS.map((dataset) => (
+        <div key={dataset}>
+          <label>
+            <input
+              type="checkbox"
+              checked={model.datasets[dataset]}
+              onChange={(e) =>
+                dispatch({
+                  type: "TOGGLE_DATASET",
+                  dataset: dataset,
+                  include: e.target.checked,
+                })
+              }
+            />{" "}
+            {dataset}
+          </label>
+        </div>
+      ))}
     </div>
   );
 };

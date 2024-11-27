@@ -47,12 +47,17 @@ export class ProtocolDate {
   }
 }
 
-export type Filter = {
+export type MeasureFilter = {
   min?: UnitValue;
   max?: UnitValue;
 };
 
-export type FilterQuery = { [measureId: MeasureId]: Filter };
+export type SnapshotQuery = {
+  datasets: {
+    [dataset in Dataset]: boolean;
+  };
+  measures: { [measureId: MeasureId]: MeasureFilter };
+};
 
 export type AuthStatus =
   | { status: "logged out" }
@@ -72,4 +77,5 @@ export type MeasureStats = {
   [measureId: MeasureId]: number;
 };
 
-export type Dataset = "climbharderv3" | "powercompany";
+export const DATASETS = ["climbharder", "powercompany"];
+export type Dataset = (typeof DATASETS)[number];

@@ -35,6 +35,6 @@
   "scripts": {
     "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js",
     "build": "tsc --pretty false",
-    "test": "mocha -r tsx './models/**/*.spec.ts' '../iso/**/*.spec.ts'"
+    "test": "npx vitest"
   }
 }

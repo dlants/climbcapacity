@@ -226,15 +226,21 @@ describe("SnapshotsModel", () => {
 
       // Test existence query
       let results = await model.querySnapshots({
-        ["weight" as MeasureId]: {},
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {},
+        },
       });
       assert.strictEqual(results.length, 3);
 
       // Test min/max query
       results = await model.querySnapshots({
-        ["weight" as MeasureId]: {
-          min: { unit: "kg", value: 75 },
-          max: { unit: "kg", value: 85 },
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 75 },
+            max: { unit: "kg", value: 85 },
+          },
         },
       });
       assert.strictEqual(results.length, 1);
@@ -268,99 +274,191 @@ describe("SnapshotsModel", () => {
 
       // Query by weight in kg (should convert from lb)
       let results = await model.querySnapshots({
-        ["weight" as MeasureId]: {
-          min: { unit: "kg", value: 69 },
-          max: { unit: "kg", value: 71 },
-        }, // ~70kg = 154lb
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 69 },
+            max: { unit: "kg", value: 71 },
+          }, // ~70kg = 154lb
+        },
       });
       assert.strictEqual(results.length, 1);
 
       // Query by negative temperature
       results = await model.querySnapshots({
-        ["weight" as MeasureId]: {
-          min: { unit: "kg", value: -10 },
-          max: { unit: "kg", value: 0 },
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: -10 },
+            max: { unit: "kg", value: 0 },
+          },
         },
       });
       assert.strictEqual(results.length, 1);
     });
-  });
 
-  it("should handle combined measure queries", async () => {
-    await model.newSnapshot(mockUser);
-    const [snapshot1] = await model.getUsersSnapshots(mockUser.id);
+    it("should handle combined measure queries", async () => {
+      await model.newSnapshot(mockUser);
+      const [snapshot1] = await model.getUsersSnapshots(mockUser.id);
 
-    await model.updateMeasure({
-      userId: mockUser.id,
-      requestParams: {
-        snapshotId: snapshot1._id.toHexString() as SnapshotId,
-        updates: {
-          ["weight" as MeasureId]: { value: 70, unit: "kg" },
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot1._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
         },
-      },
-    });
+      });
 
-    await model.updateMeasure({
-      userId: mockUser.id,
-      requestParams: {
-        snapshotId: snapshot1._id.toHexString() as SnapshotId,
-        updates: {
-          ["height" as MeasureId]: { value: 180, unit: "cm" },
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot1._id.toHexString() as SnapshotId,
+          updates: {
+            ["height" as MeasureId]: { value: 180, unit: "cm" },
+          },
         },
-      },
-    });
+      });
 
-    // Create another snapshot with different values
-    await model.newSnapshot(mockUser);
-    const [_, snapshot2] = await model.getUsersSnapshots(mockUser.id);
-    await model.updateMeasure({
-      userId: mockUser.id,
-      requestParams: {
-        snapshotId: snapshot2._id.toHexString() as SnapshotId,
-        updates: {
-          ["weight" as MeasureId]: { value: 70, unit: "kg" },
+      // Create another snapshot with different values
+      await model.newSnapshot(mockUser);
+      const [_, snapshot2] = await model.getUsersSnapshots(mockUser.id);
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot2._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
         },
-      },
-    });
-    await model.updateMeasure({
-      userId: mockUser.id,
-      requestParams: {
-        snapshotId: snapshot2._id.toHexString() as SnapshotId,
-        updates: {
-          ["height" as MeasureId]: { value: 170, unit: "cm" }, // Different height
+      });
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot2._id.toHexString() as SnapshotId,
+          updates: {
+            ["height" as MeasureId]: { value: 170, unit: "cm" }, // Different height
+          },
         },
-      },
+      });
+
+      let results = await model.querySnapshots({
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 65 },
+            max: { unit: "kg", value: 75 },
+          },
+          ["height" as MeasureId]: {
+            min: { unit: "cm", value: 175 },
+            max: { unit: "cm", value: 185 },
+          },
+        },
+      });
+
+      assert.strictEqual(
+        results.length,
+        1,
+        "one snapshot satisfies both queries",
+      );
+      assert.strictEqual(results[0].measures["height" as MeasureId].value, 180);
+
+      results = await model.querySnapshots({
+        datasets: {},
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 65 },
+            max: { unit: "kg", value: 75 },
+          },
+          ["height" as MeasureId]: {
+            min: { unit: "cm", value: 185 },
+            max: { unit: "cm", value: 190 },
+          },
+        },
+      });
+      assert.strictEqual(
+        results.length,
+        0,
+        "no snapshot satisfies both queries",
+      );
     });
 
-    // Query matching both measures
-    let results = await model.querySnapshots({
-      ["weight" as MeasureId]: {
-        min: { unit: "kg", value: 65 },
-        max: { unit: "kg", value: 75 },
-      },
-      ["height" as MeasureId]: {
-        min: { unit: "cm", value: 175 },
-        max: { unit: "cm", value: 185 },
-      },
-    });
+    it("should handle dataset queries", async () => {
+      await model.newSnapshot(mockUser, "powercompany");
+      await model.newSnapshot(mockUser, "climbharder");
+      await model.newSnapshot(mockUser);
+      const [snapshot1, snapshot2, snapshot3] = await model.getUsersSnapshots(
+        mockUser.id,
+      );
 
-    assert.strictEqual(
-      results.length,
-      1,
-      "one snapshot satisfies both queries",
-    );
-    assert.strictEqual(results[0].measures["height" as MeasureId].value, 180);
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot1._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
 
-    results = await model.querySnapshots({
-      ["weight" as MeasureId]: {
-        min: { unit: "kg", value: 65 },
-        max: { unit: "kg", value: 75 },
-      },
-      ["height" as MeasureId]: {
-        min: { unit: "cm", value: 185 },
-        max: { unit: "cm", value: 190 },
-      },
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot2._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
+
+      await model.updateMeasure({
+        userId: mockUser.id,
+        requestParams: {
+          snapshotId: snapshot3._id.toHexString() as SnapshotId,
+          updates: {
+            ["weight" as MeasureId]: { value: 70, unit: "kg" },
+          },
+        },
+      });
+
+      let results = await model.querySnapshots({
+        datasets: {
+          powercompany: true,
+          climbharder: false,
+        },
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 65 },
+            max: { unit: "kg", value: 75 },
+          },
+        },
+      });
+
+      assert.strictEqual(
+        results.length,
+        2,
+        "should find two results for powercompany dataset query",
+      );
+
+      results = await model.querySnapshots({
+        datasets: {
+          powercompany: false,
+          climbharder: false,
+        },
+        measures: {
+          ["weight" as MeasureId]: {
+            min: { unit: "kg", value: 65 },
+            max: { unit: "kg", value: 75 },
+          },
+        },
+      });
+
+      assert.strictEqual(
+        results.length,
+        1,
+        "one snapshot found since both datasets were excluded",
+      );
     });
-    assert.strictEqual(results.length, 0, "no snapshot satisfies both queries");
   });
 });

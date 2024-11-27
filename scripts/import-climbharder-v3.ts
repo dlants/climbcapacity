@@ -40,7 +40,7 @@ table.slice(1).forEach((row, idx) => {
     normedMeasures: [],
     createdAt: new Date(),
     lastUpdated: new Date(),
-    importSource: "climbharderv3",
+    importSource: "climbharder",
   };
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
@@ -703,7 +703,7 @@ async function run() {
   await client.connect();
   const db = client.db();
   const snapshotsCollection = db.collection<SnapshotDoc>("snapshots");
-  await snapshotsCollection.deleteMany({ importSource: "climbharderv3" });
+  await snapshotsCollection.deleteMany({ importSource: "climbharder" });
   const res = await snapshotsCollection.insertMany(snapshots as SnapshotDoc[]);
   return res.insertedCount;
 }

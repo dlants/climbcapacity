@@ -7,7 +7,7 @@ import {
   GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
 } from "../util/utils";
-import { FilterQuery, MeasureStats } from "../../iso/protocol";
+import { SnapshotQuery, MeasureStats } from "../../iso/protocol";
 import * as EditQuery from "../views/edit-query";
 import * as immer from "immer";
 import * as ReportCardGraphs from "./report-card-graphs";
@@ -31,7 +31,7 @@ export type Model = immer.Immutable<{
   };
   measureStats: MeasureStats;
   query: {
-    body: FilterQuery;
+    body: SnapshotQuery;
     hash: string;
   };
   mySnapshot?: HydratedSnapshot;
@@ -113,7 +113,7 @@ export function initModel({
     measureStats,
     initialFilters: initialFilters,
   });
-  const query = getQuery(filtersModel);
+  const query = EditQuery.getQuery(filtersModel);
 
   const performanceMeasure = MEASURES.find(
     (s) => s.id == "grade-boulder:gym:max",
@@ -233,7 +233,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.filtersModel = immer.castDraft(nextFiltersModel);
-          draft.query = getQuery(nextFiltersModel);
+          draft.query = EditQuery.getQuery(nextFiltersModel);
           if (draft.query.hash != model.query.hash) {
             draft.dataRequest = { status: "not-sent" };
           }
@@ -296,23 +296,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
       assertUnreachable(msg);
   }
 };
-
-function getQuery(filtersModel: EditQuery.Model): Model["query"] {
-  const query: FilterQuery = {};
-  const queryHashParts: string[] = [];
-  filtersModel.filters.forEach((filter) => {
-    query[filter.model.measureId] = Filter.getQuery(filter);
-    queryHashParts.push(
-      filter.model.measureId +
-        ":" +
-        JSON.stringify(query[filter.model.measureId]),
-    );
-  });
-  return {
-    body: query,
-    hash: queryHashParts.join(","),
-  };
-}
 
 const FetchButton = ({
   dispatch,

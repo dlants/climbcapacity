@@ -8,10 +8,12 @@ import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
 import {
-  FilterQuery,
+  SnapshotQuery,
   MeasureStats,
   SnapshotId,
   SnapshotUpdateRequest,
+  DATASETS,
+  Dataset,
 } from "../iso/protocol.js";
 import mongodb from "mongodb";
 import { asyncRoute, HandledError } from "./utils.js";
@@ -152,16 +154,27 @@ async function run() {
   app.post(
     "/api/snapshots/query",
     apiRoute(async (req, _res) => {
-      const query: FilterQuery = req.body.query;
+      const query: SnapshotQuery = req.body.query;
 
-      assert.equal(typeof query, "object", "filter must be an object");
-      for (const measureId in query) {
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.equal(
+        typeof query.datasets,
+        "object",
+        "query must contain datasets object",
+      );
+      assert.equal(
+        typeof query.measures,
+        "object",
+        "query must contain measures object",
+      );
+
+      for (const measureId in query.measures) {
         assert.ok(
           MEASURES.findIndex((m) => m.id == measureId) > -1,
           `Measure has invalid id ${measureId}`,
         );
 
-        const val = query[measureId as MeasureId];
+        const val = query.measures[measureId as MeasureId];
         assert.equal(
           typeof val,
           "object",
@@ -174,15 +187,35 @@ async function run() {
             `query ${measureId} can only define min and max but it defined ${valKey}`,
           );
 
-          assert.equal(
-            typeof val[valKey as "min" | "max"],
-            "object",
-            `query ${measureId}:${valKey} must be a UnitValue`,
-          );
+          const filterVal = val[valKey as "min" | "max"];
+          if (filterVal) {
+            assert.equal(
+              typeof filterVal,
+              "object",
+              `query ${measureId}:${valKey} must be a UnitValue`,
+            );
+          }
         }
       }
 
-      assert.ok(Object.keys(query).length, "Must provide non-empty query");
+      for (const dataset in query.datasets) {
+        assert.ok(
+          DATASETS.includes(dataset),
+          `dataset ${dataset} is not valid`,
+        );
+
+        const enabled = query.datasets[dataset as Dataset];
+        assert.equal(
+          typeof enabled,
+          "boolean",
+          `dataset ${dataset} must be enabled or disabled with boolean`,
+        );
+      }
+
+      assert.ok(
+        Object.keys(query.measures).length,
+        "Must provide non-empty measures query",
+      );
 
       return await snapshotModel.querySnapshots(query);
     }),
