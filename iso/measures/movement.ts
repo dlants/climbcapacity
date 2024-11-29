@@ -44,12 +44,11 @@ export const weightedClass: MeasureClassSpec = {
   generateDescription: (params: { movement: WeightedMovement; repMax: "1" | "2" | "5" }) => {
     return `Measure your ${params.repMax} rep maximum for the following movement:
     
-    ${weightedMovementDesc[params.movement]}.
+${weightedMovementDesc[params.movement]}.
     
-    ${(params.movement == 'pullup' || params.movement == 'dip' || params.movement == 'ringdip') ? 'Include your body weight in your recorded measurement. So if you weigh 70kg and you added 30kg, record 100kg.' : ''}
+${(params.movement == 'pullup' || params.movement == 'dip' || params.movement == 'ringdip') ? 'Include your body weight in your recorded measurement. So if you weigh 70kg and you added 30kg, record 100kg.' : ''}
 
-    Rest at least 5 minutes between attempts.
-    `;
+Rest at least 5 minutes between attempts.`;
   }
 };
 
@@ -95,9 +94,9 @@ export const unilateralWeightedClass: MeasureClassSpec = {
   generateDescription: (params: { movement: UnilateralMovement; repMax: "1" | "2" | "5"; dominantSide: "dominant" | "nondominant" }) => {
     return `Measure your ${params.repMax} rep maximum on your ${params.dominantSide} side for the following movement: 
     
-    ${unilateralMovementDesc[params.movement]}. 
+${unilateralMovementDesc[params.movement]}. 
     
-    Rest at least 5 minutes between attempts.`;
+Rest at least 5 minutes between attempts.`;
   }
 }
 
@@ -210,7 +209,7 @@ export const isometricClass: MeasureClassSpec = {
   generateDescription: (params: { movement: IsometricMovement }) => {
     return `Maximum hold time for the following movement: 
     
-    ${isometricMovementDesc[params.movement]}.`;
+${isometricMovementDesc[params.movement]}.`;
   }
 };
 
@@ -255,18 +254,18 @@ export type EnduranceMovement = "shortcampus" | "longcampus";
 const enduranceMovementDesc: { [key in EnduranceMovement]: string } = {
   "shortcampus": `For this measurement you will use medium campus rungs (1") with foot rungs.
   
-  Move one rung at a time at a pace similar to climbing, only matching on the top and bottom rungs. Move up as far as you can comfortably reach and then back down to the bottom rung. Keep your feet stationary.
+Move one rung at a time at a pace similar to climbing, only matching on the top and bottom rungs. Move up as far as you can comfortably reach and then back down to the bottom rung. Keep your feet stationary.
   
-  You may chalk between moves and shake briefly while reaching, but you may not stop to shake out. Climb until the pump causes failure and record this time in seconds.`,
+You may chalk between moves and shake briefly while reaching, but you may not stop to shake out. Climb until the pump causes failure and record this time in seconds.`,
   "longcampus": `For this measurement you will use medium campus rungs (1").
   
-  You'll be making a single big move, and without matching, reversing that same move. Then you'll repeat with the other hand.
+You'll be making a single big move, and without matching, reversing that same move. Then you'll repeat with the other hand.
   
-  The move should be as high as you can go without jumping, and that you can still reverse in control.
+The move should be as high as you can go without jumping, and that you can still reverse in control.
   
-  Your feet should be planted in one spot.
+Your feet should be planted in one spot.
   
-  Alternate the hand you lead with and move at a pace similar to climbing. You may chalk up if needed but avoid shaking out other than while reaching between rungs. Record your time spent on the board in seconds.`,
+Alternate the hand you lead with and move at a pace similar to climbing. You may chalk up if needed but avoid shaking out other than while reaching between rungs. Record your time spent on the board in seconds.`,
 };
 
 export const enduranceClass: MeasureClassSpec = {
@@ -288,6 +287,6 @@ export const enduranceClass: MeasureClassSpec = {
   generateDescription: (params: { movement: EnduranceMovement }) => {
     return `Maximum duration performing the following movement:
     
-    ${enduranceMovementDesc[params.movement]}.`;
+${enduranceMovementDesc[params.movement]}.`;
   }
 };

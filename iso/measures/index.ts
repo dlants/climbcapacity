@@ -225,8 +225,7 @@ MEASURES.push({
   name: "How long have you been climbing?",
   description: `Count time during which you've been going at least once a week.
 
-For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5
-`,
+For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5`,
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
@@ -249,8 +248,7 @@ export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
 1 - never or barely tried it
 2 - trained it on and off
 3 - trained it regularly
-4 - highly trained in it
-`,
+4 - highly trained in it`,
     units: ["training"],
     initialFilter: {
       type: "minmax",
