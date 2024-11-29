@@ -21,6 +21,7 @@ export type MeasureClassSpec = {
    */
   units: UnitType[];
   initialFilter: InitialFilter;
+  generateDescription(params: { [paramName: string]: string }): string;
 };
 
 export function generateId(
@@ -122,7 +123,7 @@ function generateMeasureSpecs(measureClass: MeasureClassSpec): MeasureSpec[] {
       type: measureClass.measureType,
       spec: measureClass,
       name: id,
-      description: "",
+      description: measureClass.generateDescription(combo),
       units: measureClass.units,
       initialFilter: measureClass.initialFilter,
     });
@@ -191,7 +192,6 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
       maxValue: { unit: "m", value: 2.8 },
     },
   },
-
   {
     id: "weight" as MeasureId,
     type: "anthro",
