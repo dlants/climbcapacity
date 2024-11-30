@@ -1,4 +1,5 @@
-# TODO
-- set up interpolation between 1rm/2rm/5rm and 18mm/20mm etc...
-- set up home page
-- dominant/nondominant toggles
+This is the source code that powers [https://climbcapacity.com/](https://climbcapacity.com/)
+
+For feature requests, etc... please see the project issues.
+
+If you'd like to contribute, see contact info at [https://dlants.me](https://dlants.me)
