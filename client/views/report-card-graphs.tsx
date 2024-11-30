@@ -19,7 +19,6 @@ import {
   UnitValue,
 } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
-import { Result } from "../../iso/utils";
 import { filterOutliersX } from "../util/stats";
 import { MEASURES } from "../constants";
 import { MeasureStats } from "../../iso/protocol";
@@ -52,15 +51,15 @@ export type Model = immer.Immutable<{
 
 export type Msg =
   | {
-      type: "FILTER_MSG";
-      measureId: MeasureId;
-      msg: ReportCardFilter.Msg;
-    }
+    type: "FILTER_MSG";
+    measureId: MeasureId;
+    msg: ReportCardFilter.Msg;
+  }
   | {
-      type: "TOGGLE_MSG";
-      measureId: MeasureId;
-      msg: UnitToggle.Msg;
-    };
+    type: "TOGGLE_MSG";
+    measureId: MeasureId;
+    msg: UnitToggle.Msg;
+  };
 
 export function initModel({
   mySnapshot,
@@ -188,13 +187,15 @@ function getPlots(model: Model) {
       measureStats: model.measureStats,
     });
 
+    const includeStrToWtRatio = inputMeasureSpec.units.includes('kg') || inputMeasureSpec.units.includes('lb')
+
     plots.push({
       inputMeasure: inputMeasure,
       filterModel,
       toggle: {
         measureId: inputMeasure.id,
-        selectedUnit: inputMeasure.unit,
-        possibleUnits: inputMeasureSpec.units,
+        selectedUnit: includeStrToWtRatio ? 'strengthtoweightratio' : inputMeasure.unit,
+        possibleUnits:  includeStrToWtRatio ? [...inputMeasureSpec.units, 'strengthtoweightratio'] : inputMeasureSpec.units,
       },
       model: getPlot({
         xMeasure: inputMeasure,

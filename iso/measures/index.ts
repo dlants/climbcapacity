@@ -154,6 +154,7 @@ MEASURES.push(...generateMeasureSpecs(Movement.enduranceClass));
 MEASURES.push(...generateMeasureSpecs(Power.powerClass));
 MEASURES.push(...generateMeasureSpecs(Power.unilateralPowerClass));
 
+export const WEIGHT_MEASURE_ID = 'weight' as MeasureId;
 const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
@@ -193,7 +194,7 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     },
   },
   {
-    id: "weight" as MeasureId,
+    id: WEIGHT_MEASURE_ID,
     type: "anthro",
     name: "weight",
     description: "Your weight",
@@ -216,6 +217,7 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     },
   },
 ];
+
 
 MEASURES.push(...ANTHRO_MEASURES);
 

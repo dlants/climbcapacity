@@ -20,7 +20,7 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
-import { MeasureId } from "./measures/index.js";
+import { MeasureId, WEIGHT_MEASURE_ID } from "./measures/index.js";
 import { Snapshot } from "./protocol.js";
 import { assertUnreachable } from "./utils.js";
 
@@ -378,11 +378,22 @@ export function extractDataPoint({
   xMeasure: { id: MeasureId; unit: UnitType };
   yMeasure: { id: MeasureId; unit: UnitType };
 }): { x: number; y: number } | undefined {
-  const inputValue = measures[xMeasure.id];
+  let inputValue = measures[xMeasure.id];
+  const weightValue = measures[WEIGHT_MEASURE_ID];
   const outputValue = measures[yMeasure.id];
 
   if (!(inputValue && outputValue)) {
     return undefined;
+  }
+
+  if (xMeasure.unit == 'strengthtoweightratio') {
+    if (!weightValue) {
+      return undefined;
+    }
+    inputValue = {
+      unit: 'strengthtoweightratio',
+      value: convertToStandardUnit(inputValue) / convertToStandardUnit(weightValue)
+    }
   }
 
   return {
