@@ -1,10 +1,10 @@
+import { MeasureClassSpec } from "./index.js";
 import {
   DOMINANT_SIDES,
-  MeasureClassSpec,
   ParamValue,
   POWER_MOVEMENT,
-  UNILATERAL_POWER_MOVEMENT,
-} from "./index.js";
+  UNILATERAL_POWER_MOVEMENT
+} from "./params.js";
 
 export type PowerMovement = (typeof POWER_MOVEMENT)[number];
 export type UnilateralPowerMovement = (typeof UNILATERAL_POWER_MOVEMENT)[number];

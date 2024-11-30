@@ -39,7 +39,7 @@ export const DURATIONS = ["7", "10"] as const;
 export const AVG_LOAD_DURATIONS = ["30"] as const;
 export const DOMINANT_SIDES = ["dominant", "nondominant"] as const;
 export const TIMINGS = ["7-3"] as const;
-export const REPS = ["1", "3", "5"] as const;
+export const REPS = ["1", "2", "5"] as const;
 
 // Location Parameters
 export const SPORT_LOCATION = ["gym", "outside"] as const;

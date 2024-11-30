@@ -1,3 +1,4 @@
+import { MeasureClassSpec, MeasureSpec } from "./index.js";
 import {
   ALL_GRIP_TYPES,
   BASIC_GRIP_TYPES,
@@ -5,12 +6,10 @@ import {
   DURATIONS,
   EDGE_SIZES,
   EXTENDED_GRIP_TYPES,
-  MeasureClassSpec,
-  MeasureSpec,
   ParamValue,
   REPS,
   TIMINGS,
-} from "./index.js";
+} from "./params.js";
 
 type GripType = ParamValue<"allGripType">;
 type EdgeSize = ParamValue<"edgeSize">;

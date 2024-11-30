@@ -1,4 +1,5 @@
-import { MeasureId, ParamMap, ParamName } from "../../../iso/measures";
+import { MeasureId, ParamMap } from "../../../iso/measures";
+import { ParamName } from "../../../iso/measures/params";
 import { MeasureStats } from "../../../iso/protocol";
 
 export type CountTree = {
@@ -37,7 +38,7 @@ export function measureStatsToCountTree(
         currentNode = currentNode.children[value];
         currentNode.count += count;
       }
-    } catch {}
+    } catch { }
   }
 
   return root;

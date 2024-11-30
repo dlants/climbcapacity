@@ -1,11 +1,11 @@
 import { IRCRAGrade } from "../grade.js";
+import { MeasureClassSpec } from "./index.js";
 import {
-  BOULDER_LOCATION,
-  MeasureClassSpec,
   ParamValue,
+  BOULDER_LOCATION,
   SPORT_LOCATION,
   STAT,
-} from "./index.js";
+} from "./params.js";
 
 type BoulderLocation = ParamValue<"boulderLocation">;
 type SportLocation = ParamValue<"sportLocation">;

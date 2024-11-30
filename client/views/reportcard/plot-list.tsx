@@ -23,14 +23,21 @@ import { filterOutliersX } from "../../util/stats";
 import { MEASURES } from "../../constants";
 import { MeasureStats } from "../../../iso/protocol";
 import * as UnitToggle from "../unit-toggle";
+import * as Interpolate from "./interpolate";
+import { InterpolationOption } from "../../../iso/interpolate";
+import { ParamName } from "../../../iso/measures/params";
 const { produce } = immer;
 
-type PlotModel = {
+type PlotModel = immer.Immutable<{
   filterModel: ReportCardFilter.Model;
   inputMeasure: MeasureWithUnit;
   toggle: UnitToggle.Model;
+  interpolate: {
+    model: Interpolate.Model;
+    interpolationOptions: InterpolationOption<ParamName>[];
+  },
   model: Plot.Model;
-};
+}>;
 
 type MeasureWithUnit = {
   id: MeasureId;
@@ -59,6 +66,11 @@ export type Msg =
     type: "TOGGLE_MSG";
     measureId: MeasureId;
     msg: UnitToggle.Msg;
+  }
+  | {
+    type: "INTERPOLATE_MSG";
+    measureId: MeasureId;
+    msg: Interpolate.Msg;
   };
 
 export function initModel({
@@ -190,6 +202,12 @@ function getPlots(model: Model) {
     const includeStrToWtRatio = inputMeasureSpec.units.includes('kg') || inputMeasureSpec.units.includes('lb')
     const selectedUnit = includeStrToWtRatio ? 'strengthtoweightratio' : inputMeasure.unit;
 
+    const interpolationModel = Interpolate.initModel({
+      measureId: inputMeasure.id,
+      measureStats: model.measureStats,
+    });
+    const interpolationOptions = getInterpolationOptions(interpolationModel);
+
     plots.push({
       inputMeasure: inputMeasure,
       filterModel,
@@ -198,11 +216,16 @@ function getPlots(model: Model) {
         selectedUnit,
         possibleUnits: includeStrToWtRatio ? [...inputMeasureSpec.units, 'strengthtoweightratio'] : inputMeasureSpec.units,
       },
+      interpolate: {
+        model: interpolationModel,
+        interpolationOptions
+      },
       model: getPlot({
         xMeasure: {
           ...inputMeasure,
           unit: selectedUnit
         },
+        interpolationOptions,
         filterModel,
         model,
       }),
@@ -212,13 +235,42 @@ function getPlots(model: Model) {
   return plots;
 }
 
+function getInterpolationOptions(interpolationModel: Interpolate.Model): InterpolationOption<ParamName>[] {
+  const measureId = interpolationModel.measureId;
+  const measureClassSpec = getSpec(measureId).spec;
+  const output: InterpolationOption<ParamName>[] = [];
+  if (!measureClassSpec) {
+    return output
+  }
+
+  for (const [paramName, option] of Object.entries(interpolationModel.interpolationOptions)) {
+    if (!option.enabled) {
+      continue;
+    }
+
+    for (const interpolationMeasure of option.interpolationMeasures) {
+      output.push({
+        param: paramName as ParamName,
+        sourceMeasureId: interpolationMeasure.sourceMeasureId,
+        targetMeasureId: interpolationModel.measureId,
+        measureParamValue: interpolationMeasure.sourceParamValue,
+        targetParamValue: interpolationMeasure.targetParamValue
+      });
+    }
+  }
+
+  return output
+}
+
 function getPlot({
   xMeasure,
   filterModel,
   model,
+  interpolationOptions,
 }: {
   xMeasure: MeasureWithUnit;
   filterModel: ReportCardFilter.Model;
+  interpolationOptions: InterpolationOption<ParamName>[];
   model: Model;
 }): Plot.Model {
   const data: { x: number; y: number }[] = [];
@@ -234,6 +286,7 @@ function getPlot({
     mySnapshot &&
     extractDataPoint({
       measures: mySnapshot.measures as any,
+      interpolations: interpolationOptions,
       xMeasure: xMeasure,
       yMeasure: {
         id: yMeasure.id,
@@ -244,6 +297,7 @@ function getPlot({
   for (const snapshot of snapshots) {
     const dataPoint = extractDataPoint({
       measures: snapshot.measures as any,
+      interpolations: interpolationOptions,
       xMeasure: xMeasure,
       yMeasure: {
         id: yMeasure.id,
@@ -314,6 +368,7 @@ export function update(msg: Msg, model: Model): [Model] {
           plot.model = immer.castDraft(
             getPlot({
               filterModel: next,
+              interpolationOptions: plot.interpolate.interpolationOptions,
               xMeasure: {
                 ...plot.inputMeasure,
                 unit: plot.toggle.selectedUnit,
@@ -338,9 +393,37 @@ export function update(msg: Msg, model: Model): [Model] {
           plot.model = immer.castDraft(
             getPlot({
               filterModel: plot.filterModel,
+              interpolationOptions: plot.interpolate.interpolationOptions,
               xMeasure: {
                 ...plot.inputMeasure,
                 unit: next.selectedUnit,
+              },
+              model,
+            }),
+          );
+        }),
+      ];
+
+    case "INTERPOLATE_MSG":
+      return [
+        produce(model, (draft) => {
+          const plot = draft.plots.find(
+            (p) => p.inputMeasure.id === msg.measureId,
+          );
+          if (!plot) {
+            throw new Error(`Cannot find plot for measure ${msg.measureId}`);
+          }
+          const [next] = Interpolate.update(msg.msg, plot.interpolate.model);
+          plot.interpolate.model = immer.castDraft(next);
+          plot.interpolate.interpolationOptions = getInterpolationOptions(plot.interpolate.model);
+
+          plot.model = immer.castDraft(
+            getPlot({
+              filterModel: plot.filterModel,
+              interpolationOptions: plot.interpolate.interpolationOptions,
+              xMeasure: {
+                ...plot.inputMeasure,
+                unit: plot.toggle.selectedUnit,
               },
               model,
             }),
@@ -395,7 +478,20 @@ function PlotWithControls({
           });
         }}
       />
+
+      <Interpolate.view
+        model={plot.interpolate.model}
+        dispatch={(msg) => {
+          dispatch({
+            type: "INTERPOLATE_MSG",
+            measureId: plot.inputMeasure.id,
+            msg,
+          });
+        }}
+      />
+
       <Plot.view model={plot.model} dispatch={dispatch} />
+
       {plot.toggle.possibleUnits.length > 1 && (
         <UnitToggle.view
           model={plot.toggle}

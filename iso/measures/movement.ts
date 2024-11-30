@@ -1,5 +1,5 @@
+import { MeasureClassSpec } from "./index.js";
 import {
-  MeasureClassSpec,
   DOMINANT_SIDES,
   ENDURANCE_MOVEMENT,
   ISOMETRIC_MOVEMENT,
@@ -10,8 +10,8 @@ import {
   UNILATERAL_MAX_REPS_MOVEMENT,
   UNILATERAL_MOVEMENT,
   UNILATERAL_REPS,
-  WEIGHTED_MOVEMENT,
-} from "./index.js";
+  WEIGHTED_MOVEMENT
+} from "./params.js";
 
 export type WeightedMovement = (typeof WEIGHTED_MOVEMENT)[number];
 export type UnilateralMovement = (typeof UNILATERAL_MOVEMENT)[number];

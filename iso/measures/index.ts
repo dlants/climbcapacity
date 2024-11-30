@@ -15,7 +15,7 @@ export type Param<K extends ParamName> = {
   suffix: string;
 };
 
-export type ParamMap = Partial<{[K in ParamName]: ParamValue<K>}>
+export type ParamMap = Partial<{ [K in ParamName]: ParamValue<K> }>
 
 export type MeasureClassSpec = {
   className: string;
@@ -47,7 +47,7 @@ export function generateId(
     }
     parts.push(value + param.suffix);
   }
-  return parts.join("-") as MeasureId;
+  return parts.join(":") as MeasureId;
 }
 
 export function parseId(
@@ -289,6 +289,3 @@ export function getSpec(measureId: MeasureId) {
 
   return spec;
 }
-
-// Re-export parameter types and values
-export * from "./params.js";

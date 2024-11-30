@@ -20,7 +20,9 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
+import { interpolate, InterpolationOption } from "./interpolate.js";
 import { MeasureId, WEIGHT_MEASURE_ID } from "./measures/index.js";
+import { ParamName } from "./measures/params.js";
 import { Snapshot } from "./protocol.js";
 import { assertUnreachable } from "./utils.js";
 
@@ -67,16 +69,6 @@ export type MeasureValue = {
 export function encodeMeasureValue(measure: MeasureValue): NormedMeasure {
   const standardValue = convertToStandardUnit(measure.value);
   return { measureId: measure.id, value: standardValue };
-}
-
-/** Convert from the weight at given reps to a 1rm. So for exmaple from a 5rm weight to a 1rm weight
- */
-function brzycki(weight: number, reps: number) {
-  return weight * (36 / (37 - reps));
-}
-
-function inverse_brzycki(weight1rm: number, targetReps: number) {
-  return weight1rm * ((37 - targetReps) / 36);
 }
 
 export function convertToStandardUnit(unit: UnitValue): number {
@@ -392,14 +384,25 @@ export function extractDataPoint({
   measures,
   xMeasure,
   yMeasure,
+  interpolations
 }: {
   measures: Snapshot["measures"];
   xMeasure: { id: MeasureId; unit: UnitType };
   yMeasure: { id: MeasureId; unit: UnitType };
+  interpolations: InterpolationOption<ParamName>[]
 }): { x: number; y: number } | undefined {
   let inputValue = measures[xMeasure.id];
   const weightValue = measures[WEIGHT_MEASURE_ID];
-  const outputValue = measures[yMeasure.id];
+  let outputValue = measures[yMeasure.id];
+  if (!inputValue) {
+    for (const interpolation of interpolations) {
+      const value = interpolate(measures, interpolation);
+      if (value != undefined) {
+        inputValue = value;
+        break;
+      }
+    }
+  }
 
   if (!(inputValue && outputValue)) {
     return undefined;

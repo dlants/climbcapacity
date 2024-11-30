@@ -1,4 +1,12 @@
-import { AVG_LOAD_DURATIONS, avgLoadDuration, BASIC_GRIP_TYPES, DOMINANT_SIDES, EDGE_SIZES, MeasureClassSpec, MeasureSpec, ParamValue } from "./index.js";
+import { MeasureClassSpec, MeasureSpec } from "./index.js";
+import { 
+  AVG_LOAD_DURATIONS, 
+  avgLoadDuration, 
+  BASIC_GRIP_TYPES, 
+  DOMINANT_SIDES, 
+  EDGE_SIZES, 
+  ParamValue 
+} from "./params.js";
 
 // Type definitions for parameters
 export type GripType = typeof BASIC_GRIP_TYPES[number];

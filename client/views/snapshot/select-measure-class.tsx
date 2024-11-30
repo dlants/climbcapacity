@@ -75,7 +75,7 @@ function initSelected({
       try {
         selectedParams = parseId(measureId, immer.castDraft(spec));
         selectedSpec = spec;
-      } catch {}
+      } catch { }
     }
   }
 
@@ -103,14 +103,14 @@ function initSelected({
 
 export type Msg =
   | {
-      type: "SELECT_MEASURE_CLASS_MSG";
-      measureClass: MeasureClassSpec;
-    }
+    type: "SELECT_MEASURE_CLASS_MSG";
+    measureClass: MeasureClassSpec;
+  }
   | {
-      type: "UPDATE_PARAM_MSG";
-      param: string;
-      value: string;
-    };
+    type: "UPDATE_PARAM_MSG";
+    param: string;
+    value: string;
+  };
 
 export const update = (msg: Msg, model: Model): [Model] => {
   switch (msg.type) {
