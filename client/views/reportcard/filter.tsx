@@ -1,12 +1,12 @@
 import React, { Dispatch } from "react";
-import { Update, View } from "../tea";
+import { Update, View } from "../../tea";
 import * as immer from "immer";
-import { Identifier } from "../parser/types";
-import { InitialFilter, UnitType } from "../../iso/units";
-import { assertUnreachable } from "../util/utils";
-import { MeasureStats } from "../../iso/protocol";
-import * as Filter from "./filters/filter";
-import { MeasureId } from "../../iso/measures";
+import { Identifier } from "../../parser/types";
+import { InitialFilter, UnitType } from "../../../iso/units";
+import { assertUnreachable } from "../../util/utils";
+import { MeasureStats } from "../../../iso/protocol";
+import * as Filter from "../filters/filter";
+import { MeasureId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -126,7 +126,6 @@ const styles = typestyle.stylesheet({
 });
 
 const FilterView = ({
-  model,
   filter,
   dispatch,
 }: {

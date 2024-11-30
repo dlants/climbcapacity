@@ -9,7 +9,7 @@ import {
   RequestStatusViewMap,
 } from "../util/utils";
 import * as immer from "immer";
-import * as LoadedReportCard from "../views/report-card";
+import * as LoadedReportCard from "../views/reportcard/main";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";

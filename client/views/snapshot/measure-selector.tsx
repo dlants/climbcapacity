@@ -37,6 +37,12 @@ import {
   weightedClass,
 } from "../../../iso/measures/movement";
 import { powerClass, unilateralPowerClass } from "../../../iso/measures/power";
+import {
+  peakloadClass,
+  avgLoadClass,
+  rfdClass,
+  criticalForceClass,
+} from "../../../iso/measures/forcemeter";
 import { InitOptions } from "./edit-measure-or-class";
 
 type MeasureItem = {
@@ -186,6 +192,18 @@ function getAllItems(): Item[] {
       measureClasses: [enduranceClass],
       items: MEASURES.filter(
         (s) => s.spec?.className === enduranceClass.className,
+      ).map(mapSpecToItem),
+    },
+    {
+      type: "measure-group",
+      name: "force meter",
+      measureClasses: [peakloadClass, avgLoadClass, rfdClass, criticalForceClass],
+      items: MEASURES.filter(
+        (s) =>
+          s.spec?.className === peakloadClass.className ||
+          s.spec?.className === avgLoadClass.className ||
+          s.spec?.className === rfdClass.className ||
+          s.spec?.className === criticalForceClass.className,
       ).map(mapSpecToItem),
     },
   ];

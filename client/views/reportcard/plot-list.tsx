@@ -1,15 +1,15 @@
 import React from "react";
-import { HydratedSnapshot } from "../types";
-import * as Plot from "./plot";
-import * as ReportCardFilter from "./report-card-filter";
-import * as Filter from "./filters/filter";
+import { HydratedSnapshot } from "../../types";
+import * as Plot from "../plot";
+import * as ReportCardFilter from "./filter";
+import * as Filter from "../filters/filter";
 import * as immer from "immer";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../../tea";
 import {
   MeasureId,
   generateTrainingMeasureId,
   getSpec,
-} from "../../iso/measures";
+} from "../../../iso/measures";
 import {
   adjustGrade,
   castInitialFilter,
@@ -17,12 +17,12 @@ import {
   extractDataPoint,
   UnitType,
   UnitValue,
-} from "../../iso/units";
-import { assertUnreachable } from "../util/utils";
-import { filterOutliersX } from "../util/stats";
-import { MEASURES } from "../constants";
-import { MeasureStats } from "../../iso/protocol";
-import * as UnitToggle from "./unit-toggle";
+} from "../../../iso/units";
+import { assertUnreachable } from "../../util/utils";
+import { filterOutliersX } from "../../util/stats";
+import { MEASURES } from "../../constants";
+import { MeasureStats } from "../../../iso/protocol";
+import * as UnitToggle from "../unit-toggle";
 const { produce } = immer;
 
 type PlotModel = {

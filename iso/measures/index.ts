@@ -2,6 +2,7 @@ import * as Fingers from "./fingers.js";
 import * as Grades from "./grades.js";
 import * as Movement from "./movement.js";
 import * as Power from "./power.js";
+import * as ForceMeter from "./forcemeter.js";
 import { InitialFilter, UnitType } from "../units.js";
 
 export type MeasureId = string & { __brand: "measureId" };
@@ -154,6 +155,11 @@ MEASURES.push(...generateMeasureSpecs(Movement.enduranceClass));
 MEASURES.push(...generateMeasureSpecs(Power.powerClass));
 MEASURES.push(...generateMeasureSpecs(Power.unilateralPowerClass));
 
+MEASURES.push(...generateMeasureSpecs(ForceMeter.peakloadClass));
+MEASURES.push(...generateMeasureSpecs(ForceMeter.avgLoadClass));
+MEASURES.push(...generateMeasureSpecs(ForceMeter.rfdClass));
+MEASURES.push(...generateMeasureSpecs(ForceMeter.criticalForceClass));
+
 export const WEIGHT_MEASURE_ID = 'weight' as MeasureId;
 const ANTHRO_MEASURES: MeasureSpec[] = [
   {
@@ -217,7 +223,6 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     },
   },
 ];
-
 
 MEASURES.push(...ANTHRO_MEASURES);
 

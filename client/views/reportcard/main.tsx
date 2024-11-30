@@ -1,27 +1,26 @@
 import React from "react";
-import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch } from "../tea";
+import type { HydratedSnapshot, Snapshot } from "../../types";
+import { Update, Thunk, View, Dispatch } from "../../tea";
 import {
   assertLoaded,
   assertUnreachable,
   GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
-} from "../util/utils";
-import { SnapshotQuery, MeasureStats } from "../../iso/protocol";
-import * as EditQuery from "../views/edit-query";
+} from "../../util/utils";
+import { SnapshotQuery, MeasureStats } from "../../../iso/protocol";
+import * as EditQuery from "../../views/edit-query";
 import * as immer from "immer";
-import * as ReportCardGraphs from "./report-card-graphs";
-import { hydrateSnapshot } from "../util/snapshot";
+import * as ReportCardGraphs from "./plot-list";
+import { hydrateSnapshot } from "../../util/snapshot";
 const produce = immer.produce;
-import * as Filter from "./filters/filter";
-import * as SelectMeasureClass from "./snapshot/select-measure-class";
-import * as UnitToggle from "./unit-toggle";
+import * as SelectMeasureClass from "../snapshot/select-measure-class";
+import * as UnitToggle from "../unit-toggle";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
-import { MEASURES } from "../constants";
-import { boulderGradeClass, sportGradeClass } from "../../iso/measures/grades";
-import { getSpec } from "../../iso/measures";
+import { MEASURES } from "../../constants";
+import { boulderGradeClass, sportGradeClass } from "../../../iso/measures/grades";
+import { getSpec } from "../../../iso/measures";
 
 export type Model = immer.Immutable<{
   filtersModel: EditQuery.Model;
@@ -46,28 +45,28 @@ export type Model = immer.Immutable<{
 
 export type Msg =
   | {
-      type: "REQUEST_DATA";
-    }
+    type: "REQUEST_DATA";
+  }
   | {
-      type: "SNAPSHOT_RESPONSE";
-      request: RequestStatus<HydratedSnapshot[], { queryHash: string }>;
-    }
+    type: "SNAPSHOT_RESPONSE";
+    request: RequestStatus<HydratedSnapshot[], { queryHash: string }>;
+  }
   | {
-      type: "REPORT_CARD_MSG";
-      msg: ReportCardGraphs.Msg;
-    }
+    type: "REPORT_CARD_MSG";
+    msg: ReportCardGraphs.Msg;
+  }
   | {
-      type: "SELECT_MEASURE_CLASS_MSG";
-      msg: SelectMeasureClass.Msg;
-    }
+    type: "SELECT_MEASURE_CLASS_MSG";
+    msg: SelectMeasureClass.Msg;
+  }
   | {
-      type: "OUTPUT_MEASURE_TOGGLE_MSG";
-      msg: UnitToggle.Msg;
-    }
+    type: "OUTPUT_MEASURE_TOGGLE_MSG";
+    msg: UnitToggle.Msg;
+  }
   | {
-      type: "FILTERS_MSG";
-      msg: EditQuery.Msg;
-    };
+    type: "FILTERS_MSG";
+    msg: EditQuery.Msg;
+  };
 
 function generateFetchThunk(model: Model) {
   return async (dispatch: Dispatch<Msg>) => {
@@ -318,7 +317,6 @@ const FetchButton = ({
 function LoadedView({
   response,
   dispatch,
-  model,
 }: {
   response: GetLoadedRequestType<Model["dataRequest"]>["response"];
   dispatch: Dispatch<Msg>;
