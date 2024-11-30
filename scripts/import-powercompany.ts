@@ -160,7 +160,7 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   function parseVgrade(maxBoulderStr: string): VGrade {
     switch (maxBoulderStr) {
@@ -210,7 +210,7 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   const parseAge = (climbingExpStr: string) => {
     switch (climbingExpStr) {
@@ -239,7 +239,7 @@ table.slice(1).forEach((row, idx) => {
       unit: "year",
       value: parseAge(climbingExpStr),
     });
-  } catch {}
+  } catch { }
 
   const trainExpStr = row[TSV_COLS.findIndex((c) => c == "trainexp")];
   let trainAge: number | undefined;
@@ -249,7 +249,7 @@ table.slice(1).forEach((row, idx) => {
       unit: "year",
       value: trainAge,
     });
-  } catch {}
+  } catch { }
 
   const heightStr = row[TSV_COLS.findIndex((c) => c == "height")];
   const height = Number(heightStr);
@@ -323,7 +323,7 @@ table.slice(1).forEach((row, idx) => {
 
   const maxHangStr = row[TSV_COLS.findIndex((c) => c == "maxhang")];
   const maxHang = parseFloat(maxHangStr);
-  if (!isNaN(maxHang)) {
+  if (!isNaN(maxHang) && !isNaN(weight)) {
     addMeasure(
       generateId(Fingers.maxhangClass, {
         gripType: "half-crimp",
@@ -332,7 +332,7 @@ table.slice(1).forEach((row, idx) => {
       }),
       {
         unit: "lb",
-        value: maxHang,
+        value: maxHang + weight,
       },
     );
   }

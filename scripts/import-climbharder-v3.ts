@@ -222,7 +222,7 @@ table.slice(1).forEach((row, idx) => {
   const maxWeight18mmHalfStr = row[19];
   {
     const addedWeight = parseFloat(maxWeight18mmHalfStr);
-    if (!isNaN(addedWeight)) {
+    if (!isNaN(addedWeight) && !isNaN(weight)) {
       addMeasure(
         generateId(Fingers.maxhangClass, {
           edgeSize: "18",
@@ -231,7 +231,7 @@ table.slice(1).forEach((row, idx) => {
         }),
         {
           unit: "kg",
-          value: addedWeight,
+          value: addedWeight + weight,
         },
       );
     }
@@ -239,7 +239,7 @@ table.slice(1).forEach((row, idx) => {
   const maxWeight18mmOpenStr = row[20];
   {
     const addedWeight = parseFloat(maxWeight18mmOpenStr);
-    if (!isNaN(addedWeight)) {
+    if (!isNaN(addedWeight) && !isNaN(weight)) {
       addMeasure(
         generateId(Fingers.maxhangClass, {
           edgeSize: "18",
@@ -248,7 +248,7 @@ table.slice(1).forEach((row, idx) => {
         }),
         {
           unit: "kg",
-          value: addedWeight,
+          value: addedWeight + weight,
         },
       );
     }

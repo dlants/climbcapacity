@@ -188,17 +188,21 @@ function getPlots(model: Model) {
     });
 
     const includeStrToWtRatio = inputMeasureSpec.units.includes('kg') || inputMeasureSpec.units.includes('lb')
+    const selectedUnit = includeStrToWtRatio ? 'strengthtoweightratio' : inputMeasure.unit;
 
     plots.push({
       inputMeasure: inputMeasure,
       filterModel,
       toggle: {
         measureId: inputMeasure.id,
-        selectedUnit: includeStrToWtRatio ? 'strengthtoweightratio' : inputMeasure.unit,
-        possibleUnits:  includeStrToWtRatio ? [...inputMeasureSpec.units, 'strengthtoweightratio'] : inputMeasureSpec.units,
+        selectedUnit,
+        possibleUnits: includeStrToWtRatio ? [...inputMeasureSpec.units, 'strengthtoweightratio'] : inputMeasureSpec.units,
       },
       model: getPlot({
-        xMeasure: inputMeasure,
+        xMeasure: {
+          ...inputMeasure,
+          unit: selectedUnit
+        },
         filterModel,
         model,
       }),

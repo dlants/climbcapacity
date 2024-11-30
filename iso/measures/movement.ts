@@ -43,9 +43,9 @@ export const weightedClass: MeasureClassSpec = {
   },
   generateDescription: (params: { movement: WeightedMovement; repMax: "1" | "2" | "5" }) => {
     return `Measure your ${params.repMax} rep maximum for the following movement:
-    
+
 ${weightedMovementDesc[params.movement]}.
-    
+
 ${(params.movement == 'pullup' || params.movement == 'dip' || params.movement == 'ringdip') ? 'Include your body weight in your recorded measurement. So if you weigh 70kg and you added 30kg, record 100kg.' : ''}
 
 Rest at least 5 minutes between attempts.`;
@@ -92,10 +92,10 @@ export const unilateralWeightedClass: MeasureClassSpec = {
     maxValue: { unit: "kg", value: 100 },
   },
   generateDescription: (params: { movement: UnilateralMovement; repMax: "1" | "2" | "5"; dominantSide: "dominant" | "nondominant" }) => {
-    return `Measure your ${params.repMax} rep maximum on your ${params.dominantSide} side for the following movement: 
-    
-${unilateralMovementDesc[params.movement]}. 
-    
+    return `Measure your ${params.repMax} rep maximum on your ${params.dominantSide} side for the following movement:
+
+${unilateralMovementDesc[params.movement]}.
+
 Rest at least 5 minutes between attempts.`;
   }
 }
@@ -171,7 +171,7 @@ export const unilateralMaxRepsClass: MeasureClassSpec = {
     maxValue: { unit: "count", value: 100 },
   },
   generateDescription: (params: { movement: UnilateralMaxRepsMovement; dominantSide: "dominant" | "nondominant" }) => {
-    return `Record the maximum number of repetitions for your ${params.dominantSide} side for the following movement: 
+    return `Record the maximum number of repetitions for your ${params.dominantSide} side for the following movement:
 
     ${unilateralMaxRepsMovementDesc[params.movement]}.`;
   }
@@ -181,10 +181,12 @@ export type IsometricMovement =
   | "barhang"
   | "frontlever"
   | "hollowhold"
+  | "lhang"
   | "plank"
 
 const isometricMovementDesc: { [key in IsometricMovement]: string } = {
   "barhang": "Hang on the bar. You may not hang on one hand and shake out.",
+  "lhang": "Hang on the bar with your legs straight in front of you at at least 90 degrees. Keep your knees locked straight.",
   "frontlever": "Hold a full front lever. Your body must be horizontal to the floor..",
   "hollowhold": "Legs straight. Your heels and shoulders should be within a couple of inches of the floor.",
   "plank": "Plank on your elbows. Your shoulders should be directly above your elbows. Keep your hips from sagging or popping up."
@@ -207,8 +209,8 @@ export const isometricClass: MeasureClassSpec = {
     maxValue: { unit: "second", value: 300 },
   },
   generateDescription: (params: { movement: IsometricMovement }) => {
-    return `Maximum hold time for the following movement: 
-    
+    return `Maximum hold time for the following movement:
+
 ${isometricMovementDesc[params.movement]}.`;
   }
 };
@@ -243,28 +245,28 @@ export const unilateralIsometricClass: MeasureClassSpec = {
   },
   generateDescription: (params: { movement: UnilateralIsometricMovement; dominantSide: "dominant" | "nondominant" }) => {
     return `Maximum hold time for a unilateral isometric:
-    
+
     ${unilateralIsometricMovementDesc[params.movement]}.`;
   }
 };
 
-export type EnduranceMovement = "shortcampus" | "longcampus";
+export type EnduranceMovement = "footoncampuslong" | "footoncampusshort";
 
 
 const enduranceMovementDesc: { [key in EnduranceMovement]: string } = {
-  "shortcampus": `For this measurement you will use medium campus rungs (1") with foot rungs.
-  
+  "footoncampuslong": `For this measurement you will use medium campus rungs (1") with foot rungs.
+
 Move one rung at a time at a pace similar to climbing, only matching on the top and bottom rungs. Move up as far as you can comfortably reach and then back down to the bottom rung. Keep your feet stationary.
-  
+
 You may chalk between moves and shake briefly while reaching, but you may not stop to shake out. Climb until the pump causes failure and record this time in seconds.`,
-  "longcampus": `For this measurement you will use medium campus rungs (1").
-  
+  "footoncampusshort": `For this measurement you will use medium campus rungs (1").
+
 You'll be making a single big move, and without matching, reversing that same move. Then you'll repeat with the other hand.
-  
+
 The move should be as high as you can go without jumping, and that you can still reverse in control.
-  
+
 Your feet should be planted in one spot.
-  
+
 Alternate the hand you lead with and move at a pace similar to climbing. You may chalk up if needed but avoid shaking out other than while reaching between rungs. Record your time spent on the board in seconds.`,
 };
 
@@ -286,7 +288,7 @@ export const enduranceClass: MeasureClassSpec = {
   },
   generateDescription: (params: { movement: EnduranceMovement }) => {
     return `Maximum duration performing the following movement:
-    
+
 ${enduranceMovementDesc[params.movement]}.`;
   }
 };
