@@ -32,7 +32,9 @@ export function tickFormatBins(
   switch (unit) {
     case "second":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
@@ -103,7 +105,9 @@ export function generateBinThresholds(
   switch (unit) {
     case "second":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":

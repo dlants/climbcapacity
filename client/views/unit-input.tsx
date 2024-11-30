@@ -30,8 +30,9 @@ type UnitInputMap = {
   month: string;
   year: string;
   lb: string;
-
+  "lb/s": string;
   kg: string;
+  "kg/s": string;
   ["1RMkg"]: string;
   ["2RMkg"]: string;
   ["5RMkg"]: string;
@@ -93,7 +94,9 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
     case "month":
     case "year":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
@@ -166,7 +169,9 @@ function getInitialInput(
     case "month":
     case "year":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
@@ -270,8 +275,9 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       case "month":
       case "year":
       case "lb":
-
+      case "lb/s":
       case "kg":
+      case "kg/s":
       case "1RMkg":
       case "2RMkg":
       case "5RMkg":
@@ -484,8 +490,9 @@ const InnerUnitInput = ({
     case "month":
     case "year":
     case "lb":
-
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":

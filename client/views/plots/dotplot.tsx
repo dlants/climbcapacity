@@ -34,8 +34,10 @@ export function generateDotplotTicks(
 
   switch (unit) {
     case "second":
-    case "lb":
     case "kg":
+    case "kg/s":
+    case "lb":
+    case "lb/s":
     case "m":
     case "cm":
     case "mm":
@@ -170,7 +172,9 @@ export function formatTicks(value: number, unit: UnitType | undefined): string {
   switch (unit) {
     case "second":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":

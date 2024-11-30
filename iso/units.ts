@@ -89,7 +89,11 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value / 12;
     case "lb":
       return unit.value * 0.45359237;
+    case "lb/s":
+      return unit.value * 0.45359237;
     case "kg":
+      return unit.value;
+    case "kg/s":
       return unit.value;
     case "m":
       return unit.value;
@@ -144,8 +148,12 @@ export function convertToTargetUnit(
       return { unit: "month", value: normalizedValue * 12 };
     case "lb":
       return { unit: "lb", value: normalizedValue / 0.45359237 };
+    case "lb/s":
+      return { unit: "lb/s", value: normalizedValue / 0.45359237 };
     case "kg":
       return { unit: "kg", value: normalizedValue };
+    case "kg/s":
+      return { unit: "kg/s", value: normalizedValue };
     case "m":
       return { unit: "m", value: normalizedValue };
     case "cm":
@@ -222,7 +230,15 @@ export type UnitValue =
     value: number;
   }
   | {
+    unit: "lb/s";
+    value: number;
+  }
+  | {
     unit: "kg";
+    value: number;
+  }
+  | {
+    unit: "kg/s";
     value: number;
   }
   | {
@@ -294,6 +310,8 @@ export function unitValueToString(unitValue: UnitValue): string {
       return `${unitValue.value}mo`;
     case "lb":
     case "kg":
+    case "lb/s":
+    case "kg/s":
       return `${unitValue.value}${unitValue.unit}`;
     case "m":
       return `${unitValue.value}m`;
@@ -341,12 +359,15 @@ export function toLinear(unitValue: UnitValue): number {
     case "month":
     case "lb":
     case "kg":
+    case "lb/s":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
     case "inch":
     case "ircra":
     case "count":
+    case "strengthtoweightratio":
       return unitValue.value;
     case "vermin":
       return VGRADE.indexOf(unitValue.value);
@@ -361,8 +382,6 @@ export function toLinear(unitValue: UnitValue): number {
     case "sex-at-birth":
       return ["female", "male"].indexOf(unitValue.value);
     case "training":
-      return unitValue.value;
-    case "strengthtoweightratio":
       return unitValue.value;
     default:
       assertUnreachable(unitValue);

@@ -270,7 +270,9 @@ function getMinInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
@@ -329,7 +331,9 @@ function getMaxInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
+    case "lb/s":
     case "kg":
+    case "kg/s":
     case "m":
     case "cm":
     case "mm":
