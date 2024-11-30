@@ -32,24 +32,24 @@ export type Model = {
   measureStats: MeasureStats;
   mySnapshotRequest: RequestStatus<
     | {
-        state: "no-snapshot";
-      }
+      state: "no-snapshot";
+    }
     | {
-        state: "has-snapshot";
-        model: LoadedReportCard.Model;
-      }
+      state: "has-snapshot";
+      model: LoadedReportCard.Model;
+    }
   >;
 };
 
 export type Msg =
   | {
-      type: "MY_SNAPSHOT_RESPONSE";
-      request: RequestStatus<HydratedSnapshot | undefined>;
-    }
+    type: "MY_SNAPSHOT_RESPONSE";
+    request: RequestStatus<HydratedSnapshot | undefined>;
+  }
   | {
-      type: "LOADED_MSG";
-      msg: LoadedReportCard.Msg;
-    };
+    type: "LOADED_MSG";
+    msg: LoadedReportCard.Msg;
+  };
 
 export function initModel({
   userId,
@@ -270,13 +270,12 @@ function getMinInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
     case "inch":
+    case "strengthtoweightratio":
       return {
         ...value,
         value: value.value * 0.9,
@@ -330,13 +329,12 @@ function getMaxInputValue(value: UnitValue) {
     case "year":
     case "month":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
     case "inch":
+    case "strengthtoweightratio":
       return {
         ...value,
         value: value.value * 1.1,
@@ -362,10 +360,10 @@ function getMaxInputValue(value: UnitValue) {
         ...value,
         value:
           FRENCH_SPORT[
-            Math.min(
-              FRENCH_SPORT.indexOf(value.value) + 1,
-              FRENCH_SPORT.length - 1,
-            )
+          Math.min(
+            FRENCH_SPORT.indexOf(value.value) + 1,
+            FRENCH_SPORT.length - 1,
+          )
           ],
       };
     case "yds":

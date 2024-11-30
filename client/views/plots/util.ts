@@ -32,16 +32,15 @@ export function tickFormatBins(
   switch (unit) {
     case "second":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
     case "month":
     case "year":
     case "training":
-    case "count": {
+    case "count":
+    case "strengthtoweightratio": {
       const min = thresholds[binIndex];
       const max = thresholds[binIndex + 1];
       return max ? `${fmt.format(min)}-${fmt.format(max)}` : ``;
@@ -104,9 +103,7 @@ export function generateBinThresholds(
   switch (unit) {
     case "second":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
@@ -114,6 +111,7 @@ export function generateBinThresholds(
     case "month":
     case "sex-at-birth":
     case "count":
+    case "strengthtoweightratio":
       return defaultThresholds;
     case "year":
       return [0.5, 1.5, 2.5, 3.5, 6, 8, 10, 15, Number.POSITIVE_INFINITY];

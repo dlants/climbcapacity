@@ -51,6 +51,7 @@ type UnitInputMap = {
   "sex-at-birth": "female" | "male";
   count: string;
   training: string;
+  strengthtoweightratio: string;
 };
 
 type UnitInput = UnitInputMap[UnitType];
@@ -98,6 +99,7 @@ function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
     case "mm":
     case "inch":
     case "count":
+    case "strengthtoweightratio":
       return {
         unit,
         value: 0,
@@ -176,6 +178,7 @@ function getInitialInput(
     case "ircra":
     case "count":
     case "training":
+    case "strengthtoweightratio":
       return targetValue ? targetValue.value.toString() : "";
     case "inch":
       const { feet, inches } = inchesToFeetAndInches(
@@ -185,12 +188,12 @@ function getInitialInput(
     case "sex-at-birth":
       return targetValue
         ? (
-            targetValue as ExtractFromDisjointUnion<
-              UnitValue,
-              "unit",
-              "sex-at-birth"
-            >
-          ).value
+          targetValue as ExtractFromDisjointUnion<
+            UnitValue,
+            "unit",
+            "sex-at-birth"
+          >
+        ).value
         : "";
     default:
       assertUnreachable(targetUnit);
@@ -209,14 +212,14 @@ export function hasParseResult(
 
 export type Msg =
   | {
-      type: "MEASURE_TYPED";
-      measureId: MeasureId;
-      unitInput: UnitInput;
-    }
+    type: "MEASURE_TYPED";
+    measureId: MeasureId;
+    unitInput: UnitInput;
+  }
   | {
-      type: "SELECT_UNIT";
-      unit: UnitType;
-    };
+    type: "SELECT_UNIT";
+    unit: UnitType;
+  };
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
@@ -275,18 +278,21 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       case "m":
       case "cm":
       case "mm":
-      case "count": {
+      case "count":
+      case "strengthtoweightratio": {
         if (
           !(
             input as UnitInputMap[
-              | "second"
-              | "year"
-              | "lb"
-              | "kg"
-              | "m"
-              | "cm"
-              | "mm"
-              | "count"]
+            | "second"
+            | "year"
+            | "lb"
+            | "kg"
+            | "m"
+            | "cm"
+            | "mm"
+            | "count"
+            | "strengthtoweightratio"
+            ]
           ).length
         ) {
           return { status: "fail", error: "Nothing provided" };
@@ -484,6 +490,7 @@ const InnerUnitInput = ({
     case "cm":
     case "mm":
     case "count":
+    case "strengthtoweightratio":
       return (
         <span>
           <input

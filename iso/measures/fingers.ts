@@ -319,7 +319,7 @@ export const minEdgePullupsClass: MeasureClassSpec = {
     {
       name: "reps",
       values: ["1", "2", "5"] as Reps[],
-      suffix: "",
+      suffix: "rm",
     },
   ],
   measureType: "input",
@@ -330,7 +330,7 @@ export const minEdgePullupsClass: MeasureClassSpec = {
     maxValue: { unit: "mm", value: 25 },
   },
   generateDescription: (params: { gripType: GripType; reps: Reps }) => {
-    return `Minimum edge size on which you can do${params.reps} pull-ups.
+    return `Minimum edge size on which you can do ${params.reps} pull-ups.
     
 ${getGripTypeDescription(params.gripType)}
 

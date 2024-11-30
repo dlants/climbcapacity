@@ -32,14 +32,14 @@ export type NormedMeasure = { measureId: MeasureId; value: number };
 
 export type InitialFilter =
   | {
-      type: "minmax";
-      minValue: UnitValue;
-      maxValue: UnitValue;
-    }
+    type: "minmax";
+    minValue: UnitValue;
+    maxValue: UnitValue;
+  }
   | {
-      type: "toggle";
-      value: UnitValue;
-    };
+    type: "toggle";
+    value: UnitValue;
+  };
 
 export function castInitialFilter(filter: InitialFilter, targetUnit: UnitType) {
   switch (filter.type) {
@@ -124,6 +124,8 @@ export function convertToStandardUnit(unit: UnitValue): number {
       return unit.value;
     case "count":
       return unit.value;
+    case "strengthtoweightratio":
+      return unit.value;
     default:
       assertUnreachable(unit);
   }
@@ -188,7 +190,8 @@ export function convertToTargetUnit(
       return { unit: "count", value: normalizedValue };
     case "training":
       return { unit: "training", value: normalizedValue as Training };
-
+    case "strengthtoweightratio":
+      return { unit: "strengthtoweightratio", value: normalizedValue };
     default:
       assertUnreachable(targetUnit);
   }
@@ -203,77 +206,81 @@ export function castUnit(
 export type Training = 1 | 2 | 3 | 4;
 export type UnitValue =
   | {
-      unit: "second";
-      value: number;
-    }
+    unit: "second";
+    value: number;
+  }
   | {
-      unit: "year";
-      value: number;
-    }
+    unit: "year";
+    value: number;
+  }
   | {
-      unit: "month";
-      value: number;
-    }
+    unit: "month";
+    value: number;
+  }
   | {
-      unit: "lb";
-      value: number;
-    }
+    unit: "lb";
+    value: number;
+  }
   | {
-      unit: "kg";
-      value: number;
-    }
+    unit: "kg";
+    value: number;
+  }
   | {
-      unit: "m";
-      value: number;
-    }
+    unit: "m";
+    value: number;
+  }
   | {
-      unit: "cm";
-      value: number;
-    }
+    unit: "cm";
+    value: number;
+  }
   | {
-      unit: "mm";
-      value: number;
-    }
+    unit: "mm";
+    value: number;
+  }
   | {
-      unit: "inch";
-      value: number;
-    }
+    unit: "inch";
+    value: number;
+  }
   | {
-      unit: "vermin";
-      value: VGrade;
-    }
+    unit: "vermin";
+    value: VGrade;
+  }
   | {
-      unit: "font";
-      value: Font;
-    }
+    unit: "font";
+    value: Font;
+  }
   | {
-      unit: "frenchsport";
-      value: FrenchSport;
-    }
+    unit: "frenchsport";
+    value: FrenchSport;
+  }
   | {
-      unit: "yds";
-      value: YDS;
-    }
+    unit: "yds";
+    value: YDS;
+  }
   | {
-      unit: "ewbank";
-      value: EwbankGrade;
-    }
+    unit: "ewbank";
+    value: EwbankGrade;
+  }
   | {
-      unit: "ircra";
-      value: IRCRAGrade;
-    }
+    unit: "ircra";
+    value: IRCRAGrade;
+  }
   | {
-      unit: "sex-at-birth";
-      value: "female" | "male";
-    }
+    unit: "sex-at-birth";
+    value: "female" | "male";
+  }
   | {
-      unit: "training";
-      value: Training;
-    }
+    unit: "training";
+    value: Training;
+  }
   | {
-      unit: "count";
-      value: number;
-    };
+    unit: "count";
+    value: number;
+  }
+  | {
+    unit: "strengthtoweightratio";
+    value: number;
+  };
 
 export type UnitType = UnitValue["unit"];
 
@@ -314,6 +321,8 @@ export function unitValueToString(unitValue: UnitValue): string {
       return unitValue.value.toString();
     case "training":
       return unitValue.value.toString();
+    case "strengthtoweightratio":
+      return unitValue.value.toString();
     default:
       assertUnreachable(unitValue);
   }
@@ -352,6 +361,8 @@ export function toLinear(unitValue: UnitValue): number {
     case "sex-at-birth":
       return ["female", "male"].indexOf(unitValue.value);
     case "training":
+      return unitValue.value;
+    case "strengthtoweightratio":
       return unitValue.value;
     default:
       assertUnreachable(unitValue);

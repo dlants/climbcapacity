@@ -35,9 +35,7 @@ export function generateDotplotTicks(
   switch (unit) {
     case "second":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
@@ -46,6 +44,7 @@ export function generateDotplotTicks(
     case "sex-at-birth":
     case "year":
     case "count":
+    case "strengthtoweightratio":
       return null;
     case "training":
       return [1, 2, 3, 4];
@@ -60,6 +59,7 @@ export function generateDotplotTicks(
       assertUnreachable(unit);
   }
 }
+
 export function view({
   model,
   svg,
@@ -170,15 +170,14 @@ export function formatTicks(value: number, unit: UnitType | undefined): string {
   switch (unit) {
     case "second":
     case "lb":
-
     case "kg":
-
     case "m":
     case "cm":
     case "mm":
     case "month":
     case "year":
     case "training":
+    case "strengthtoweightratio":
     case "count": {
       return fmt.format(value);
     }
