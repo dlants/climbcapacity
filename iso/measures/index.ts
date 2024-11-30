@@ -4,63 +4,67 @@ import * as Movement from "./movement.js";
 import * as Power from "./power.js";
 import * as ForceMeter from "./forcemeter.js";
 import { InitialFilter, UnitType } from "../units.js";
+import { ParamName, ParamValue, PARAMS } from "./params.js";
 
 export type MeasureId = string & { __brand: "measureId" };
 export type MeasureType = "performance" | "anthro" | "input" | "training";
+
+export type Param<K extends ParamName> = {
+  name: K;
+  values: (typeof PARAMS)[K];
+  suffix: string;
+};
+
+export type ParamMap = Partial<{[K in ParamName]: ParamValue<K>}>
+
 export type MeasureClassSpec = {
   className: string;
   /**
    * Map from propName to possible values
    */
-  params: {
-    name: string;
-    values: string[];
-    suffix: string;
-  }[];
+  params: Param<ParamName>[];
   measureType: MeasureType;
   /** units[0] is the default
    */
   units: UnitType[];
   initialFilter: InitialFilter;
-  generateDescription(params: { [paramName: string]: string }): string;
+  generateDescription(
+    params: Partial<{ [K in ParamName]: ParamValue<K> }>,
+  ): string;
 };
 
 export function generateId(
   spec: MeasureClassSpec,
-  params: {
-    [name: string]: string;
-  },
-) {
+  params: ParamMap,
+): MeasureId {
   const parts: string[] = [spec.className];
   for (const param of spec.params) {
     const value = params[param.name];
-    if (!(value && param.values.includes(value))) {
+    if (!(value && (param.values as any).includes(value))) {
       throw new Error(
         `Expected param ${param.name} to be one of ${JSON.stringify(param.values)} but it was ${value}`,
       );
     }
     parts.push(value + param.suffix);
   }
-  return parts.join(":") as MeasureId;
+  return parts.join("-") as MeasureId;
 }
 
 export function parseId(
   id: MeasureId,
   spec: MeasureClassSpec,
-): {
-  [paramName: string]: string;
-} {
+): ParamMap {
   const parts = id.split(":");
   if (parts[0] !== spec.className) {
-    throw new Error(`Expected measureId ${id} to start with ${spec.className}`);
-  }
-
-  if (parts.length !== spec.params.length + 1) {
     throw new Error(
-      `Expected measureId ${id} to have ${spec.params.length + 1} segments but it had ${parts.length}`,
+      `Expected measure id ${id} to start with ${spec.className}`,
     );
   }
-
+  if (parts.length !== spec.params.length + 1) {
+    throw new Error(
+      `Expected measure id ${id} to have ${spec.params.length + 1} parts but it had ${parts.length}`,
+    );
+  }
   const result: { [paramName: string]: string } = {};
   for (let i = 0; i < spec.params.length; i++) {
     const param = spec.params[i];
@@ -71,14 +75,13 @@ export function parseId(
       );
     }
     const value = part.substring(0, part.length - param.suffix.length);
-    if (!param.values.includes(value)) {
+    if (!(param.values as any).includes(value)) {
       throw new Error(
         `Expected param ${param.name} to be one of ${JSON.stringify(param.values)} but it was ${value}`,
       );
     }
     result[param.name] = value;
   }
-
   return result;
 }
 
@@ -96,9 +99,8 @@ export type MeasureSpec = {
 
 export const MEASURES: MeasureSpec[] = [];
 
-function generateMeasureSpecs(measureClass: MeasureClassSpec): MeasureSpec[] {
+export function generateMeasureSpecs(measureClass: MeasureClassSpec): MeasureSpec[] {
   const result: MeasureSpec[] = [];
-
   const params = measureClass.params;
   let combinations: { [paramName: string]: string }[] = [{}];
 
@@ -287,3 +289,6 @@ export function getSpec(measureId: MeasureId) {
 
   return spec;
 }
+
+// Re-export parameter types and values
+export * from "./params.js";

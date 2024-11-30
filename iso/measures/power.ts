@@ -1,7 +1,13 @@
-import { MeasureClassSpec } from "./index.js";
+import {
+  DOMINANT_SIDES,
+  MeasureClassSpec,
+  ParamValue,
+  POWER_MOVEMENT,
+  UNILATERAL_POWER_MOVEMENT,
+} from "./index.js";
 
-export type PowerMovement = "verticaljump" | "horizontaljump";
-export type UnilateralPowerMovement = PowerMovement | "campusreach";
+export type PowerMovement = (typeof POWER_MOVEMENT)[number];
+export type UnilateralPowerMovement = (typeof UNILATERAL_POWER_MOVEMENT)[number];
 
 const powerMovementDesc: { [key in PowerMovement]: string } = {
   "verticaljump": "Vertical jump. Start by standing with both feet on the ground, measure the highest point you can reach with one hand.",
@@ -18,8 +24,8 @@ export const powerClass: MeasureClassSpec = {
   className: "power",
   params: [
     {
-      name: "movement",
-      values: Object.keys(powerMovementDesc) as PowerMovement[],
+      name: "powerMovement",
+      values: POWER_MOVEMENT,
       suffix: "",
     },
   ],
@@ -30,10 +36,10 @@ export const powerClass: MeasureClassSpec = {
     minValue: { unit: "m", value: 1 },
     maxValue: { unit: "m", value: 2 },
   },
-  generateDescription: (params: { movement: PowerMovement }) => {
+  generateDescription: (params: { powerMovement: PowerMovement }) => {
     return `Your maximum distance for the following movement:
     
-    ${powerMovementDesc[params.movement]}`;
+    ${powerMovementDesc[params.powerMovement]}`;
   }
 };
 
@@ -41,13 +47,13 @@ export const unilateralPowerClass: MeasureClassSpec = {
   className: "power-unilateral",
   params: [
     {
-      name: "movement",
-      values: Object.keys(unilateralPowerMovementDesc) as UnilateralPowerMovement[],
+      name: "unilateralPowerMovement",
+      values: UNILATERAL_POWER_MOVEMENT,
       suffix: "",
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -58,10 +64,10 @@ export const unilateralPowerClass: MeasureClassSpec = {
     minValue: { unit: "m", value: 0 },
     maxValue: { unit: "m", value: 2 },
   },
-  generateDescription: (params: { movement: UnilateralPowerMovement, dominantSide: "dominant" | "nondominant" }) => {
+  generateDescription: (params: { unilateralPowerMovement: UnilateralPowerMovement, dominantSide: ParamValue<"dominantSide"> }) => {
     return `Your maximum distance using your ${params.dominantSide} side:
     
-    ${unilateralPowerMovementDesc[params.movement]}
+    ${unilateralPowerMovementDesc[params.unilateralPowerMovement]}
     `
   }
 };

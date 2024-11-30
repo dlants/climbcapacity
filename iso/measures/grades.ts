@@ -1,40 +1,45 @@
 import { IRCRAGrade } from "../grade.js";
-import { MeasureClassSpec } from "./index.js";
+import {
+  BOULDER_LOCATION,
+  MeasureClassSpec,
+  ParamValue,
+  SPORT_LOCATION,
+  STAT,
+} from "./index.js";
 
-// Type definitions for parameters
-export type SportLocation = "gym" | "outside";
-export type BoulderLocation = "gym" | "outside" | "kilter" | "tensionboard1" | "tensionboard2" | "moonboard";
-export type Stat = "max" | "top5" | "projectp50" | "projectp90" | "onsitep50" | "onsitep90";
+type BoulderLocation = ParamValue<"boulderLocation">;
+type SportLocation = ParamValue<"sportLocation">;
+type Stat = ParamValue<"stat">;
 
 const locationDesc: { [key in BoulderLocation]: string } = {
-  "gym": "in a gym",
-  "outside": "outdoors",
-  "kilter": "Kilter Board",
-  "tensionboard1": "Tension Board 1",
-  "tensionboard2": "Tension Board 2",
-  "moonboard": "Moon Board"
+  gym: "in a gym",
+  outside: "outdoors",
+  kilter: "Kilter Board",
+  tensionboard1: "Tension Board 1",
+  tensionboard2: "Tension Board 2",
+  moonboard: "Moon Board",
 };
 
 const statDesc: { [key in Stat]: string } = {
-  "max": "hardest grade you've ever climbed",
-  "top5": "minimum of your hardest 5 grades climbed",
-  "projectp50": "grade you can project with 50% success rate",
-  "projectp90": "grade you can project with 90% success rate",
-  "onsitep50": "grade you can onsight with 50% success rate",
-  "onsitep90": "grade you can onsight with 90% success rate"
+  max: "hardest grade you've ever climbed",
+  top5: "minimum of your hardest 5 grades climbed",
+  projectp50: "grade you can project with 50% success rate",
+  projectp90: "grade you can project with 90% success rate",
+  onsitep50: "grade you can onsight with 50% success rate",
+  onsitep90: "grade you can onsight with 90% success rate",
 };
 
 export const sportGradeClass: MeasureClassSpec = {
   className: "grade-sport",
   params: [
     {
-      name: "location",
-      values: ["gym", "outside"] as SportLocation[],
+      name: "sportLocation",
+      values: SPORT_LOCATION,
       suffix: "",
     },
     {
       name: "stat",
-      values: Object.keys(statDesc) as Stat[],
+      values: STAT,
       suffix: "",
     },
   ],
@@ -45,22 +50,25 @@ export const sportGradeClass: MeasureClassSpec = {
     minValue: { unit: "ircra", value: 1 as IRCRAGrade },
     maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
   },
-  generateDescription: (params: { location: SportLocation; stat: Stat }) => {
-    return `${statDesc[params.stat]} ${locationDesc[params.location]}.`
-  }
+  generateDescription: (params: {
+    sportLocation: SportLocation;
+    stat: Stat;
+  }) => {
+    return `${statDesc[params.stat]} ${locationDesc[params.sportLocation]}.`;
+  },
 };
 
 export const boulderGradeClass: MeasureClassSpec = {
   className: "grade-boulder",
   params: [
     {
-      name: "location",
-      values: Object.keys(locationDesc) as BoulderLocation[],
+      name: "boulderLocation",
+      values: BOULDER_LOCATION,
       suffix: "",
     },
     {
       name: "stat",
-      values: Object.keys(statDesc) as Stat[],
+      values: STAT,
       suffix: "",
     },
   ],
@@ -71,7 +79,10 @@ export const boulderGradeClass: MeasureClassSpec = {
     minValue: { unit: "ircra", value: 1 as IRCRAGrade },
     maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
   },
-  generateDescription: (params: { location: BoulderLocation; stat: Stat }) => {
-    return `${statDesc[params.stat]} ${locationDesc[params.location]}.`
-  }
+  generateDescription: (params: {
+    boulderLocation: BoulderLocation;
+    stat: Stat;
+  }) => {
+    return `${statDesc[params.stat]} ${locationDesc[params.boulderLocation]}.`;
+  },
 };

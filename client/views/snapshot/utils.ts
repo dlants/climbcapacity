@@ -1,4 +1,4 @@
-import { MeasureId } from "../../../iso/measures";
+import { MeasureId, ParamMap, ParamName } from "../../../iso/measures";
 import { MeasureStats } from "../../../iso/protocol";
 
 export type CountTree = {
@@ -11,15 +11,13 @@ export type CountTree = {
  *
  * @param measureStats
  * @param parseMeasureId
- * @param props
+ * @param params
  * @returns
  */
-export function measureStatsToCountTree<PropType extends string>(
+export function measureStatsToCountTree(
   measureStats: MeasureStats,
-  parseMeasureId: (measureId: MeasureId) => {
-    [prop in PropType]: number | string;
-  },
-  props: PropType[],
+  parseMeasureId: (measureId: MeasureId) => ParamMap,
+  params: ParamName[],
 ): CountTree {
   const root: CountTree = { count: 0, children: {} };
 
@@ -29,7 +27,7 @@ export function measureStatsToCountTree<PropType extends string>(
       const parsed = parseMeasureId(measureId as MeasureId);
       currentNode.count += count;
 
-      for (const prop of props) {
+      for (const prop of params) {
         const value = String(parsed[prop]);
 
         if (!currentNode.children[value]) {

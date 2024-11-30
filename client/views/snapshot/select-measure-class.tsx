@@ -129,7 +129,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
             }
           }
 
-          selected.measureClass = msg.measureClass;
+          selected.measureClass = immer.castDraft(msg.measureClass);
           selected.params = paramMap;
           selected.measureId = generateId(
             selected.measureClass,
@@ -150,7 +150,7 @@ export const update = (msg: Msg, model: Model): [Model] => {
               `Invalid param ${msg.param} for measure class ${selected.measureClass.className}`,
             );
           }
-          if (!param.values.includes(msg.value)) {
+          if (!(param.values as any).includes(msg.value)) {
             throw new Error(
               `invalid value ${msg.value} for param ${param.name}`,
             );

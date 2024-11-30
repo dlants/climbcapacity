@@ -1,15 +1,9 @@
-import { MeasureClassSpec, MeasureSpec } from "./index.js";
+import { AVG_LOAD_DURATIONS, avgLoadDuration, BASIC_GRIP_TYPES, DOMINANT_SIDES, EDGE_SIZES, MeasureClassSpec, MeasureSpec, ParamValue } from "./index.js";
 
 // Type definitions for parameters
-export type GripType =
-  | "half-crimp"
-  | "open"
-  | "full-crimp";
-
-export type Duration = "30";
-
-export type EdgeSize = "20" | "18" | "10";
-export type DominantSide = "dominant" | "nondominant";
+export type GripType = typeof BASIC_GRIP_TYPES[number];
+export type EdgeSize = typeof EDGE_SIZES[number];
+export type DominantSide = typeof DOMINANT_SIDES[number];
 
 // Helper functions for parameter descriptions
 const getGripTypeDescription = (gripType: GripType): string => {
@@ -36,24 +30,18 @@ export const peakloadClass: MeasureClassSpec = {
   className: "peakload",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-      ] as const,
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: [
-        "20", "18", "10"
-      ] as const,
+      values: EDGE_SIZES,
       suffix: 'mm'
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -76,31 +64,23 @@ export const avgLoadClass: MeasureClassSpec = {
   className: "avgload",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-      ] as const,
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: [
-        "20", "18", "10"
-      ] as const,
+      values: EDGE_SIZES,
       suffix: 'mm'
     },
     {
-      name: "duration",
-      values: [
-        "30"
-      ] as const,
+      name: "avgLoadDuration",
+      values: AVG_LOAD_DURATIONS,
       suffix: 's'
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -111,11 +91,11 @@ export const avgLoadClass: MeasureClassSpec = {
     minValue: { unit: "kg", value: 35 },
     maxValue: { unit: "kg", value: 100 },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; duration: Duration; dominantSide: DominantSide }) => {
+  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize; avgLoadDuration: avgLoadDuration; dominantSide: DominantSide }) => {
     return `\
-Avg load measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge block pull, over a duration of ${params.duration}s on your ${getDominantSideDescription(params.dominantSide)}.
+Avg load measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge block pull, over a duration of ${params.avgLoadDuration}s on your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.gripType)}.`
+${getGripTypeDescription(params.basicGripType)}.`
   }
 };
 
@@ -123,24 +103,18 @@ export const rfdClass: MeasureClassSpec = {
   className: "rfd",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-      ] as const,
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: [
-        "20", "18", "10"
-      ] as const,
+      values: EDGE_SIZES,
       suffix: 'mm'
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -163,24 +137,18 @@ export const criticalForceClass: MeasureClassSpec = {
   className: "criticalforce",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-      ] as const,
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: [
-        "20", "18", "10"
-      ] as const,
+      values: EDGE_SIZES,
       suffix: 'mm'
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],

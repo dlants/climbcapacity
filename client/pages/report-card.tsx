@@ -133,7 +133,6 @@ export const update: Update<Msg, Model> = (msg, model) => {
                 continue;
               }
               initialFilters[measureId] = getInitialFilter(
-                measureId,
                 myInputValues[measureId] as UnitValue,
               );
             }
@@ -247,7 +246,6 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
 };
 
 function getInitialFilter(
-  measureId: MeasureId,
   value: UnitValue,
 ): InitialFilter {
   if (value.unit == "sex-at-birth") {

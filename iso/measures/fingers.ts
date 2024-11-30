@@ -1,36 +1,30 @@
-import { MeasureClassSpec, MeasureSpec } from "./index.js";
+import {
+  ALL_GRIP_TYPES,
+  BASIC_GRIP_TYPES,
+  DOMINANT_SIDES,
+  DURATIONS,
+  EDGE_SIZES,
+  EXTENDED_GRIP_TYPES,
+  MeasureClassSpec,
+  MeasureSpec,
+  ParamValue,
+  REPS,
+  TIMINGS,
+} from "./index.js";
 
-// Type definitions for parameters
-export type GripType =
-  | "half-crimp"
-  | "open"
-  | "full-crimp"
-  | "back-3-crimp"
-  | "back-3-drag"
-  | "front-3-crimp"
-  | "front-3-drag"
-  | "mono-index-crimp"
-  | "mono-index-drag"
-  | "mono-middle-crimp"
-  | "mono-middle-drag"
-  | "mono-ring-crimp"
-  | "mono-ring-drag"
-  | "mono-pinky-crimp"
-  | "mono-pinky-drag";
+type GripType = ParamValue<"allGripType">;
+type EdgeSize = ParamValue<"edgeSize">;
+type Duration = ParamValue<"duration">;
+type DominantSide = ParamValue<"dominantSide">;
+type Timing = ParamValue<"timing">;
+type Reps = ParamValue<"repMax">;
 
-export type EdgeSize = "20" | "18" | "10";
-export type Duration = "7" | "10";
-export type DominantSide = "dominant" | "nondominant";
-export type Timing = "7-3";
-export type Reps = "1" | "3" | "5";
-
-// Helper functions for parameter descriptions
 const getGripTypeDescription = (gripType: GripType): string => {
   const descriptions: Record<GripType, string> = {
     "half-crimp": `\
 use a half crimp grip (90° at index, middle and ring pip joints).
 consider the test a technical failure if your hand starts to open up.`,
-    "open": `\
+    open: `\
 use an open hand grip.`,
     "full-crimp": `\
 use a full crimp grip (closed position with thumb wrap).
@@ -64,7 +58,7 @@ use a mono ring drag.`,
 use a mono pinky crimp grip (90° at pip joint).
 consider the test a technical failure if your hand starts to open up.`,
     "mono-pinky-drag": `\
-use a mono pinky drag.`
+use a mono pinky drag.`,
   };
 
   return descriptions[gripType];
@@ -84,7 +78,7 @@ const getDominantSideDescription = (side: DominantSide): string => {
 
 const getTimingDescription = (timing: Timing): string => {
   const descriptions: Record<Timing, string> = {
-    "7-3": "7 seconds hang, 3 seconds rest"
+    "7-3": "7 seconds hang, 3 seconds rest",
   };
   return descriptions[timing];
 };
@@ -100,26 +94,18 @@ export const maxhangClass: MeasureClassSpec = {
   measureType: "input",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-        "back-3-crimp",
-        "back-3-drag",
-        "front-3-crimp",
-        "front-3-drag",
-      ] as GripType[],
+      name: "extendedGripType",
+      values: EXTENDED_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["20", "18", "10"] as EdgeSize[],
+      values: EDGE_SIZES,
       suffix: "mm",
     },
     {
       name: "duration",
-      values: ["7", "10"] as Duration[],
+      values: DURATIONS,
       suffix: "s",
     },
   ],
@@ -129,7 +115,11 @@ export const maxhangClass: MeasureClassSpec = {
     minValue: { unit: "kg", value: 35 },
     maxValue: { unit: "kg", value: 100 },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; duration: Duration }) => {
+  generateDescription: (params: {
+    gripType: GripType;
+    edgeSize: EdgeSize;
+    duration: Duration;
+  }) => {
     return `\
 Maximum weight added for a ${getDurationDescription(params.duration)} on a ${getEdgeSizeDescription(params.edgeSize)}.
 
@@ -138,38 +128,30 @@ ${getGripTypeDescription(params.gripType)}
 Take at least a 5 minute rest between attempts.
 
 Record total weight, so if you weigh 70kg and you added 30kg, record 100kg.`;
-  }
+  },
 };
 
 export const unilateralMaxhangClass: MeasureClassSpec = {
   className: "maxhang-unilateral",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-        "back-3-crimp",
-        "back-3-drag",
-        "front-3-crimp",
-        "front-3-drag",
-      ] as GripType[],
+      name: "extendedGripType",
+      values: EXTENDED_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["20", "18", "10"] as EdgeSize[],
+      values: EDGE_SIZES,
       suffix: "mm",
     },
     {
       name: "duration",
-      values: ["7", "10"] as Duration[],
+      values: DURATIONS,
       suffix: "s",
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -180,7 +162,12 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
     minValue: { unit: "kg", value: 35 },
     maxValue: { unit: "kg", value: 100 },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; duration: Duration; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    gripType: GripType;
+    edgeSize: EdgeSize;
+    duration: Duration;
+    dominantSide: DominantSide;
+  }) => {
     return `Maximum weight added for a ${params.duration} second hang on a ${params.edgeSize}mm edge.
 
 Use your ${getDominantSideDescription(params.dominantSide)}.
@@ -190,7 +177,7 @@ ${getGripTypeDescription(params.gripType)}
 Take at least a 5 minute rest between attempts.
 
 Record total weight, so if you weigh 70kg and you removed 20kg, record 50kg.`;
-  }
+  },
 };
 
 export const repeatersClass: MeasureClassSpec = {
@@ -198,17 +185,17 @@ export const repeatersClass: MeasureClassSpec = {
   params: [
     {
       name: "timing",
-      values: ["7-3"] as Timing[],
+      values: TIMINGS,
       suffix: "",
     },
     {
-      name: "gripType",
-      values: ["half-crimp", "open", "full-crimp"] as GripType[],
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["20", "18", "10"] as EdgeSize[],
+      values: EDGE_SIZES,
       suffix: "mm",
     },
   ],
@@ -219,45 +206,41 @@ export const repeatersClass: MeasureClassSpec = {
     minValue: { unit: "second", value: 0 },
     maxValue: { unit: "second", value: 300 },
   },
-  generateDescription: (params: { timing: Timing; gripType: GripType; edgeSize: EdgeSize }) => {
+  generateDescription: (params: {
+    timing: Timing;
+    gripType: GripType;
+    edgeSize: EdgeSize;
+  }) => {
     return `\
 Maximum duration for ${getTimingDescription(params.timing)} body-weight repeaters on a ${params.edgeSize}mm edge.
-  
+
 ${getGripTypeDescription(params.gripType)}
 
 Record total test duration, so if you fail 4 seconds into the 5th hang, you would record 4 * (7 + 3) + 4 = 44 seconds.`;
-  }
+  },
 };
 
 export const blockPullClass: MeasureClassSpec = {
   className: "block-pull",
   params: [
     {
-      name: "gripType",
-      values: [
-        "half-crimp",
-        "open",
-        "full-crimp",
-        "back-3-crimp",
-        "back-3-drag",
-        "front-3-crimp",
-        "front-3-drag",
-      ] as GripType[],
+      name: "allGripType",
+      values: ALL_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["20", "18", "10"] as EdgeSize[],
+      values: EDGE_SIZES,
       suffix: "mm",
     },
     {
       name: "duration",
-      values: ["7", "10"] as Duration[],
+      values: DURATIONS,
       suffix: "s",
     },
     {
       name: "dominantSide",
-      values: ["dominant", "nondominant"] as DominantSide[],
+      values: DOMINANT_SIDES,
       suffix: "",
     },
   ],
@@ -268,27 +251,32 @@ export const blockPullClass: MeasureClassSpec = {
     minValue: { unit: "kg", value: 35 },
     maxValue: { unit: "kg", value: 100 },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; duration: Duration; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    allGripType: ParamValue<"allGripType">;
+    edgeSize: EdgeSize;
+    duration: Duration;
+    dominantSide: DominantSide;
+  }) => {
     return `\
 Maximum weight added for a ${params.duration} second block pull on a ${params.edgeSize}mm edge using your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.gripType)}.
+${getGripTypeDescription(params.allGripType)}.
 
-Take at least a 5 minute rest between attempts.`
-  }
+Take at least a 5 minute rest between attempts.`;
+  },
 };
 
 export const minEdgeClass: MeasureClassSpec = {
   className: "min-edge",
   params: [
     {
-      name: "gripType",
-      values: ["half-crimp", "open", "full-crimp"] as GripType[],
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "duration",
-      values: ["7", "10"] as Duration[],
+      values: DURATIONS,
       suffix: "s",
     },
   ],
@@ -301,24 +289,24 @@ export const minEdgeClass: MeasureClassSpec = {
   },
   generateDescription: (params: { gripType: GripType; duration: Duration }) => {
     return `Minimum edge size for a ${params.duration} second hang.
-    
+
 ${getGripTypeDescription(params.gripType)}
-    
+
 Take at least a 5 minute rest between attempts.`;
-  }
+  },
 };
 
 export const minEdgePullupsClass: MeasureClassSpec = {
   className: "min-edge-pullups",
   params: [
     {
-      name: "gripType",
-      values: ["half-crimp", "open", "full-crimp"] as GripType[],
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
-      name: "reps",
-      values: ["1", "2", "5"] as Reps[],
+      name: "repMax",
+      values: REPS,
       suffix: "rm",
     },
   ],
@@ -329,28 +317,28 @@ export const minEdgePullupsClass: MeasureClassSpec = {
     minValue: { unit: "mm", value: 5 },
     maxValue: { unit: "mm", value: 25 },
   },
-  generateDescription: (params: { gripType: GripType; reps: Reps }) => {
-    return `Minimum edge size on which you can do ${params.reps} pull-ups.
-    
-${getGripTypeDescription(params.gripType)}
+  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; repMax: Reps }) => {
+    return `Minimum edge size on which you can do ${params.repMax} pull-ups.
+
+${getGripTypeDescription(params.basicGripType)}
 
 You must control the descent of each rep, so if you jump off at the end, do not count the attempt.
 
 Take at least a 5 minute rest between attempts.`;
-  }
+  },
 };
 
 export const continuousHangClass: MeasureClassSpec = {
   className: "continuous-hang",
   params: [
     {
-      name: "gripType",
-      values: ["half-crimp", "open", "full-crimp"] as GripType[],
+      name: "basicGripType",
+      values: BASIC_GRIP_TYPES,
       suffix: "",
     },
     {
       name: "edgeSize",
-      values: ["20", "18", "10"] as EdgeSize[],
+      values: EDGE_SIZES,
       suffix: "mm",
     },
   ],
@@ -361,10 +349,10 @@ export const continuousHangClass: MeasureClassSpec = {
     minValue: { unit: "second", value: 0 },
     maxValue: { unit: "second", value: 300 },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize }) => {
+  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize }) => {
     return `\
 Maximum hang time on a ${params.edgeSize}mm edge.
 
-${getGripTypeDescription(params.gripType)}.`;
-  }
+${getGripTypeDescription(params.basicGripType)}.`;
+  },
 };

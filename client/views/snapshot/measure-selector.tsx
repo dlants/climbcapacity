@@ -80,7 +80,7 @@ export function initModel({
     items: [],
   };
   return produce(model, (draft) => {
-    draft.items = getItems(draft);
+    draft.items = immer.castDraft(getItems(draft));
   });
 }
 
@@ -288,17 +288,17 @@ function getItems(model: Omit<Model, "items">): Item[] {
 
 export type Msg =
   | {
-      type: "UPDATE_QUERY";
-      query: string;
-    }
+    type: "UPDATE_QUERY";
+    query: string;
+  }
   | {
-      type: "INIT_UPDATE";
-      update: InitOptions;
-    }
+    type: "INIT_UPDATE";
+    update: InitOptions;
+  }
   | {
-      type: "DELETE_MEASURE";
-      measureId: MeasureId;
-    };
+    type: "DELETE_MEASURE";
+    measureId: MeasureId;
+  };
 
 export const update: Update<Msg, Model> = (msg, model) => {
   switch (msg.type) {
@@ -306,7 +306,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
       return [
         produce(model, (draft) => {
           draft.query = msg.query;
-          draft.items = getItems(draft);
+          draft.items = immer.castDraft(getItems(draft));
         }),
       ];
     case "DELETE_MEASURE":
