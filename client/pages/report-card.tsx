@@ -133,6 +133,7 @@ export const update: Update<Msg, Model> = (msg, model) => {
                 continue;
               }
               initialFilters[measureId] = getInitialFilter(
+                measureId,
                 myInputValues[measureId] as UnitValue,
               );
             }
@@ -245,149 +246,187 @@ export const view: View<Msg, Model> = ({ model, dispatch }) => {
   );
 };
 
+function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min: UnitValue, max: UnitValue } {
+  if (measureId === 'weight' && unitValue.unit === 'kg') {
+    return {
+      min: {
+        ...unitValue,
+        value: Math.ceil(unitValue.value - 5)
+      },
+      max: {
+        ...unitValue,
+        value: Math.floor(unitValue.value + 5)
+      }
+    };
+  }
+
+  if (measureId === 'weight' && unitValue.unit === 'lb') {
+    return {
+      min: {
+        ...unitValue,
+        value: Math.ceil(unitValue.value - 10)
+      },
+      max: {
+        ...unitValue,
+        value: Math.floor(unitValue.value + 10)
+      }
+    };
+  }
+
+  if (measureId === 'height' || measureId === 'armspan' || measureId === 'standing-reach') {
+    let adjustment = 0;
+    if (unitValue.unit === 'cm') {
+      adjustment = 5;
+    } else if (unitValue.unit === 'inch') {
+      adjustment = 2;
+    } else if (unitValue.unit === 'm') {
+      adjustment = 0.05;
+    }
+
+    if (unitValue.unit === 'm') {
+      return {
+        min: {
+          ...unitValue,
+          value: Math.ceil((unitValue.value - adjustment) * 100) / 100
+        },
+        max: {
+          ...unitValue,
+          value: Math.floor((unitValue.value + adjustment) * 100) / 100
+        }
+      };
+    } else {
+      return {
+        min: {
+          ...unitValue,
+          value: Math.ceil(unitValue.value as number - adjustment)
+        } as UnitValue,
+        max: {
+          ...unitValue,
+          value: Math.floor(unitValue.value as number + adjustment)
+        } as UnitValue
+      };
+    }
+  }
+
+  switch (unitValue.unit) {
+    case "second":
+    case "year":
+    case "month":
+    case "lb":
+    case "lb/s":
+    case "kg":
+    case "kg/s":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+    case "strengthtoweightratio":
+      return {
+        min: {
+          ...unitValue,
+          value: unitValue.value * 0.9,
+        },
+        max: {
+          ...unitValue,
+          value: unitValue.value * 1.1,
+        }
+      };
+    case "count":
+      return {
+        min: {
+          ...unitValue,
+          value: Math.max(Math.floor(unitValue.value * 0.9), unitValue.value - 1),
+        },
+        max: {
+          ...unitValue,
+          value: Math.min(Math.ceil(unitValue.value * 1.1), unitValue.value + 1),
+        }
+      };
+    case "vermin":
+      return {
+        min: {
+          ...unitValue,
+          value: VGRADE[Math.max(VGRADE.indexOf(unitValue.value) - 1, 0)],
+        },
+        max: {
+          ...unitValue,
+          value: VGRADE[Math.min(VGRADE.indexOf(unitValue.value) + 2, VGRADE.length - 1)],
+        }
+      };
+    case "font":
+      return {
+        min: {
+          ...unitValue,
+          value: FONT[Math.max(FONT.indexOf(unitValue.value) - 1, 0)],
+        },
+        max: {
+          ...unitValue,
+          value: FONT[Math.min(FONT.indexOf(unitValue.value) + 2, FONT.length - 1)],
+        }
+      };
+    case "frenchsport":
+      return {
+        min: {
+          ...unitValue,
+          value: FRENCH_SPORT[Math.max(FRENCH_SPORT.indexOf(unitValue.value) - 1, 0)],
+        },
+        max: {
+          ...unitValue,
+          value: FRENCH_SPORT[Math.min(FRENCH_SPORT.indexOf(unitValue.value) + 2, FRENCH_SPORT.length - 1)],
+        }
+      };
+    case "yds":
+      return {
+        min: {
+          ...unitValue,
+          value: YDS[Math.max(YDS.indexOf(unitValue.value) - 1, 0)],
+        },
+        max: {
+          ...unitValue,
+          value: YDS[Math.min(YDS.indexOf(unitValue.value) + 2, YDS.length - 1)],
+        }
+      };
+    case "ewbank":
+      return {
+        min: {
+          ...unitValue,
+          value: EWBANK[Math.max(EWBANK.indexOf(unitValue.value) - 1, 0)],
+        },
+        max: {
+          ...unitValue,
+          value: EWBANK[Math.min(EWBANK.indexOf(unitValue.value) + 2, EWBANK.length - 1)],
+        }
+      };
+    case "ircra":
+      return {
+        min: {
+          ...unitValue,
+          value: Math.max(unitValue.value - 1, 1) as IRCRAGrade,
+        },
+        max: {
+          ...unitValue,
+          value: Math.min(unitValue.value + 2, 33) as IRCRAGrade,
+        }
+      };
+    case "sex-at-birth":
+    case "training":
+      return {
+        min: unitValue,
+        max: unitValue
+      }
+    default:
+      assertUnreachable(unitValue);
+  }
+}
+
 function getInitialFilter(
+  measureId: MeasureId,
   value: UnitValue,
 ): InitialFilter {
-  if (value.unit == "sex-at-birth") {
-    return {
-      type: "toggle",
-      value,
-    };
+  if (value.unit === "sex-at-birth") {
+    return { type: "toggle", value };
   } else {
-    return {
-      type: "minmax",
-      minValue: getMinInputValue(value),
-      maxValue: getMaxInputValue(value),
-    };
-  }
-}
-
-function getMinInputValue(value: UnitValue) {
-  switch (value.unit) {
-    case "second":
-    case "year":
-    case "month":
-    case "lb":
-    case "lb/s":
-    case "kg":
-    case "kg/s":
-    case "m":
-    case "cm":
-    case "mm":
-    case "inch":
-    case "strengthtoweightratio":
-      return {
-        ...value,
-        value: value.value * 0.9,
-      };
-    case "count":
-      return {
-        ...value,
-        value: Math.max(Math.floor(value.value * 0.9), value.value - 1),
-      };
-    case "vermin":
-      return {
-        ...value,
-        value: VGRADE[Math.max(VGRADE.indexOf(value.value) - 1, 0)],
-      };
-    case "font":
-      return {
-        ...value,
-        value: FONT[Math.max(FONT.indexOf(value.value) - 1, 0)],
-      };
-    case "frenchsport":
-      return {
-        ...value,
-        value: FRENCH_SPORT[Math.max(FRENCH_SPORT.indexOf(value.value) - 1, 0)],
-      };
-    case "yds":
-      return {
-        ...value,
-        value: YDS[Math.max(YDS.indexOf(value.value) - 1, 0)],
-      };
-    case "ewbank":
-      return {
-        ...value,
-        value: EWBANK[Math.max(EWBANK.indexOf(value.value) - 1, 0)],
-      };
-    case "ircra":
-      return {
-        ...value,
-        value: (value.value * 0.9) as IRCRAGrade,
-      };
-    case "sex-at-birth":
-    case "training":
-      return value;
-    default:
-      assertUnreachable(value);
-  }
-}
-
-function getMaxInputValue(value: UnitValue) {
-  switch (value.unit) {
-    case "second":
-    case "year":
-    case "month":
-    case "lb":
-    case "lb/s":
-    case "kg":
-    case "kg/s":
-    case "m":
-    case "cm":
-    case "mm":
-    case "inch":
-    case "strengthtoweightratio":
-      return {
-        ...value,
-        value: value.value * 1.1,
-      };
-    case "count":
-      return {
-        ...value,
-        value: Math.max(Math.ceil(value.value * 1.1), value.value + 1),
-      };
-    case "vermin":
-      return {
-        ...value,
-        value:
-          VGRADE[Math.min(VGRADE.indexOf(value.value) + 1, VGRADE.length - 1)],
-      };
-    case "font":
-      return {
-        ...value,
-        value: FONT[Math.min(FONT.indexOf(value.value) + 1, FONT.length - 1)],
-      };
-    case "frenchsport":
-      return {
-        ...value,
-        value:
-          FRENCH_SPORT[
-          Math.min(
-            FRENCH_SPORT.indexOf(value.value) + 1,
-            FRENCH_SPORT.length - 1,
-          )
-          ],
-      };
-    case "yds":
-      return {
-        ...value,
-        value: YDS[Math.min(YDS.indexOf(value.value) + 1, YDS.length - 1)],
-      };
-    case "ewbank":
-      return {
-        ...value,
-        value:
-          EWBANK[Math.min(EWBANK.indexOf(value.value) + 1, EWBANK.length - 1)],
-      };
-    case "ircra":
-      return {
-        ...value,
-        value: (value.value * 1.1) as IRCRAGrade,
-      };
-    case "sex-at-birth":
-    case "training":
-      return value;
-    default:
-      assertUnreachable(value);
+    const { min, max } = getMinMaxInputValues(measureId, value);
+    return { type: "minmax", minValue: min, maxValue: max };
   }
 }
