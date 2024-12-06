@@ -82,10 +82,6 @@ const getTimingDescription = (timing: Timing): string => {
   return descriptions[timing];
 };
 
-const getRepsDescription = (reps: Reps): string => {
-  return `${reps} repetition${reps === "1" ? "" : "s"}`;
-};
-
 export const MEASURES: MeasureSpec[] = [];
 
 export const maxhangClass: MeasureClassSpec = {

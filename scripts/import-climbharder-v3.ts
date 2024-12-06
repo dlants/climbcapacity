@@ -156,7 +156,7 @@ table.slice(1).forEach((row, idx) => {
     const grade = parseVgrade(hardestVGradeStr);
     addMeasure(
       generateId(Grades.boulderGradeClass, {
-        location: "gym",
+        boulderLocation: "gym",
         stat: "max",
       }),
       {
@@ -164,14 +164,14 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   const p90VGradeStr = row[9];
   try {
     const grade = parseVgrade(p90VGradeStr);
     addMeasure(
       generateId(Grades.boulderGradeClass, {
-        location: "gym",
+        boulderLocation: "gym",
         stat: "projectp90",
       }),
       {
@@ -179,7 +179,7 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   function parseEwbankGrade(str: string) {
     const grade = parseFloat(str);
@@ -194,7 +194,7 @@ table.slice(1).forEach((row, idx) => {
     const grade = parseEwbankGrade(hardestRouteGrade);
     addMeasure(
       generateId(Grades.sportGradeClass, {
-        location: "gym",
+        sportLocation: "gym",
         stat: "max",
       }),
       {
@@ -202,14 +202,14 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   const p90RouteGradeStr = row[12];
   try {
     const grade = parseEwbankGrade(p90RouteGradeStr);
     addMeasure(
       generateId(Grades.sportGradeClass, {
-        location: "gym",
+        sportLocation: "gym",
         stat: "projectp90",
       }),
       {
@@ -217,7 +217,7 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch {}
+  } catch { }
 
   const maxWeight18mmHalfStr = row[19];
   {
@@ -227,7 +227,7 @@ table.slice(1).forEach((row, idx) => {
         generateId(Fingers.maxhangClass, {
           edgeSize: "18",
           duration: "10",
-          gripType: "half-crimp",
+          extendedGripType: "half-crimp",
         }),
         {
           unit: "kg",
@@ -244,7 +244,7 @@ table.slice(1).forEach((row, idx) => {
         generateId(Fingers.maxhangClass, {
           edgeSize: "18",
           duration: "10",
-          gripType: "open",
+          extendedGripType: "open",
         }),
         {
           unit: "kg",
@@ -267,7 +267,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateId(Fingers.minEdgeClass, {
           duration: "10",
-          gripType: "half-crimp",
+          basicGripType: "half-crimp",
         }),
         {
           unit: "mm",
@@ -284,7 +284,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateId(Fingers.minEdgeClass, {
           duration: "10",
-          gripType: "open",
+          basicGripType: "open",
         }),
         {
           unit: "mm",
@@ -299,7 +299,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxPulls)) {
     addMeasure(
       generateId(Movement.maxRepsClass, {
-        movement: "pullup",
+        maxRepsMovement: "pullup",
       }),
       {
         unit: "count",
@@ -324,7 +324,7 @@ table.slice(1).forEach((row, idx) => {
     if (weight) {
       addMeasure(
         generateId(Movement.weightedClass, {
-          movement: "pullup",
+          weightedMovement: "pullup",
           repMax: "5",
         }),
         {
@@ -340,7 +340,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxPushups)) {
     addMeasure(
       generateId(Movement.maxRepsClass, {
-        movement: "pushup",
+        maxRepsMovement: "pushup",
       }),
       {
         unit: "count",
@@ -354,7 +354,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxLhang)) {
     addMeasure(
       generateId(Movement.isometricClass, {
-        movement: "lhang",
+        isometricMovement: "lhang",
       }),
       {
         unit: "second",
@@ -402,7 +402,7 @@ table.slice(1).forEach((row, idx) => {
           generateId(Fingers.maxhangClass, {
             edgeSize: "18",
             duration: "10",
-            gripType: "open",
+            extendedGripType: "open",
           }),
         ),
         {
@@ -415,7 +415,7 @@ table.slice(1).forEach((row, idx) => {
           generateId(Fingers.maxhangClass, {
             edgeSize: "18",
             duration: "10",
-            gripType: "half-crimp",
+            extendedGripType: "half-crimp",
           }),
         ),
         {
@@ -427,7 +427,7 @@ table.slice(1).forEach((row, idx) => {
         generateTrainingMeasureId(
           generateId(Fingers.repeatersClass, {
             edgeSize: "18",
-            gripType: "open",
+            basicGripType: "open",
             timing: "7-3",
           }),
         ),
@@ -440,7 +440,7 @@ table.slice(1).forEach((row, idx) => {
         generateTrainingMeasureId(
           generateId(Fingers.repeatersClass, {
             edgeSize: "18",
-            gripType: "half-crimp",
+            basicGripType: "half-crimp",
             timing: "7-3",
           }),
         ),
@@ -457,7 +457,7 @@ table.slice(1).forEach((row, idx) => {
             generateId(Fingers.maxhangClass, {
               edgeSize: "18",
               duration: "10",
-              gripType: "open",
+              extendedGripType: "open",
             }),
           ),
           {
@@ -471,7 +471,7 @@ table.slice(1).forEach((row, idx) => {
             generateId(Fingers.maxhangClass, {
               edgeSize: "18",
               duration: "10",
-              gripType: "open",
+              extendedGripType: "open",
             }),
           ),
           {
@@ -490,7 +490,7 @@ table.slice(1).forEach((row, idx) => {
             generateId(Fingers.maxhangClass, {
               edgeSize: "18",
               duration: "10",
-              gripType: "half-crimp",
+              extendedGripType: "half-crimp",
             }),
           ),
           {
@@ -504,7 +504,7 @@ table.slice(1).forEach((row, idx) => {
             generateId(Fingers.maxhangClass, {
               edgeSize: "18",
               duration: "10",
-              gripType: "half-crimp",
+              extendedGripType: "half-crimp",
             }),
           ),
           {
@@ -544,7 +544,7 @@ table.slice(1).forEach((row, idx) => {
     addMeasure(
       generateTrainingMeasureId(
         generateId(Movement.maxRepsClass, {
-          movement: "pushup",
+          maxRepsMovement: "pushup",
         }),
       ),
       {
@@ -555,7 +555,7 @@ table.slice(1).forEach((row, idx) => {
     addMeasure(
       generateTrainingMeasureId(
         generateId(Movement.maxRepsClass, {
-          movement: "pullup",
+          maxRepsMovement: "pullup",
         }),
       ),
       {
@@ -566,7 +566,7 @@ table.slice(1).forEach((row, idx) => {
     addMeasure(
       generateTrainingMeasureId(
         generateId(Movement.weightedClass, {
-          movement: "pullup",
+          weightedMovement: "pullup",
           repMax: "5",
         }),
       ),
@@ -578,7 +578,7 @@ table.slice(1).forEach((row, idx) => {
     addMeasure(
       generateTrainingMeasureId(
         generateId(Movement.isometricClass, {
-          movement: "lhang",
+          isometricMovement: "lhang",
         }),
       ),
       {
@@ -596,7 +596,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.maxRepsClass, {
-            movement: "pushup",
+            maxRepsMovement: "pushup",
           }),
         ),
         {
@@ -608,7 +608,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.maxRepsClass, {
-            movement: "pushup",
+            maxRepsMovement: "pushup",
           }),
         ),
         {
@@ -622,7 +622,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.maxRepsClass, {
-            movement: "pullup",
+            maxRepsMovement: "pullup",
           }),
         ),
         {
@@ -633,7 +633,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.weightedClass, {
-            movement: "pullup",
+            weightedMovement: "pullup",
             repMax: "5",
           }),
         ),
@@ -646,7 +646,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.maxRepsClass, {
-            movement: "pullup",
+            maxRepsMovement: "pullup",
           }),
         ),
         {
@@ -657,7 +657,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.weightedClass, {
-            movement: "pullup",
+            weightedMovement: "pullup",
             repMax: "5",
           }),
         ),
@@ -672,7 +672,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.isometricClass, {
-            movement: "lhang",
+            isometricMovement: "lhang",
           }),
         ),
         {
@@ -684,7 +684,7 @@ table.slice(1).forEach((row, idx) => {
       addMeasure(
         generateTrainingMeasureId(
           generateId(Movement.isometricClass, {
-            movement: "lhang",
+            isometricMovement: "lhang",
           }),
         ),
         {

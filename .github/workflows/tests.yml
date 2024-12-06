@@ -1,0 +1,90 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd backend
+          yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: |
+          cd backend
+          yarn test
+
+  iso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd iso
+          yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: |
+          cd iso
+          yarn test
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd client
+          yarn install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: |
+          cd client
+          npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: |
+          cd client
+          yarn test:e2e
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          retention-days: 30
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
