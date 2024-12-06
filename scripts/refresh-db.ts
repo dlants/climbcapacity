@@ -5,6 +5,7 @@ async function run() {
   if (!process.env.MONGODB_URL) {
     throw new Error(`Must define MONGODB_URL`);
   }
+  await $`npx tsx ./create-indexes.ts`
   await $`npx tsx ./import-climbharder-v3.ts`;
   await $`npx tsx ./import-powercompany.ts`;
   await $`npx tsx ./update-measure-stats.ts`;

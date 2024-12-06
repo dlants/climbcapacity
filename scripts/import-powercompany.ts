@@ -152,7 +152,7 @@ table.slice(1).forEach((row, idx) => {
     const grade = parseSportGrade(maxSportStr);
     addMeasure(
       generateId(Grades.sportGradeClass, {
-        location: "gym",
+        sportLocation: "gym",
         stat: "max",
       }),
       {
@@ -202,7 +202,7 @@ table.slice(1).forEach((row, idx) => {
     const grade = parseVgrade(maxBoulderStr);
     addMeasure(
       generateId(Grades.boulderGradeClass, {
-        location: "gym",
+        boulderLocation: "gym",
         stat: "max",
       }),
       {
@@ -241,7 +241,6 @@ table.slice(1).forEach((row, idx) => {
     });
   } catch { }
 
-  const trainExpStr = row[TSV_COLS.findIndex((c) => c == "trainexp")];
   let trainAge: number | undefined;
   try {
     trainAge = parseAge(climbingExpStr);
@@ -283,7 +282,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxPulls)) {
     addMeasure(
       generateId(Movement.maxRepsClass, {
-        movement: "pullup",
+        maxRepsMovement: "pullup",
       }),
       {
         unit: "count",
@@ -297,7 +296,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxPushups)) {
     addMeasure(
       generateId(Movement.maxRepsClass, {
-        movement: "pushup",
+        maxRepsMovement: "pushup",
       }),
       {
         unit: "count",
@@ -311,7 +310,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(continuousHang)) {
     addMeasure(
       generateId(Fingers.continuousHangClass, {
-        gripType: "half-crimp",
+        basicGripType: "half-crimp",
         edgeSize: "20",
       }),
       {
@@ -326,7 +325,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(maxHang) && !isNaN(weight)) {
     addMeasure(
       generateId(Fingers.maxhangClass, {
-        gripType: "half-crimp",
+        extendedGripType: "half-crimp",
         edgeSize: "20",
         duration: "10",
       }),
@@ -343,7 +342,7 @@ table.slice(1).forEach((row, idx) => {
     if (weight) {
       addMeasure(
         generateId(Movement.weightedClass, {
-          movement: "pullup",
+          weightedMovement: "pullup",
           repMax: "1",
         }),
         {
@@ -362,7 +361,7 @@ table.slice(1).forEach((row, idx) => {
         generateId(Fingers.repeatersClass, {
           timing: "7-3",
           edgeSize: "20",
-          gripType: "half-crimp",
+          basicGripType: "half-crimp",
         }),
         {
           unit: "second",
@@ -377,7 +376,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(longCamp)) {
     addMeasure(
       generateId(Movement.enduranceClass, {
-        movement: "footoncampuslong",
+        enduranceMovement: "footoncampuslong",
       }),
       {
         unit: "second",
@@ -391,7 +390,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(shortCamp)) {
     addMeasure(
       generateId(Movement.enduranceClass, {
-        movement: "footoncampusshort",
+        enduranceMovement: "footoncampusshort",
       }),
       {
         unit: "second",
@@ -409,7 +408,7 @@ table.slice(1).forEach((row, idx) => {
     if (ohpl > ohpr) {
       addMeasure(
         generateId(Movement.unilateralWeightedClass, {
-          movement: "overheadpress",
+          unilateralMovement: "overheadpress",
           repMax: "1",
           dominantSide: "dominant",
         }),
@@ -417,7 +416,7 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateId(Movement.unilateralWeightedClass, {
-          movement: "overheadpress",
+          unilateralMovement: "overheadpress",
           repMax: "1",
           dominantSide: "nondominant",
         }),
@@ -426,7 +425,7 @@ table.slice(1).forEach((row, idx) => {
     } else {
       addMeasure(
         generateId(Movement.unilateralWeightedClass, {
-          movement: "overheadpress",
+          unilateralMovement: "overheadpress",
           repMax: "1",
           dominantSide: "dominant",
         }),
@@ -434,7 +433,7 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateId(Movement.unilateralWeightedClass, {
-          movement: "overheadpress",
+          unilateralMovement: "overheadpress",
           repMax: "1",
           dominantSide: "nondominant",
         }),
@@ -452,7 +451,7 @@ table.slice(1).forEach((row, idx) => {
     if (powl > powr) {
       addMeasure(
         generateId(Power.unilateralPowerClass, {
-          movement: "campusreach",
+          unilateralPowerMovement: "campusreach",
           dominantSide: "dominant",
         }),
         {
@@ -462,7 +461,7 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateId(Power.unilateralPowerClass, {
-          movement: "campusreach",
+          unilateralPowerMovement: "campusreach",
           dominantSide: "nondominant",
         }),
         { unit: "inch", value: powr },
@@ -470,7 +469,7 @@ table.slice(1).forEach((row, idx) => {
     } else {
       addMeasure(
         generateId(Power.unilateralPowerClass, {
-          movement: "campusreach",
+          unilateralPowerMovement: "campusreach",
           dominantSide: "dominant",
         }),
         {
@@ -480,7 +479,7 @@ table.slice(1).forEach((row, idx) => {
       );
       addMeasure(
         generateId(Power.unilateralPowerClass, {
-          movement: "campusreach",
+          unilateralPowerMovement: "campusreach",
           dominantSide: "nondominant",
         }),
         { unit: "inch", value: powl },
@@ -493,7 +492,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(dl)) {
     addMeasure(
       generateId(Movement.weightedClass, {
-        movement: "deadlift",
+        weightedMovement: "deadlift",
         repMax: "1",
       }),
       {
@@ -508,7 +507,7 @@ table.slice(1).forEach((row, idx) => {
   if (!isNaN(lhang)) {
     addMeasure(
       generateId(Movement.isometricClass, {
-        movement: "lhang",
+        isometricMovement: "lhang",
       }),
       {
         unit: "second",

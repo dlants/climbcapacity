@@ -93,10 +93,10 @@ export function generateBinThresholds(
   const min = lodash.min(data)!;
   const max = lodash.max(data)!;
 
-  // by default split up the min/max range into bins of 10
+  // by default split up the min/max range into 8 bins
   const defaultThresholds = lodash
-    .range(11)
-    .map((d) => min + ((max - min) * d) / 10);
+    .range(9)
+    .map((d) => min + ((max - min) * d) / 8);
 
   if (!unit) {
     return defaultThresholds;
