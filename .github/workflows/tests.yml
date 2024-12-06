@@ -84,13 +84,6 @@ jobs:
           path: client/playwright-report/
           retention-days: 30
 
-      - name: Publish Playwright Report to GitHub Pages
-        if: always()
-        uses: microsoft/playwright-github-action-report@v0.8.0
-        with:
-          report-dir: client/playwright-report
-          gh-pages: true
-
 permissions:
   contents: read
   pages: write
