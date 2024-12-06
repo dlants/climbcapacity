@@ -1,0 +1,32 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [backend, client, iso]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd ${{ matrix.project }}
+          yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: |
+          cd ${{ matrix.project }}
+          yarn test
