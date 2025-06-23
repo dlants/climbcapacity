@@ -1,6 +1,6 @@
 import React from "react";
 import { Dispatch } from "../tea";
-import { createRequestThunk, RequestStatus } from "../util/utils";
+import { RequestStatus } from "../util/utils";
 
 export type Model = {
   email: string;
@@ -16,7 +16,6 @@ export class SendLink {
   state: Model;
 
   constructor(
-    initialParams: any,
     private context: { myDispatch: Dispatch<Msg> }
   ) {
     this.state = {
@@ -31,21 +30,12 @@ export class SendLink {
         this.state.email = msg.email;
         break;
 
-      case "SEND_MAGIC_LINK":
+      case "SEND_MAGIC_LINK": {
         this.state.signinRequest = { status: "loading" };
 
-        (async () => {
-          const thunk = createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
-            url: "/api/send-login-link",
-            body: { email: this.state.email },
-            msgType: "UPDATE_STATUS",
-          });
-
-          if (thunk) {
-            await thunk(this.context.myDispatch);
-          }
-        })().catch(console.error);
+        (this.sendLink()).catch(console.error);
         break;
+      }
 
       case "UPDATE_STATUS":
         this.state.signinRequest = msg.request;
@@ -84,4 +74,27 @@ export class SendLink {
       </div>
     );
   }
+
+  async sendLink() {
+    const response = await fetch("/api/send-login-link", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: this.state.email }),
+    });
+
+    if (response.ok) {
+      this.context.myDispatch({
+        type: "UPDATE_STATUS",
+        request: { status: "loaded", response: undefined },
+      });
+    } else {
+      this.context.myDispatch({
+        type: "UPDATE_STATUS",
+        request: { status: "error", error: await response.text() },
+      });
+    }
+  };
 }
+

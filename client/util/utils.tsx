@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Dispatch, Thunk } from "../tea";
+import { Dispatch } from "../tea";
 import { MeasureSpec } from "../../iso/measures";
 
 export type LoadedRequest<T> = {
@@ -9,16 +9,16 @@ export type LoadedRequest<T> = {
 
 export type RequestStatus<T, Ext = {}> =
   | {
-      status: "not-sent";
-    }
+    status: "not-sent";
+  }
   | ({
-      status: "loading";
-    } & Ext)
+    status: "loading";
+  } & Ext)
   | (LoadedRequest<T> & Ext)
   | {
-      status: "error";
-      error: string;
-    };
+    status: "error";
+    error: string;
+  };
 
 export type GetLoadedRequest<T extends RequestStatus<any>> =
   T extends LoadedRequest<infer U> ? LoadedRequest<U> : never;
@@ -75,43 +75,6 @@ export function RequestStatusView<T, Msg = never>({
 
 export function assertUnreachable(value: never): never {
   throw new Error(`Unexpected value: ${JSON.stringify(value)}`);
-}
-
-export function createRequestThunk<T, Body, MsgType extends string>({
-  url,
-  method,
-  body,
-  msgType,
-}: {
-  url: string;
-  body: Body;
-  method?: "GET" | "POST";
-  msgType: MsgType;
-}): Thunk<{ type: MsgType; request: RequestStatus<T> }> {
-  return async (
-    dispatch: (msg: { type: MsgType; request: RequestStatus<T> }) => void,
-  ) => {
-    const response = await fetch(url, {
-      method: method || "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (response.ok) {
-      const value = (await response.json()) as T;
-      dispatch({
-        type: msgType,
-        request: { status: "loaded", response: value },
-      });
-    } else {
-      dispatch({
-        type: msgType,
-        request: { status: "error", error: await response.text() },
-      });
-    }
-  };
 }
 
 export type ExtractFromDisjointUnion<

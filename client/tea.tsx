@@ -17,19 +17,6 @@ export type View<Msg, Model> = ({
 
 export type Dispatch<Msg> = (msg: Msg) => void;
 
-export interface Subscription<SubscriptionType extends string> {
-  /** Must be unique!
-   */
-  id: SubscriptionType;
-}
-
-export type SubscriptionManager<SubscriptionType extends string, Msg> = {
-  [K in SubscriptionType]: {
-    subscribe(dispatch: Dispatch<Msg>): void;
-    unsubscribe(): void;
-  };
-};
-
 type AppState<Model> =
   | {
     status: "running";
@@ -40,19 +27,14 @@ type AppState<Model> =
     error: string;
   };
 
-export function createApp<Model, Msg, SubscriptionType extends string>({
+export function createApp<Model, Msg>({
   initialModel,
   update,
   View,
-  sub,
 }: {
   initialModel: Model;
   update: Update<Msg, Model>;
   View: View<Msg, Model>;
-  sub?: {
-    subscriptions: (model: Model) => Subscription<SubscriptionType>[];
-    subscriptionManager: SubscriptionManager<SubscriptionType, Msg>;
-  };
 }) {
   let dispatchRef: { current: Dispatch<Msg> | undefined } = {
     current: undefined,
@@ -63,10 +45,6 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
       status: "running",
       model: initialModel,
     });
-
-    const subsRef = React.useRef<{
-      [id: string]: Subscription<SubscriptionType>;
-    }>({});
 
     const dispatch = useCallback((msg: Msg) => {
       setModel((currentState) => {
@@ -86,36 +64,6 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
 
     dispatchRef.current = dispatch;
 
-    React.useEffect(() => {
-      if (!sub) return;
-      if (appState.status != "running") return;
-
-      const subscriptionManager = sub.subscriptionManager;
-      const currentSubscriptions = subsRef.current;
-
-      const nextSubs = sub.subscriptions(appState.model);
-      const nextSubsMap: { [id: string]: Subscription<SubscriptionType> } = {};
-
-      // Add new subs
-      nextSubs.forEach((sub) => {
-        nextSubsMap[sub.id] = sub;
-        if (!subscriptionManager[sub.id]) {
-          subscriptionManager[sub.id].subscribe(dispatch);
-          currentSubscriptions[sub.id] = sub;
-        }
-      });
-
-      // Remove old subs
-      Object.keys(currentSubscriptions).forEach((id) => {
-        if (!nextSubsMap[id]) {
-          subscriptionManager[id as SubscriptionType].unsubscribe();
-          delete subsRef.current[id];
-        }
-      });
-
-      return () => { };
-    }, [appState]);
-
     return (
       <div>
         {appState.status == "running" ? (
@@ -133,30 +81,5 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
       flushSync(() => root.render(<App />));
       return { root, dispatchRef };
     },
-  };
-}
-
-export type Thunk<Msg> = (dispatch: Dispatch<Msg>) => Promise<void>;
-
-export function wrapThunk<MsgType extends string, InnerMsg>(
-  msgType: MsgType,
-  thunk: Thunk<InnerMsg> | undefined,
-): Thunk<{ type: MsgType; msg: InnerMsg }> | undefined {
-  if (!thunk) {
-    return undefined;
-  }
-  return (dispatch: Dispatch<{ type: MsgType; msg: InnerMsg }>) =>
-    thunk((msg: InnerMsg) => dispatch({ type: msgType, msg }));
-}
-
-export function chainThunks<Msg>(
-  ...thunks: (Thunk<Msg> | undefined)[]
-): Thunk<Msg> {
-  return async (dispatch) => {
-    for (const thunk of thunks) {
-      if (thunk) {
-        await thunk(dispatch);
-      }
-    }
   };
 }

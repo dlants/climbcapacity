@@ -1,7 +1,6 @@
 import React from "react";
 import {
   createApp,
-  SubscriptionManager,
   Dispatch,
 } from "./tea";
 import { SendLink } from "./pages/send-link";
@@ -148,7 +147,6 @@ export class MainApp {
           this.state.page = { route: "/" };
         } else {
           const sendLinkPage = new SendLink(
-            {},
             { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
@@ -170,7 +168,6 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            {},
             { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
@@ -195,7 +192,6 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            {},
             { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
@@ -220,7 +216,6 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            {},
             { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
@@ -437,9 +432,6 @@ export class MainApp {
 
 async function run() {
   const router = new Router();
-  const subscriptionManager: SubscriptionManager<"router", Msg> = {
-    router: router,
-  };
   const response = await fetch("/api/auth", {
     method: "POST",
     headers: {
@@ -481,7 +473,6 @@ async function run() {
     };
   } else {
     const sendLinkPage = new SendLink(
-      {},
       { myDispatch: (msg) => tempDispatch({ type: "SEND_LINK_MSG", msg }) }
     );
     initialModel = {
@@ -494,7 +485,7 @@ async function run() {
     };
   }
 
-  const app = createApp<Model, Msg, "router">({
+  const app = createApp<Model, Msg>({
     initialModel,
     update: (msg) => {
       mainApp.update(msg);
@@ -503,15 +494,14 @@ async function run() {
     View: () => {
       return mainApp.view();
     },
-    sub: {
-      subscriptions: () => [{ id: "router" }],
-      subscriptionManager,
-    },
   });
   const { dispatchRef } = app.mount(document.getElementById("app")!);
 
   dispatchFn = dispatchRef.current!;
   mainApp = new MainApp(initialModel, { myDispatch: dispatchFn });
+
+  // Attach the dispatcher to the router
+  router.subscribe(dispatchFn);
 
   const navMsg = parseRoute(window.location.pathname);
   if (navMsg) {
