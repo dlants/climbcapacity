@@ -11,7 +11,7 @@ import * as csx from "csx";
 
 export type ToggleableFilter = {
   enabled: boolean;
-  model: Filter.Model;
+  filter: Filter.Filter;
 };
 
 export type FilterMapping = {
@@ -50,17 +50,31 @@ export class ReportCardFilter {
       const initialFilter = initialParams.initialFilters[measureId];
       filters.push({
         enabled: initialFilter.enabled,
-        model: Filter.initModel({ measureId, initialFilter }),
+        filter: new Filter.Filter(
+          { measureId, initialFilter },
+          { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+        ),
       });
     }
     this.state = { measureStats: initialParams.measureStats, filters };
+  }
+
+  private getMeasureId(filter: Filter.Filter): MeasureId {
+    switch (filter.state.type) {
+      case "minmax":
+        return filter.state.model.state.measureId;
+      case "toggle":
+        return filter.state.model.state.measureId;
+      default:
+        assertUnreachable(filter.state);
+    }
   }
 
   update(msg: Msg) {
     switch (msg.type) {
       case "TOGGLE_FILTER":
         const toggleFilter = this.state.filters.find(
-          (f) => f.model.model.measureId === msg.measureId,
+          (f) => this.getMeasureId(f.filter) === msg.measureId,
         );
         if (!toggleFilter) {
           throw new Error(`Filter not found for measureId ${msg.measureId}`);
@@ -70,14 +84,13 @@ export class ReportCardFilter {
         break;
       case "FILTER_MSG":
         const msgFilter = this.state.filters.find(
-          (f) => f.model.model.measureId === msg.measureId,
+          (f) => this.getMeasureId(f.filter) === msg.measureId,
         );
         if (!msgFilter) {
           throw new Error(`Filter not found for measureId ${msg.measureId}`);
         }
 
-        const [next] = Filter.update(msg.msg, msgFilter.model);
-        msgFilter.model = next;
+        msgFilter.filter.update(msg.msg);
         break;
       default:
         assertUnreachable(msg);
@@ -86,6 +99,7 @@ export class ReportCardFilter {
 
   view() {
     const FilterView = ({ filter }: { filter: ToggleableFilter }) => {
+      const measureId = this.getMeasureId(filter.filter);
       return (
         <div className={styles.filterView}>
           <div className={styles.filterItem}>
@@ -95,26 +109,17 @@ export class ReportCardFilter {
               onChange={(e) =>
                 this.context.myDispatch({
                   type: "TOGGLE_FILTER",
-                  measureId: filter.model.model.measureId,
+                  measureId,
                   enabled: e.target.checked,
                 })
               }
             />
           </div>
           <div className={styles.filterItem}>
-            <strong>{filter.model.model.measureId}</strong>{" "}
+            <strong>{measureId}</strong>{" "}
           </div>
           <div className={styles.filterItem}>
-            <Filter.view
-              model={filter.model}
-              dispatch={(msg) =>
-                this.context.myDispatch({
-                  type: "FILTER_MSG",
-                  measureId: filter.model.model.measureId,
-                  msg,
-                })
-              }
-            />
+            {filter.filter.view()}
           </div>
         </div>
       );
@@ -124,7 +129,7 @@ export class ReportCardFilter {
       <div>
         {this.state.filters.map((filter) => (
           <FilterView
-            key={filter.model.model.measureId}
+            key={this.getMeasureId(filter.filter)}
             filter={filter}
           />
         ))}

@@ -68,7 +68,7 @@ export class MeasureSelectionBox {
   }
 
   view() {
-    if (this.state.state == "typing") {
+    if (this.state.state === "typing") {
       return (
         <div className="measure-selection-box">
           <input
@@ -93,18 +93,21 @@ export class MeasureSelectionBox {
           </ul>
         </div>
       );
-    } else {
+    } else if (this.state.state === "selected") {
+      const measureId = this.state.measureId;
       return (
         <div className="measure-selection-box">
           <span
             onPointerDown={() =>
-              this.context.myDispatch({ type: "TYPE_QUERY", query: this.state.measureId })
+              this.context.myDispatch({ type: "TYPE_QUERY", query: measureId })
             }
           >
             {this.state.measureId}
           </span>
         </div>
       );
+    } else {
+      return assertUnreachable(this.state);
     }
   }
 }

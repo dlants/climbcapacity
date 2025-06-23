@@ -8,7 +8,7 @@ import {
   RequestStatusView,
   RequestStatusViewMap,
 } from "../util/utils";
-import * as LoadedReportCard from "../views/reportcard/main";
+import { ReportCardMain, Msg as ReportCardMainMsg } from "../views/reportcard/main";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";
@@ -34,7 +34,7 @@ export type Model = {
     }
     | {
       state: "has-snapshot";
-      model: LoadedReportCard.Model;
+      model: ReportCardMain;
     }
   >;
 };
@@ -46,7 +46,7 @@ export type Msg =
   }
   | {
     type: "LOADED_MSG";
-    msg: LoadedReportCard.Msg;
+    msg: ReportCardMainMsg;
   };
 
 export class ReportCard {
@@ -132,11 +132,14 @@ export class ReportCard {
                 );
               }
 
-              const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
-                initialFilters,
-                measureStats: this.state.measureStats,
-                mySnapshot: msg.request.response,
-              });
+              const loadedModel = new ReportCardMain(
+                {
+                  initialFilters,
+                  measureStats: this.state.measureStats,
+                  mySnapshot: msg.request.response,
+                },
+                { myDispatch: (msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }) }
+              );
 
               this.state.mySnapshotRequest = {
                 status: "loaded",
@@ -145,14 +148,6 @@ export class ReportCard {
                   model: loadedModel,
                 },
               };
-
-              if (loadedThunk) {
-                (async () => {
-                  await loadedThunk((loadedMsg) => {
-                    this.context.myDispatch({ type: "LOADED_MSG", msg: loadedMsg });
-                  });
-                })().catch(console.error);
-              }
             }
             break;
 
@@ -174,26 +169,7 @@ export class ReportCard {
           );
         }
 
-        const [nextModel, thunk] = LoadedReportCard.update(
-          msg.msg,
-          this.state.mySnapshotRequest.response.model,
-        );
-
-        this.state.mySnapshotRequest = {
-          status: "loaded",
-          response: {
-            state: "has-snapshot",
-            model: nextModel,
-          },
-        };
-
-        if (thunk) {
-          (async () => {
-            await thunk((loadedMsg) => {
-              this.context.myDispatch({ type: "LOADED_MSG", msg: loadedMsg });
-            });
-          })().catch(console.error);
-        }
+        this.state.mySnapshotRequest.response.model.update(msg.msg);
         break;
       }
 
@@ -217,12 +193,7 @@ export class ReportCard {
               case "no-snapshot":
                 return <NoSnapshotView />;
               case "has-snapshot":
-                return (
-                  <LoadedReportCard.view
-                    model={response.model}
-                    dispatch={(msg) => this.context.myDispatch({ type: "LOADED_MSG", msg })}
-                  />
-                );
+                return response.model.view();
               default:
                 assertUnreachable(response);
             }

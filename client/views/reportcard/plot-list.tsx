@@ -27,14 +27,11 @@ import { InterpolationOption } from "../../../iso/interpolate";
 import { ParamName } from "../../../iso/measures/params";
 
 type PlotModel = {
-  filterModel: ReportCardFilter.Model;
+  filter: ReportCardFilter.ReportCardFilter;
   inputMeasure: MeasureWithUnit;
-  toggle: UnitToggle.Model;
-  interpolate: {
-    model: Interpolate.Model;
-    interpolationOptions: InterpolationOption<ParamName>[];
-  },
-  model: Plot.Model;
+  toggle: UnitToggle.UnitToggle;
+  interpolate: Interpolate.Interpolate;
+  plot: Plot.Plot;
 };
 
 type MeasureWithUnit = {
@@ -58,17 +55,17 @@ export type Msg =
   | {
     type: "FILTER_MSG";
     measureId: MeasureId;
-    msg: ReportCardFilter.Msg;
+    msg: import("./filter").Msg;
   }
   | {
     type: "TOGGLE_MSG";
     measureId: MeasureId;
-    msg: UnitToggle.Msg;
+    msg: import("../unit-toggle").Msg;
   }
   | {
     type: "INTERPOLATE_MSG";
     measureId: MeasureId;
-    msg: Interpolate.Msg;
+    msg: import("./interpolate").Msg;
   };
 
 export class PlotList {
@@ -190,55 +187,67 @@ export class PlotList {
         };
       }
 
-      const filterModel = ReportCardFilter.initModel({
-        initialFilters: initialFilters,
-        measureStats: this.state.measureStats,
-      });
-
       const includeStrToWtRatio = inputMeasureSpec.units.includes('kg') || inputMeasureSpec.units.includes('lb')
       const selectedUnit = includeStrToWtRatio ? 'strengthtoweightratio' : inputMeasure.unit;
 
-      const interpolationModel = Interpolate.initModel({
-        measureId: inputMeasure.id,
-        measureStats: this.state.measureStats,
-      });
-      const interpolationOptions = this.getInterpolationOptions(interpolationModel);
+      const filter = new ReportCardFilter.ReportCardFilter(
+        {
+          initialFilters: initialFilters,
+          measureStats: this.state.measureStats,
+        },
+        { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId: inputMeasure.id, msg }) }
+      );
 
-      plots.push({
-        inputMeasure: inputMeasure,
-        filterModel,
-        toggle: {
+      const toggle = new UnitToggle.UnitToggle(
+        {
           measureId: inputMeasure.id,
           selectedUnit,
           possibleUnits: includeStrToWtRatio ? [...inputMeasureSpec.units, 'strengthtoweightratio'] : inputMeasureSpec.units,
         },
-        interpolate: {
-          model: interpolationModel,
-          interpolationOptions
+        { myDispatch: (msg) => this.context.myDispatch({ type: "TOGGLE_MSG", measureId: inputMeasure.id, msg }) }
+      );
+
+      const interpolate = new Interpolate.Interpolate(
+        {
+          measureId: inputMeasure.id,
+          measureStats: this.state.measureStats,
         },
-        model: this.getPlot({
+        { myDispatch: (msg) => this.context.myDispatch({ type: "INTERPOLATE_MSG", measureId: inputMeasure.id, msg }) }
+      );
+
+      const plot = new Plot.Plot(
+        this.getPlot({
           xMeasure: {
             ...inputMeasure,
             unit: selectedUnit
           },
-          interpolationOptions,
-          filterModel,
+          interpolationOptions: this.getInterpolationOptions(interpolate),
+          filterModel: filter,
         }),
+        { myDispatch: () => {} }
+      );
+
+      plots.push({
+        inputMeasure: inputMeasure,
+        filter,
+        toggle,
+        interpolate,
+        plot,
       });
     }
 
     return plots;
   }
 
-  private getInterpolationOptions(interpolationModel: Interpolate.Model): InterpolationOption<ParamName>[] {
-    const measureId = interpolationModel.measureId;
+  private getInterpolationOptions(interpolate: Interpolate.Interpolate): InterpolationOption<ParamName>[] {
+    const measureId = interpolate.state.measureId;
     const measureClassSpec = getSpec(measureId).spec;
     const output: InterpolationOption<ParamName>[] = [];
     if (!measureClassSpec) {
       return output
     }
 
-    for (const [paramName, option] of Object.entries(interpolationModel.interpolationOptions)) {
+    for (const [paramName, option] of Object.entries(interpolate.state.interpolationOptions)) {
       if (!option.enabled) {
         continue;
       }
@@ -247,7 +256,7 @@ export class PlotList {
         output.push({
           param: paramName as ParamName,
           sourceMeasureId: interpolationMeasure.sourceMeasureId,
-          targetMeasureId: interpolationModel.measureId,
+          targetMeasureId: interpolate.state.measureId,
           measureParamValue: interpolationMeasure.sourceParamValue,
           targetParamValue: interpolationMeasure.targetParamValue
         });
@@ -263,16 +272,25 @@ export class PlotList {
     interpolationOptions,
   }: {
     xMeasure: MeasureWithUnit;
-    filterModel: ReportCardFilter.Model;
+    filterModel: ReportCardFilter.ReportCardFilter;
     interpolationOptions: InterpolationOption<ParamName>[];
   }): Plot.Model {
     const data: { x: number; y: number }[] = [];
     const { mySnapshot, snapshots, outputMeasure: yMeasure } = this.state;
-    const yFilter = filterModel.filters.find(
-      (f) => f.model.model.measureId == yMeasure.id,
+    const yFilter = filterModel.state.filters.find(
+      (f) => {
+        switch (f.filter.state.type) {
+          case "minmax":
+            return f.filter.state.model.state.measureId == yMeasure.id;
+          case "toggle":
+            return f.filter.state.model.state.measureId == yMeasure.id;
+          default:
+            return false;
+        }
+      }
     );
     const yUnit = yFilter
-      ? yFilter.model.model.unitToggle.selectedUnit
+      ? yFilter.filter.getUnit()
       : yMeasure.unit;
 
     const myData =
@@ -302,17 +320,32 @@ export class PlotList {
         continue;
       }
 
-      const shouldKeep = filterModel.filters.every((filter) => {
+      const shouldKeep = filterModel.state.filters.every((filter) => {
         if (!filter.enabled) {
           return true;
         }
 
-        const snapshotValue = snapshot.measures[filter.model.model.measureId];
+        const measureId = (() => {
+          switch (filter.filter.state.type) {
+            case "minmax":
+              return filter.filter.state.model.state.measureId;
+            case "toggle":
+              return filter.filter.state.model.state.measureId;
+            default:
+              return null;
+          }
+        })();
+
+        if (!measureId) {
+          return false;
+        }
+
+        const snapshotValue = snapshot.measures[measureId];
         if (!snapshotValue) {
           return false;
         }
 
-        return Filter.filterApplies(filter.model, snapshotValue as UnitValue);
+        return filter.filter.filterApplies(snapshotValue as UnitValue);
       });
 
       if (!shouldKeep) {
@@ -354,14 +387,13 @@ export class PlotList {
         if (!filterPlot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
-        const [nextFilter] = ReportCardFilter.update(msg.msg, filterPlot.filterModel);
-        filterPlot.filterModel = nextFilter;
-        filterPlot.model = this.getPlot({
-          filterModel: nextFilter,
-          interpolationOptions: filterPlot.interpolate.interpolationOptions,
+        filterPlot.filter.update(msg.msg);
+        filterPlot.plot.state = this.getPlot({
+          filterModel: filterPlot.filter,
+          interpolationOptions: this.getInterpolationOptions(filterPlot.interpolate),
           xMeasure: {
             ...filterPlot.inputMeasure,
-            unit: filterPlot.toggle.selectedUnit,
+            unit: filterPlot.toggle.state.selectedUnit,
           },
         });
         break;
@@ -373,14 +405,13 @@ export class PlotList {
         if (!togglePlot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
-        const [nextToggle] = UnitToggle.update(msg.msg, togglePlot.toggle);
-        togglePlot.toggle = nextToggle;
-        togglePlot.model = this.getPlot({
-          filterModel: togglePlot.filterModel,
-          interpolationOptions: togglePlot.interpolate.interpolationOptions,
+        togglePlot.toggle.update(msg.msg);
+        togglePlot.plot.state = this.getPlot({
+          filterModel: togglePlot.filter,
+          interpolationOptions: this.getInterpolationOptions(togglePlot.interpolate),
           xMeasure: {
             ...togglePlot.inputMeasure,
-            unit: nextToggle.selectedUnit,
+            unit: togglePlot.toggle.state.selectedUnit,
           },
         });
         break;
@@ -392,16 +423,13 @@ export class PlotList {
         if (!interpolatePlot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
-        const [nextInterpolate] = Interpolate.update(msg.msg, interpolatePlot.interpolate.model);
-        interpolatePlot.interpolate.model = nextInterpolate;
-        interpolatePlot.interpolate.interpolationOptions = this.getInterpolationOptions(interpolatePlot.interpolate.model);
-
-        interpolatePlot.model = this.getPlot({
-          filterModel: interpolatePlot.filterModel,
-          interpolationOptions: interpolatePlot.interpolate.interpolationOptions,
+        interpolatePlot.interpolate.update(msg.msg);
+        interpolatePlot.plot.state = this.getPlot({
+          filterModel: interpolatePlot.filter,
+          interpolationOptions: this.getInterpolationOptions(interpolatePlot.interpolate),
           xMeasure: {
             ...interpolatePlot.inputMeasure,
-            unit: interpolatePlot.toggle.selectedUnit,
+            unit: interpolatePlot.toggle.state.selectedUnit,
           },
         });
         break;
@@ -417,42 +445,10 @@ export class PlotList {
         style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}
       >
         <h1>{plot.inputMeasure.id}</h1>
-        <ReportCardFilter.view
-          model={plot.filterModel}
-          dispatch={(msg) => {
-            this.context.myDispatch({
-              type: "FILTER_MSG",
-              measureId: plot.inputMeasure.id,
-              msg,
-            });
-          }}
-        />
-
-        <Interpolate.view
-          model={plot.interpolate.model}
-          dispatch={(msg) => {
-            this.context.myDispatch({
-              type: "INTERPOLATE_MSG",
-              measureId: plot.inputMeasure.id,
-              msg,
-            });
-          }}
-        />
-
-        <Plot.view model={plot.model} dispatch={this.context.myDispatch} />
-
-        {plot.toggle.possibleUnits.length > 1 && (
-          <UnitToggle.view
-            model={plot.toggle}
-            dispatch={(msg) => {
-              this.context.myDispatch({
-                type: "TOGGLE_MSG",
-                measureId: plot.inputMeasure.id,
-                msg,
-              });
-            }}
-          />
-        )}
+        {plot.filter.view()}
+        {plot.interpolate.view()}
+        {plot.plot.view()}
+        {plot.toggle.state.possibleUnits.length > 1 && plot.toggle.view()}
       </div>
     );
 

@@ -14,12 +14,14 @@ import {
   getSpec,
   MeasureId,
 } from "../../iso/measures";
-import * as MeasureSelector from "./snapshot/measure-selector";
-import * as EditMeasureOrClass from "./snapshot/edit-measure-or-class";
+import { MeasureSelector } from "./snapshot/measure-selector";
+import type { Msg as MeasureSelectorMsg } from "./snapshot/measure-selector";
+import { EditMeasureOrClass } from "./snapshot/edit-measure-or-class";
+import type { Msg as EditMeasureOrClassMsg } from "./snapshot/edit-measure-or-class";
 
 type EditingEditingState = {
   state: "editing";
-  model: EditMeasureOrClass.Model;
+  editMeasureOrClass: EditMeasureOrClass;
 };
 
 type SubmittingEditingState = {
@@ -38,18 +40,18 @@ type EditingState =
 export type Model = {
   snapshot: HydratedSnapshot;
   measureStats: MeasureStats;
-  measureSelector: MeasureSelector.Model;
+  measureSelector: MeasureSelector;
   editingState: EditingState;
 };
 
 export type Msg =
   | {
     type: "MEASURE_SELECTOR_MSG";
-    msg: MeasureSelector.Msg;
+    msg: MeasureSelectorMsg;
   }
   | {
     type: "EDIT_MEASURE_OR_CLASS_MSG";
-    msg: EditMeasureOrClass.Msg;
+    msg: EditMeasureOrClassMsg;
   }
   | {
     type: "SUBMIT_MEASURE_UPDATE";
@@ -78,7 +80,10 @@ export class Snapshot {
     this.state = {
       snapshot,
       measureStats,
-      measureSelector: MeasureSelector.initModel({ snapshot, measureStats }),
+      measureSelector: new MeasureSelector(
+        { snapshot, measureStats },
+        { myDispatch: (msg: MeasureSelectorMsg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
+      ),
       editingState: { state: "not-editing" },
     };
   }
@@ -86,17 +91,19 @@ export class Snapshot {
   update(msg: Msg) {
     switch (msg.type) {
       case "MEASURE_SELECTOR_MSG":
-        const [next] = MeasureSelector.update(msg.msg, this.state.measureSelector);
-        this.state.measureSelector = next;
+        this.state.measureSelector.update(msg.msg);
 
         if (msg.msg.type == "INIT_UPDATE") {
           this.state.editingState = {
             state: "editing",
-            model: EditMeasureOrClass.initModel({
-              init: msg.msg.update,
-              snapshot: this.state.snapshot,
-              measureStats: this.state.measureStats,
-            }),
+            editMeasureOrClass: new EditMeasureOrClass(
+              {
+                init: msg.msg.update,
+                snapshot: this.state.snapshot,
+                measureStats: this.state.measureStats,
+              },
+              { myDispatch: (msg: EditMeasureOrClassMsg) => this.context.myDispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg }) }
+            ),
           };
         } else if (msg.msg.type == "DELETE_MEASURE") {
           const requestParams: SnapshotUpdateRequest = {
@@ -177,10 +184,13 @@ export class Snapshot {
 
           this.state.snapshot = nextSnapshot;
           this.state.editingState = { state: "not-editing" };
-          this.state.measureSelector = MeasureSelector.initModel({
-            snapshot: nextSnapshot,
-            measureStats: this.state.measureStats,
-          });
+          this.state.measureSelector = new MeasureSelector(
+            {
+              snapshot: nextSnapshot,
+              measureStats: this.state.measureStats,
+            },
+            { myDispatch: (msg: MeasureSelectorMsg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
+          );
         } else {
           const editingState = this.state.editingState;
           if (!(editingState.state == "submitting")) {
@@ -198,22 +208,25 @@ export class Snapshot {
         if (this.state.editingState.state != "editing") {
           throw new Error(`Unexpected editingState when editing`);
         }
-        const [nextEditModel] = EditMeasureOrClass.update(
-          msg.msg,
-          this.state.editingState.model,
-        );
-        this.state.editingState.model = nextEditModel;
+        this.state.editingState.editMeasureOrClass.update(msg.msg);
         break;
 
       case "SUBMIT_MEASURE_UPDATE": {
         const editingState = this.state.editingState;
-        if (!(editingState.state == "editing" && editingState.model.canSubmit)) {
+        if (editingState.state !== "editing") {
           throw new Error(
             `Unexpected state for editingState upon submit ${JSON.stringify(editingState)}`,
           );
         }
 
-        const canSubmit = editingState.model.canSubmit;
+        const editMeasureOrClass = editingState.editMeasureOrClass;
+        const canSubmit = editMeasureOrClass.canSubmit;
+
+        if (!canSubmit) {
+          throw new Error(
+            `Cannot submit - canSubmit is not available`,
+          );
+        }
 
         const requestParams: SnapshotUpdateRequest = {
           snapshotId: this.state.snapshot._id as SnapshotId,
@@ -264,10 +277,7 @@ export class Snapshot {
   view() {
     const NotEditingView = () => (
       <div className="measures-list">
-        <MeasureSelector.view
-          model={this.state.measureSelector}
-          dispatch={(msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
-        />
+        {this.state.measureSelector.view()}
       </div>
     );
 
@@ -282,21 +292,16 @@ export class Snapshot {
               const editingState = this.state.editingState;
               return (
                 <div>
-                  <EditMeasureOrClass.view
-                    model={this.state.editingState.model}
-                    dispatch={(msg) =>
-                      this.context.myDispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg })
-                    }
-                  />
+                  {editingState.editMeasureOrClass.view()}
                   <button
                     onPointerDown={() => {
-                      if (editingState.model.canSubmit) {
+                      if (editingState.editMeasureOrClass.canSubmit) {
                         this.context.myDispatch({
                           type: "SUBMIT_MEASURE_UPDATE",
                         });
                       }
                     }}
-                    disabled={editingState.model.canSubmit == undefined}
+                    disabled={editingState.editMeasureOrClass.canSubmit == undefined}
                   >
                     Submit
                   </button>{" "}

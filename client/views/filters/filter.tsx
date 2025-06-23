@@ -1,132 +1,129 @@
-import React from "react";
-import * as MinMaxFilter from "./min-max-filter";
-import * as ToggleFilter from "./toggle-filter";
+import { MinMaxFilter } from "./min-max-filter";
+import { ToggleFilter } from "./toggle-filter";
 import { InitialFilter, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 
 export type Model =
   | {
-      type: "minmax";
-      model: MinMaxFilter.Model;
-    }
+    type: "minmax";
+    model: MinMaxFilter;
+  }
   | {
-      type: "toggle";
-      model: ToggleFilter.Model;
-    };
-
-export function getUnit(model: Model) {
-  switch (model.type) {
-    case "minmax":
-      return model.model.unitToggle.selectedUnit;
-
-    case "toggle":
-      return model.model.unitToggle.selectedUnit;
-  }
-}
-
-export function filterApplies(model: Model, value: UnitValue) {
-  switch (model.type) {
-    case "minmax":
-      return MinMaxFilter.filterApplies(model.model, value);
-
-    case "toggle":
-      return ToggleFilter.filterApplies(model.model, value);
-
-    default:
-      assertUnreachable(model);
-  }
-}
-
-export function getQuery(model: Model) {
-  switch (model.type) {
-    case "minmax":
-      return MinMaxFilter.getQuery(model.model);
-
-    case "toggle":
-      return ToggleFilter.getQuery(model.model);
-
-    default:
-      assertUnreachable(model);
-  }
-}
+    type: "toggle";
+    model: ToggleFilter;
+  };
 
 export type Msg =
-  | { type: "MINMAX_FILTER_MSG"; msg: MinMaxFilter.Msg }
-  | { type: "TOGGLE_FILTER_MSG"; msg: ToggleFilter.Msg };
+  | { type: "MINMAX_FILTER_MSG"; msg: import("./min-max-filter").Msg }
+  | { type: "TOGGLE_FILTER_MSG"; msg: import("./toggle-filter").Msg };
 
-export function initModel({
-  measureId,
-  initialFilter,
-}: {
-  measureId: MeasureId;
-  initialFilter: InitialFilter;
-}): Model {
-  switch (initialFilter.type) {
-    case "minmax":
-      return {
-        type: "minmax",
-        model: MinMaxFilter.initModel({
-          measureId,
-          minValue: initialFilter.minValue,
-          maxValue: initialFilter.maxValue,
-        }),
-      };
+export class Filter {
+  state: Model;
 
-    case "toggle":
-      return {
-        type: "toggle",
-        model: ToggleFilter.initModel({
-          measureId,
-          value: initialFilter.value,
-        }),
-      };
+  constructor(
+    initialParams: {
+      measureId: MeasureId;
+      initialFilter: InitialFilter;
+    },
+    private context: { myDispatch: (msg: Msg) => void }
+  ) {
+    const { measureId, initialFilter } = initialParams;
 
-    default:
-      assertUnreachable(initialFilter);
+    switch (initialFilter.type) {
+      case "minmax":
+        this.state = {
+          type: "minmax",
+          model: new MinMaxFilter(
+            {
+              measureId,
+              minValue: initialFilter.minValue,
+              maxValue: initialFilter.maxValue,
+            },
+            { myDispatch: (msg) => this.context.myDispatch({ type: "MINMAX_FILTER_MSG", msg }) }
+          ),
+        };
+        break;
+
+      case "toggle":
+        this.state = {
+          type: "toggle",
+          model: new ToggleFilter(
+            {
+              measureId,
+              value: initialFilter.value,
+            },
+            { myDispatch: (msg) => this.context.myDispatch({ type: "TOGGLE_FILTER_MSG", msg }) }
+          ),
+        };
+        break;
+
+      default:
+        assertUnreachable(initialFilter);
+    }
+  }
+
+  getUnit() {
+    switch (this.state.type) {
+      case "minmax":
+        return this.state.model.state.unitToggle.state.selectedUnit;
+
+      case "toggle":
+        return this.state.model.state.unitToggle.state.selectedUnit;
+    }
+  }
+
+  filterApplies(value: UnitValue) {
+    switch (this.state.type) {
+      case "minmax":
+        return this.state.model.filterApplies(value);
+
+      case "toggle":
+        return this.state.model.filterApplies(value);
+
+      default:
+        assertUnreachable(this.state);
+    }
+  }
+
+  getQuery() {
+    switch (this.state.type) {
+      case "minmax":
+        return this.state.model.getQuery();
+
+      case "toggle":
+        return this.state.model.getQuery();
+
+      default:
+        assertUnreachable(this.state);
+    }
+  }
+
+  update(msg: Msg) {
+    switch (this.state.type) {
+      case "minmax":
+        if (msg.type !== "MINMAX_FILTER_MSG") {
+          throw new Error("Unexpected message type");
+        }
+        this.state.model.update(msg.msg);
+        break;
+
+      case "toggle":
+        if (msg.type !== "TOGGLE_FILTER_MSG") {
+          throw new Error("Unexpected message type");
+        }
+        this.state.model.update(msg.msg);
+        break;
+    }
+  }
+
+  view() {
+    switch (this.state.type) {
+      case "minmax":
+        return this.state.model.view();
+
+      case "toggle":
+        return this.state.model.view();
+    }
   }
 }
-
-export const update = (msg: Msg, model: Model) => {
-  switch (model.type) {
-    case "minmax":
-      if (msg.type !== "MINMAX_FILTER_MSG") {
-        throw new Error("Unexpected message type");
-      }
-      const [minMaxModel] = MinMaxFilter.update(msg.msg, model.model);
-      return [{ ...model, model: minMaxModel }];
-
-    case "toggle":
-      if (msg.type !== "TOGGLE_FILTER_MSG") {
-        throw new Error("Unexpected message type");
-      }
-      const [toggleModel] = ToggleFilter.update(msg.msg, model.model);
-      return [{ ...model, model: toggleModel }];
-  }
-};
-
-export const view = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}) => {
-  switch (model.type) {
-    case "minmax":
-      return (
-        <MinMaxFilter.view
-          model={model.model}
-          dispatch={(msg) => dispatch({ type: "MINMAX_FILTER_MSG", msg })}
-        />
-      );
-
-    case "toggle":
-      return (
-        <ToggleFilter.view
-          model={model.model}
-          dispatch={(msg) => dispatch({ type: "TOGGLE_FILTER_MSG", msg })}
-        />
-      );
-  }
-};

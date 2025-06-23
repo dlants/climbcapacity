@@ -6,17 +6,17 @@ import {
 } from "../../../iso/measures";
 import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
-import * as UnitInput from "../unit-input";
+import { UnitInputComponent } from "../unit-input";
 import { Dispatch } from "../../tea";
-import * as UnitToggle from "../unit-toggle";
+import { UnitToggle } from "../unit-toggle";
 import { MeasureStats } from "../../../iso/protocol";
 
 export type Model = {
-  model: UnitInput.Model;
+  unitInputComponent: UnitInputComponent;
   measureStats: MeasureStats;
   trainingMeasure?: {
     measureId: MeasureId;
-    model: UnitInput.Model;
+    unitInputComponent: UnitInputComponent;
   };
   canSubmit:
   | {
@@ -35,11 +35,11 @@ export type CanSubmit = Model["canSubmit"];
 export type Msg =
   | {
     type: "UNIT_INPUT_MSG";
-    msg: UnitInput.Msg;
+    msg: import("../unit-input").Msg;
   }
   | {
     type: "TRAINING_UNIT_INPUT_MSG";
-    msg: UnitInput.Msg;
+    msg: import("../unit-input").Msg;
   };
 
 export class EditMeasure {
@@ -57,8 +57,9 @@ export class EditMeasure {
     },
     private context: { myDispatch: Dispatch<Msg> }
   ) {
-    const inputModel = UnitInput.initModel(
+    const unitInputComponent = new UnitInputComponent(
       measureId,
+      { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_INPUT_MSG", msg }) },
       snapshot.measures[measureId] as UnitValue | undefined,
     );
 
@@ -66,21 +67,22 @@ export class EditMeasure {
     let trainingMeasure;
     if (measure.type == "input") {
       const trainingMeasureId = generateTrainingMeasureId(measureId);
-      let trainingInputmodel = UnitInput.initModel(
+      const trainingUnitInputComponent = new UnitInputComponent(
         trainingMeasureId,
+        { myDispatch: (msg) => this.context.myDispatch({ type: "TRAINING_UNIT_INPUT_MSG", msg }) },
         snapshot.measures[trainingMeasureId] as UnitValue | undefined,
       );
       trainingMeasure = {
         measureId: trainingMeasureId,
-        model: trainingInputmodel,
+        unitInputComponent: trainingUnitInputComponent,
       };
     }
 
     this.state = {
-      model: inputModel,
+      unitInputComponent,
       measureStats,
       trainingMeasure,
-      canSubmit: this.canSubmit({ model: inputModel, trainingMeasure }),
+      canSubmit: this.canSubmit({ unitInputComponent, trainingMeasure }),
     };
   }
 
@@ -88,35 +90,34 @@ export class EditMeasure {
     model: Omit<Model, "canSubmit" | "measureStats">,
   ): Model["canSubmit"] {
     let value;
-    if (model.model.parseResult.status == "success") {
-      value = model.model.parseResult.value;
+    if (model.unitInputComponent.state.parseResult.status == "success") {
+      value = model.unitInputComponent.state.parseResult.value;
     } else {
       return undefined;
     }
 
     if (model.trainingMeasure) {
-      if (model.trainingMeasure.model.parseResult.status == "success") {
+      if (model.trainingMeasure.unitInputComponent.state.parseResult.status == "success") {
         return {
-          measureId: model.model.measureId,
+          measureId: model.unitInputComponent.state.measureId,
           value,
           trainingMeasure: {
             measureId: model.trainingMeasure.measureId,
-            value: model.trainingMeasure.model.parseResult.value,
+            value: model.trainingMeasure.unitInputComponent.state.parseResult.value,
           },
         };
       } else {
         return undefined;
       }
     } else {
-      return { measureId: model.model.measureId, value };
+      return { measureId: model.unitInputComponent.state.measureId, value };
     }
   }
 
   update(msg: Msg) {
     switch (msg.type) {
       case "UNIT_INPUT_MSG":
-        const [next] = UnitInput.update(msg.msg, this.state.model);
-        this.state.model = next;
+        this.state.unitInputComponent.update(msg.msg);
         this.state.canSubmit = this.canSubmit(this.state);
         break;
       case "TRAINING_UNIT_INPUT_MSG":
@@ -124,45 +125,53 @@ export class EditMeasure {
           throw new Error("No training measure");
         }
 
-        const [nextTraining] = UnitInput.update(msg.msg, this.state.trainingMeasure.model);
-        this.state.trainingMeasure.model = nextTraining;
+        this.state.trainingMeasure.unitInputComponent.update(msg.msg);
         this.state.canSubmit = this.canSubmit(this.state);
         break;
     }
   }
 
   view() {
-    const EditMeasureView = ({ model }: { model: UnitInput.Model }) => {
-      const measure = getSpec(model.measureId);
+    const EditMeasureView = ({
+      unitInputComponent,
+      isTraining = false
+    }: {
+      unitInputComponent: UnitInputComponent;
+      isTraining?: boolean;
+    }) => {
+      const measure = getSpec(unitInputComponent.state.measureId);
+      const unitToggle = new UnitToggle(
+        {
+          measureId: unitInputComponent.state.measureId,
+          selectedUnit: unitInputComponent.state.selectedUnit,
+          possibleUnits: unitInputComponent.state.possibleUnits,
+        },
+        {
+          myDispatch: (msg) => this.context.myDispatch({
+            type: isTraining ? "TRAINING_UNIT_INPUT_MSG" : "UNIT_INPUT_MSG",
+            msg
+          })
+        }
+      );
+
       return (
         <div className={`measure-item`}>
           <label>{measure.name}</label>
           <pre>{measure.description}</pre>
-          <UnitInput.UnitInput
-            model={model}
-            dispatch={(msg) => this.context.myDispatch({
-              type: model === this.state.model ? "UNIT_INPUT_MSG" : "TRAINING_UNIT_INPUT_MSG",
-              msg
-            })}
-          />
-          {measure.units.length > 1 && (
-            <UnitToggle.view
-              model={model}
-              dispatch={(msg) => this.context.myDispatch({
-                type: model === this.state.model ? "UNIT_INPUT_MSG" : "TRAINING_UNIT_INPUT_MSG",
-                msg
-              })}
-            />
-          )}
+          {unitInputComponent.view()}
+          {measure.units.length > 1 && unitToggle.view()}
         </div>
       );
     };
 
     return (
       <div>
-        <EditMeasureView model={this.state.model} />
+        <EditMeasureView unitInputComponent={this.state.unitInputComponent} />
         {this.state.trainingMeasure && (
-          <EditMeasureView model={this.state.trainingMeasure.model} />
+          <EditMeasureView
+            unitInputComponent={this.state.trainingMeasure.unitInputComponent}
+            isTraining={true}
+          />
         )}
       </div>
     );

@@ -1,3 +1,4 @@
+/**
 import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
 import { Dispatch } from "../tea";
@@ -288,3 +289,4 @@ export class CustomQuery {
     );
   }
 }
+*/

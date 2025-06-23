@@ -1,19 +1,18 @@
-import React from "react";
 import { Dispatch } from "../tea";
 import { assertUnreachable } from "../util/utils";
-import * as LoadedReportCard from "../views/reportcard/main";
+import { ReportCardMain, Msg as ReportCardMsg } from "../views/reportcard/main";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../constants";
 
 export type Model = {
   measureStats: MeasureStats;
-  model: LoadedReportCard.Model;
+  reportCardMain: ReportCardMain;
 };
 
 export type Msg = {
-  type: "LOADED_MSG";
-  msg: LoadedReportCard.Msg;
+  type: "REPORT_CARD_MSG";
+  msg: ReportCardMsg;
 };
 
 export class Explore {
@@ -32,35 +31,25 @@ export class Explore {
       initialFilters[measure.id] = measure.initialFilter;
     }
 
-    const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
-      initialFilters,
-      measureStats: initialParams.measureStats,
-      mySnapshot: undefined,
-    });
+    const reportCardMain = new ReportCardMain(
+      {
+        initialFilters,
+        measureStats: initialParams.measureStats,
+        mySnapshot: undefined,
+      },
+      { myDispatch: (msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+    );
 
     this.state = {
       measureStats: initialParams.measureStats,
-      model: loadedModel,
+      reportCardMain,
     };
-
-    if (loadedThunk) {
-      (async () => {
-        await loadedThunk((msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }));
-      })().catch(console.error);
-    }
   }
 
   update(msg: Msg) {
     switch (msg.type) {
-      case "LOADED_MSG": {
-        const [nextModel, thunk] = LoadedReportCard.update(msg.msg, this.state.model);
-        this.state.model = nextModel;
-
-        if (thunk) {
-          (async () => {
-            await thunk((msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }));
-          })().catch(console.error);
-        }
+      case "REPORT_CARD_MSG": {
+        this.state.reportCardMain.update(msg.msg);
         break;
       }
 
@@ -70,11 +59,6 @@ export class Explore {
   }
 
   view() {
-    return (
-      <LoadedReportCard.view
-        model={this.state.model}
-        dispatch={(msg) => this.context.myDispatch({ type: "LOADED_MSG", msg })}
-      />
-    );
+    return this.state.reportCardMain.view();
   }
 }

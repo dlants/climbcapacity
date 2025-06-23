@@ -1,12 +1,11 @@
 import React from "react";
 import type { Snapshot } from "../types";
 import { Dispatch } from "../tea";
-import * as LoadedSnapshot from "../views/snapshot";
+import { Snapshot as LoadedSnapshot, Msg as LoadedSnapshotMsg } from "../views/snapshot";
 import {
   assertUnreachable,
   RequestStatus,
   RequestStatusView,
-  assertLoaded,
   RequestStatusViewMap,
 } from "../util/utils";
 import { MeasureStats, SnapshotId } from "../../iso/protocol";
@@ -15,17 +14,17 @@ import { hydrateSnapshot } from "../util/snapshot";
 export type Model = {
   snapshotId: SnapshotId;
   measureStats: MeasureStats;
-  snapshotRequest: RequestStatus<LoadedSnapshot.Model>;
+  snapshotRequest: RequestStatus<LoadedSnapshot>;
 };
 
 export type Msg =
   | {
     type: "SNAPSHOT_RESPONSE";
-    request: RequestStatus<LoadedSnapshot.Model>;
+    request: RequestStatus<LoadedSnapshot>;
   }
   | {
     type: "LOADED_SNAPSHOT_MSG";
-    msg: LoadedSnapshot.Msg;
+    msg: LoadedSnapshotMsg;
   };
 
 export class SnapshotPage {
@@ -60,13 +59,16 @@ export class SnapshotPage {
 
     if (response.ok) {
       const snapshot = (await response.json()) as Snapshot;
-      const model = LoadedSnapshot.initModel({
-        measureStats: this.state.measureStats,
-        snapshot: hydrateSnapshot(snapshot),
-      });
+      const loadedSnapshot = new LoadedSnapshot(
+        {
+          measureStats: this.state.measureStats,
+          snapshot: hydrateSnapshot(snapshot),
+        },
+        { myDispatch: (msg) => this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }) }
+      );
       this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
-        request: { status: "loaded", response: model },
+        request: { status: "loaded", response: loadedSnapshot },
       });
     } else {
       this.context.myDispatch({
@@ -84,23 +86,7 @@ export class SnapshotPage {
 
       case "LOADED_SNAPSHOT_MSG":
         if (this.state.snapshotRequest.status == "loaded") {
-          const [nextModel, thunk] = LoadedSnapshot.update(
-            msg.msg,
-            this.state.snapshotRequest.response,
-          );
-
-          assertLoaded(this.state.snapshotRequest).response = nextModel;
-
-          if (thunk) {
-            (async () => {
-              await thunk((loadedMsg) => {
-                this.context.myDispatch({
-                  type: "LOADED_SNAPSHOT_MSG",
-                  msg: loadedMsg
-                });
-              });
-            })().catch(console.error);
-          }
+          this.state.snapshotRequest.response.update(msg.msg);
         }
         break;
 
@@ -110,16 +96,11 @@ export class SnapshotPage {
   }
 
   view() {
-    const snapshotRequestViewMap: RequestStatusViewMap<LoadedSnapshot.Model, Msg> = {
+    const snapshotRequestViewMap: RequestStatusViewMap<LoadedSnapshot, Msg> = {
       "not-sent": () => <div />,
       loading: () => <div>Loading...</div>,
       error: ({ error }) => <div>Error loading snapshot: {error}</div>,
-      loaded: ({ response }) => (
-        <LoadedSnapshot.view
-          model={response}
-          dispatch={(msg) => this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg })}
-        />
-      ),
+      loaded: ({ response }) => response.view(),
     };
 
     return (

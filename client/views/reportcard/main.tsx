@@ -8,11 +8,11 @@ import {
   RequestStatus,
 } from "../../util/utils";
 import { SnapshotQuery, MeasureStats } from "../../../iso/protocol";
-import * as EditQuery from "../../views/edit-query";
-import * as ReportCardGraphs from "./plot-list";
+import { EditQuery } from "../../views/edit-query";
+import { PlotList } from "./plot-list";
 import { hydrateSnapshot } from "../../util/snapshot";
-import * as SelectMeasureClass from "../snapshot/select-measure-class";
-import * as UnitToggle from "../unit-toggle";
+import { SelectMeasureClass } from "../snapshot/select-measure-class";
+import { UnitToggle } from "../unit-toggle";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -21,10 +21,10 @@ import { boulderGradeClass, sportGradeClass } from "../../../iso/measures/grades
 import { getSpec } from "../../../iso/measures";
 
 export type Model = {
-  filtersModel: EditQuery.Model;
+  filtersModel: EditQuery;
   outputMeasure: {
-    selector: SelectMeasureClass.Model;
-    toggle: UnitToggle.Model;
+    selector: SelectMeasureClass;
+    toggle: UnitToggle;
   };
   measureStats: MeasureStats;
   query: {
@@ -35,7 +35,7 @@ export type Model = {
   dataRequest: RequestStatus<
     {
       snapshots: HydratedSnapshot[];
-      reportCardModel: ReportCardGraphs.Model;
+      reportCardModel: PlotList;
     },
     { queryHash: string }
   >;
@@ -51,19 +51,19 @@ export type Msg =
   }
   | {
     type: "REPORT_CARD_MSG";
-    msg: ReportCardGraphs.Msg;
+    msg: import("./plot-list").Msg;
   }
   | {
     type: "SELECT_MEASURE_CLASS_MSG";
-    msg: SelectMeasureClass.Msg;
+    msg: import("../snapshot/select-measure-class").Msg;
   }
   | {
     type: "OUTPUT_MEASURE_TOGGLE_MSG";
-    msg: UnitToggle.Msg;
+    msg: import("../unit-toggle").Msg;
   }
   | {
     type: "FILTERS_MSG";
-    msg: EditQuery.Msg;
+    msg: import("../../views/edit-query").Msg;
   };
 
 export class ReportCardMain {
@@ -75,17 +75,20 @@ export class ReportCardMain {
       measureStats,
       mySnapshot,
     }: {
-      initialFilters: EditQuery.InitialFilters;
+      initialFilters: import("../../views/edit-query").InitialFilters;
       measureStats: MeasureStats;
       mySnapshot?: HydratedSnapshot;
     },
     private context: { myDispatch: Dispatch<Msg> }
   ) {
-    const filtersModel = EditQuery.initModel({
-      measureStats,
-      initialFilters: initialFilters,
-    });
-    const query = EditQuery.getQuery(filtersModel);
+    const filtersModel = new EditQuery(
+      {
+        measureStats,
+        initialFilters: initialFilters,
+      },
+      { myDispatch: (msg: import("../../views/edit-query").Msg) => this.context.myDispatch({ type: "FILTERS_MSG", msg }) }
+    );
+    const query = this.getQuery(filtersModel);
 
     const performanceMeasure = MEASURES.find(
       (s) => s.id == "grade-boulder:gym:max",
@@ -115,17 +118,23 @@ export class ReportCardMain {
     }
 
     const outputMeasure: Model["outputMeasure"] = {
-      selector: SelectMeasureClass.initModel({
-        measureClasses: [boulderGradeClass, sportGradeClass],
-        measureStats,
-        measureId: initialMeasure.measureId,
-      }),
+      selector: new SelectMeasureClass(
+        {
+          measureClasses: [boulderGradeClass, sportGradeClass],
+          measureStats,
+          measureId: initialMeasure.measureId,
+        },
+        { myDispatch: (msg: import("../snapshot/select-measure-class").Msg) => this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }) }
+      ),
 
-      toggle: {
-        measureId: initialMeasure.measureId,
-        selectedUnit: initialMeasure.unit,
-        possibleUnits: initialMeasure.possibleUnits,
-      },
+      toggle: new UnitToggle(
+        {
+          measureId: initialMeasure.measureId,
+          selectedUnit: initialMeasure.unit,
+          possibleUnits: initialMeasure.possibleUnits,
+        },
+        { myDispatch: (msg: import("../unit-toggle").Msg) => this.context.myDispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg }) }
+      ),
     };
 
     this.state = {
@@ -139,6 +148,32 @@ export class ReportCardMain {
 
     // Execute initial data fetch
     this.fetchData().catch(console.error);
+  }
+
+  private getQuery(editQuery: EditQuery): { body: SnapshotQuery; hash: string } {
+    const query: SnapshotQuery = {
+      datasets: {},
+      measures: {},
+    };
+    const queryHashParts: string[] = [];
+    
+    editQuery.state.filters.forEach((filter) => {
+      const measureId = editQuery.getFilterMeasureId(filter);
+      query.measures[measureId] = editQuery.getFilterQuery(filter);
+      queryHashParts.push(
+        measureId + ":" + JSON.stringify(query.measures[measureId])
+      );
+    });
+
+    for (const dataset in editQuery.state.datasets) {
+      query.datasets[dataset] = editQuery.state.datasets[dataset];
+      queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
+    }
+
+    return {
+      body: query,
+      hash: queryHashParts.join(","),
+    };
   }
 
   private async fetchData() {
@@ -180,15 +215,18 @@ export class ReportCardMain {
             this.state.dataRequest = msg.request;
             return;
           case "loaded":
-            const next = ReportCardGraphs.initModel({
-              snapshots: msg.request.response,
-              outputMeasure: {
-                id: this.state.outputMeasure.selector.selected.measureId,
-                unit: this.state.outputMeasure.toggle.selectedUnit,
+            const next = new PlotList(
+              {
+                snapshots: msg.request.response,
+                outputMeasure: {
+                  id: this.state.outputMeasure.selector.state.selected.measureId,
+                  unit: this.state.outputMeasure.toggle.state.selectedUnit,
+                },
+                measureStats: this.state.measureStats,
+                mySnapshot: this.state.mySnapshot,
               },
-              measureStats: this.state.measureStats,
-              mySnapshot: this.state.mySnapshot,
-            });
+              { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+            );
 
             this.state.dataRequest = {
               status: "loaded",
@@ -213,66 +251,63 @@ export class ReportCardMain {
           console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
           return;
         }
-        const [nextReportCardModel] = ReportCardGraphs.update(
-          msg.msg,
-          this.state.dataRequest.response.reportCardModel,
-        );
-
-        const request = assertLoaded(this.state.dataRequest);
-        request.response.reportCardModel = nextReportCardModel;
+        this.state.dataRequest.response.reportCardModel.update(msg.msg);
         break;
 
       case "FILTERS_MSG":
-        const [nextFiltersModel] = EditQuery.update(msg.msg, this.state.filtersModel);
         const oldQueryHash = this.state.query.hash;
-        this.state.filtersModel = nextFiltersModel;
-        this.state.query = EditQuery.getQuery(nextFiltersModel);
+        this.state.filtersModel.update(msg.msg);
+        this.state.query = this.getQuery(this.state.filtersModel);
         if (this.state.query.hash != oldQueryHash) {
           this.state.dataRequest = { status: "not-sent" };
         }
         break;
 
       case "SELECT_MEASURE_CLASS_MSG":
-        const [nextSelector] = SelectMeasureClass.update(
-          msg.msg,
-          this.state.outputMeasure.selector,
+        this.state.outputMeasure.selector.update(msg.msg);
+        const measure = getSpec(this.state.outputMeasure.selector.state.selected.measureId);
+        this.state.outputMeasure.toggle = new UnitToggle(
+          {
+            measureId: measure.id,
+            selectedUnit: measure.units[0],
+            possibleUnits: measure.units,
+          },
+          { myDispatch: (msg: import("../unit-toggle").Msg) => this.context.myDispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg }) }
         );
-        this.state.outputMeasure.selector = nextSelector;
-        const measure = getSpec(nextSelector.selected.measureId);
-        this.state.outputMeasure.toggle = {
-          measureId: measure.id,
-          selectedUnit: measure.units[0],
-          possibleUnits: measure.units,
-        };
 
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = ReportCardGraphs.initModel({
-            snapshots: this.state.dataRequest.response.snapshots,
-            outputMeasure: {
-              id: this.state.outputMeasure.selector.selected.measureId,
-              unit: this.state.outputMeasure.toggle.selectedUnit,
+          const nextReportCardModel = new PlotList(
+            {
+              snapshots: this.state.dataRequest.response.snapshots,
+              outputMeasure: {
+                id: this.state.outputMeasure.selector.state.selected.measureId,
+                unit: this.state.outputMeasure.toggle.state.selectedUnit,
+              },
+              measureStats: this.state.measureStats,
+              mySnapshot: this.state.mySnapshot,
             },
-            measureStats: this.state.measureStats,
-            mySnapshot: this.state.mySnapshot,
-          });
+            { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+          );
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
         break;
 
       case "OUTPUT_MEASURE_TOGGLE_MSG":
-        const [nextToggle] = UnitToggle.update(msg.msg, this.state.outputMeasure.toggle);
-        this.state.outputMeasure.toggle = nextToggle;
+        this.state.outputMeasure.toggle.update(msg.msg);
 
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = ReportCardGraphs.initModel({
-            snapshots: this.state.dataRequest.response.snapshots,
-            outputMeasure: {
-              id: this.state.outputMeasure.selector.selected.measureId,
-              unit: this.state.outputMeasure.toggle.selectedUnit,
+          const nextReportCardModel = new PlotList(
+            {
+              snapshots: this.state.dataRequest.response.snapshots,
+              outputMeasure: {
+                id: this.state.outputMeasure.selector.state.selected.measureId,
+                unit: this.state.outputMeasure.toggle.state.selectedUnit,
+              },
+              measureStats: this.state.measureStats,
+              mySnapshot: this.state.mySnapshot,
             },
-            measureStats: this.state.measureStats,
-            mySnapshot: this.state.mySnapshot,
-          });
+            { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+          );
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
         break;
@@ -301,30 +336,15 @@ export class ReportCardMain {
   }: {
     response: GetLoadedRequestType<Model["dataRequest"]>["response"];
   }) {
-    return (
-      <ReportCardGraphs.view
-        model={response.reportCardModel}
-        dispatch={(msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg })}
-      />
-    );
+    return response.reportCardModel.view();
   }
 
   private OutputMeasureView() {
     return (
       <div className={styles.outputMeasureContainer}>
         Output Measure:
-        <SelectMeasureClass.view
-          model={this.state.outputMeasure.selector}
-          dispatch={(msg) => {
-            this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg });
-          }}
-        />
-        <UnitToggle.view
-          model={this.state.outputMeasure.toggle}
-          dispatch={(msg) => {
-            this.context.myDispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg });
-          }}
-        />
+        {this.state.outputMeasure.selector.view()}
+        {this.state.outputMeasure.toggle.view()}
       </div>
     );
   }
@@ -343,10 +363,7 @@ export class ReportCardMain {
     return (
       <div className={styles.reportCardRoot}>
         <div className={styles.filter}>
-          <EditQuery.view
-            model={this.state.filtersModel}
-            dispatch={(msg) => this.context.myDispatch({ type: "FILTERS_MSG", msg })}
-          />
+          {this.state.filtersModel.view()}
 
           <this.SnapshotStatsView />
           <this.OutputMeasureView />

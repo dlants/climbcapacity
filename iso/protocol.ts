@@ -52,6 +52,13 @@ export type MeasureFilter = {
   max?: UnitValue;
 };
 
+export type FilterQuery = {
+  [measureId: MeasureId]: {
+    min?: number;
+    max?: number;
+  };
+};
+
 export type SnapshotQuery = {
   datasets: {
     [dataset in Dataset]: boolean;

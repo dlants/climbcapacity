@@ -6,31 +6,21 @@ import {
 } from "../../../iso/units";
 import { Dispatch } from "../../tea";
 import { assertUnreachable } from "../../util/utils";
-import * as UnitToggle from "../unit-toggle";
+import { UnitToggle } from "../unit-toggle";
+import type { Msg as UnitToggleMsg } from "../unit-toggle";
 import { getSpec, MeasureId } from "../../../iso/measures";
 
 export type Model = {
   measureId: MeasureId;
   value: UnitValue;
-  unitToggle: UnitToggle.Model;
+  unitToggle: UnitToggle;
 };
 
 export type Msg =
   | { type: "SELECT_VALUE"; value: UnitValue }
-  | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggle.Msg };
+  | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggleMsg };
 
-export function getQuery(model: Model) {
-  return {
-    min: model.value,
-    max: model.value,
-  };
-}
 
-export function filterApplies(model: Model, value: UnitValue): boolean {
-  const normalizedValue = convertToStandardUnit(value);
-  const normalizedFilterValue = convertToStandardUnit(model.value);
-  return normalizedValue === normalizedFilterValue;
-}
 
 export class ToggleFilter {
   state: Model;
@@ -46,11 +36,14 @@ export class ToggleFilter {
     this.state = {
       measureId: initialParams.measureId,
       value: initialParams.value,
-      unitToggle: {
-        measureId: initialParams.measureId,
-        selectedUnit: initialParams.value.unit,
-        possibleUnits: measure.units,
-      },
+      unitToggle: new UnitToggle(
+        {
+          measureId: initialParams.measureId,
+          selectedUnit: initialParams.value.unit,
+          possibleUnits: measure.units,
+        },
+        { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+      ),
     };
   }
 
@@ -61,18 +54,30 @@ export class ToggleFilter {
         break;
 
       case "UNIT_TOGGLE_MSG":
-        const [newModel] = UnitToggle.update(msg.msg, this.state.unitToggle);
-        this.state.unitToggle = newModel;
+        this.state.unitToggle.update(msg.msg);
 
         this.state.value = convertToTargetUnit(
           convertToStandardUnit(this.state.value),
-          this.state.unitToggle.selectedUnit,
+          this.state.unitToggle.state.selectedUnit,
         );
         break;
 
       default:
         assertUnreachable(msg);
     }
+  }
+
+  getQuery() {
+    return {
+      min: this.state.value,
+      max: this.state.value,
+    };
+  }
+
+  filterApplies(value: UnitValue): boolean {
+    const normalizedValue = convertToStandardUnit(value);
+    const normalizedFilterValue = convertToStandardUnit(this.state.value);
+    return normalizedValue === normalizedFilterValue;
   }
 
   view() {

@@ -1,8 +1,8 @@
 import React from "react";
 import { convertToStandardUnit, UnitValue } from "../../../iso/units";
 import { Dispatch } from "../../tea";
-import * as UnitInput from "../unit-input";
-import * as UnitToggle from "../unit-toggle";
+import { UnitInputComponent } from "../unit-input";
+import { UnitToggle } from "../unit-toggle";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
@@ -11,48 +11,17 @@ import * as csx from "csx";
 
 export type Model = {
   measureId: MeasureId;
-  minInput: UnitInput.Model;
-  maxInput: UnitInput.Model;
-  unitToggle: UnitToggle.Model;
+  minInput: UnitInputComponent;
+  maxInput: UnitInputComponent;
+  unitToggle: UnitToggle;
 };
 
 export type Msg =
-  | { type: "MAX_INPUT_MSG"; msg: UnitInput.Msg }
-  | { type: "MIN_INPUT_MSG"; msg: UnitInput.Msg }
-  | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggle.Msg };
+  | { type: "MAX_INPUT_MSG"; msg: import("../unit-input").Msg }
+  | { type: "MIN_INPUT_MSG"; msg: import("../unit-input").Msg }
+  | { type: "UNIT_TOGGLE_MSG"; msg: import("../unit-toggle").Msg };
 
-export function getQuery(model: Model) {
-  const minResult = model.minInput.parseResult;
-  const maxResult = model.maxInput.parseResult;
 
-  return {
-    min: minResult.status == "success" ? minResult.value : undefined,
-    max: maxResult.status == "success" ? maxResult.value : undefined,
-  };
-}
-
-export function filterApplies(model: Model, value: UnitValue): boolean {
-  const normalizedValue = convertToStandardUnit(value);
-
-  const minInputModel = model.minInput;
-  const maxInputModel = model.maxInput;
-
-  if (minInputModel.parseResult.status == "success") {
-    const minValue = convertToStandardUnit(minInputModel.parseResult.value);
-    if (minValue > normalizedValue) {
-      return false;
-    }
-  }
-
-  if (maxInputModel.parseResult.status == "success") {
-    const maxValue = convertToStandardUnit(maxInputModel.parseResult.value);
-    if (maxValue < normalizedValue) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 const styles = typestyle.stylesheet({
   container: {
@@ -88,46 +57,55 @@ export class MinMaxFilter {
     },
     private context: { myDispatch: Dispatch<Msg> }
   ) {
-    const minInput = UnitInput.initModel(initialParams.measureId, initialParams.minValue);
+    const minInput = new UnitInputComponent(
+      initialParams.measureId,
+      { myDispatch: (msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg }) },
+      initialParams.minValue
+    );
+    const maxInput = new UnitInputComponent(
+      initialParams.measureId,
+      { myDispatch: (msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg }) },
+      initialParams.maxValue
+    );
+    const unitToggle = new UnitToggle(
+      {
+        measureId: initialParams.measureId,
+        selectedUnit: minInput.state.selectedUnit,
+        possibleUnits: minInput.state.possibleUnits,
+      },
+      { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+    );
+
     this.state = {
       measureId: initialParams.measureId,
       minInput,
-      maxInput: UnitInput.initModel(initialParams.measureId, initialParams.maxValue),
-      unitToggle: {
-        measureId: initialParams.measureId,
-        selectedUnit: minInput.selectedUnit,
-        possibleUnits: minInput.possibleUnits,
-      },
+      maxInput,
+      unitToggle,
     };
   }
 
   update(msg: Msg) {
     switch (msg.type) {
       case "MIN_INPUT_MSG":
-        const [newMinModel] = UnitInput.update(msg.msg, this.state.minInput);
-        this.state.minInput = newMinModel;
+        this.state.minInput.update(msg.msg);
         break;
 
       case "MAX_INPUT_MSG":
-        const [newMaxModel] = UnitInput.update(msg.msg, this.state.maxInput);
-        this.state.maxInput = newMaxModel;
+        this.state.maxInput.update(msg.msg);
         break;
 
       case "UNIT_TOGGLE_MSG":
-        const [newToggleModel] = UnitToggle.update(msg.msg, this.state.unitToggle);
-        this.state.unitToggle = newToggleModel;
+        this.state.unitToggle.update(msg.msg);
 
-        const [nextMin] = UnitInput.update(
-          { type: "SELECT_UNIT", unit: this.state.unitToggle.selectedUnit },
-          this.state.minInput,
-        );
-        this.state.minInput = nextMin;
-
-        const [nextMax] = UnitInput.update(
-          { type: "SELECT_UNIT", unit: this.state.unitToggle.selectedUnit },
-          this.state.maxInput,
-        );
-        this.state.maxInput = nextMax;
+        // Update both inputs to use the new selected unit
+        this.state.minInput.update({
+          type: "SELECT_UNIT",
+          unit: this.state.unitToggle.state.selectedUnit,
+        });
+        this.state.maxInput.update({
+          type: "SELECT_UNIT", 
+          unit: this.state.unitToggle.state.selectedUnit,
+        });
         break;
 
       default:
@@ -139,30 +117,50 @@ export class MinMaxFilter {
     return (
       <div className={styles.container}>
         <div className={styles.item}>
-          min:{" "}
-          <UnitInput.UnitInput
-            model={this.state.minInput}
-            dispatch={(msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg })}
-          />
+          min: {this.state.minInput.view()}
         </div>
         <div className={styles.item}>
-          max:{" "}
-          <UnitInput.UnitInput
-            model={this.state.maxInput}
-            dispatch={(msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg })}
-          />
+          max: {this.state.maxInput.view()}
         </div>
-        {this.state.minInput.possibleUnits.length > 1 && (
+        {this.state.minInput.state.possibleUnits.length > 1 && (
           <div className={styles.item}>
-            <UnitToggle.view
-              model={this.state.unitToggle}
-              dispatch={(msg) => {
-                this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg });
-              }}
-            />
+            {this.state.unitToggle.view()}
           </div>
         )}
       </div>
     );
+  }
+
+  getQuery() {
+    const minResult = this.state.minInput.state.parseResult;
+    const maxResult = this.state.maxInput.state.parseResult;
+
+    return {
+      min: minResult.status == "success" ? minResult.value : undefined,
+      max: maxResult.status == "success" ? maxResult.value : undefined,
+    };
+  }
+
+  filterApplies(value: UnitValue): boolean {
+    const normalizedValue = convertToStandardUnit(value);
+
+    const minInputModel = this.state.minInput.state;
+    const maxInputModel = this.state.maxInput.state;
+
+    if (minInputModel.parseResult.status == "success") {
+      const minValue = convertToStandardUnit(minInputModel.parseResult.value);
+      if (minValue > normalizedValue) {
+        return false;
+      }
+    }
+
+    if (maxInputModel.parseResult.status == "success") {
+      const maxValue = convertToStandardUnit(maxInputModel.parseResult.value);
+      if (maxValue < normalizedValue) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

@@ -4,11 +4,11 @@ import {
   SubscriptionManager,
   Dispatch,
 } from "./tea";
-import * as SendLinkPage from "./pages/send-link";
+import { SendLink } from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
-import * as SnapshotPage from "./pages/snapshot";
-import * as ExplorePage from "./pages/explore";
-import * as ReportCardPage from "./pages/report-card";
+import { SnapshotPage } from "./pages/snapshot";
+import { Explore } from "./pages/explore";
+import { ReportCard } from "./pages/report-card";
 import {
   assertUnreachable,
   ExtractFromDisjointUnion,
@@ -68,7 +68,7 @@ export type Model = {
   page:
   | {
     route: "/send-link";
-    sendLinkModel: SendLinkPage.Model;
+    sendLinkPage: SendLink;
   }
   | {
     route: "/snapshots";
@@ -76,15 +76,15 @@ export type Model = {
   }
   | {
     route: "/snapshot";
-    snapshotModel: SnapshotPage.Model;
+    snapshotPage: SnapshotPage;
   }
   | {
     route: "/explore";
-    exploreModel: ExplorePage.Model;
+    explorePage: Explore;
   }
   | {
     route: "/report-card";
-    reportCardModel: ReportCardPage.Model;
+    reportCardPage: ReportCard;
   }
   | {
     route: "/";
@@ -99,7 +99,7 @@ type Msg =
   | NavigateMsg
   | {
     type: "SEND_LINK_MSG";
-    msg: SendLinkPage.Msg;
+    msg: any;
   }
   | {
     type: "USER_SNAPSHOTS_MSG";
@@ -107,15 +107,15 @@ type Msg =
   }
   | {
     type: "SNAPSHOT_MSG";
-    msg: SnapshotPage.Msg;
+    msg: any;
   }
   | {
     type: "EXPLORE_MSG";
-    msg: ExplorePage.Msg;
+    msg: any;
   }
   | {
     type: "REPORT_CARD_MSG";
-    msg: ReportCardPage.Msg;
+    msg: any;
   };
 
 export class MainApp {
@@ -147,9 +147,13 @@ export class MainApp {
         if (user) {
           this.state.page = { route: "/" };
         } else {
+          const sendLinkPage = new SendLink(
+            {},
+            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+          );
           this.state.page = {
             route: "/send-link",
-            sendLinkModel: SendLinkPage.initModel(),
+            sendLinkPage,
           };
         }
         break;
@@ -165,78 +169,78 @@ export class MainApp {
             userSnapshotsPage,
           };
         } else {
+          const sendLinkPage = new SendLink(
+            {},
+            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+          );
           this.state.page = {
             route: "/send-link",
-            sendLinkModel: SendLinkPage.initModel(),
+            sendLinkPage,
           };
         }
         break;
 
       case "/report-card":
         if (user) {
-          const [reportCardModel, reportCardThunk] = ReportCardPage.initModel({
-            userId: user.id,
-            measureStats: this.state.measureStats,
-          });
+          const reportCardPage = new ReportCard(
+            {
+              userId: user.id,
+              measureStats: this.state.measureStats,
+            },
+            { myDispatch: (msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+          );
           this.state.page = {
             route: "/report-card",
-            reportCardModel,
+            reportCardPage,
           };
-
-          (async () => {
-            const wrappedThunk = async (dispatch: Dispatch<ReportCardPage.Msg>) => {
-              await reportCardThunk(dispatch);
-            };
-            await wrappedThunk((msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }));
-          })().catch(console.error);
         } else {
+          const sendLinkPage = new SendLink(
+            {},
+            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+          );
           this.state.page = {
             route: "/send-link",
-            sendLinkModel: SendLinkPage.initModel(),
+            sendLinkPage,
           };
         }
         break;
 
       case "/snapshot":
         if (user) {
-          const [snapshotModel, snapshotThunk] = SnapshotPage.initModel({
-            snapshotId: msg.target.snapshotId,
-            measureStats: this.state.measureStats,
-          });
+          const snapshotPage = new SnapshotPage(
+            {
+              snapshotId: msg.target.snapshotId,
+              measureStats: this.state.measureStats,
+            },
+            { myDispatch: (msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }) }
+          );
           this.state.page = {
             route: "/snapshot",
-            snapshotModel,
+            snapshotPage,
           };
-
-          (async () => {
-            const wrappedThunk = async (dispatch: Dispatch<SnapshotPage.Msg>) => {
-              await snapshotThunk(dispatch);
-            };
-            await wrappedThunk((msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }));
-          })().catch(console.error);
         } else {
+          const sendLinkPage = new SendLink(
+            {},
+            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+          );
           this.state.page = {
             route: "/send-link",
-            sendLinkModel: SendLinkPage.initModel(),
+            sendLinkPage,
           };
         }
         break;
 
       case "/explore":
-        const [exploreModel, exploreThunk] = ExplorePage.initModel({
-          measureStats: this.state.measureStats,
-        });
+        const explorePage = new Explore(
+          {
+            measureStats: this.state.measureStats,
+          },
+          { myDispatch: (msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }) }
+        );
         this.state.page = {
           route: "/explore",
-          exploreModel,
+          explorePage,
         };
-
-        (async () => {
-          const wrappedThunk = async (dispatch: Dispatch<ExplorePage.Msg>) => {
-            await exploreThunk(dispatch);
-          };
-          await wrappedThunk((msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }));
-        })().catch(console.error);
         break;
 
       default:
@@ -263,24 +267,13 @@ export class MainApp {
           );
           return;
         }
-        const [sendLinkModel, sendLinkThunk] = SendLinkPage.update(
-          msg.msg,
-          this.state.page.sendLinkModel,
-        );
         (
           this.state.page as ExtractFromDisjointUnion<
             Model["page"],
             "route",
             "/send-link"
           >
-        ).sendLinkModel = sendLinkModel;
-
-        (async () => {
-          const wrappedThunk = async (dispatch: Dispatch<SendLinkPage.Msg>) => {
-            await sendLinkThunk(dispatch);
-          };
-          await wrappedThunk((msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }));
-        })().catch(console.error);
+        ).sendLinkPage.update(msg.msg);
         break;
 
       case "USER_SNAPSHOTS_MSG":
@@ -321,24 +314,13 @@ export class MainApp {
           );
           return;
         }
-        const [snapshotModel, snapshotThunk] = SnapshotPage.update(
-          msg.msg,
-          this.state.page.snapshotModel,
-        );
         (
           this.state.page as ExtractFromDisjointUnion<
             Model["page"],
             "route",
             "/snapshot"
           >
-        ).snapshotModel = snapshotModel;
-
-        (async () => {
-          const wrappedThunk = async (dispatch: Dispatch<SnapshotPage.Msg>) => {
-            await snapshotThunk(dispatch);
-          };
-          await wrappedThunk((msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }));
-        })().catch(console.error);
+        ).snapshotPage.update(msg.msg);
         break;
 
       case "EXPLORE_MSG":
@@ -348,24 +330,13 @@ export class MainApp {
           );
           return;
         }
-        const [exploreModel, exploreThunk] = ExplorePage.update(
-          msg.msg,
-          this.state.page.exploreModel,
-        );
         (
           this.state.page as ExtractFromDisjointUnion<
             Model["page"],
             "route",
             "/explore"
           >
-        ).exploreModel = exploreModel;
-
-        (async () => {
-          const wrappedThunk = async (dispatch: Dispatch<ExplorePage.Msg>) => {
-            await exploreThunk(dispatch);
-          };
-          await wrappedThunk((msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }));
-        })().catch(console.error);
+        ).explorePage.update(msg.msg);
         break;
 
       case "REPORT_CARD_MSG":
@@ -375,24 +346,13 @@ export class MainApp {
           );
           return;
         }
-        const [reportCardModel, reportCardThunk] = ReportCardPage.update(
-          msg.msg,
-          this.state.page.reportCardModel,
-        );
         (
           this.state.page as ExtractFromDisjointUnion<
             Model["page"],
             "route",
             "/report-card"
           >
-        ).reportCardModel = reportCardModel;
-
-        (async () => {
-          const wrappedThunk = async (dispatch: Dispatch<ReportCardPage.Msg>) => {
-            await reportCardThunk(dispatch);
-          };
-          await wrappedThunk((msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }));
-        })().catch(console.error);
+        ).reportCardPage.update(msg.msg);
         break;
 
       default:
@@ -413,7 +373,7 @@ export class MainApp {
         newUrl = "/report-card";
         break;
       case "/snapshot":
-        newUrl = `/snapshot/${this.state.page.snapshotModel.snapshotId}`;
+        newUrl = `/snapshot/${this.state.page.snapshotPage.state.snapshotId}`;
         break;
       case "/explore":
         newUrl = "/explore";
@@ -432,39 +392,19 @@ export class MainApp {
     const Page = () => {
       switch (this.state.page.route) {
         case "/send-link":
-          return (
-            <SendLinkPage.view
-              model={this.state.page.sendLinkModel}
-              dispatch={(msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg })}
-            />
-          );
+          return this.state.page.sendLinkPage.view();
 
         case "/snapshots":
           return this.state.page.userSnapshotsPage.view();
 
         case "/report-card":
-          return (
-            <ReportCardPage.view
-              model={this.state.page.reportCardModel}
-              dispatch={(msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg })}
-            />
-          );
+          return this.state.page.reportCardPage.view();
 
         case "/snapshot":
-          return (
-            <SnapshotPage.view
-              model={this.state.page.snapshotModel}
-              dispatch={(msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg })}
-            />
-          );
+          return this.state.page.snapshotPage.view();
 
         case "/explore":
-          return (
-            <ExplorePage.view
-              model={this.state.page.exploreModel}
-              dispatch={(msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg })}
-            />
-          );
+          return this.state.page.explorePage.view();
 
         case "/":
           return <div>TODO: add homepage content</div>;
@@ -522,31 +462,45 @@ async function run() {
     measureStats = {};
   }
 
-  let initialModel: Model = {
-    auth,
-    measureStats,
-    page:
-      auth.status == "loaded" && auth.response.status == "logged in"
-        ? {
-          route: "/",
-        }
-        : {
-          route: "/send-link",
-          sendLinkModel: SendLinkPage.initModel(),
-        },
+  let initialModel: Model;
+  let mainApp: MainApp;
+  let dispatchFn: Dispatch<Msg>;
+
+  // We'll create a temporary dispatch function that will be replaced later
+  const tempDispatch = (msg: Msg) => {
+    if (dispatchFn) {
+      dispatchFn(msg);
+    }
   };
 
-  let mainApp: MainApp;
-
-  let dispatchFn: Dispatch<Msg>;
+  if (auth.status == "loaded" && auth.response.status == "logged in") {
+    initialModel = {
+      auth,
+      measureStats,
+      page: { route: "/" },
+    };
+  } else {
+    const sendLinkPage = new SendLink(
+      {},
+      { myDispatch: (msg) => tempDispatch({ type: "SEND_LINK_MSG", msg }) }
+    );
+    initialModel = {
+      auth,
+      measureStats,
+      page: {
+        route: "/send-link",
+        sendLinkPage,
+      },
+    };
+  }
 
   const app = createApp<Model, Msg, "router">({
     initialModel,
-    update: (msg, model) => {
+    update: (msg) => {
       mainApp.update(msg);
       return mainApp.state;
     },
-    View: ({ model }) => {
+    View: () => {
       return mainApp.view();
     },
     sub: {

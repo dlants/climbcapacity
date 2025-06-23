@@ -1,3 +1,4 @@
+/**
 import React from "react";
 import * as MeasureExpressionBox from "./measure-expression-box";
 import * as Plot from "./plot";
@@ -223,3 +224,4 @@ export class PlotWithControls {
     );
   }
 }
+*/

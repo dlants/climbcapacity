@@ -1,5 +1,5 @@
 import React, { Dispatch } from "react";
-import * as MeasureSelectionBox from "./measure-selection-box";
+import { MeasureSelectionBox } from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
@@ -9,7 +9,7 @@ import {
   Dataset,
   DATASETS,
 } from "../../iso/protocol";
-import * as Filter from "./filters/filter";
+import { Filter } from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
@@ -23,25 +23,25 @@ export type FilterMapping = {
 
 export type Model = {
   measureStats: MeasureStats;
-  filters: Filter.Model[];
+  filters: Filter[];
   datasets: {
     [dataset in Dataset]: boolean;
   };
-  measureSelectionBox: MeasureSelectionBox.Model;
+  measureSelectionBox: MeasureSelectionBox;
 };
 
 export type Msg =
   | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
     type: "MEASURE_SELECTOR_MSG";
-    msg: MeasureSelectionBox.Msg;
+    msg: any;
   }
   | {
     type: "TOGGLE_DATASET";
     dataset: Dataset;
     include: boolean;
   }
-  | { type: "FILTER_MSG"; measureId: MeasureId; msg: Filter.Msg };
+  | { type: "FILTER_MSG"; measureId: MeasureId; msg: any };
 
 export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter;
@@ -60,11 +60,14 @@ export class EditQuery {
     },
     private context: { myDispatch: Dispatch<Msg> }
   ) {
-    const filters: Filter.Model[] = [];
+    const filters: Filter[] = [];
     for (const measureIdStr in initialFilters) {
       const measureId = measureIdStr as MeasureId;
       const initialFilter = initialFilters[measureId];
-      filters.push(Filter.initModel({ measureId, initialFilter }));
+      filters.push(new Filter(
+        { measureId, initialFilter },
+        { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+      ));
     }
 
     this.state = {
@@ -74,56 +77,74 @@ export class EditQuery {
         climbharder: true,
       },
       filters,
-      measureSelectionBox: MeasureSelectionBox.initModel({
-        measureStats,
-      }),
+      measureSelectionBox: new MeasureSelectionBox(
+        { measureStats },
+        { myDispatch: (msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
+      ),
     };
+  }
+
+  getFilterMeasureId(filter: Filter): MeasureId {
+    switch (filter.state.type) {
+      case "minmax":
+        return filter.state.model.state.measureId;
+      case "toggle":
+        return filter.state.model.state.measureId;
+      default:
+        throw new Error("Unknown filter type");
+    }
+  }
+
+  getFilterUnit(filter: Filter): UnitType {
+    return filter.getUnit();
+  }
+
+  getFilterQuery(filter: Filter) {
+    return filter.getQuery();
   }
 
   update(msg: Msg) {
     switch (msg.type) {
       case "REMOVE_FILTER":
         this.state.filters = this.state.filters.filter(
-          (f) => f.model.measureId !== msg.measureId,
+          (f) => this.getFilterMeasureId(f) !== msg.measureId,
         );
         break;
 
       case "MEASURE_SELECTOR_MSG":
-        const [newModel] = MeasureSelectionBox.update(
-          msg.msg,
-          this.state.measureSelectionBox,
-        );
-        if (newModel.state == "selected") {
-          const spec = MEASURES.find((spec) => spec.id == newModel.measureId);
+        this.state.measureSelectionBox.update(msg.msg);
+        if (this.state.measureSelectionBox.state.state == "selected") {
+          const measureId = this.state.measureSelectionBox.state.measureId;
+          const spec = MEASURES.find((spec) => spec.id == measureId);
           if (!spec) {
-            throw new Error(`Unexpected measureId ${newModel.measureId}`);
+            throw new Error(`Unexpected measureId ${measureId}`);
           }
 
           this.state.filters.push(
-            Filter.initModel({
-              measureId: newModel.measureId,
-              initialFilter: spec.initialFilter,
-            }),
+            new Filter(
+              {
+                measureId: measureId,
+                initialFilter: spec.initialFilter,
+              },
+              { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+            ),
           );
 
-          this.state.measureSelectionBox = MeasureSelectionBox.initModel({
-            measureStats: this.state.measureStats,
-          });
-        } else {
-          this.state.measureSelectionBox = newModel;
+          this.state.measureSelectionBox = new MeasureSelectionBox(
+            { measureStats: this.state.measureStats },
+            { myDispatch: (msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
+          );
         }
         break;
 
       case "FILTER_MSG":
-        const filterIndex = this.state.filters.findIndex(
-          (f) => f.model.measureId === msg.measureId,
+        const filter = this.state.filters.find(
+          (f) => this.getFilterMeasureId(f) === msg.measureId,
         );
-        const filter = this.state.filters[filterIndex];
         if (!filter) {
           throw new Error(`Unexpected filter id ${msg.measureId}`);
         }
-        const [next] = Filter.update(msg.msg, filter);
-        this.state.filters[filterIndex] = next;
+        filter.update(msg.msg);
         break;
 
       case "TOGGLE_DATASET":
@@ -139,32 +160,24 @@ export class EditQuery {
     const FilterView = ({
       filter,
     }: {
-      filter: Filter.Model;
+      filter: Filter;
     }) => {
+      const measureId = this.getFilterMeasureId(filter);
       return (
         <div className={styles.container}>
           <div className={styles.item}>
-            <strong>{filter.model.measureId}</strong>(
-            {this.state.measureStats[filter.model.measureId] || 0} snapshots)
+            <strong>{measureId}</strong>(
+            {this.state.measureStats[measureId] || 0} snapshots)
           </div>
           <div className={styles.item}>
-            <Filter.view
-              model={filter}
-              dispatch={(msg) =>
-                this.context.myDispatch({
-                  type: "FILTER_MSG",
-                  measureId: filter.model.measureId,
-                  msg,
-                })
-              }
-            />
+            {filter.view()}
           </div>
           <div className={styles.item}>
             <button
               onPointerDown={() =>
                 this.context.myDispatch({
                   type: "REMOVE_FILTER",
-                  measureId: filter.model.measureId,
+                  measureId: measureId,
                 })
               }
             >
@@ -179,14 +192,11 @@ export class EditQuery {
       <div>
         {this.state.filters.map((filter) => (
           <FilterView
-            key={filter.model.measureId}
+            key={this.getFilterMeasureId(filter)}
             filter={filter}
           />
         ))}
-        <MeasureSelectionBox.view
-          model={this.state.measureSelectionBox}
-          dispatch={(msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
-        />{" "}
+        {this.state.measureSelectionBox.view()}
         {DATASETS.map((dataset) => (
           <div key={dataset}>
             <label>
@@ -210,18 +220,20 @@ export class EditQuery {
   }
 }
 
-export function generateFiltersMap(model: Model): FilterMapping {
+export function generateFiltersMap(editQuery: EditQuery): FilterMapping {
   const filterMapping: FilterMapping = {};
-  for (const filter of model.filters) {
-    filterMapping[filter.model.measureId] = {
-      measureId: filter.model.measureId,
-      unit: filter.model.unitToggle.selectedUnit,
+  for (const filter of editQuery.state.filters) {
+    const measureId = editQuery.getFilterMeasureId(filter);
+    const unit = editQuery.getFilterUnit(filter);
+    filterMapping[measureId] = {
+      measureId: measureId,
+      unit: unit,
     };
   }
   return filterMapping;
 }
 
-export function getQuery(filtersModel: Model): {
+export function getQuery(editQuery: EditQuery): {
   body: SnapshotQuery;
   hash: string;
 } {
@@ -230,18 +242,19 @@ export function getQuery(filtersModel: Model): {
     measures: {},
   };
   const queryHashParts: string[] = [];
-  filtersModel.filters.forEach((filter) => {
-    query.measures[filter.model.measureId] = Filter.getQuery(filter);
+  editQuery.state.filters.forEach((filter) => {
+    const measureId = editQuery.getFilterMeasureId(filter);
+    query.measures[measureId] = editQuery.getFilterQuery(filter);
     queryHashParts.push(
-      filter.model.measureId +
+      measureId +
       ":" +
-      JSON.stringify(query.measures[filter.model.measureId]),
+      JSON.stringify(query.measures[measureId]),
     );
   });
 
-  for (const dataset in filtersModel.datasets) {
-    query.datasets[dataset] = filtersModel.datasets[dataset];
-    queryHashParts.push(`dataset:${filtersModel.datasets[dataset]}`);
+  for (const dataset in editQuery.state.datasets) {
+    query.datasets[dataset] = editQuery.state.datasets[dataset];
+    queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
   }
 
   return {
