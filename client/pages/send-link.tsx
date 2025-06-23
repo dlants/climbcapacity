@@ -1,81 +1,87 @@
 import React from "react";
-import { Update, View } from "../tea";
+import { Dispatch } from "../tea";
 import { createRequestThunk, RequestStatus } from "../util/utils";
-import * as immer from "immer";
-const produce = immer.produce;
 
-export type Model = immer.Immutable<{
+export type Model = {
   email: string;
   signinRequest: RequestStatus<void>;
-}>;
-
-export function initModel(): Model {
-  return { email: "", signinRequest: { status: "not-sent" } };
-}
+};
 
 export type Msg =
   | { type: "SET_EMAIL"; email: string }
   | { type: "SEND_MAGIC_LINK" }
   | { type: "UPDATE_STATUS"; request: RequestStatus<void> };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "SET_EMAIL":
-      return [
-        produce(model, (draft) => {
-          draft.email = msg.email;
-        }),
-      ];
-    case "SEND_MAGIC_LINK":
-      return [
-        produce(model, (draft) => {
-          draft.signinRequest = { status: "loading" };
-        }),
-        createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
-          url: "/api/send-login-link",
-          body: { email: model.email },
-          msgType: "UPDATE_STATUS",
-        }),
-      ];
+export class SendLink {
+  state: Model;
 
-    case "UPDATE_STATUS":
-      return [
-        produce(model, (draft) => {
-          draft.signinRequest = msg.request;
-        }),
-        undefined,
-      ];
-
-    default:
-      msg satisfies never;
-      return msg;
+  constructor(
+    initialParams: any,
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = {
+      email: "",
+      signinRequest: { status: "not-sent" }
+    };
   }
-};
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      <input
-        key="email"
-        type="email"
-        value={model.email}
-        onChange={(e) =>
-          dispatch({
-            type: "SET_EMAIL",
-            email: e.target.value,
-          })
-        }
-      />
-      <button
-        disabled={model.signinRequest.status === "loading"}
-        onPointerDown={() => dispatch({ type: "SEND_MAGIC_LINK" })}
-      >
-        Send Magic Link
-      </button>
-      {model.signinRequest.status === "loaded" && <p>Check your email!</p>}
-      {model.signinRequest.status === "error" && (
-        <p>{model.signinRequest.error}</p>
-      )}
-    </div>
-  );
-};
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "SET_EMAIL":
+        this.state.email = msg.email;
+        break;
+
+      case "SEND_MAGIC_LINK":
+        this.state.signinRequest = { status: "loading" };
+
+        (async () => {
+          const thunk = createRequestThunk<void, { email: string }, "UPDATE_STATUS">({
+            url: "/api/send-login-link",
+            body: { email: this.state.email },
+            msgType: "UPDATE_STATUS",
+          });
+
+          if (thunk) {
+            await thunk(this.context.myDispatch);
+          }
+        })().catch(console.error);
+        break;
+
+      case "UPDATE_STATUS":
+        this.state.signinRequest = msg.request;
+        break;
+
+      default:
+        msg satisfies never;
+        return msg;
+    }
+  }
+
+  view() {
+    return (
+      <div>
+        <input
+          key="email"
+          type="email"
+          value={this.state.email}
+          onChange={(e) =>
+            this.context.myDispatch({
+              type: "SET_EMAIL",
+              email: e.target.value,
+            })
+          }
+        />
+        <button
+          disabled={this.state.signinRequest.status === "loading"}
+          onPointerDown={() => this.context.myDispatch({ type: "SEND_MAGIC_LINK" })}
+        >
+          Send Magic Link
+        </button>
+        {this.state.signinRequest.status === "loaded" && <p>Check your email!</p>}
+        {this.state.signinRequest.status === "error" && (
+          <p>{this.state.signinRequest.error}</p>
+        )}
+      </div>
+    );
+  }
+}

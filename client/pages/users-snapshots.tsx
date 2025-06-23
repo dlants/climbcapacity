@@ -1,324 +1,302 @@
 import React from "react";
 import type { Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch } from "../tea";
+import { Dispatch } from "../tea";
 import { assertUnreachable, RequestStatus } from "../util/utils";
-import * as immer from "immer";
-const produce = immer.produce;
 
 type SnapshotListItem = {
   snapshot: Snapshot;
   deleteRequest: RequestStatus<void>;
 };
 
-export type Model = immer.Immutable<{
+export type Model = {
   userId: string;
   snapshotRequest: RequestStatus<SnapshotListItem[]>;
   newSnapshotRequest: RequestStatus<Snapshot>;
-}>;
+};
 
 export type Msg =
   | {
-      type: "SNAPSHOT_RESPONSE";
-      request: RequestStatus<SnapshotListItem[]>;
-    }
-  | {
-      type: "NEW_SNAPSHOT_RESPONSE";
-      request: RequestStatus<Snapshot>;
-    }
-  | {
-      type: "NEW_SNAPSHOT";
-    }
-  | {
-      type: "SELECT_SNAPSHOT";
-      snapshot: SnapshotListItem;
-    }
-  | {
-      type: "DELETE_SNAPSHOT";
-      snapshotId: string;
-    }
-  | {
-      type: "DELETE_SNAPSHOT_RESPONSE";
-      request: RequestStatus<void>;
-      snapshotId: string;
-    };
-
-async function fetchSnapshotsThunk(dispatch: Dispatch<Msg>) {
-  const response = await fetch("/api/my-snapshots", { method: "POST" });
-  if (response.ok) {
-    const snapshots = (await response.json()) as Snapshot[];
-    dispatch({
-      type: "SNAPSHOT_RESPONSE",
-      request: {
-        status: "loaded",
-        response: snapshots.map((s) => ({
-          snapshot: s,
-          deleteRequest: { status: "not-sent" },
-        })),
-      },
-    });
-  } else {
-    dispatch({
-      type: "SNAPSHOT_RESPONSE",
-      request: { status: "error", error: await response.text() },
-    });
+    type: "SNAPSHOT_RESPONSE";
+    request: RequestStatus<SnapshotListItem[]>;
   }
-}
+  | {
+    type: "NEW_SNAPSHOT_RESPONSE";
+    request: RequestStatus<Snapshot>;
+  }
+  | {
+    type: "NEW_SNAPSHOT";
+  }
+  | {
+    type: "SELECT_SNAPSHOT";
+    snapshot: SnapshotListItem;
+  }
+  | {
+    type: "DELETE_SNAPSHOT";
+    snapshotId: string;
+  }
+  | {
+    type: "DELETE_SNAPSHOT_RESPONSE";
+    request: RequestStatus<void>;
+    snapshotId: string;
+  };
 
-export function initModel(userId: string): [Model, Thunk<Msg>] {
-  return [
-    {
+export class UsersSnapshotsPage {
+  state: Model;
+
+  constructor(userId: string, private context: { myDispatch: Dispatch<Msg> }) {
+    this.state = {
       userId,
       snapshotRequest: { status: "loading" },
       newSnapshotRequest: { status: "not-sent" },
-    },
-    fetchSnapshotsThunk,
-  ];
-}
+    };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "SNAPSHOT_RESPONSE":
-      return [
-        produce(model, (draft) => {
-          draft.snapshotRequest = msg.request;
-        }),
-      ];
-    case "NEW_SNAPSHOT_RESPONSE":
-      return [
-        produce(model, (draft) => {
-          draft.newSnapshotRequest = msg.request;
-        }),
-      ];
+    this.fetchSnapshots().catch(console.error);
+  }
 
-    case "NEW_SNAPSHOT":
-      return [
-        produce(model, (draft) => {
-          draft.newSnapshotRequest = { status: "loading" };
-        }),
-        async (dispatch) => {
+  private async fetchSnapshots() {
+    const response = await fetch("/api/my-snapshots", { method: "POST" });
+    if (response.ok) {
+      const snapshots = (await response.json()) as Snapshot[];
+      this.context.myDispatch({
+        type: "SNAPSHOT_RESPONSE",
+        request: {
+          status: "loaded",
+          response: snapshots.map((s) => ({
+            snapshot: s,
+            deleteRequest: { status: "not-sent" },
+          })),
+        },
+      });
+    } else {
+      this.context.myDispatch({
+        type: "SNAPSHOT_RESPONSE",
+        request: { status: "error", error: await response.text() },
+      });
+    }
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "SNAPSHOT_RESPONSE":
+        this.state.snapshotRequest = msg.request;
+        break;
+      case "NEW_SNAPSHOT_RESPONSE":
+        this.state.newSnapshotRequest = msg.request;
+        break;
+
+      case "NEW_SNAPSHOT":
+        this.state.newSnapshotRequest = { status: "loading" };
+
+        (async () => {
           const response = await fetch("/api/snapshots/new", {
             method: "POST",
           });
           if (response.ok) {
             const snapshot = (await response.json()) as Snapshot;
-            dispatch({
+            this.context.myDispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
               request: { status: "loaded", response: snapshot },
             });
 
             // re-fetch snapshots
-            dispatch({
+            this.context.myDispatch({
               type: "SNAPSHOT_RESPONSE",
               request: { status: "loading" },
             });
 
-            await fetchSnapshotsThunk(dispatch);
+            await this.fetchSnapshots();
           } else {
-            dispatch({
+            this.context.myDispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
               request: { status: "error", error: await response.text() },
             });
           }
-        },
-      ];
+        })().catch(console.error);
+        break;
 
-    case "SELECT_SNAPSHOT":
-      // will be intercepted by parent view
-      return [model];
+      case "SELECT_SNAPSHOT":
+        // will be intercepted by parent view
+        break;
 
-    case "DELETE_SNAPSHOT":
-      return [
-        produce(model, (draft) => {
-          if (draft.snapshotRequest.status != "loaded") {
-            throw new Error(
-              `Unexpected snapshotRequest status when deleting snapshot`,
-            );
-          }
-          const snapshot = draft.snapshotRequest.response.find(
-            (s) => s.snapshot._id == msg.snapshotId,
+      case "DELETE_SNAPSHOT":
+        if (this.state.snapshotRequest.status != "loaded") {
+          throw new Error(
+            `Unexpected snapshotRequest status when deleting snapshot`,
           );
-          if (!snapshot) {
-            throw new Error(
-              `Unable to find snapshot ${msg.snapshotId} to delete`,
-            );
-          }
-          snapshot.deleteRequest = { status: "loading" };
-        }),
-        async (dispatch) => {
+        }
+        const snapshot = this.state.snapshotRequest.response.find(
+          (s) => s.snapshot._id == msg.snapshotId,
+        );
+        if (!snapshot) {
+          throw new Error(
+            `Unable to find snapshot ${msg.snapshotId} to delete`,
+          );
+        }
+        snapshot.deleteRequest = { status: "loading" };
+
+        (async () => {
           const response = await fetch(`/api/snapshot`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
             },
-
             body: JSON.stringify({
               snapshotId: msg.snapshotId,
             }),
           });
           if (response.ok) {
-            dispatch({
+            this.context.myDispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
               request: { status: "loaded", response: undefined },
             });
             // Refresh the list
-            await fetchSnapshotsThunk(dispatch);
+            await this.fetchSnapshots();
           } else {
-            dispatch({
+            this.context.myDispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
               request: { status: "error", error: await response.text() },
             });
           }
-        },
-      ];
+        })().catch(console.error);
+        break;
 
-    case "DELETE_SNAPSHOT_RESPONSE":
-      return [
-        produce(model, (draft) => {
-          if (draft.snapshotRequest.status != "loaded") {
-            throw new Error(
-              `Unexpected snapshotRequest status when handling delete response`,
-            );
-          }
-          const snapshot = draft.snapshotRequest.response.find(
-            (s) => s.snapshot._id == msg.snapshotId,
+      case "DELETE_SNAPSHOT_RESPONSE":
+        if (this.state.snapshotRequest.status != "loaded") {
+          throw new Error(
+            `Unexpected snapshotRequest status when handling delete response`,
           );
-          if (!snapshot) {
-            throw new Error(
-              `Unable to find snapshot ${msg.snapshotId} to update delete response`,
-            );
-          }
-          snapshot.deleteRequest = msg.request;
-        }),
-      ];
-
-    default:
-      msg satisfies never;
-      return msg;
-  }
-};
-
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  const NewSnapshot = () => {
-    const NewSnapshotButton = () => (
-      <button onPointerDown={() => dispatch({ type: "NEW_SNAPSHOT" })}>
-        Create New Snapshot
-      </button>
-    );
-
-    if (model.newSnapshotRequest.status == "not-sent") {
-      return <NewSnapshotButton />;
-    }
-
-    switch (model.newSnapshotRequest.status) {
-      case "loading":
-        return <div>Creating new snapshot...</div>;
-      case "loaded":
-        return (
-          <div>
-            created new snapshot <NewSnapshotButton />
-          </div>
+        }
+        const responseSnapshot = this.state.snapshotRequest.response.find(
+          (s) => s.snapshot._id == msg.snapshotId,
         );
-      case "error":
-        return (
-          <div>
-            error when creating new snapshot: {model.newSnapshotRequest.error}
-          </div>
-        );
+        if (!responseSnapshot) {
+          throw new Error(
+            `Unable to find snapshot ${msg.snapshotId} to update delete response`,
+          );
+        }
+        responseSnapshot.deleteRequest = msg.request;
+        break;
+
       default:
-        assertUnreachable(model.newSnapshotRequest);
+        msg satisfies never;
+        break;
     }
-  };
+  }
 
-  return (
-    <div>
-      <h2>Your Snapshots</h2>
-      <div className="new-snapshot">
-        <NewSnapshot />
-      </div>
-      <div className="list-snapshots">
-        <SnapshotList model={model} dispatch={dispatch} />
-      </div>
-    </div>
-  );
-};
+  view() {
+    const NewSnapshot = () => {
+      const NewSnapshotButton = () => (
+        <button onPointerDown={() => this.context.myDispatch({ type: "NEW_SNAPSHOT" })}>
+          Create New Snapshot
+        </button>
+      );
 
-const SnapshotResponse = ({
-  snapshot: item,
-  dispatch,
-}: {
-  snapshot: SnapshotListItem;
-  dispatch: Dispatch<Msg>;
-}) => (
-  <div key={item.snapshot._id}>
-    {new Date(item.snapshot.createdAt).toLocaleString()}
-    <button
-      onPointerDown={() =>
-        dispatch({ type: "SELECT_SNAPSHOT", snapshot: item })
+      if (this.state.newSnapshotRequest.status == "not-sent") {
+        return <NewSnapshotButton />;
       }
-    >
-      Edit
-    </button>
 
-    {(() => {
-      switch (item.deleteRequest.status) {
-        case "not-sent":
+      switch (this.state.newSnapshotRequest.status) {
+        case "loading":
+          return <div>Creating new snapshot...</div>;
+        case "loaded":
+          return (
+            <div>
+              created new snapshot <NewSnapshotButton />
+            </div>
+          );
         case "error":
           return (
-            <span>
-              {item.deleteRequest.status == "error" && (
-                <span>{item.deleteRequest.error}</span>
-              )}
-              <button
-                onPointerDown={() =>
-                  dispatch({
-                    type: "DELETE_SNAPSHOT",
-                    snapshotId: item.snapshot._id,
-                  })
-                }
-              >
-                Delete
-              </button>
-            </span>
+            <div>
+              error when creating new snapshot: {this.state.newSnapshotRequest.error}
+            </div>
           );
-        case "loading":
-          return <button disabled>Edit</button>;
-
-        case "loaded":
-          return <div>Deleted</div>;
+        default:
+          assertUnreachable(this.state.newSnapshotRequest);
       }
-    })()}
-  </div>
-);
+    };
 
-const SnapshotList = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: Dispatch<Msg>;
-}) => {
-  switch (model.snapshotRequest.status) {
-    case "not-sent":
-      return <div />;
-    case "loading":
-      return <div>Loading...</div>;
-    case "error":
-      return <div className="error">{model.snapshotRequest.error}</div>;
-    case "loaded":
-      return (
-        <div className="loaded">
-          {model.snapshotRequest.response.map((snapshot) => (
-            <SnapshotResponse
-              key={snapshot.snapshot._id}
-              snapshot={snapshot}
-              dispatch={dispatch}
-            />
-          ))}
+    const SnapshotResponse = ({
+      snapshot: item,
+    }: {
+      snapshot: SnapshotListItem;
+    }) => (
+      <div key={item.snapshot._id}>
+        {new Date(item.snapshot.createdAt).toLocaleString()}
+        <button
+          onPointerDown={() =>
+            this.context.myDispatch({ type: "SELECT_SNAPSHOT", snapshot: item })
+          }
+        >
+          Edit
+        </button>
+
+        {(() => {
+          switch (item.deleteRequest.status) {
+            case "not-sent":
+            case "error":
+              return (
+                <span>
+                  {item.deleteRequest.status == "error" && (
+                    <span>{item.deleteRequest.error}</span>
+                  )}
+                  <button
+                    onPointerDown={() =>
+                      this.context.myDispatch({
+                        type: "DELETE_SNAPSHOT",
+                        snapshotId: item.snapshot._id,
+                      })
+                    }
+                  >
+                    Delete
+                  </button>
+                </span>
+              );
+            case "loading":
+              return <button disabled>Edit</button>;
+
+            case "loaded":
+              return <div>Deleted</div>;
+          }
+        })()}
+      </div>
+    );
+
+    const SnapshotList = () => {
+      switch (this.state.snapshotRequest.status) {
+        case "not-sent":
+          return <div />;
+        case "loading":
+          return <div>Loading...</div>;
+        case "error":
+          return <div className="error">{this.state.snapshotRequest.error}</div>;
+        case "loaded":
+          return (
+            <div className="loaded">
+              {this.state.snapshotRequest.response.map((snapshot) => (
+                <SnapshotResponse
+                  key={snapshot.snapshot._id}
+                  snapshot={snapshot}
+                />
+              ))}
+            </div>
+          );
+        default:
+          assertUnreachable(this.state.snapshotRequest);
+      }
+    };
+
+    return (
+      <div>
+        <h2>Your Snapshots</h2>
+        <div className="new-snapshot">
+          <NewSnapshot />
         </div>
-      );
-    default:
-      assertUnreachable(model.snapshotRequest);
+        <div className="list-snapshots">
+          <SnapshotList />
+        </div>
+      </div>
+    );
   }
-};
+}

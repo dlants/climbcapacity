@@ -5,7 +5,8 @@ import { flushSync } from "react-dom";
 export type Update<Msg, Model> = (
   msg: Msg,
   model: Model,
-) => [Model] | [Model, Thunk<Msg> | undefined];
+) => Model
+
 export type View<Msg, Model> = ({
   model,
   dispatch,
@@ -13,6 +14,7 @@ export type View<Msg, Model> = ({
   model: Model;
   dispatch: (msg: Msg) => void;
 }) => JSX.Element;
+
 export type Dispatch<Msg> = (msg: Msg) => void;
 
 export interface Subscription<SubscriptionType extends string> {
@@ -30,13 +32,13 @@ export type SubscriptionManager<SubscriptionType extends string, Msg> = {
 
 type AppState<Model> =
   | {
-      status: "running";
-      model: Model;
-    }
+    status: "running";
+    model: Model;
+  }
   | {
-      status: "error";
-      error: string;
-    };
+    status: "error";
+    error: string;
+  };
 
 export function createApp<Model, Msg, SubscriptionType extends string>({
   initialModel,
@@ -73,13 +75,7 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
         }
 
         try {
-          const [nextModel, thunk] = update(msg, currentState.model);
-
-          if (thunk) {
-            // purposefully do not await
-            thunk(dispatch);
-          }
-
+          const nextModel = update(msg, currentState.model);
           return { status: "running", model: nextModel };
         } catch (e) {
           console.error(e);
@@ -117,7 +113,7 @@ export function createApp<Model, Msg, SubscriptionType extends string>({
         }
       });
 
-      return () => {};
+      return () => { };
     }, [appState]);
 
     return (

@@ -1,6 +1,4 @@
 import React, { Dispatch } from "react";
-import { Update, View } from "../../tea";
-import * as immer from "immer";
 import { Identifier } from "../../parser/types";
 import { InitialFilter, UnitType } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
@@ -11,10 +9,10 @@ import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
 
-export type ToggleableFilter = immer.Immutable<{
+export type ToggleableFilter = {
   enabled: boolean;
   model: Filter.Model;
-}>;
+};
 
 export type FilterMapping = {
   [id: Identifier]: {
@@ -23,10 +21,10 @@ export type FilterMapping = {
   };
 };
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureStats: MeasureStats;
   filters: ToggleableFilter[];
-}>;
+};
 
 export type Msg =
   | { type: "TOGGLE_FILTER"; measureId: MeasureId; enabled: boolean }
@@ -36,73 +34,104 @@ export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter & { enabled: boolean };
 };
 
-export function initModel({
-  initialFilters,
-  measureStats,
-}: {
-  initialFilters: InitialFilters;
-  measureStats: MeasureStats;
-}): Model {
-  const filters: ToggleableFilter[] = [];
-  for (const measureIdStr in initialFilters) {
-    const measureId = measureIdStr as MeasureId;
-    const initialFilter = initialFilters[measureId];
-    filters.push({
-      enabled: initialFilter.enabled,
-      model: Filter.initModel({ measureId, initialFilter }),
-    });
+export class ReportCardFilter {
+  state: Model;
+
+  constructor(
+    initialParams: {
+      initialFilters: InitialFilters;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const filters: ToggleableFilter[] = [];
+    for (const measureIdStr in initialParams.initialFilters) {
+      const measureId = measureIdStr as MeasureId;
+      const initialFilter = initialParams.initialFilters[measureId];
+      filters.push({
+        enabled: initialFilter.enabled,
+        model: Filter.initModel({ measureId, initialFilter }),
+      });
+    }
+    this.state = { measureStats: initialParams.measureStats, filters };
   }
-  return { measureStats, filters };
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "TOGGLE_FILTER":
+        const toggleFilter = this.state.filters.find(
+          (f) => f.model.model.measureId === msg.measureId,
+        );
+        if (!toggleFilter) {
+          throw new Error(`Filter not found for measureId ${msg.measureId}`);
+        } else {
+          toggleFilter.enabled = msg.enabled;
+        }
+        break;
+      case "FILTER_MSG":
+        const msgFilter = this.state.filters.find(
+          (f) => f.model.model.measureId === msg.measureId,
+        );
+        if (!msgFilter) {
+          throw new Error(`Filter not found for measureId ${msg.measureId}`);
+        }
+
+        const [next] = Filter.update(msg.msg, msgFilter.model);
+        msgFilter.model = next;
+        break;
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    const FilterView = ({ filter }: { filter: ToggleableFilter }) => {
+      return (
+        <div className={styles.filterView}>
+          <div className={styles.filterItem}>
+            <input
+              type="checkbox"
+              checked={filter.enabled}
+              onChange={(e) =>
+                this.context.myDispatch({
+                  type: "TOGGLE_FILTER",
+                  measureId: filter.model.model.measureId,
+                  enabled: e.target.checked,
+                })
+              }
+            />
+          </div>
+          <div className={styles.filterItem}>
+            <strong>{filter.model.model.measureId}</strong>{" "}
+          </div>
+          <div className={styles.filterItem}>
+            <Filter.view
+              model={filter.model}
+              dispatch={(msg) =>
+                this.context.myDispatch({
+                  type: "FILTER_MSG",
+                  measureId: filter.model.model.measureId,
+                  msg,
+                })
+              }
+            />
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div>
+        {this.state.filters.map((filter) => (
+          <FilterView
+            key={filter.model.model.measureId}
+            filter={filter}
+          />
+        ))}
+      </div>
+    );
+  }
 }
-
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "TOGGLE_FILTER":
-      return [
-        immer.produce(model, (draft) => {
-          const filter = draft.filters.find(
-            (f) => f.model.model.measureId === msg.measureId,
-          );
-          if (!filter) {
-            throw new Error(`Filter not found for measureId ${msg.measureId}`);
-          } else {
-            filter.enabled = msg.enabled;
-          }
-        }),
-      ];
-    case "FILTER_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const filter = draft.filters.find(
-            (f) => f.model.model.measureId === msg.measureId,
-          );
-          if (!filter) {
-            throw new Error(`Filter not found for measureId ${msg.measureId}`);
-          }
-
-          const [next] = Filter.update(msg.msg, filter.model);
-          filter.model = immer.castDraft(next);
-        }),
-      ];
-    default:
-      assertUnreachable(msg);
-  }
-};
-
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      {model.filters.map((filter) => (
-        <FilterView
-          key={filter.model.model.measureId}
-          filter={filter}
-          dispatch={dispatch}
-          model={model}
-        />
-      ))}
-    </div>
-  );
-};
 
 const styles = typestyle.stylesheet({
   filterView: {
@@ -124,45 +153,3 @@ const styles = typestyle.stylesheet({
     maxWidth: csx.percent(100),
   },
 });
-
-const FilterView = ({
-  filter,
-  dispatch,
-}: {
-  model: Model;
-  filter: ToggleableFilter;
-  dispatch: Dispatch<Msg>;
-}) => {
-  return (
-    <div className={styles.filterView}>
-      <div className={styles.filterItem}>
-        <input
-          type="checkbox"
-          checked={filter.enabled}
-          onChange={(e) =>
-            dispatch({
-              type: "TOGGLE_FILTER",
-              measureId: filter.model.model.measureId,
-              enabled: e.target.checked,
-            })
-          }
-        />
-      </div>
-      <div className={styles.filterItem}>
-        <strong>{filter.model.model.measureId}</strong>{" "}
-      </div>
-      <div className={styles.filterItem}>
-        <Filter.view
-          model={filter.model}
-          dispatch={(msg) =>
-            dispatch({
-              type: "FILTER_MSG",
-              measureId: filter.model.model.measureId,
-              msg,
-            })
-          }
-        />
-      </div>
-    </div>
-  );
-};

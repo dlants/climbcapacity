@@ -5,9 +5,7 @@ import {
   MeasureId,
   parseId,
 } from "../../../iso/measures";
-import * as immer from "immer";
 import { Dispatch } from "../../tea";
-const produce = immer.produce;
 import { MeasureStats } from "../../../iso/protocol";
 import { CountTree, measureStatsToCountTree, getFromCountTree } from "./utils";
 
@@ -19,87 +17,14 @@ type Selected = {
   };
 };
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureStats: MeasureStats;
   measureClasses: {
     spec: MeasureClassSpec;
     countTree: CountTree;
   }[];
   selected: Selected;
-}>;
-
-export const initModel = ({
-  measureStats,
-  measureClasses,
-  measureId,
-}: {
-  measureClasses: MeasureClassSpec[];
-  measureId?: MeasureId;
-  measureStats: MeasureStats;
-}): Model => {
-  const hydratedMeasureClasses = measureClasses.map((c) => {
-    const countTree = measureStatsToCountTree(
-      measureStats,
-      (measureId) => parseId(measureId, c),
-      c.params.map((s) => s.name),
-    );
-
-    return {
-      spec: c,
-      countTree,
-    };
-  });
-  return {
-    measureStats,
-    measureClasses: hydratedMeasureClasses,
-    selected: initSelected({ measureStats, measureClasses, measureId }),
-  };
 };
-
-function initSelected({
-  measureStats,
-  measureClasses,
-  measureId,
-}: {
-  measureStats: MeasureStats;
-  measureClasses: MeasureClassSpec[];
-  measureId?: MeasureId;
-}): immer.Immutable<Selected> {
-  let selectedParams: { [name: string]: string } | undefined;
-  let selectedSpec: immer.Immutable<MeasureClassSpec> | undefined;
-  let selectedMeasureId: MeasureId | undefined;
-
-  if (measureId) {
-    selectedMeasureId = measureId;
-    for (const spec of measureClasses) {
-      try {
-        selectedParams = parseId(measureId, immer.castDraft(spec));
-        selectedSpec = spec;
-      } catch { }
-    }
-  }
-
-  if (!(selectedParams && selectedSpec && selectedMeasureId)) {
-    selectedSpec = measureClasses[0];
-    selectedParams = {};
-    for (const param of selectedSpec.params) {
-      selectedParams[param.name] = param.values[0];
-    }
-    selectedMeasureId = generateId(
-      immer.castDraft(selectedSpec),
-      selectedParams,
-    );
-  }
-
-  return immer.produce(
-    {
-      measureClass: selectedSpec,
-      measureId: selectedMeasureId,
-      params: selectedParams,
-    },
-    (d) => d,
-  );
-}
 
 export type Msg =
   | {
@@ -112,140 +37,197 @@ export type Msg =
     value: string;
   };
 
-export const update = (msg: Msg, model: Model): [Model] => {
-  switch (msg.type) {
-    case "SELECT_MEASURE_CLASS_MSG":
-      return [
-        produce(model, (draft) => {
-          const selected = draft.selected;
-          const oldParams = { ...selected.params };
+export class SelectMeasureClass {
+  state: Model;
 
-          const paramMap: { [key: string]: string } = {};
-          for (const param of msg.measureClass.params) {
-            if (oldParams[param.name]) {
-              paramMap[param.name] = oldParams[param.name];
-            } else {
-              paramMap[param.name] = param.values[0];
-            }
-          }
+  constructor(
+    {
+      measureStats,
+      measureClasses,
+      measureId,
+    }: {
+      measureClasses: MeasureClassSpec[];
+      measureId?: MeasureId;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const hydratedMeasureClasses = measureClasses.map((c) => {
+      const countTree = measureStatsToCountTree(
+        measureStats,
+        (measureId) => parseId(measureId, c),
+        c.params.map((s) => s.name),
+      );
 
-          selected.measureClass = immer.castDraft(msg.measureClass);
-          selected.params = paramMap;
-          selected.measureId = generateId(
-            selected.measureClass,
-            selected.params,
-          );
-        }),
-      ];
+      return {
+        spec: c,
+        countTree,
+      };
+    });
 
-    case "UPDATE_PARAM_MSG":
-      return [
-        produce(model, (draft) => {
-          const selected = draft.selected;
-          const param = selected.measureClass.params.find(
-            (p) => p.name === msg.param,
-          );
-          if (!param) {
-            throw new Error(
-              `Invalid param ${msg.param} for measure class ${selected.measureClass.className}`,
-            );
-          }
-          if (!(param.values as any).includes(msg.value)) {
-            throw new Error(
-              `invalid value ${msg.value} for param ${param.name}`,
-            );
-          }
-          selected.params[msg.param] = msg.value;
-          selected.measureId = generateId(
-            selected.measureClass,
-            selected.params,
-          );
-        }),
-      ];
-
-    default:
-      return [model];
+    this.state = {
+      measureStats,
+      measureClasses: hydratedMeasureClasses,
+      selected: this.initSelected({ measureStats, measureClasses, measureId }),
+    };
   }
-};
 
-export function view({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: Dispatch<Msg>;
-}) {
-  const getCountForMeasureClass = (measureClass: MeasureClassSpec) => {
-    const m = model.measureClasses.find((mc) => mc.spec === measureClass);
+  private initSelected({
+    measureStats,
+    measureClasses,
+    measureId,
+  }: {
+    measureStats: MeasureStats;
+    measureClasses: MeasureClassSpec[];
+    measureId?: MeasureId;
+  }): Selected {
+    let selectedParams: { [name: string]: string } | undefined;
+    let selectedSpec: MeasureClassSpec | undefined;
+    let selectedMeasureId: MeasureId | undefined;
+
+    if (measureId) {
+      selectedMeasureId = measureId;
+      for (const spec of measureClasses) {
+        try {
+          selectedParams = parseId(measureId, spec);
+          selectedSpec = spec;
+        } catch { }
+      }
+    }
+
+    if (!(selectedParams && selectedSpec && selectedMeasureId)) {
+      selectedSpec = measureClasses[0];
+      selectedParams = {};
+      for (const param of selectedSpec.params) {
+        selectedParams[param.name] = param.values[0];
+      }
+      selectedMeasureId = generateId(selectedSpec, selectedParams);
+    }
+
+    return {
+      measureClass: selectedSpec,
+      measureId: selectedMeasureId,
+      params: selectedParams,
+    };
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "SELECT_MEASURE_CLASS_MSG":
+        const selected = this.state.selected;
+        const oldParams = { ...selected.params };
+
+        const paramMap: { [key: string]: string } = {};
+        for (const param of msg.measureClass.params) {
+          if (oldParams[param.name]) {
+            paramMap[param.name] = oldParams[param.name];
+          } else {
+            paramMap[param.name] = param.values[0];
+          }
+        }
+
+        selected.measureClass = msg.measureClass;
+        selected.params = paramMap;
+        selected.measureId = generateId(selected.measureClass, selected.params);
+        break;
+
+      case "UPDATE_PARAM_MSG":
+        const selectedForParam = this.state.selected;
+        const param = selectedForParam.measureClass.params.find(
+          (p) => p.name === msg.param,
+        );
+        if (!param) {
+          throw new Error(
+            `Invalid param ${msg.param} for measure class ${selectedForParam.measureClass.className}`,
+          );
+        }
+        if (!(param.values as any).includes(msg.value)) {
+          throw new Error(
+            `invalid value ${msg.value} for param ${param.name}`,
+          );
+        }
+        selectedForParam.params[msg.param] = msg.value;
+        selectedForParam.measureId = generateId(
+          selectedForParam.measureClass,
+          selectedForParam.params,
+        );
+        break;
+    }
+  }
+
+  private getCountForMeasureClass(measureClass: MeasureClassSpec) {
+    const m = this.state.measureClasses.find((mc) => mc.spec === measureClass);
     return m ? getFromCountTree(m.countTree, []) : 0;
-  };
+  }
 
-  const getCountForParam = (paramName: string, paramValue: string) => {
-    const measureClass = model.measureClasses.find(
-      (mc) => mc.spec === model.selected.measureClass,
+  private getCountForParam(paramName: string, paramValue: string) {
+    const measureClass = this.state.measureClasses.find(
+      (mc) => mc.spec === this.state.selected.measureClass,
     );
     if (!measureClass) return 0;
 
-    const paramIndex = model.selected.measureClass.params.findIndex(
+    const paramIndex = this.state.selected.measureClass.params.findIndex(
       (p) => p.name === paramName,
     );
-    const paramValues = model.selected.measureClass.params
+    const paramValues = this.state.selected.measureClass.params
       .slice(0, paramIndex)
-      .map((p) => model.selected.params[p.name]);
+      .map((p) => this.state.selected.params[p.name]);
     paramValues.push(paramValue);
 
     return getFromCountTree(measureClass.countTree, paramValues);
-  };
+  }
 
-  return (
-    <div>
-      <select
-        onChange={(e) => {
-          const measureClass = model.measureClasses.find(
-            (c) => c.spec.className == e.target.value,
-          );
-          if (!measureClass) {
-            throw new Error(`Unexpected measure class ${e.target.value}`);
-          }
-
-          dispatch({
-            type: "SELECT_MEASURE_CLASS_MSG",
-            measureClass: immer.castDraft(measureClass.spec),
-          });
-        }}
-        value={model.selected.measureClass.className}
-      >
-        {model.measureClasses.map((measureClass) => (
-          <option
-            key={measureClass.spec.className}
-            value={measureClass.spec.className}
-          >
-            {measureClass.spec.className} (
-            {getCountForMeasureClass(immer.castDraft(measureClass.spec))})
-          </option>
-        ))}
-      </select>
-
-      {model.selected.measureClass.params.map((param) => (
+  view() {
+    return (
+      <div>
         <select
-          key={param.name}
-          onChange={(e) =>
-            dispatch({
-              type: "UPDATE_PARAM_MSG",
-              param: param.name,
-              value: e.target.value,
-            })
-          }
-          value={model.selected.params[param.name]}
+          onChange={(e) => {
+            const measureClass = this.state.measureClasses.find(
+              (c) => c.spec.className == e.target.value,
+            );
+            if (!measureClass) {
+              throw new Error(`Unexpected measure class ${e.target.value}`);
+            }
+
+            this.context.myDispatch({
+              type: "SELECT_MEASURE_CLASS_MSG",
+              measureClass: measureClass.spec,
+            });
+          }}
+          value={this.state.selected.measureClass.className}
         >
-          {param.values.map((value) => (
-            <option key={value} value={value}>
-              {value}
-              {param.suffix} ({getCountForParam(param.name, value)})
+          {this.state.measureClasses.map((measureClass) => (
+            <option
+              key={measureClass.spec.className}
+              value={measureClass.spec.className}
+            >
+              {measureClass.spec.className} (
+              {this.getCountForMeasureClass(measureClass.spec)})
             </option>
           ))}
         </select>
-      ))}
-    </div>
-  );
+
+        {this.state.selected.measureClass.params.map((param) => (
+          <select
+            key={param.name}
+            onChange={(e) =>
+              this.context.myDispatch({
+                type: "UPDATE_PARAM_MSG",
+                param: param.name,
+                value: e.target.value,
+              })
+            }
+            value={this.state.selected.params[param.name]}
+          >
+            {param.values.map((value) => (
+              <option key={value} value={value}>
+                {value}
+                {param.suffix} ({this.getCountForParam(param.name, value)})
+              </option>
+            ))}
+          </select>
+        ))}
+      </div>
+    );
+  }
 }

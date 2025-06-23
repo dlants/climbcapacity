@@ -1,63 +1,66 @@
 import React from "react";
-import { Update, View } from "../tea";
+import { Dispatch } from "../tea";
 import { parseExpression, ParseResult } from "../parser/parser";
-import * as immer from "immer";
 
-export type Model = immer.Immutable<{
+export type Model = {
   expression: string;
   evalResult: ParseResult;
-}>;
+};
 
 export type Msg = {
   type: "EXPRESSION_CHANGED";
   value: string;
 };
 
-export function initModel(expression: string): Model {
-  const evalResult = parseExpression(expression);
+export class MeasureExpressionBox {
+  state: Model;
 
-  return {
-    expression,
-    evalResult,
-  };
-}
+  constructor(
+    expression: string,
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const evalResult = parseExpression(expression);
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "EXPRESSION_CHANGED": {
-      const evalResult = parseExpression(msg.value);
-      return [
-        immer.produce(model, (draft) => {
-          draft.expression = msg.value;
-          draft.evalResult = evalResult;
-        }),
-      ];
+    this.state = {
+      expression,
+      evalResult,
+    };
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "EXPRESSION_CHANGED": {
+        const evalResult = parseExpression(msg.value);
+        this.state.expression = msg.value;
+        this.state.evalResult = evalResult;
+        break;
+      }
     }
   }
-};
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      <input
-        type="text"
-        value={model.expression}
-        onChange={(e) =>
-          dispatch({
-            type: "EXPRESSION_CHANGED",
-            value: e.target.value,
-          })
-        }
-        style={{
-          borderColor: model.evalResult.status == 'success' ? "initial" : "red",
-        }}
-        placeholder="Enter expression (e.g. a + b * 2)"
-      />
-      {model.evalResult.status != 'success' && (
-        <div style={{ color: "red", fontSize: "small" }}>
-          {model.evalResult.error}
-        </div>
-      )}
-    </div>
-  );
-};
+  view() {
+    return (
+      <div>
+        <input
+          type="text"
+          value={this.state.expression}
+          onChange={(e) =>
+            this.context.myDispatch({
+              type: "EXPRESSION_CHANGED",
+              value: e.target.value,
+            })
+          }
+          style={{
+            borderColor: this.state.evalResult.status == 'success' ? "initial" : "red",
+          }}
+          placeholder="Enter expression (e.g. a + b * 2)"
+        />
+        {this.state.evalResult.status != 'success' && (
+          <div style={{ color: "red", fontSize: "small" }}>
+            {this.state.evalResult.error}
+          </div>
+        )}
+      </div>
+    );
+  }
+}

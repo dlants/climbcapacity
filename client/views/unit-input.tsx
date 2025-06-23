@@ -1,6 +1,4 @@
 import React from "react";
-import * as immer from "immer";
-const produce = immer.produce;
 import {
   EWBANK,
   EwbankGrade,
@@ -21,7 +19,7 @@ import {
   inchesToFeetAndInches,
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
-import { Update } from "../tea";
+import { Dispatch } from "../tea";
 import { getSpec, MeasureId } from "../../iso/measures";
 import { ExtractFromDisjointUnion } from "../util/utils";
 
@@ -57,35 +55,250 @@ type UnitInputMap = {
 
 type UnitInput = UnitInputMap[UnitType];
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureId: MeasureId;
   selectedUnit: UnitType;
   possibleUnits: UnitType[];
   unitInput: UnitInput;
   parseResult: Result<UnitValue>;
-}>;
+};
 
-export type HasParseResultModel = immer.Immutable<
-  Omit<Model, "parseResult"> & {
-    parseResult: Success<UnitValue>;
+export type HasParseResultModel = Omit<Model, "parseResult"> & {
+  parseResult: Success<UnitValue>;
+};
+
+export class UnitInputComponent {
+  state: Model;
+
+  constructor(
+    measureId: MeasureId,
+    private context: { myDispatch: Dispatch<Msg> },
+    initialValue?: UnitValue,
+  ) {
+    const measureSpec = getSpec(measureId);
+    const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
+    const initialInput = getInitialInput(defaultUnit, initialValue);
+
+    this.state = {
+      measureId,
+      selectedUnit: defaultUnit,
+      possibleUnits: measureSpec.units,
+      unitInput: initialInput,
+      parseResult: parseUnitValue(defaultUnit, initialInput),
+    };
   }
->;
 
-export function initModel(
-  measureId: MeasureId,
-  initialValue?: UnitValue,
-): Model {
-  const measureSpec = getSpec(measureId);
-  const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
-  const initialInput = getInitialInput(defaultUnit, initialValue);
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "MEASURE_TYPED": {
+        const parseResult = parseUnitValue(this.state.selectedUnit, msg.unitInput);
+        this.state.unitInput = msg.unitInput;
+        this.state.parseResult = parseResult;
+        break;
+      }
+      case "SELECT_UNIT": {
+        if (!this.state.possibleUnits.includes(msg.unit)) {
+          throw new Error(
+            `${msg.unit} is not a possible unit for measure ${this.state.measureId}`,
+          );
+        }
 
-  return {
-    measureId,
-    selectedUnit: defaultUnit,
-    possibleUnits: measureSpec.units,
-    unitInput: initialInput,
-    parseResult: parseUnitValue(defaultUnit, initialInput),
-  };
+        this.state.selectedUnit = msg.unit;
+        this.state.unitInput = getInitialInput(
+          msg.unit,
+          this.state.parseResult.status == "success"
+            ? this.state.parseResult.value
+            : getDefaultValueFromUnitType(msg.unit),
+        );
+        this.state.parseResult = parseUnitValue(
+          this.state.selectedUnit,
+          this.state.unitInput,
+        );
+        break;
+      }
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    return (
+      <span className={"unitInput"}>
+        {this.innerUnitInput()}
+      </span>
+    );
+  }
+
+  private innerUnitInput() {
+    const handleChange = (unitInput: typeof this.state.unitInput) => {
+      this.context.myDispatch({
+        type: "MEASURE_TYPED",
+        measureId: this.state.measureId,
+        unitInput,
+      });
+    };
+
+    switch (this.state.selectedUnit) {
+      case "second":
+      case "month":
+      case "year":
+      case "lb":
+      case "lb/s":
+      case "kg":
+      case "kg/s":
+      case "m":
+      case "cm":
+      case "mm":
+      case "count":
+      case "strengthtoweightratio":
+        return (
+          <span>
+            <input
+              type="number"
+              value={this.state.unitInput as string}
+              onChange={(e) => handleChange(e.target.value)}
+            />
+            <span>{this.state.selectedUnit}</span>
+          </span>
+        );
+
+      case "training":
+        return (
+          <span>
+            <select
+              value={this.state.unitInput as string}
+              onChange={(e) => handleChange(e.target.value)}
+            >
+              {["", "1", "2", "3", "4"].map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+            <span>{this.state.selectedUnit}</span>
+          </span>
+        );
+
+      case "inch": {
+        const value = this.state.unitInput as { feet: string; inches: string };
+        return (
+          <span>
+            <input
+              type="number"
+              value={value.feet}
+              onChange={(e) => handleChange({ ...value, feet: e.target.value })}
+            />
+            <span>'</span>
+            <input
+              type="number"
+              value={value.inches}
+              onChange={(e) => handleChange({ ...value, inches: e.target.value })}
+            />
+            <span>"</span>
+          </span>
+        );
+      }
+
+      case "sex-at-birth":
+        return (
+          <select
+            value={this.state.unitInput as "female" | "male" | ""}
+            onChange={(e) =>
+              handleChange(e.target.value as "" | "female" | "male")
+            }
+          >
+            <option value=""></option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        );
+
+      case "ircra":
+        return (
+          <span>
+            <input
+              type="number"
+              value={this.state.unitInput as string}
+              onChange={(e) => handleChange(e.target.value)}
+            />
+            <span>IRCRA</span>
+          </span>
+        );
+
+      case "vermin":
+        return (
+          <select
+            value={this.state.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {VGRADE.map((grade) => (
+              <option key={grade} value={grade}>
+                V{grade}
+              </option>
+            ))}
+          </select>
+        );
+
+      case "ewbank":
+        return (
+          <select
+            value={this.state.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {EWBANK.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+        );
+
+      case "font":
+        return (
+          <select
+            value={this.state.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {FONT.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+        );
+
+      case "frenchsport":
+        return (
+          <select
+            value={this.state.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {FRENCH_SPORT.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+        );
+
+      case "yds":
+        return (
+          <select
+            value={this.state.unitInput as string}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            {YDS.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+        );
+
+      default:
+        assertUnreachable(this.state.selectedUnit);
+    }
+  }
 }
 
 function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
@@ -226,44 +439,7 @@ export type Msg =
     unit: UnitType;
   };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "MEASURE_TYPED": {
-      const parseResult = parseUnitValue(model.selectedUnit, msg.unitInput);
-      return [
-        produce(model, (draft) => {
-          draft.unitInput = msg.unitInput;
-          draft.parseResult = parseResult;
-        }),
-      ];
-    }
-    case "SELECT_UNIT": {
-      if (!model.possibleUnits.includes(msg.unit)) {
-        throw new Error(
-          `${msg.unit} is not a possible unit for measure ${model.measureId}`,
-        );
-      }
 
-      return [
-        produce(model, (draft) => {
-          draft.selectedUnit = msg.unit;
-          draft.unitInput = getInitialInput(
-            msg.unit,
-            draft.parseResult.status == "success"
-              ? draft.parseResult.value
-              : getDefaultValueFromUnitType(msg.unit),
-          );
-          draft.parseResult = parseUnitValue(
-            draft.selectedUnit,
-            draft.unitInput,
-          );
-        }),
-      ];
-    }
-    default:
-      assertUnreachable(msg);
-  }
-};
 
 export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   unit: UnitName,
@@ -456,193 +632,4 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   }
 }
 
-export const UnitInput = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}) => {
-  return (
-    <span className={"unitInput"}>
-      {<InnerUnitInput model={model} dispatch={dispatch} />}
-    </span>
-  );
-};
 
-const InnerUnitInput = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}) => {
-  const handleChange = (unitInput: typeof model.unitInput) => {
-    dispatch({
-      type: "MEASURE_TYPED",
-      measureId: model.measureId,
-      unitInput,
-    });
-  };
-
-  switch (model.selectedUnit) {
-    case "second":
-    case "month":
-    case "year":
-    case "lb":
-    case "lb/s":
-    case "kg":
-    case "kg/s":
-    case "m":
-    case "cm":
-    case "mm":
-    case "count":
-    case "strengthtoweightratio":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>{model.selectedUnit}</span>
-        </span>
-      );
-
-    case "training":
-      return (
-        <span>
-          <select
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {["", "1", "2", "3", "4"].map((val) => (
-              <option key={val} value={val}>
-                {val}
-              </option>
-            ))}
-          </select>
-          <span>{model.selectedUnit}</span>
-        </span>
-      );
-
-    case "inch": {
-      const value = model.unitInput as { feet: string; inches: string };
-      return (
-        <span>
-          <input
-            type="number"
-            value={value.feet}
-            onChange={(e) => handleChange({ ...value, feet: e.target.value })}
-          />
-          <span>'</span>
-          <input
-            type="number"
-            value={value.inches}
-            onChange={(e) => handleChange({ ...value, inches: e.target.value })}
-          />
-          <span>"</span>
-        </span>
-      );
-    }
-
-    case "sex-at-birth":
-      return (
-        <select
-          value={model.unitInput as "female" | "male" | ""}
-          onChange={(e) =>
-            handleChange(e.target.value as "" | "female" | "male")
-          }
-        >
-          <option value=""></option>
-          <option value="female">Female</option>
-          <option value="male">Male</option>
-        </select>
-      );
-
-    case "ircra":
-      return (
-        <span>
-          <input
-            type="number"
-            value={model.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <span>IRCRA</span>
-        </span>
-      );
-
-    case "vermin":
-      return (
-        <select
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {VGRADE.map((grade) => (
-            <option key={grade} value={grade}>
-              V{grade}
-            </option>
-          ))}
-        </select>
-      );
-
-    case "ewbank":
-      return (
-        <select
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {EWBANK.map((grade) => (
-            <option key={grade} value={grade}>
-              {grade}
-            </option>
-          ))}
-        </select>
-      );
-
-    case "font":
-      return (
-        <select
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {FONT.map((grade) => (
-            <option key={grade} value={grade}>
-              {grade}
-            </option>
-          ))}
-        </select>
-      );
-
-    case "frenchsport":
-      return (
-        <select
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {FRENCH_SPORT.map((grade) => (
-            <option key={grade} value={grade}>
-              {grade}
-            </option>
-          ))}
-        </select>
-      );
-
-    case "yds":
-      return (
-        <select
-          value={model.unitInput as string}
-          onChange={(e) => handleChange(e.target.value)}
-        >
-          {YDS.map((grade) => (
-            <option key={grade} value={grade}>
-              {grade}
-            </option>
-          ))}
-        </select>
-      );
-
-    default:
-      assertUnreachable(model.selectedUnit);
-  }
-};

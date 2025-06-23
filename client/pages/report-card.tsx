@@ -1,6 +1,6 @@
 import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
+import { Dispatch } from "../tea";
 import {
   assertUnreachable,
   GetLoadedRequest as GetLoadedRequestType,
@@ -8,12 +8,10 @@ import {
   RequestStatusView,
   RequestStatusViewMap,
 } from "../util/utils";
-import * as immer from "immer";
 import * as LoadedReportCard from "../views/reportcard/main";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";
-const produce = immer.produce;
 import lodash from "lodash";
 import { InitialFilters } from "../views/edit-query";
 import { InitialFilter, UnitValue } from "../../iso/units";
@@ -51,17 +49,31 @@ export type Msg =
     msg: LoadedReportCard.Msg;
   };
 
-export function initModel({
-  userId,
-  measureStats,
-}: {
-  userId: string;
-  measureStats: MeasureStats;
-}): [Model] | [Model, Thunk<Msg> | undefined] {
-  const mySnapshotRequest: RequestStatus<Snapshot> = {
-    status: "loading",
-  };
-  const fetchSnapshotThunk = async (dispatch: Dispatch<Msg>) => {
+export class ReportCard {
+  state: Model;
+
+  constructor(
+    {
+      userId,
+      measureStats,
+    }: {
+      userId: string;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = {
+      userId,
+      measureStats,
+      mySnapshotRequest: {
+        status: "loading",
+      },
+    };
+
+    this.fetchSnapshot().catch(console.error);
+  }
+
+  private async fetchSnapshot() {
     const response = await fetch("/api/my-latest-snapshot", {
       method: "POST",
     });
@@ -69,7 +81,7 @@ export function initModel({
       const { snapshot } = (await response.json()) as {
         snapshot: Snapshot | undefined;
       };
-      dispatch({
+      this.context.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: {
           status: "loaded",
@@ -77,174 +89,168 @@ export function initModel({
         },
       });
     } else {
-      dispatch({
+      this.context.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
     }
-  };
-
-  return [
-    {
-      userId,
-      measureStats,
-      mySnapshotRequest,
-    },
-    fetchSnapshotThunk,
-  ];
-}
-
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "MY_SNAPSHOT_RESPONSE": {
-      switch (msg.request.status) {
-        case "not-sent":
-        case "error":
-        case "loading":
-          const request = msg.request;
-          return [
-            produce(model, (draft) => {
-              draft.mySnapshotRequest = immer.castDraft(request);
-            }),
-          ];
-        case "loaded":
-          if (msg.request.response == undefined) {
-            return [
-              produce(model, (draft) => {
-                draft.mySnapshotRequest = {
-                  status: "loaded",
-                  response: { state: "no-snapshot" },
-                };
-              }),
-            ];
-          } else {
-            const mySnapshot = msg.request.response;
-
-            let myInputValues = lodash.pick(
-              mySnapshot.measures,
-              MEASURES.filter((s) => s.type == "anthro").map((m) => m.id),
-            );
-            const initialFilters: InitialFilters = {};
-
-            for (const measureIdStr in myInputValues) {
-              const measureId = measureIdStr as MeasureId;
-              const measureCount = model.measureStats[measureId] || 0;
-              if (measureCount < 100) {
-                continue;
-              }
-              initialFilters[measureId] = getInitialFilter(
-                measureId,
-                myInputValues[measureId] as UnitValue,
-              );
-            }
-
-            const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
-              initialFilters,
-              measureStats: model.measureStats,
-              mySnapshot: msg.request.response,
-            });
-            return [
-              produce(model, (draft) => {
-                draft.mySnapshotRequest = {
-                  status: "loaded",
-                  response: {
-                    state: "has-snapshot",
-                    model: immer.castDraft(loadedModel),
-                  },
-                };
-              }),
-              wrapThunk("LOADED_MSG", loadedThunk),
-            ];
-          }
-
-        default:
-          assertUnreachable(msg.request);
-      }
-    }
-
-    case "LOADED_MSG": {
-      if (
-        !(
-          model.mySnapshotRequest.status == "loaded" &&
-          model.mySnapshotRequest.response.state == "has-snapshot"
-        )
-      ) {
-        throw new Error(
-          `Did not expect a LOADED_MSG when we haven't loaded a snapshot`,
-        );
-      }
-
-      const [nextModel, thunk] = LoadedReportCard.update(
-        msg.msg,
-        model.mySnapshotRequest.response.model,
-      );
-      return [
-        produce(model, (draft) => {
-          draft.mySnapshotRequest = {
-            status: "loaded",
-            response: {
-              state: "has-snapshot",
-              model: immer.castDraft(nextModel),
-            },
-          };
-        }),
-        wrapThunk("LOADED_MSG", thunk),
-      ];
-    }
-
-    default:
-      assertUnreachable(msg);
   }
-};
 
-const viewMap: RequestStatusViewMap<
-  GetLoadedRequestType<Model["mySnapshotRequest"]>["response"],
-  Msg
-> = {
-  "not-sent": () => <div />,
-  loading: () => <div>Fetching...</div>,
-  error: ({ error }) => <div>Error when fetching data: {error}</div>,
-  loaded: ({ response, dispatch }) => (
-    <div>
-      {(() => {
-        switch (response.state) {
-          case "no-snapshot":
-            return <NoSnapshotView />;
-          case "has-snapshot":
-            return (
-              <LoadedReportCard.view
-                model={response.model}
-                dispatch={(msg) => dispatch({ type: "LOADED_MSG", msg })}
-              />
-            );
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "MY_SNAPSHOT_RESPONSE": {
+        switch (msg.request.status) {
+          case "not-sent":
+          case "error":
+          case "loading":
+            this.state.mySnapshotRequest = msg.request;
+            break;
+          case "loaded":
+            if (msg.request.response == undefined) {
+              this.state.mySnapshotRequest = {
+                status: "loaded",
+                response: { state: "no-snapshot" },
+              };
+            } else {
+              const mySnapshot = msg.request.response;
+
+              let myInputValues = lodash.pick(
+                mySnapshot.measures,
+                MEASURES.filter((s) => s.type == "anthro").map((m) => m.id),
+              );
+              const initialFilters: InitialFilters = {};
+
+              for (const measureIdStr in myInputValues) {
+                const measureId = measureIdStr as MeasureId;
+                const measureCount = this.state.measureStats[measureId] || 0;
+                if (measureCount < 100) {
+                  continue;
+                }
+                initialFilters[measureId] = getInitialFilter(
+                  measureId,
+                  myInputValues[measureId] as UnitValue,
+                );
+              }
+
+              const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
+                initialFilters,
+                measureStats: this.state.measureStats,
+                mySnapshot: msg.request.response,
+              });
+
+              this.state.mySnapshotRequest = {
+                status: "loaded",
+                response: {
+                  state: "has-snapshot",
+                  model: loadedModel,
+                },
+              };
+
+              if (loadedThunk) {
+                (async () => {
+                  await loadedThunk((loadedMsg) => {
+                    this.context.myDispatch({ type: "LOADED_MSG", msg: loadedMsg });
+                  });
+                })().catch(console.error);
+              }
+            }
+            break;
+
           default:
-            assertUnreachable(response);
+            assertUnreachable(msg.request);
         }
-      })()}
-    </div>
-  ),
-};
+        break;
+      }
 
-const NoSnapshotView = () => {
-  return (
-    <div>
-      You haven't added any snapshots. You can do that on the{" "}
-      <a href="/snapshots">Snapshots</a> page.
-    </div>
-  );
-};
+      case "LOADED_MSG": {
+        if (
+          !(
+            this.state.mySnapshotRequest.status == "loaded" &&
+            this.state.mySnapshotRequest.response.state == "has-snapshot"
+          )
+        ) {
+          throw new Error(
+            `Did not expect a LOADED_MSG when we haven't loaded a snapshot`,
+          );
+        }
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      <RequestStatusView
-        dispatch={dispatch}
-        request={model.mySnapshotRequest}
-        viewMap={viewMap}
-      />
-    </div>
-  );
-};
+        const [nextModel, thunk] = LoadedReportCard.update(
+          msg.msg,
+          this.state.mySnapshotRequest.response.model,
+        );
+
+        this.state.mySnapshotRequest = {
+          status: "loaded",
+          response: {
+            state: "has-snapshot",
+            model: nextModel,
+          },
+        };
+
+        if (thunk) {
+          (async () => {
+            await thunk((loadedMsg) => {
+              this.context.myDispatch({ type: "LOADED_MSG", msg: loadedMsg });
+            });
+          })().catch(console.error);
+        }
+        break;
+      }
+
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    const viewMap: RequestStatusViewMap<
+      GetLoadedRequestType<Model["mySnapshotRequest"]>["response"],
+      Msg
+    > = {
+      "not-sent": () => <div />,
+      loading: () => <div>Fetching...</div>,
+      error: ({ error }) => <div>Error when fetching data: {error}</div>,
+      loaded: ({ response }) => (
+        <div>
+          {(() => {
+            switch (response.state) {
+              case "no-snapshot":
+                return <NoSnapshotView />;
+              case "has-snapshot":
+                return (
+                  <LoadedReportCard.view
+                    model={response.model}
+                    dispatch={(msg) => this.context.myDispatch({ type: "LOADED_MSG", msg })}
+                  />
+                );
+              default:
+                assertUnreachable(response);
+            }
+          })()}
+        </div>
+      ),
+    };
+
+    const NoSnapshotView = () => {
+      return (
+        <div>
+          You haven't added any snapshots. You can do that on the{" "}
+          <a href="/snapshots">Snapshots</a> page.
+        </div>
+      );
+    };
+
+    return (
+      <div>
+        <RequestStatusView
+          dispatch={this.context.myDispatch}
+          request={this.state.mySnapshotRequest}
+          viewMap={viewMap}
+        />
+      </div>
+    );
+  }
+}
 
 function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min: UnitValue, max: UnitValue } {
   if (measureId === 'weight' && unitValue.unit === 'kg') {

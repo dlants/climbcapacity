@@ -1,6 +1,5 @@
 import React from "react";
-import { Update, View } from "../../tea";
-import * as immer from "immer";
+import { Dispatch } from "../../tea";
 import { assertUnreachable } from "../../util/utils";
 import { generateId, getSpec, MeasureId, parseId, } from "../../../iso/measures";
 import * as typestyle from "typestyle";
@@ -22,85 +21,13 @@ type InterpolationOptions = Partial<{
   }
 }>
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureId: MeasureId;
   interpolationOptions: InterpolationOptions
-}>;
+};
 
 export type Msg =
   | { type: "TOGGLE_INTERPOLATION"; paramName: ParamName; enabled: boolean };
-
-export function initModel({
-  measureId,
-  measureStats
-}: {
-  measureId: MeasureId;
-  measureStats: MeasureStats
-}): Model {
-  const measureSpec = getSpec(measureId);
-  const measureClass = measureSpec.spec;
-
-  const interpolationOptions: InterpolationOptions = {}
-
-  if (measureClass) {
-    const params = parseId(measureId, measureClass);
-    for (const param of measureClass?.params || []) {
-      if (param.name == 'repMax' && measureClass.units.includes('kg')) {
-        const possibleValues = REPS.filter((r) => r != params.repMax);
-
-        interpolationOptions['repMax'] = {
-          interpolationMeasures: possibleValues.map((r) => {
-            const sourceMeasureId = generateId(measureClass, { ...params, repMax: r })
-            return {
-              sourceMeasureId,
-              sourceParamValue: r as ParamValue<"repMax">,
-              targetParamValue: params.repMax as ParamValue<'repMax'>,
-              count: measureStats[sourceMeasureId] || 0
-            }
-          }),
-          enabled: false
-        };
-      }
-
-      if (param.name == 'edgeSize' && ['18', '20'].includes(params.edgeSize!) && measureClass.units.includes('kg')) {
-        const possibleValues = (['18', '20'] as const).filter((r) => r != params.edgeSize);
-        interpolationOptions['edgeSize'] = {
-          interpolationMeasures: possibleValues.map((size) => {
-            const sourceMeasureId = generateId(measureClass, { ...params, edgeSize: size })
-            return {
-              sourceMeasureId,
-              sourceParamValue: size as ParamValue<"edgeSize">,
-              targetParamValue: params.edgeSize as ParamValue<'edgeSize'>,
-              count: measureStats[sourceMeasureId] || 0
-            }
-          }),
-          enabled: false
-        };
-      }
-    }
-  }
-
-  return {
-    measureId,
-    interpolationOptions
-  }
-}
-
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "TOGGLE_INTERPOLATION": {
-      return [
-        immer.produce(model, (draft) => {
-          if (draft.interpolationOptions[msg.paramName]) {
-            draft.interpolationOptions[msg.paramName]!.enabled = msg.enabled;
-          }
-        }),
-      ];
-    }
-    default:
-      assertUnreachable(msg.type);
-  }
-};
 
 const styles = typestyle.stylesheet({
   container: {
@@ -123,32 +50,105 @@ const styles = typestyle.stylesheet({
   },
 });
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      <div className={styles.container}>
-        {Object.entries(model.interpolationOptions).map(([paramName, options]) => (
-          <div key={paramName} className={styles.row}>
-            <label className={styles.label}>
-              <input
-                type="checkbox"
-                checked={options.enabled}
-                onChange={(e) =>
-                  dispatch({
-                    type: "TOGGLE_INTERPOLATION",
-                    paramName: paramName as ParamName,
-                    enabled: e.target.checked,
-                  })
-                }
-              />
+export class Interpolate {
+  state: Model;
 
-              <span className={styles.text}>
-                Interpolate {paramName} {options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
-              </span>
-            </label>
-          </div>
-        ))}
+  constructor(
+    initialParams: {
+      measureId: MeasureId;
+      measureStats: MeasureStats
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const { measureId, measureStats } = initialParams;
+    const measureSpec = getSpec(measureId);
+    const measureClass = measureSpec.spec;
+
+    const interpolationOptions: InterpolationOptions = {}
+
+    if (measureClass) {
+      const params = parseId(measureId, measureClass);
+      for (const param of measureClass?.params || []) {
+        if (param.name == 'repMax' && measureClass.units.includes('kg')) {
+          const possibleValues = REPS.filter((r) => r != params.repMax);
+
+          interpolationOptions['repMax'] = {
+            interpolationMeasures: possibleValues.map((r) => {
+              const sourceMeasureId = generateId(measureClass, { ...params, repMax: r })
+              return {
+                sourceMeasureId,
+                sourceParamValue: r as ParamValue<"repMax">,
+                targetParamValue: params.repMax as ParamValue<'repMax'>,
+                count: measureStats[sourceMeasureId] || 0
+              }
+            }),
+            enabled: false
+          };
+        }
+
+        if (param.name == 'edgeSize' && ['18', '20'].includes(params.edgeSize!) && measureClass.units.includes('kg')) {
+          const possibleValues = (['18', '20'] as const).filter((r) => r != params.edgeSize);
+          interpolationOptions['edgeSize'] = {
+            interpolationMeasures: possibleValues.map((size) => {
+              const sourceMeasureId = generateId(measureClass, { ...params, edgeSize: size })
+              return {
+                sourceMeasureId,
+                sourceParamValue: size as ParamValue<"edgeSize">,
+                targetParamValue: params.edgeSize as ParamValue<'edgeSize'>,
+                count: measureStats[sourceMeasureId] || 0
+              }
+            }),
+            enabled: false
+          };
+        }
+      }
+    }
+
+    this.state = {
+      measureId,
+      interpolationOptions
+    };
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "TOGGLE_INTERPOLATION":
+        if (this.state.interpolationOptions[msg.paramName]) {
+          this.state.interpolationOptions[msg.paramName]!.enabled = msg.enabled;
+        }
+        break;
+      default:
+        assertUnreachable(msg.type);
+    }
+  }
+
+  view() {
+    return (
+      <div>
+        <div className={styles.container}>
+          {Object.entries(this.state.interpolationOptions).map(([paramName, options]) => (
+            <div key={paramName} className={styles.row}>
+              <label className={styles.label}>
+                <input
+                  type="checkbox"
+                  checked={options.enabled}
+                  onChange={(e) =>
+                    this.context.myDispatch({
+                      type: "TOGGLE_INTERPOLATION",
+                      paramName: paramName as ParamName,
+                      enabled: e.target.checked,
+                    })
+                  }
+                />
+
+                <span className={styles.text}>
+                  Interpolate {paramName} {options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
+                </span>
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+}

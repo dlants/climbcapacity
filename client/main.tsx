@@ -1,11 +1,7 @@
 import React from "react";
 import {
   createApp,
-  wrapThunk,
-  Update,
-  View,
   SubscriptionManager,
-  chainThunks,
   Dispatch,
 } from "./tea";
 import * as SendLinkPage from "./pages/send-link";
@@ -21,12 +17,11 @@ import {
 import { NavigateMsg, parseRoute, Router } from "./router";
 import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
-import * as immer from "immer";
 import * as typestyle from "typestyle";
 import * as csx from "csx";
 import * as csstips from "csstips";
 
-const produce = immer.produce;
+
 
 const styles = typestyle.stylesheet({
   root: {
@@ -71,422 +66,343 @@ export type Model = {
   auth: RequestStatus<AuthStatus>;
   measureStats: MeasureStats;
   page:
-    | {
-        route: "/send-link";
-        sendLinkModel: SendLinkPage.Model;
-      }
-    | {
-        route: "/snapshots";
-        userSnapshotsModel: UserSnapshotsPage.Model;
-      }
-    | {
-        route: "/snapshot";
-        snapshotModel: SnapshotPage.Model;
-      }
-    | {
-        route: "/explore";
-        exploreModel: ExplorePage.Model;
-      }
-    | {
-        route: "/report-card";
-        reportCardModel: ReportCardPage.Model;
-      }
-    | {
-        route: "/";
-      };
+  | {
+    route: "/send-link";
+    sendLinkModel: SendLinkPage.Model;
+  }
+  | {
+    route: "/snapshots";
+    userSnapshotsPage: UserSnapshotsPage.UsersSnapshotsPage;
+  }
+  | {
+    route: "/snapshot";
+    snapshotModel: SnapshotPage.Model;
+  }
+  | {
+    route: "/explore";
+    exploreModel: ExplorePage.Model;
+  }
+  | {
+    route: "/report-card";
+    reportCardModel: ReportCardPage.Model;
+  }
+  | {
+    route: "/";
+  };
 };
 
 type Msg =
   | {
-      type: "AUTH_RESOLVED";
-      status: AuthStatus;
-    }
+    type: "AUTH_RESOLVED";
+    status: AuthStatus;
+  }
   | NavigateMsg
   | {
-      type: "SEND_LINK_MSG";
-      msg: SendLinkPage.Msg;
-    }
+    type: "SEND_LINK_MSG";
+    msg: SendLinkPage.Msg;
+  }
   | {
-      type: "USER_SNAPSHOTS_MSG";
-      msg: UserSnapshotsPage.Msg;
-    }
+    type: "USER_SNAPSHOTS_MSG";
+    msg: UserSnapshotsPage.Msg;
+  }
   | {
-      type: "SNAPSHOT_MSG";
-      msg: SnapshotPage.Msg;
-    }
+    type: "SNAPSHOT_MSG";
+    msg: SnapshotPage.Msg;
+  }
   | {
-      type: "EXPLORE_MSG";
-      msg: ExplorePage.Msg;
-    }
+    type: "EXPLORE_MSG";
+    msg: ExplorePage.Msg;
+  }
   | {
-      type: "REPORT_CARD_MSG";
-      msg: ReportCardPage.Msg;
-    };
+    type: "REPORT_CARD_MSG";
+    msg: ReportCardPage.Msg;
+  };
 
-const navigate: Update<Msg, Model> = (msg, model) => {
-  if (msg.type != "NAVIGATE") {
-    throw new Error(`Unexpected msg passed to navigate fn ${msg.type}`);
+export class MainApp {
+  state: Model;
+
+  constructor(
+    initialModel: Model,
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = initialModel;
   }
 
-  const user =
-    model.auth.status == "loaded" &&
-    model.auth.response.status == "logged in" &&
-    model.auth.response.user;
+  private navigate(msg: NavigateMsg) {
+    if (msg.type != "NAVIGATE") {
+      throw new Error(`Unexpected msg passed to navigate fn ${msg.type}`);
+    }
 
-  switch (msg.target.route) {
-    case "/":
-      return [
-        produce(model, (draft) => {
-          draft.page = { route: "/" };
-        }),
-      ];
+    const user =
+      this.state.auth.status == "loaded" &&
+      this.state.auth.response.status == "logged in" &&
+      this.state.auth.response.user;
 
-    case "/send-link":
-      if (user) {
-        return [
-          produce(model, (draft) => {
-            draft.page = { route: "/" };
-          }),
-        ];
-      } else {
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/send-link",
-              sendLinkModel: SendLinkPage.initModel(),
-            };
-          }),
-        ];
-      }
-    case "/snapshots":
-      if (user) {
-        const [userSnapshotsModel, userSnapshotsThunk] =
-          UserSnapshotsPage.initModel(user.id);
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/snapshots",
-              userSnapshotsModel: immer.castDraft(userSnapshotsModel),
-            };
-          }),
-          wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
-        ];
-      } else {
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/send-link",
-              sendLinkModel: SendLinkPage.initModel(),
-            };
-          }),
-        ];
-      }
+    switch (msg.target.route) {
+      case "/":
+        this.state.page = { route: "/" };
+        break;
 
-    case "/report-card":
-      if (user) {
-        const [reportCardModel, reportCardThunk] = ReportCardPage.initModel({
-          userId: user.id,
-          measureStats: model.measureStats,
-        });
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/report-card",
-              reportCardModel: immer.castDraft(reportCardModel),
-            };
-          }),
-          wrapThunk("REPORT_CARD_MSG", reportCardThunk),
-        ];
-      } else {
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/send-link",
-              sendLinkModel: SendLinkPage.initModel(),
-            };
-          }),
-        ];
-      }
-
-    case "/snapshot":
-      if (user) {
-        const [snapshotModel, snapshotThunk] = SnapshotPage.initModel({
-          snapshotId: msg.target.snapshotId,
-          measureStats: model.measureStats,
-        });
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/snapshot",
-              snapshotModel: immer.castDraft(snapshotModel),
-            };
-          }),
-          wrapThunk("SNAPSHOT_MSG", snapshotThunk),
-        ];
-      } else {
-        return [
-          produce(model, (draft) => {
-            draft.page = {
-              route: "/send-link",
-              sendLinkModel: SendLinkPage.initModel(),
-            };
-          }),
-        ];
-      }
-    case "/explore":
-      const [exploreModel, exploreThunk] = ExplorePage.initModel({
-        measureStats: model.measureStats,
-      });
-      return [
-        produce(model, (draft) => {
-          draft.page = {
-            route: "/explore",
-            exploreModel: immer.castDraft(exploreModel),
+      case "/send-link":
+        if (user) {
+          this.state.page = { route: "/" };
+        } else {
+          this.state.page = {
+            route: "/send-link",
+            sendLinkModel: SendLinkPage.initModel(),
           };
-        }),
-        wrapThunk("EXPLORE_MSG", exploreThunk),
-      ];
-    default:
-      assertUnreachable(msg.target);
+        }
+        break;
+
+      case "/snapshots":
+        if (user) {
+          const userSnapshotsPage = new UserSnapshotsPage.UsersSnapshotsPage(
+            user.id,
+            { myDispatch: (msg) => this.context.myDispatch({ type: "USER_SNAPSHOTS_MSG", msg }) }
+          );
+          this.state.page = {
+            route: "/snapshots",
+            userSnapshotsPage,
+          };
+        } else {
+          this.state.page = {
+            route: "/send-link",
+            sendLinkModel: SendLinkPage.initModel(),
+          };
+        }
+        break;
+
+      case "/report-card":
+        if (user) {
+          const [reportCardModel, reportCardThunk] = ReportCardPage.initModel({
+            userId: user.id,
+            measureStats: this.state.measureStats,
+          });
+          this.state.page = {
+            route: "/report-card",
+            reportCardModel,
+          };
+
+          (async () => {
+            const wrappedThunk = async (dispatch: Dispatch<ReportCardPage.Msg>) => {
+              await reportCardThunk(dispatch);
+            };
+            await wrappedThunk((msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }));
+          })().catch(console.error);
+        } else {
+          this.state.page = {
+            route: "/send-link",
+            sendLinkModel: SendLinkPage.initModel(),
+          };
+        }
+        break;
+
+      case "/snapshot":
+        if (user) {
+          const [snapshotModel, snapshotThunk] = SnapshotPage.initModel({
+            snapshotId: msg.target.snapshotId,
+            measureStats: this.state.measureStats,
+          });
+          this.state.page = {
+            route: "/snapshot",
+            snapshotModel,
+          };
+
+          (async () => {
+            const wrappedThunk = async (dispatch: Dispatch<SnapshotPage.Msg>) => {
+              await snapshotThunk(dispatch);
+            };
+            await wrappedThunk((msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }));
+          })().catch(console.error);
+        } else {
+          this.state.page = {
+            route: "/send-link",
+            sendLinkModel: SendLinkPage.initModel(),
+          };
+        }
+        break;
+
+      case "/explore":
+        const [exploreModel, exploreThunk] = ExplorePage.initModel({
+          measureStats: this.state.measureStats,
+        });
+        this.state.page = {
+          route: "/explore",
+          exploreModel,
+        };
+
+        (async () => {
+          const wrappedThunk = async (dispatch: Dispatch<ExplorePage.Msg>) => {
+            await exploreThunk(dispatch);
+          };
+          await wrappedThunk((msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }));
+        })().catch(console.error);
+        break;
+
+      default:
+        assertUnreachable(msg.target);
+    }
+
+    this.navigationThunk().catch(console.error);
   }
-};
 
-const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "NAVIGATE": {
-      const [nextModel, thunk] = navigate(msg, model);
-      return [nextModel, chainThunks(thunk, navigationThunk(nextModel))];
-    }
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "NAVIGATE":
+        this.navigate(msg);
+        break;
 
-    case "AUTH_RESOLVED": {
-      return [
-        produce(model, (draft) => {
-          draft.auth = { status: "loaded", response: msg.status };
-        }),
-      ];
-    }
+      case "AUTH_RESOLVED":
+        this.state.auth = { status: "loaded", response: msg.status };
+        break;
 
-    case "SEND_LINK_MSG": {
-      if (model.page.route != "/send-link") {
-        console.warn(
-          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
+      case "SEND_LINK_MSG":
+        if (this.state.page.route != "/send-link") {
+          console.warn(
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+          );
+          return;
+        }
+        const [sendLinkModel, sendLinkThunk] = SendLinkPage.update(
+          msg.msg,
+          this.state.page.sendLinkModel,
         );
-        return [model];
-      }
-      const [sendLinkModel, sendLinkThunk] = SendLinkPage.update(
-        msg.msg,
-        model.page.sendLinkModel,
-      );
-      return [
-        produce(model, (draft) => {
-          (
-            draft.page as ExtractFromDisjointUnion<
-              Model["page"],
-              "route",
-              "/send-link"
-            >
-          ).sendLinkModel = immer.castDraft(sendLinkModel);
-        }),
-        wrapThunk("SEND_LINK_MSG", sendLinkThunk),
-      ];
-    }
+        (
+          this.state.page as ExtractFromDisjointUnion<
+            Model["page"],
+            "route",
+            "/send-link"
+          >
+        ).sendLinkModel = sendLinkModel;
 
-    case "USER_SNAPSHOTS_MSG": {
-      if (model.page.route != "/snapshots") {
-        console.warn(
-          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
-        );
-        return [model];
-      }
+        (async () => {
+          const wrappedThunk = async (dispatch: Dispatch<SendLinkPage.Msg>) => {
+            await sendLinkThunk(dispatch);
+          };
+          await wrappedThunk((msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }));
+        })().catch(console.error);
+        break;
 
-      if (msg.msg.type == "SELECT_SNAPSHOT") {
-        const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
-        return [
-          model,
-          async (dispatch) => {
-            dispatch({
+      case "USER_SNAPSHOTS_MSG":
+        if (this.state.page.route != "/snapshots") {
+          console.warn(
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+          );
+          return;
+        }
+
+        if (msg.msg.type == "SELECT_SNAPSHOT") {
+          const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
+          (async () => {
+            this.context.myDispatch({
               type: "NAVIGATE",
               target: {
                 route: "/snapshot",
                 snapshotId,
               },
             });
-          },
-        ];
-      }
+          })().catch(console.error);
+          return;
+        }
 
-      const [userSnapshotsModel, userSnapshotsThunk] = UserSnapshotsPage.update(
-        msg.msg,
-        model.page.userSnapshotsModel,
-      );
-      return [
-        produce(model, (draft) => {
-          (
-            draft.page as ExtractFromDisjointUnion<
-              Model["page"],
-              "route",
-              "/snapshots"
-            >
-          ).userSnapshotsModel = immer.castDraft(userSnapshotsModel);
-        }),
-        wrapThunk("USER_SNAPSHOTS_MSG", userSnapshotsThunk),
-      ];
-    }
+        (
+          this.state.page as ExtractFromDisjointUnion<
+            Model["page"],
+            "route",
+            "/snapshots"
+          >
+        ).userSnapshotsPage.update(msg.msg);
+        break;
 
-    case "SNAPSHOT_MSG": {
-      if (model.page.route != "/snapshot") {
-        console.warn(
-          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
+      case "SNAPSHOT_MSG":
+        if (this.state.page.route != "/snapshot") {
+          console.warn(
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+          );
+          return;
+        }
+        const [snapshotModel, snapshotThunk] = SnapshotPage.update(
+          msg.msg,
+          this.state.page.snapshotModel,
         );
-        return [model];
-      }
-      const [snapshotModel, snapshotThunk] = SnapshotPage.update(
-        msg.msg,
-        model.page.snapshotModel,
-      );
-      return [
-        produce(model, (draft) => {
-          (
-            draft.page as ExtractFromDisjointUnion<
-              Model["page"],
-              "route",
-              "/snapshot"
-            >
-          ).snapshotModel = immer.castDraft(snapshotModel);
-        }),
-        wrapThunk("SNAPSHOT_MSG", snapshotThunk),
-      ];
-    }
+        (
+          this.state.page as ExtractFromDisjointUnion<
+            Model["page"],
+            "route",
+            "/snapshot"
+          >
+        ).snapshotModel = snapshotModel;
 
-    case "EXPLORE_MSG": {
-      if (model.page.route != "/explore") {
-        console.warn(
-          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
+        (async () => {
+          const wrappedThunk = async (dispatch: Dispatch<SnapshotPage.Msg>) => {
+            await snapshotThunk(dispatch);
+          };
+          await wrappedThunk((msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }));
+        })().catch(console.error);
+        break;
+
+      case "EXPLORE_MSG":
+        if (this.state.page.route != "/explore") {
+          console.warn(
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+          );
+          return;
+        }
+        const [exploreModel, exploreThunk] = ExplorePage.update(
+          msg.msg,
+          this.state.page.exploreModel,
         );
-        return [model];
-      }
-      const [exploreModel, exploreThunk] = ExplorePage.update(
-        msg.msg,
-        model.page.exploreModel,
-      );
-      return [
-        produce(model, (draft) => {
-          (
-            draft.page as ExtractFromDisjointUnion<
-              Model["page"],
-              "route",
-              "/explore"
-            >
-          ).exploreModel = immer.castDraft(exploreModel);
-        }),
-        wrapThunk("EXPLORE_MSG", exploreThunk),
-      ];
-    }
+        (
+          this.state.page as ExtractFromDisjointUnion<
+            Model["page"],
+            "route",
+            "/explore"
+          >
+        ).exploreModel = exploreModel;
 
-    case "REPORT_CARD_MSG": {
-      if (model.page.route != "/report-card") {
-        console.warn(
-          `Got unexpected ${msg.type} msg when model is in ${model.page.route} state. Ingoring.`,
+        (async () => {
+          const wrappedThunk = async (dispatch: Dispatch<ExplorePage.Msg>) => {
+            await exploreThunk(dispatch);
+          };
+          await wrappedThunk((msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }));
+        })().catch(console.error);
+        break;
+
+      case "REPORT_CARD_MSG":
+        if (this.state.page.route != "/report-card") {
+          console.warn(
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+          );
+          return;
+        }
+        const [reportCardModel, reportCardThunk] = ReportCardPage.update(
+          msg.msg,
+          this.state.page.reportCardModel,
         );
-        return [model];
-      }
-      const [reportCardModel, reportCardThunk] = ReportCardPage.update(
-        msg.msg,
-        model.page.reportCardModel,
-      );
-      return [
-        produce(model, (draft) => {
-          (
-            draft.page as ExtractFromDisjointUnion<
-              Model["page"],
-              "route",
-              "/report-card"
-            >
-          ).reportCardModel = immer.castDraft(reportCardModel);
-        }),
-        wrapThunk("REPORT_CARD_MSG", reportCardThunk),
-      ];
-    }
+        (
+          this.state.page as ExtractFromDisjointUnion<
+            Model["page"],
+            "route",
+            "/report-card"
+          >
+        ).reportCardModel = reportCardModel;
 
-    default:
-      return assertUnreachable(msg);
+        (async () => {
+          const wrappedThunk = async (dispatch: Dispatch<ReportCardPage.Msg>) => {
+            await reportCardThunk(dispatch);
+          };
+          await wrappedThunk((msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }));
+        })().catch(console.error);
+        break;
+
+      default:
+        assertUnreachable(msg);
+    }
   }
-};
 
-function Page({ model, dispatch }: { model: Model; dispatch: Dispatch<Msg> }) {
-  switch (model.page.route) {
-    case "/send-link":
-      return (
-        <SendLinkPage.view
-          model={model.page.sendLinkModel}
-          dispatch={(msg) => dispatch({ type: "SEND_LINK_MSG", msg })}
-        />
-      );
-
-    case "/snapshots":
-      return (
-        <UserSnapshotsPage.view
-          model={model.page.userSnapshotsModel}
-          dispatch={(msg) => dispatch({ type: "USER_SNAPSHOTS_MSG", msg })}
-        />
-      );
-
-    case "/report-card":
-      return (
-        <ReportCardPage.view
-          model={model.page.reportCardModel}
-          dispatch={(msg) => dispatch({ type: "REPORT_CARD_MSG", msg })}
-        />
-      );
-
-    case "/snapshot":
-      return (
-        <SnapshotPage.view
-          model={model.page.snapshotModel}
-          dispatch={(msg) => dispatch({ type: "SNAPSHOT_MSG", msg })}
-        />
-      );
-
-    case "/explore":
-      return (
-        <ExplorePage.view
-          model={model.page.exploreModel}
-          dispatch={(msg) => dispatch({ type: "EXPLORE_MSG", msg })}
-        />
-      );
-
-    case "/":
-      return <div>TODO: add homepage content</div>;
-
-    default:
-      assertUnreachable(model.page);
-  }
-}
-
-const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div className={styles.root}>
-      <div className={styles.page}>
-        <div className={styles.pageItem}>
-          <Nav
-            loggedIn={
-              model.auth.status == "loaded" &&
-              model.auth.response.status == "logged in"
-            }
-          />
-        </div>
-        <div className={styles.lastPageItem}>
-          <Page model={model} dispatch={dispatch} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-function navigationThunk(model: Model) {
-  return async function () {
+  private async navigationThunk() {
     let newUrl = "/";
-    switch (model.page.route) {
+    switch (this.state.page.route) {
       case "/send-link":
         newUrl = "/send-link";
         break;
@@ -497,7 +413,7 @@ function navigationThunk(model: Model) {
         newUrl = "/report-card";
         break;
       case "/snapshot":
-        newUrl = `/snapshot/${model.page.snapshotModel.snapshotId}`;
+        newUrl = `/snapshot/${this.state.page.snapshotModel.snapshotId}`;
         break;
       case "/explore":
         newUrl = "/explore";
@@ -506,12 +422,79 @@ function navigationThunk(model: Model) {
         newUrl = "/";
         break;
       default:
-        assertUnreachable(model.page);
+        assertUnreachable(this.state.page);
     }
 
     window.history.replaceState({}, "", newUrl);
-  };
+  }
+
+  view() {
+    const Page = () => {
+      switch (this.state.page.route) {
+        case "/send-link":
+          return (
+            <SendLinkPage.view
+              model={this.state.page.sendLinkModel}
+              dispatch={(msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg })}
+            />
+          );
+
+        case "/snapshots":
+          return this.state.page.userSnapshotsPage.view();
+
+        case "/report-card":
+          return (
+            <ReportCardPage.view
+              model={this.state.page.reportCardModel}
+              dispatch={(msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg })}
+            />
+          );
+
+        case "/snapshot":
+          return (
+            <SnapshotPage.view
+              model={this.state.page.snapshotModel}
+              dispatch={(msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg })}
+            />
+          );
+
+        case "/explore":
+          return (
+            <ExplorePage.view
+              model={this.state.page.exploreModel}
+              dispatch={(msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg })}
+            />
+          );
+
+        case "/":
+          return <div>TODO: add homepage content</div>;
+
+        default:
+          assertUnreachable(this.state.page);
+      }
+    };
+
+    return (
+      <div className={styles.root}>
+        <div className={styles.page}>
+          <div className={styles.pageItem}>
+            <Nav
+              loggedIn={
+                this.state.auth.status == "loaded" &&
+                this.state.auth.response.status == "logged in"
+              }
+            />
+          </div>
+          <div className={styles.lastPageItem}>
+            <Page />
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
+
+
 async function run() {
   const router = new Router();
   const subscriptionManager: SubscriptionManager<"router", Msg> = {
@@ -545,24 +528,36 @@ async function run() {
     page:
       auth.status == "loaded" && auth.response.status == "logged in"
         ? {
-            route: "/",
-          }
+          route: "/",
+        }
         : {
-            route: "/send-link",
-            sendLinkModel: SendLinkPage.initModel(),
-          },
+          route: "/send-link",
+          sendLinkModel: SendLinkPage.initModel(),
+        },
   };
+
+  let mainApp: MainApp;
+
+  let dispatchFn: Dispatch<Msg>;
 
   const app = createApp<Model, Msg, "router">({
     initialModel,
-    update,
-    View: view,
+    update: (msg, model) => {
+      mainApp.update(msg);
+      return mainApp.state;
+    },
+    View: ({ model }) => {
+      return mainApp.view();
+    },
     sub: {
       subscriptions: () => [{ id: "router" }],
       subscriptionManager,
     },
   });
   const { dispatchRef } = app.mount(document.getElementById("app")!);
+
+  dispatchFn = dispatchRef.current!;
+  mainApp = new MainApp(initialModel, { myDispatch: dispatchFn });
 
   const navMsg = parseRoute(window.location.pathname);
   if (navMsg) {

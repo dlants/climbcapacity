@@ -1,6 +1,4 @@
 import React, { Dispatch } from "react";
-import { Update, View } from "../tea";
-import * as immer from "immer";
 import * as MeasureSelectionBox from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
@@ -23,57 +21,193 @@ export type FilterMapping = {
   };
 };
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureStats: MeasureStats;
   filters: Filter.Model[];
   datasets: {
     [dataset in Dataset]: boolean;
   };
   measureSelectionBox: MeasureSelectionBox.Model;
-}>;
+};
 
 export type Msg =
   | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
-      type: "MEASURE_SELECTOR_MSG";
-      msg: MeasureSelectionBox.Msg;
-    }
+    type: "MEASURE_SELECTOR_MSG";
+    msg: MeasureSelectionBox.Msg;
+  }
   | {
-      type: "TOGGLE_DATASET";
-      dataset: Dataset;
-      include: boolean;
-    }
+    type: "TOGGLE_DATASET";
+    dataset: Dataset;
+    include: boolean;
+  }
   | { type: "FILTER_MSG"; measureId: MeasureId; msg: Filter.Msg };
 
 export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter;
 };
 
-export function initModel({
-  initialFilters,
-  measureStats,
-}: {
-  initialFilters: InitialFilters;
-  measureStats: MeasureStats;
-}): Model {
-  const filters: Filter.Model[] = [];
-  for (const measureIdStr in initialFilters) {
-    const measureId = measureIdStr as MeasureId;
-    const initialFilter = initialFilters[measureId];
-    filters.push(Filter.initModel({ measureId, initialFilter }));
+export class EditQuery {
+  state: Model;
+
+  constructor(
+    {
+      initialFilters,
+      measureStats,
+    }: {
+      initialFilters: InitialFilters;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const filters: Filter.Model[] = [];
+    for (const measureIdStr in initialFilters) {
+      const measureId = measureIdStr as MeasureId;
+      const initialFilter = initialFilters[measureId];
+      filters.push(Filter.initModel({ measureId, initialFilter }));
+    }
+
+    this.state = {
+      measureStats,
+      datasets: {
+        powercompany: true,
+        climbharder: true,
+      },
+      filters,
+      measureSelectionBox: MeasureSelectionBox.initModel({
+        measureStats,
+      }),
+    };
   }
 
-  return {
-    measureStats,
-    datasets: {
-      powercompany: true,
-      climbharder: true,
-    },
-    filters,
-    measureSelectionBox: MeasureSelectionBox.initModel({
-      measureStats,
-    }),
-  };
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "REMOVE_FILTER":
+        this.state.filters = this.state.filters.filter(
+          (f) => f.model.measureId !== msg.measureId,
+        );
+        break;
+
+      case "MEASURE_SELECTOR_MSG":
+        const [newModel] = MeasureSelectionBox.update(
+          msg.msg,
+          this.state.measureSelectionBox,
+        );
+        if (newModel.state == "selected") {
+          const spec = MEASURES.find((spec) => spec.id == newModel.measureId);
+          if (!spec) {
+            throw new Error(`Unexpected measureId ${newModel.measureId}`);
+          }
+
+          this.state.filters.push(
+            Filter.initModel({
+              measureId: newModel.measureId,
+              initialFilter: spec.initialFilter,
+            }),
+          );
+
+          this.state.measureSelectionBox = MeasureSelectionBox.initModel({
+            measureStats: this.state.measureStats,
+          });
+        } else {
+          this.state.measureSelectionBox = newModel;
+        }
+        break;
+
+      case "FILTER_MSG":
+        const filterIndex = this.state.filters.findIndex(
+          (f) => f.model.measureId === msg.measureId,
+        );
+        const filter = this.state.filters[filterIndex];
+        if (!filter) {
+          throw new Error(`Unexpected filter id ${msg.measureId}`);
+        }
+        const [next] = Filter.update(msg.msg, filter);
+        this.state.filters[filterIndex] = next;
+        break;
+
+      case "TOGGLE_DATASET":
+        this.state.datasets[msg.dataset] = msg.include;
+        break;
+
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    const FilterView = ({
+      filter,
+    }: {
+      filter: Filter.Model;
+    }) => {
+      return (
+        <div className={styles.container}>
+          <div className={styles.item}>
+            <strong>{filter.model.measureId}</strong>(
+            {this.state.measureStats[filter.model.measureId] || 0} snapshots)
+          </div>
+          <div className={styles.item}>
+            <Filter.view
+              model={filter}
+              dispatch={(msg) =>
+                this.context.myDispatch({
+                  type: "FILTER_MSG",
+                  measureId: filter.model.measureId,
+                  msg,
+                })
+              }
+            />
+          </div>
+          <div className={styles.item}>
+            <button
+              onPointerDown={() =>
+                this.context.myDispatch({
+                  type: "REMOVE_FILTER",
+                  measureId: filter.model.measureId,
+                })
+              }
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div>
+        {this.state.filters.map((filter) => (
+          <FilterView
+            key={filter.model.measureId}
+            filter={filter}
+          />
+        ))}
+        <MeasureSelectionBox.view
+          model={this.state.measureSelectionBox}
+          dispatch={(msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
+        />{" "}
+        {DATASETS.map((dataset) => (
+          <div key={dataset}>
+            <label>
+              <input
+                type="checkbox"
+                checked={this.state.datasets[dataset]}
+                onChange={(e) =>
+                  this.context.myDispatch({
+                    type: "TOGGLE_DATASET",
+                    dataset: dataset,
+                    include: e.target.checked,
+                  })
+                }
+              />{" "}
+              {dataset}
+            </label>
+          </div>
+        ))}
+      </div>
+    );
+  }
 }
 
 export function generateFiltersMap(model: Model): FilterMapping {
@@ -100,8 +234,8 @@ export function getQuery(filtersModel: Model): {
     query.measures[filter.model.measureId] = Filter.getQuery(filter);
     queryHashParts.push(
       filter.model.measureId +
-        ":" +
-        JSON.stringify(query.measures[filter.model.measureId]),
+      ":" +
+      JSON.stringify(query.measures[filter.model.measureId]),
     );
   });
 
@@ -115,118 +249,6 @@ export function getQuery(filtersModel: Model): {
     hash: queryHashParts.join(","),
   };
 }
-
-function nextChar(char: string) {
-  return String.fromCharCode(char.charCodeAt(0) + 1);
-}
-
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "REMOVE_FILTER":
-      return [
-        immer.produce(model, (draft) => {
-          draft.filters = draft.filters.filter(
-            (f) => f.model.measureId !== msg.measureId,
-          );
-        }),
-      ];
-
-    case "MEASURE_SELECTOR_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const [newModel] = MeasureSelectionBox.update(
-            msg.msg,
-            model.measureSelectionBox,
-          );
-          if (newModel.state == "selected") {
-            const spec = MEASURES.find((spec) => spec.id == newModel.measureId);
-            if (!spec) {
-              throw new Error(`Unexpected measureId ${newModel.measureId}`);
-            }
-
-            draft.filters.push(
-              immer.castDraft(
-                Filter.initModel({
-                  measureId: newModel.measureId,
-                  initialFilter: spec.initialFilter,
-                }),
-              ),
-            );
-
-            draft.measureSelectionBox = immer.castDraft(
-              MeasureSelectionBox.initModel({
-                measureStats: model.measureStats,
-              }),
-            );
-          } else {
-            draft.measureSelectionBox = immer.castDraft(newModel);
-          }
-        }),
-      ];
-
-    case "FILTER_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const filterIndex = draft.filters.findIndex(
-            (f) => f.model.measureId === msg.measureId,
-          );
-          const filter = draft.filters[filterIndex];
-          if (!filter) {
-            throw new Error(`Unexpected filter id ${msg.measureId}`);
-          }
-          const [next] = Filter.update(msg.msg, filter);
-          draft.filters[filterIndex] = immer.castDraft(next);
-        }),
-      ];
-
-    case "TOGGLE_DATASET":
-      return [
-        immer.produce(model, (draft) => {
-          draft.datasets[msg.dataset] = msg.include;
-        }),
-      ];
-
-    default:
-      assertUnreachable(msg);
-  }
-};
-
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      {model.filters.map((filter) => (
-        <FilterView
-          key={filter.model.measureId}
-          filter={filter}
-          dispatch={dispatch}
-          model={model}
-        />
-      ))}
-      <MeasureSelectionBox.view
-        model={model.measureSelectionBox}
-        dispatch={(msg) => dispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
-      />{" "}
-      {DATASETS.map((dataset) => (
-        <div key={dataset}>
-          <label>
-            <input
-              type="checkbox"
-              checked={model.datasets[dataset]}
-              onChange={(e) =>
-                dispatch({
-                  type: "TOGGLE_DATASET",
-                  dataset: dataset,
-                  include: e.target.checked,
-                })
-              }
-            />{" "}
-            {dataset}
-          </label>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 const styles = typestyle.stylesheet({
   container: {
@@ -246,46 +268,3 @@ const styles = typestyle.stylesheet({
     ...csstips.content,
   },
 });
-
-const FilterView = ({
-  model,
-  filter,
-  dispatch,
-}: {
-  model: Model;
-  filter: Filter.Model;
-  dispatch: Dispatch<Msg>;
-}) => {
-  return (
-    <div className={styles.container}>
-      <div className={styles.item}>
-        <strong>{filter.model.measureId}</strong>(
-        {model.measureStats[filter.model.measureId] || 0} snapshots)
-      </div>
-      <div className={styles.item}>
-        <Filter.view
-          model={filter}
-          dispatch={(msg) =>
-            dispatch({
-              type: "FILTER_MSG",
-              measureId: filter.model.measureId,
-              msg,
-            })
-          }
-        />
-      </div>
-      <div className={styles.item}>
-        <button
-          onPointerDown={() =>
-            dispatch({
-              type: "REMOVE_FILTER",
-              measureId: filter.model.measureId,
-            })
-          }
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  );
-};

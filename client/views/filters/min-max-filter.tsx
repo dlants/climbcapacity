@@ -1,21 +1,20 @@
 import React from "react";
 import { convertToStandardUnit, UnitValue } from "../../../iso/units";
-import { Dispatch, Update } from "../../tea";
+import { Dispatch } from "../../tea";
 import * as UnitInput from "../unit-input";
 import * as UnitToggle from "../unit-toggle";
-import * as immer from "immer";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureId: MeasureId;
   minInput: UnitInput.Model;
   maxInput: UnitInput.Model;
   unitToggle: UnitToggle.Model;
-}>;
+};
 
 export type Msg =
   | { type: "MAX_INPUT_MSG"; msg: UnitInput.Msg }
@@ -55,70 +54,6 @@ export function filterApplies(model: Model, value: UnitValue): boolean {
   return true;
 }
 
-export function initModel({
-  measureId,
-  minValue,
-  maxValue,
-}: {
-  measureId: MeasureId;
-  minValue: UnitValue;
-  maxValue: UnitValue;
-}): Model {
-  const minInput = UnitInput.initModel(measureId, minValue);
-  return {
-    measureId,
-    minInput,
-    maxInput: UnitInput.initModel(measureId, maxValue),
-    unitToggle: {
-      measureId,
-      selectedUnit: minInput.selectedUnit,
-      possibleUnits: minInput.possibleUnits,
-    },
-  };
-}
-
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "MIN_INPUT_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const [newModel] = UnitInput.update(msg.msg, draft.minInput);
-          draft.minInput = immer.castDraft(newModel);
-        }),
-      ];
-
-    case "MAX_INPUT_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const [newModel] = UnitInput.update(msg.msg, draft.maxInput);
-          draft.maxInput = immer.castDraft(newModel);
-        }),
-      ];
-
-    case "UNIT_TOGGLE_MSG":
-      return [
-        immer.produce(model, (draft) => {
-          const [newModel] = UnitToggle.update(msg.msg, draft.unitToggle);
-          draft.unitToggle = immer.castDraft(newModel);
-          const [nextMin] = UnitInput.update(
-            { type: "SELECT_UNIT", unit: draft.unitToggle.selectedUnit },
-            draft.minInput,
-          );
-          draft.minInput = immer.castDraft(nextMin);
-
-          const [nextMax] = UnitInput.update(
-            { type: "SELECT_UNIT", unit: draft.unitToggle.selectedUnit },
-            draft.maxInput,
-          );
-          draft.maxInput = immer.castDraft(nextMax);
-        }),
-      ];
-
-    default:
-      assertUnreachable(msg);
-  }
-};
-
 const styles = typestyle.stylesheet({
   container: {
     ...csstips.horizontal,
@@ -142,39 +77,92 @@ const styles = typestyle.stylesheet({
   },
 });
 
-export const view = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: Dispatch<Msg>;
-}) => {
-  return (
-    <div className={styles.container}>
-      <div className={styles.item}>
-        min:{" "}
-        <UnitInput.UnitInput
-          model={model.minInput}
-          dispatch={(msg) => dispatch({ type: "MIN_INPUT_MSG", msg })}
-        />
-      </div>
-      <div className={styles.item}>
-        max:{" "}
-        <UnitInput.UnitInput
-          model={model.maxInput}
-          dispatch={(msg) => dispatch({ type: "MAX_INPUT_MSG", msg })}
-        />
-      </div>
-      {model.minInput.possibleUnits.length > 1 && (
+export class MinMaxFilter {
+  state: Model;
+
+  constructor(
+    initialParams: {
+      measureId: MeasureId;
+      minValue: UnitValue;
+      maxValue: UnitValue;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const minInput = UnitInput.initModel(initialParams.measureId, initialParams.minValue);
+    this.state = {
+      measureId: initialParams.measureId,
+      minInput,
+      maxInput: UnitInput.initModel(initialParams.measureId, initialParams.maxValue),
+      unitToggle: {
+        measureId: initialParams.measureId,
+        selectedUnit: minInput.selectedUnit,
+        possibleUnits: minInput.possibleUnits,
+      },
+    };
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "MIN_INPUT_MSG":
+        const [newMinModel] = UnitInput.update(msg.msg, this.state.minInput);
+        this.state.minInput = newMinModel;
+        break;
+
+      case "MAX_INPUT_MSG":
+        const [newMaxModel] = UnitInput.update(msg.msg, this.state.maxInput);
+        this.state.maxInput = newMaxModel;
+        break;
+
+      case "UNIT_TOGGLE_MSG":
+        const [newToggleModel] = UnitToggle.update(msg.msg, this.state.unitToggle);
+        this.state.unitToggle = newToggleModel;
+
+        const [nextMin] = UnitInput.update(
+          { type: "SELECT_UNIT", unit: this.state.unitToggle.selectedUnit },
+          this.state.minInput,
+        );
+        this.state.minInput = nextMin;
+
+        const [nextMax] = UnitInput.update(
+          { type: "SELECT_UNIT", unit: this.state.unitToggle.selectedUnit },
+          this.state.maxInput,
+        );
+        this.state.maxInput = nextMax;
+        break;
+
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    return (
+      <div className={styles.container}>
         <div className={styles.item}>
-          <UnitToggle.view
-            model={model.maxInput}
-            dispatch={(msg) => {
-              dispatch({ type: "UNIT_TOGGLE_MSG", msg });
-            }}
+          min:{" "}
+          <UnitInput.UnitInput
+            model={this.state.minInput}
+            dispatch={(msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg })}
           />
         </div>
-      )}
-    </div>
-  );
-};
+        <div className={styles.item}>
+          max:{" "}
+          <UnitInput.UnitInput
+            model={this.state.maxInput}
+            dispatch={(msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg })}
+          />
+        </div>
+        {this.state.minInput.possibleUnits.length > 1 && (
+          <div className={styles.item}>
+            <UnitToggle.view
+              model={this.state.unitToggle}
+              dispatch={(msg) => {
+                this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg });
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+}

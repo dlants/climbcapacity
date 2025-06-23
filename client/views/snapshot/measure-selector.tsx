@@ -1,9 +1,7 @@
 import React from "react";
-import * as immer from "immer";
-const produce = immer.produce;
 
 import type { HydratedSnapshot } from "../../types";
-import { Update, View, Dispatch } from "../../tea";
+import { Dispatch } from "../../tea";
 import { UnitValue, unitValueToString } from "../../../iso/units";
 import { MEASURES } from "../../constants";
 import { isSubsequence } from "../../util/utils";
@@ -59,32 +57,182 @@ type MeasureGroup = {
 
 type Item = MeasureItem | MeasureGroup;
 
-export type Model = immer.Immutable<{
+export type Model = {
   query: string;
   snapshot: HydratedSnapshot;
   measureStats: MeasureStats;
   items: Item[];
-}>;
+};
 
-export function initModel({
-  snapshot,
-  measureStats,
-}: {
-  snapshot: HydratedSnapshot;
-  measureStats: MeasureStats;
-}): Model {
-  const model: Model = {
-    query: "",
-    measureStats,
-    snapshot: snapshot,
-    items: [],
-  };
-  return produce(model, (draft) => {
-    draft.items = immer.castDraft(getItems(draft));
-  });
+export class MeasureSelector {
+  state: Model;
+
+  constructor(
+    {
+      snapshot,
+      measureStats,
+    }: {
+      snapshot: HydratedSnapshot;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = {
+      query: "",
+      measureStats,
+      snapshot: snapshot,
+      items: [],
+    };
+
+    this.state.items = getItems(this.state);
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "UPDATE_QUERY":
+        this.state.query = msg.query;
+        this.state.items = getItems(this.state);
+        break;
+      case "DELETE_MEASURE":
+      case "INIT_UPDATE":
+        // do nothing since we will cover this in the parent component
+        break;
+      default:
+        assertUnreachable(msg);
+    }
+  }
+
+  view() {
+    const FilterInput = ({
+      value,
+      onChange,
+    }: {
+      value: string;
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    }) => (
+      <input
+        type="text"
+        placeholder="Filter measures..."
+        value={value}
+        onChange={onChange}
+      />
+    );
+
+    const MeasureView = ({
+      measureStatsCount,
+      measure,
+    }: {
+      measureStatsCount: number;
+      measure: MeasureSpec;
+    }) => {
+      const unitValue = this.state.snapshot.measures[measure.id];
+      return (
+        <div key={measure.id} className="measure-item">
+          <label>
+            {measure.name} ({measureStatsCount || 0} snapshots)
+          </label>{" "}
+          {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+          <button
+            onPointerDown={() => {
+              this.context.myDispatch({
+                type: "INIT_UPDATE",
+                update: {
+                  type: "measure",
+                  measureId: measure.id,
+                },
+              });
+            }}
+          >
+            Edit
+          </button>
+          {this.state.snapshot.measures[measure.id] ? (
+            <button
+              onPointerDown={() => {
+                this.context.myDispatch({
+                  type: "DELETE_MEASURE",
+                  measureId: measure.id,
+                });
+              }}
+            >
+              Delete
+            </button>
+          ) : undefined}
+        </div>
+      );
+    };
+
+    const MeasureGroupView = ({
+      measureGroup,
+    }: {
+      measureGroup: MeasureGroup;
+    }) => {
+      return (
+        <div className="measure-class">
+          <div>
+            <strong>{measureGroup.name}</strong>{" "}
+            <button
+              onPointerDown={() => {
+                this.context.myDispatch({
+                  type: "INIT_UPDATE",
+                  update: {
+                    type: "measureClasses",
+                    measureClasses: measureGroup.measureClasses,
+                  },
+                });
+              }}
+            >
+              Add New
+            </button>
+          </div>
+
+          <div className="measure-class-items" style={{ paddingLeft: "10px" }}>
+            {measureGroup.items.map((item) => (
+              <MeasureView
+                key={item.spec.id}
+                measureStatsCount={this.state.measureStats[item.spec.id] || 0}
+                measure={item.spec}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="measure-selector">
+        <FilterInput
+          value={this.state.query}
+          onChange={(e) =>
+            this.context.myDispatch({ type: "UPDATE_QUERY", query: e.target.value })
+          }
+        />
+        {this.state.items.map((i) => {
+          switch (i.type) {
+            case "measure-item":
+              return (
+                <MeasureView
+                  key={i.spec.id}
+                  measureStatsCount={this.state.measureStats[i.spec.id]}
+                  measure={i.spec}
+                />
+              );
+            case "measure-group":
+              return (
+                <MeasureGroupView
+                  key={i.name}
+                  measureGroup={i}
+                />
+              );
+            default:
+              assertUnreachable(i);
+          }
+        })}
+      </div>
+    );
+  }
 }
 
-function getAllItems(): Item[] {
+export function getAllItems(): Item[] {
   const mapSpecToItem = (s: MeasureSpec) => ({
     type: "measure-item" as const,
     spec: s,
@@ -208,7 +356,7 @@ function getAllItems(): Item[] {
     },
   ];
 }
-function getItemsForSnapshot(snapshot: HydratedSnapshot) {
+export function getItemsForSnapshot(snapshot: HydratedSnapshot) {
   const allItems = getAllItems();
   const outItems: Item[] = [];
   for (const item of allItems) {
@@ -234,7 +382,7 @@ function getItemsForSnapshot(snapshot: HydratedSnapshot) {
   return outItems;
 }
 
-function getItems(model: Omit<Model, "items">): Item[] {
+export function getItems(model: Omit<Model, "items">): Item[] {
   const allItems = getItemsForSnapshot(model.snapshot);
   const outItems: Item[] = [];
   const queryTerms = model.query
@@ -300,163 +448,8 @@ export type Msg =
     measureId: MeasureId;
   };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "UPDATE_QUERY":
-      return [
-        produce(model, (draft) => {
-          draft.query = msg.query;
-          draft.items = immer.castDraft(getItems(draft));
-        }),
-      ];
-    case "DELETE_MEASURE":
-    case "INIT_UPDATE":
-      // do nothing since we will cover this in the parent component
-      return [model];
-    default:
-      assertUnreachable(msg);
-  }
-};
 
-const FilterInput = ({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) => (
-  <input
-    type="text"
-    placeholder="Filter measures..."
-    value={value}
-    onChange={onChange}
-  />
-);
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div className="measure-selector">
-      <FilterInput
-        value={model.query}
-        onChange={(e) =>
-          dispatch({ type: "UPDATE_QUERY", query: e.target.value })
-        }
-      />
-      {model.items.map((i) => {
-        switch (i.type) {
-          case "measure-item":
-            return (
-              <MeasureView
-                key={i.spec.id}
-                model={model}
-                measureStatsCount={model.measureStats[i.spec.id]}
-                dispatch={dispatch}
-                measure={i.spec}
-              />
-            );
-          case "measure-group":
-            return (
-              <MeasureGroupView
-                key={i.name}
-                model={model}
-                measureGroup={i}
-                dispatch={dispatch}
-              />
-            );
-          default:
-            assertUnreachable(i);
-        }
-      })}
-    </div>
-  );
-};
 
-const MeasureView = ({
-  model,
-  measureStatsCount,
-  dispatch,
-  measure,
-}: {
-  model: Model;
-  measureStatsCount: number;
-  dispatch: Dispatch<Msg>;
-  measure: immer.Immutable<MeasureSpec>;
-}) => {
-  const unitValue = model.snapshot.measures[measure.id];
-  return (
-    <div key={measure.id} className="measure-item">
-      <label>
-        {measure.name} ({measureStatsCount || 0} snapshots)
-      </label>{" "}
-      {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
-      <button
-        onPointerDown={() => {
-          dispatch({
-            type: "INIT_UPDATE",
-            update: {
-              type: "measure",
-              measureId: measure.id,
-            },
-          });
-        }}
-      >
-        Edit
-      </button>
-      {model.snapshot.measures[measure.id] ? (
-        <button
-          onPointerDown={() => {
-            dispatch({
-              type: "DELETE_MEASURE",
-              measureId: measure.id,
-            });
-          }}
-        >
-          Delete
-        </button>
-      ) : undefined}
-    </div>
-  );
-};
 
-const MeasureGroupView = ({
-  model,
-  measureGroup,
-  dispatch,
-}: {
-  model: Model;
-  measureGroup: immer.Immutable<MeasureGroup>;
-  dispatch: Dispatch<Msg>;
-}) => {
-  return (
-    <div className="measure-class">
-      <div>
-        <strong>{measureGroup.name}</strong>{" "}
-        <button
-          onPointerDown={() => {
-            dispatch({
-              type: "INIT_UPDATE",
-              update: {
-                type: "measureClasses",
-                measureClasses: immer.castDraft(measureGroup.measureClasses),
-              },
-            });
-          }}
-        >
-          Add New
-        </button>
-      </div>
 
-      <div className="measure-class-items" style={{ paddingLeft: "10px" }}>
-        {measureGroup.items.map((item) => (
-          <MeasureView
-            key={item.spec.id}
-            model={model}
-            measureStatsCount={model.measureStats[item.spec.id] || 0}
-            dispatch={dispatch}
-            measure={item.spec}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};

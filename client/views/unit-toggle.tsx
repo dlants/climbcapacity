@@ -1,66 +1,74 @@
 import React, { useId } from "react";
-import * as immer from "immer";
-const produce = immer.produce;
 import { UnitType } from "../../iso/units";
 import { assertUnreachable } from "../../iso/utils";
-import { Update } from "../tea";
+import { Dispatch } from "../tea";
 import { MeasureId } from "../../iso/measures";
 
-export type Model = immer.Immutable<{
+export type Model = {
   measureId: MeasureId;
   selectedUnit: UnitType;
   possibleUnits: UnitType[];
-}>;
+};
 
 export type Msg = {
   type: "SELECT_UNIT";
   unit: UnitType;
 };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "SELECT_UNIT": {
-      if (!model.possibleUnits.includes(msg.unit)) {
-        throw new Error(
-          `${msg.unit} is not a possible unit for measure ${model.measureId}`,
-        );
-      }
+export class UnitToggle {
+  state: Model;
 
-      return [
-        produce(model, (draft) => {
-          draft.selectedUnit = msg.unit;
-        }),
-      ];
-    }
-    default:
-      assertUnreachable(msg.type);
+  constructor(
+    initialParams: {
+      measureId: MeasureId;
+      selectedUnit: UnitType;
+      possibleUnits: UnitType[];
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = {
+      measureId: initialParams.measureId,
+      selectedUnit: initialParams.selectedUnit,
+      possibleUnits: initialParams.possibleUnits,
+    };
   }
-};
 
-export const view = ({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: (msg: Msg) => void;
-}) => {
-  const toggleId = useId(); // React 18+ feature
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "SELECT_UNIT": {
+        if (!this.state.possibleUnits.includes(msg.unit)) {
+          throw new Error(
+            `${msg.unit} is not a possible unit for measure ${this.state.measureId}`,
+          );
+        }
 
-  return (
-    <span>
-      {model.possibleUnits.map((unit) => (
-        <span key={unit}>
-          <input
-            type="radio"
-            id={toggleId + ":" + unit}
-            name={toggleId}
-            value={unit}
-            checked={unit === model.selectedUnit}
-            onChange={() => dispatch({ type: "SELECT_UNIT", unit })}
-          />
-          <label key={unit}>{unit}</label>
-        </span>
-      ))}
-    </span>
-  );
-};
+        this.state.selectedUnit = msg.unit;
+        break;
+      }
+      default:
+        assertUnreachable(msg.type);
+    }
+  }
+
+  view() {
+    const toggleId = useId(); // React 18+ feature
+
+    return (
+      <span>
+        {this.state.possibleUnits.map((unit) => (
+          <span key={unit}>
+            <input
+              type="radio"
+              id={toggleId + ":" + unit}
+              name={toggleId}
+              value={unit}
+              checked={unit === this.state.selectedUnit}
+              onChange={() => this.context.myDispatch({ type: "SELECT_UNIT", unit })}
+            />
+            <label key={unit}>{unit}</label>
+          </span>
+        ))}
+      </span>
+    );
+  }
+}

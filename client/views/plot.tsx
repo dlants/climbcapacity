@@ -1,54 +1,73 @@
 import React from "react";
-import { View } from "../tea";
+import { Dispatch } from "../tea";
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 import { assertUnreachable } from "../util/utils";
-import * as immer from "immer";
 import * as Histogram from "./plots/histogram";
 import * as Dotplot from "./plots/dotplot";
 import * as Heatmap from "./plots/heatmap";
 
-export type Model = immer.Immutable<
-  Histogram.Model | Dotplot.Model | Heatmap.Model
->;
+export type Model = Histogram.Model | Dotplot.Model | Heatmap.Model;
 
-export const view: View<never, Model> = ({ model }) => {
-  const containerRef = useRef<SVGSVGElement>(null);
+export type Msg = never;
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const svg = d3.select(containerRef.current);
-    switch (model.style) {
-      case "histogram":
-        Histogram.view({ model, svg });
-        break;
+export class Plot {
+  state: Model;
 
-      case "dotplot":
-        Dotplot.view({ model, svg });
-        break;
+  constructor(
+    initialModel: Model,
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = initialModel;
+  }
 
-      case "heatmap":
-        Heatmap.view({ model, svg });
-        break;
+  update(msg: Msg) {
+    // No messages are currently handled by this component
+    // This method is kept for consistency with the class-based pattern
+  }
 
-      default:
-        assertUnreachable(model);
-    }
-    return () => {
-      if (containerRef.current) {
-        d3.select(containerRef.current).selectAll("*").remove();
-      }
+  view() {
+    const PlotComponent = () => {
+      const containerRef = useRef<SVGSVGElement>(null);
+
+      useEffect(() => {
+        if (!containerRef.current) return;
+        const svg = d3.select(containerRef.current);
+        switch (this.state.style) {
+          case "histogram":
+            Histogram.view({ model: this.state, svg });
+            break;
+
+          case "dotplot":
+            Dotplot.view({ model: this.state, svg });
+            break;
+
+          case "heatmap":
+            Heatmap.view({ model: this.state, svg });
+            break;
+
+          default:
+            assertUnreachable(this.state);
+        }
+        return () => {
+          if (containerRef.current) {
+            d3.select(containerRef.current).selectAll("*").remove();
+          }
+        };
+      }, [this.state]);
+
+      return (
+        <svg
+          className="plot-container"
+          ref={containerRef}
+          width="100%"
+          height="100%"
+          viewBox="0 0 600 400"
+          preserveAspectRatio="xMidYMid meet"
+        ></svg>
+      );
     };
-  }, [model]);
 
-  return (
-    <svg
-      className="plot-container"
-      ref={containerRef}
-      width="100%"
-      height="100%"
-      viewBox="0 0 600 400"
-      preserveAspectRatio="xMidYMid meet"
-    ></svg>
-  );
-};
+    return <PlotComponent />;
+  }
+}

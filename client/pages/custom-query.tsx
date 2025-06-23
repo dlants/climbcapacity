@@ -1,6 +1,6 @@
-/*import React from "react";
+import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../types";
-import { Update, Thunk, View, Dispatch, wrapThunk } from "../tea";
+import { Dispatch } from "../tea";
 import {
   assertLoaded,
   assertUnreachable,
@@ -12,11 +12,9 @@ import {
 import { FilterQuery, MeasureStats } from "../../iso/protocol";
 import * as PlotWithControls from "../views/plot-with-controls";
 import * as SelectFilters from "../views/select-filters";
-import * as immer from "immer";
 import { hydrateSnapshot } from "../util/snapshot";
-const produce = immer.produce;
 
-export type Model = immer.Immutable<{
+export type Model = {
   filtersModel: SelectFilters.Model;
   userId: string | undefined;
   query: FilterQuery;
@@ -25,35 +23,85 @@ export type Model = immer.Immutable<{
     plotModel: PlotWithControls.Model;
   }>;
   mySnapshotRequest: RequestStatus<HydratedSnapshot | undefined>;
-}>;
+};
 
 export type Msg =
   | {
-      type: "UPDATE_QUERY";
-    }
+    type: "UPDATE_QUERY";
+  }
   | {
-      type: "REQUEST_DATA";
-    }
+    type: "REQUEST_DATA";
+  }
   | {
-      type: "SNAPSHOT_RESPONSE";
-      request: RequestStatus<HydratedSnapshot[]>;
-    }
+    type: "SNAPSHOT_RESPONSE";
+    request: RequestStatus<HydratedSnapshot[]>;
+  }
   | {
-      type: "MY_SNAPSHOT_RESPONSE";
-      request: RequestStatus<HydratedSnapshot | undefined>;
-    }
+    type: "MY_SNAPSHOT_RESPONSE";
+    request: RequestStatus<HydratedSnapshot | undefined>;
+  }
   | {
-      type: "PLOT_MSG";
-      msg: PlotWithControls.Msg;
-    }
+    type: "PLOT_MSG";
+    msg: PlotWithControls.Msg;
+  }
   | {
-      type: "FILTERS_MSG";
-      msg: SelectFilters.Msg;
+    type: "FILTERS_MSG";
+    msg: SelectFilters.Msg;
+  };
+
+export class CustomQuery {
+  state: Model;
+
+  constructor(
+    initialParams: {
+      userId: string | undefined;
+      measureStats: MeasureStats;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    this.state = {
+      filtersModel: SelectFilters.initModel({
+        measureStats: initialParams.measureStats,
+        initialFilters: {},
+      }),
+      userId: initialParams.userId,
+      query: {},
+      dataRequest: { status: "not-sent" },
+      mySnapshotRequest: { status: "not-sent" },
     };
 
-function generateFetchThunk(model: Model) {
-  return async (dispatch: Dispatch<Msg>) => {
-    const query: FilterQuery = model.query;
+    // Execute initial async operation if userId exists
+    if (initialParams.userId) {
+      this.state.mySnapshotRequest = { status: "loading" };
+      this.fetchMySnapshot().catch(console.error);
+    }
+  }
+
+  private async fetchMySnapshot() {
+    const response = await fetch("/api/my-latest-snapshot", {
+      method: "POST",
+    });
+    if (response.ok) {
+      const { snapshot } = (await response.json()) as {
+        snapshot: Snapshot | undefined;
+      };
+      this.context.myDispatch({
+        type: "MY_SNAPSHOT_RESPONSE",
+        request: {
+          status: "loaded",
+          response: snapshot ? hydrateSnapshot(snapshot) : undefined,
+        },
+      });
+    } else {
+      this.context.myDispatch({
+        type: "MY_SNAPSHOT_RESPONSE",
+        request: { status: "error", error: await response.text() },
+      });
+    }
+  }
+
+  private async fetchSnapshots() {
+    const query: FilterQuery = this.state.query;
     const response = await fetch("/api/snapshots/query", {
       method: "POST",
       headers: {
@@ -65,232 +113,178 @@ function generateFetchThunk(model: Model) {
     });
     if (response.ok) {
       const snapshots = (await response.json()) as Snapshot[];
-      dispatch({
+      this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "loaded", response: snapshots.map(hydrateSnapshot) },
       });
     } else {
-      dispatch({
+      this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
     }
-  };
-}
-
-export function initModel({
-  userId,
-  measureStats,
-}: {
-  userId: string | undefined;
-  measureStats: MeasureStats;
-}): [Model] | [Model, Thunk<Msg> | undefined] {
-  let mySnapshotRequest: RequestStatus<Snapshot> = { status: "not-sent" };
-  let fetchSnapshotThunk;
-  if (userId) {
-    mySnapshotRequest = {
-      status: "loading",
-    };
-    fetchSnapshotThunk = async (dispatch: Dispatch<Msg>) => {
-      const response = await fetch("/api/my-latest-snapshot", {
-        method: "POST",
-      });
-      if (response.ok) {
-        const { snapshot } = (await response.json()) as {
-          snapshot: Snapshot | undefined;
-        };
-        dispatch({
-          type: "MY_SNAPSHOT_RESPONSE",
-          request: {
-            status: "loaded",
-            response: snapshot ? hydrateSnapshot(snapshot) : undefined,
-          },
-        });
-      } else {
-        dispatch({
-          type: "MY_SNAPSHOT_RESPONSE",
-          request: { status: "error", error: await response.text() },
-        });
-      }
-    };
   }
 
-  return [
-    {
-      filtersModel: SelectFilters.initModel({
-        measureStats,
-        initialFilters: {},
-      }),
-      userId,
-      query: {},
-      dataRequest: { status: "not-sent" },
-      mySnapshotRequest,
-    },
-    fetchSnapshotThunk,
-  ];
-}
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "SNAPSHOT_RESPONSE": {
-      const nextModel: Model = produce(model, (draft) => {
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "SNAPSHOT_RESPONSE": {
         switch (msg.request.status) {
           case "not-sent":
           case "loading":
           case "error":
-            draft.dataRequest = msg.request;
+            this.state.dataRequest = msg.request;
             return;
           case "loaded":
             const plotModel = PlotWithControls.initModel({
               snapshots: msg.request.response,
               mySnapshot:
-                model.mySnapshotRequest.status == "loaded"
-                  ? model.mySnapshotRequest.response
+                this.state.mySnapshotRequest.status == "loaded"
+                  ? this.state.mySnapshotRequest.response
                   : undefined,
-              userId: model.userId,
+              userId: this.state.userId,
               filterMapping: SelectFilters.generateFiltersMap(
-                draft.filtersModel,
+                this.state.filtersModel,
               ),
             });
-            draft.dataRequest = {
+            this.state.dataRequest = {
               status: "loaded",
               response: {
                 snapshots: msg.request.response,
-                plotModel: immer.castDraft(plotModel),
+                plotModel: plotModel,
               },
             };
             return;
           default:
             assertUnreachable(msg.request);
         }
-      });
-      return [nextModel];
-    }
-
-    case "MY_SNAPSHOT_RESPONSE": {
-      return [
-        produce(model, (draft) => {
-          draft.mySnapshotRequest = msg.request;
-          if (
-            draft.mySnapshotRequest.status == "loaded" &&
-            draft.dataRequest.status == "loaded"
-          ) {
-            const plotModel = PlotWithControls.initModel({
-              snapshots: draft.dataRequest.response.snapshots,
-              mySnapshot: draft.mySnapshotRequest.response,
-              userId: model.userId,
-              filterMapping: SelectFilters.generateFiltersMap(
-                draft.filtersModel,
-              ),
-            });
-
-            draft.dataRequest = {
-              status: "loaded",
-              response: {
-                ...draft.dataRequest.response,
-                plotModel: immer.castDraft(plotModel),
-              },
-            };
-          }
-        }),
-      ];
-    }
-
-    case "UPDATE_QUERY":
-      return [model];
-
-    case "REQUEST_DATA":
-      const nextModel: Model = produce(model, (draft) => {
-        draft.dataRequest = { status: "loading" };
-      });
-      return [nextModel, generateFetchThunk(model)];
-
-    case "PLOT_MSG":
-      if (model.dataRequest.status != "loaded") {
-        console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
-        return [model];
+        break;
       }
-      const [nextPlotModel, thunk] = PlotWithControls.update(
-        msg.msg,
-        model.dataRequest.response.plotModel,
-      );
 
-      return [
-        produce(model, (draft) => {
-          const request = assertLoaded(draft.dataRequest);
-          request.response.plotModel = immer.castDraft(nextPlotModel);
-        }),
-        wrapThunk("PLOT_MSG", thunk),
-      ];
-
-    case "FILTERS_MSG": {
-      const [nextFiltersModel] = SelectFilters.update(
-        msg.msg,
-        model.filtersModel,
-      );
-      return [
-        produce(model, (draft) => {
-          draft.filtersModel = immer.castDraft(nextFiltersModel);
-          // Convert filters to query format
-          draft.query = {};
-          nextFiltersModel.filters.forEach((filter) => {
-            const minResult = filter.model.minInput.parseResult;
-            const maxResult = filter.model.maxInput.parseResult;
-
-            draft.query[filter.model.measureId] = {
-              min: minResult.status == "success" ? minResult.value : undefined,
-              max: maxResult.status == "success" ? maxResult.value : undefined,
-            };
+      case "MY_SNAPSHOT_RESPONSE": {
+        this.state.mySnapshotRequest = msg.request;
+        if (
+          this.state.mySnapshotRequest.status == "loaded" &&
+          this.state.dataRequest.status == "loaded"
+        ) {
+          const plotModel = PlotWithControls.initModel({
+            snapshots: this.state.dataRequest.response.snapshots,
+            mySnapshot: this.state.mySnapshotRequest.response,
+            userId: this.state.userId,
+            filterMapping: SelectFilters.generateFiltersMap(
+              this.state.filtersModel,
+            ),
           });
-        }),
-      ];
+
+          this.state.dataRequest = {
+            status: "loaded",
+            response: {
+              ...this.state.dataRequest.response,
+              plotModel: plotModel,
+            },
+          };
+        }
+        break;
+      }
+
+      case "UPDATE_QUERY":
+        break;
+
+      case "REQUEST_DATA":
+        this.state.dataRequest = { status: "loading" };
+        this.fetchSnapshots().catch(console.error);
+        break;
+
+      case "PLOT_MSG":
+        if (this.state.dataRequest.status != "loaded") {
+          console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
+          return;
+        }
+        const [nextPlotModel, thunk] = PlotWithControls.update(
+          msg.msg,
+          this.state.dataRequest.response.plotModel,
+        );
+
+        const request = assertLoaded(this.state.dataRequest);
+        request.response.plotModel = nextPlotModel;
+
+        if (thunk) {
+          (async () => {
+            await thunk((plotMsg) =>
+              this.context.myDispatch({ type: "PLOT_MSG", msg: plotMsg })
+            );
+          })().catch(console.error);
+        }
+        break;
+
+      case "FILTERS_MSG": {
+        const [nextFiltersModel] = SelectFilters.update(
+          msg.msg,
+          this.state.filtersModel,
+        );
+        this.state.filtersModel = nextFiltersModel;
+
+        // Convert filters to query format
+        this.state.query = {};
+        nextFiltersModel.filters.forEach((filter) => {
+          const minResult = filter.model.minInput.parseResult;
+          const maxResult = filter.model.maxInput.parseResult;
+
+          this.state.query[filter.model.measureId] = {
+            min: minResult.status == "success" ? minResult.value : undefined,
+            max: maxResult.status == "success" ? maxResult.value : undefined,
+          };
+        });
+        break;
+      }
+
+      default:
+        assertUnreachable(msg);
     }
-
-    default:
-      assertUnreachable(msg);
   }
-};
 
-const FetchButton = ({ dispatch }: { dispatch: Dispatch<Msg> }) => (
-  <button onPointerDown={() => dispatch({ type: "REQUEST_DATA" })}>Fetch Data</button>
-);
+  view() {
+    const FetchButton = () => (
+      <button onPointerDown={() => this.context.myDispatch({ type: "REQUEST_DATA" })}>
+        Fetch Data
+      </button>
+    );
 
-const viewMap: RequestStatusViewMap<
-  GetLoadedRequestType<Model["dataRequest"]>["response"],
-  Msg
-> = {
-  "not-sent": ({ dispatch }) => <FetchButton dispatch={dispatch} />,
-  loading: () => <div>Fetching...</div>,
-  error: ({ error, dispatch }) => (
-    <div>
-      <div>error when fetching data: {error}</div>
-      <FetchButton dispatch={dispatch} />
-    </div>
-  ),
-  loaded: ({ response, dispatch }) => (
-    <div>
-      {response.snapshots.length} snapshots loaded.{" "}
-      <FetchButton dispatch={dispatch} />
-      <PlotWithControls.view
-        model={response.plotModel}
-        dispatch={(msg) => dispatch({ type: "PLOT_MSG", msg })}
-      />
-    </div>
-  ),
-};
+    const viewMap: RequestStatusViewMap<
+      GetLoadedRequestType<Model["dataRequest"]>["response"],
+      Msg
+    > = {
+      "not-sent": () => <FetchButton />,
+      loading: () => <div>Fetching...</div>,
+      error: ({ error }) => (
+        <div>
+          <div>error when fetching data: {error}</div>
+          <FetchButton />
+        </div>
+      ),
+      loaded: ({ response }) => (
+        <div>
+          {response.snapshots.length} snapshots loaded.{" "}
+          <FetchButton />
+          <PlotWithControls.view
+            model={response.plotModel}
+            dispatch={(msg) => this.context.myDispatch({ type: "PLOT_MSG", msg })}
+          />
+        </div>
+      ),
+    };
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <div>
-      <SelectFilters.view
-        model={model.filtersModel}
-        dispatch={(msg) => dispatch({ type: "FILTERS_MSG", msg })}
-      />
-      <RequestStatusView
-        dispatch={dispatch}
-        request={model.dataRequest}
-        viewMap={viewMap}
-      />
-    </div>
-  );
-};
-*/
+    return (
+      <div>
+        <SelectFilters.view
+          model={this.state.filtersModel}
+          dispatch={(msg) => this.context.myDispatch({ type: "FILTERS_MSG", msg })}
+        />
+        <RequestStatusView
+          dispatch={this.context.myDispatch}
+          request={this.state.dataRequest}
+          viewMap={viewMap}
+        />
+      </div>
+    );
+  }
+}

@@ -1,114 +1,103 @@
 import React from "react";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
-import * as immer from "immer";
 import { Dispatch } from "../../tea";
-const produce = immer.produce;
 import * as SelectMeasureClass from "./select-measure-class";
 import * as EditMeasure from "./edit-measure";
 import { MeasureStats } from "../../../iso/protocol";
 
-export type Model = immer.Immutable<{
+export type Model = {
   selectMeasure: SelectMeasureClass.Model;
   editMeasure: EditMeasure.Model;
   snapshot: HydratedSnapshot;
-}>;
-
-export const initModel = ({
-  measureStats,
-  measureClasses,
-  measureId,
-  snapshot,
-}: {
-  measureClasses: MeasureClassSpec[];
-  measureId?: MeasureId;
-  measureStats: MeasureStats;
-  snapshot: HydratedSnapshot;
-}): Model => {
-  const selectMeasure = SelectMeasureClass.initModel({
-    measureStats,
-    measureClasses,
-    measureId,
-  });
-
-  return {
-    snapshot,
-    selectMeasure,
-    editMeasure: EditMeasure.initModel({
-      measureId: selectMeasure.selected.measureId,
-      measureStats,
-      snapshot,
-    }),
-  };
 };
 
 export type Msg =
   | {
-      type: "SELECT_MEASURE_CLASS_MSG";
-      msg: SelectMeasureClass.Msg;
-    }
-  | {
-      type: "EDIT_MEASURE_MSG";
-      msg: EditMeasure.Msg;
-    };
-
-export const update = (msg: Msg, model: Model): [Model] => {
-  switch (msg.type) {
-    case "EDIT_MEASURE_MSG":
-      return [
-        produce(model, (draft) => {
-          const [next] = EditMeasure.update(msg.msg, draft.editMeasure);
-          draft.editMeasure = immer.castDraft(next);
-        }),
-      ];
-
-    case "SELECT_MEASURE_CLASS_MSG": {
-      return [
-        produce(model, (draft) => {
-          const [selectMeasure] = SelectMeasureClass.update(
-            msg.msg,
-            draft.selectMeasure,
-          );
-          draft.selectMeasure = immer.castDraft(selectMeasure);
-          if (
-            draft.selectMeasure.selected.measureId !=
-            model.selectMeasure.selected.measureId
-          ) {
-            draft.editMeasure = immer.castDraft(
-              EditMeasure.initModel({
-                measureId: selectMeasure.selected.measureId,
-                measureStats: selectMeasure.measureStats,
-                snapshot: model.snapshot,
-              }),
-            );
-          }
-        }),
-      ];
-    }
-
-    default:
-      return [model];
+    type: "SELECT_MEASURE_CLASS_MSG";
+    msg: SelectMeasureClass.Msg;
   }
-};
+  | {
+    type: "EDIT_MEASURE_MSG";
+    msg: EditMeasure.Msg;
+  };
 
-export function view({
-  model,
-  dispatch,
-}: {
-  model: Model;
-  dispatch: Dispatch<Msg>;
-}) {
-  return (
-    <div>
-      <SelectMeasureClass.view
-        model={model.selectMeasure}
-        dispatch={(msg) => dispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg })}
-      />
+export class EditMeasureClass {
+  state: Model;
 
-      <EditMeasure.view
-        model={model.editMeasure}
-        dispatch={(msg) => dispatch({ type: "EDIT_MEASURE_MSG", msg })}
-      />
-    </div>
-  );
+  constructor(
+    {
+      measureStats,
+      measureClasses,
+      measureId,
+      snapshot,
+    }: {
+      measureClasses: MeasureClassSpec[];
+      measureId?: MeasureId;
+      measureStats: MeasureStats;
+      snapshot: HydratedSnapshot;
+    },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const selectMeasure = SelectMeasureClass.initModel({
+      measureStats,
+      measureClasses,
+      measureId,
+    });
+
+    this.state = {
+      snapshot,
+      selectMeasure,
+      editMeasure: EditMeasure.initModel({
+        measureId: selectMeasure.selected.measureId,
+        measureStats,
+        snapshot,
+      }),
+    };
+  }
+
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "EDIT_MEASURE_MSG":
+        const [nextEditMeasure] = EditMeasure.update(msg.msg, this.state.editMeasure);
+        this.state.editMeasure = nextEditMeasure;
+        break;
+
+      case "SELECT_MEASURE_CLASS_MSG":
+        const [nextSelectMeasure] = SelectMeasureClass.update(
+          msg.msg,
+          this.state.selectMeasure
+        );
+        const previousMeasureId = this.state.selectMeasure.selected.measureId;
+        this.state.selectMeasure = nextSelectMeasure;
+
+        if (this.state.selectMeasure.selected.measureId !== previousMeasureId) {
+          this.state.editMeasure = EditMeasure.initModel({
+            measureId: nextSelectMeasure.selected.measureId,
+            measureStats: nextSelectMeasure.measureStats,
+            snapshot: this.state.snapshot,
+          });
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  view() {
+    return (
+      <div>
+        <SelectMeasureClass.view
+          model={this.state.selectMeasure}
+          dispatch={(msg) => this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg })}
+        />
+
+        <EditMeasure.view
+          model={this.state.editMeasure}
+          dispatch={(msg) => this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg })}
+        />
+      </div>
+    );
+  }
 }

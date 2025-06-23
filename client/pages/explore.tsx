@@ -1,12 +1,10 @@
 import React from "react";
-import { Update, Thunk, View, wrapThunk } from "../tea";
+import { Dispatch } from "../tea";
 import { assertUnreachable } from "../util/utils";
-import * as immer from "immer";
 import * as LoadedReportCard from "../views/reportcard/main";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../constants";
-const produce = immer.produce;
 
 export type Model = {
   measureStats: MeasureStats;
@@ -18,56 +16,65 @@ export type Msg = {
   msg: LoadedReportCard.Msg;
 };
 
-export function initModel({
-  measureStats,
-}: {
-  measureStats: MeasureStats;
-}): [Model] | [Model, Thunk<Msg> | undefined] {
-  const initialFilters: InitialFilters = {};
-  for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
-    const count = measureStats[measure.id] || 0;
-    if (count < 100) {
-      continue;
-    }
-    initialFilters[measure.id] = measure.initialFilter;
-  }
+export class Explore {
+  state: Model;
 
-  const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
-    initialFilters,
-    measureStats: measureStats,
-    mySnapshot: undefined,
-  });
-  return [
-    {
-      measureStats,
+  constructor(
+    initialParams: { measureStats: MeasureStats },
+    private context: { myDispatch: Dispatch<Msg> }
+  ) {
+    const initialFilters: InitialFilters = {};
+    for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
+      const count = initialParams.measureStats[measure.id] || 0;
+      if (count < 100) {
+        continue;
+      }
+      initialFilters[measure.id] = measure.initialFilter;
+    }
+
+    const [loadedModel, loadedThunk] = LoadedReportCard.initModel({
+      initialFilters,
+      measureStats: initialParams.measureStats,
+      mySnapshot: undefined,
+    });
+
+    this.state = {
+      measureStats: initialParams.measureStats,
       model: loadedModel,
-    },
-    wrapThunk("LOADED_MSG", loadedThunk),
-  ];
-}
+    };
 
-export const update: Update<Msg, Model> = (msg, model) => {
-  switch (msg.type) {
-    case "LOADED_MSG": {
-      const [nextModel, thunk] = LoadedReportCard.update(msg.msg, model.model);
-      return [
-        produce(model, (draft) => {
-          draft.model = immer.castDraft(nextModel);
-        }),
-        wrapThunk("LOADED_MSG", thunk),
-      ];
+    if (loadedThunk) {
+      (async () => {
+        await loadedThunk((msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }));
+      })().catch(console.error);
     }
-
-    default:
-      assertUnreachable(msg.type);
   }
-};
 
-export const view: View<Msg, Model> = ({ model, dispatch }) => {
-  return (
-    <LoadedReportCard.view
-      model={model.model}
-      dispatch={(msg) => dispatch({ type: "LOADED_MSG", msg })}
-    />
-  );
-};
+  update(msg: Msg) {
+    switch (msg.type) {
+      case "LOADED_MSG": {
+        const [nextModel, thunk] = LoadedReportCard.update(msg.msg, this.state.model);
+        this.state.model = nextModel;
+
+        if (thunk) {
+          (async () => {
+            await thunk((msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }));
+          })().catch(console.error);
+        }
+        break;
+      }
+
+      default:
+        assertUnreachable(msg.type);
+    }
+  }
+
+  view() {
+    return (
+      <LoadedReportCard.view
+        model={this.state.model}
+        dispatch={(msg) => this.context.myDispatch({ type: "LOADED_MSG", msg })}
+      />
+    );
+  }
+}
