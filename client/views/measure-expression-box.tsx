@@ -1,5 +1,5 @@
 import React from "react";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../types";
 import { parseExpression, ParseResult } from "../parser/parser";
 
 export type Model = {
@@ -44,7 +44,7 @@ export class MeasureExpressionBox {
         <input
           type="text"
           value={this.state.expression}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             this.context.myDispatch({
               type: "EXPRESSION_CHANGED",
               value: e.target.value,

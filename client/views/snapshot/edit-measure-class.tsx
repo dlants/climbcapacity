@@ -1,7 +1,7 @@
 import React from "react";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { SelectMeasureClass, Msg as SelectMeasureClassMsg } from "./select-measure-class";
 import { EditMeasure, Msg as EditMeasureMsg } from "./edit-measure";
 import { MeasureStats } from "../../../iso/protocol";

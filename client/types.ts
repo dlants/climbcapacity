@@ -23,3 +23,5 @@ export type HydratedSnapshot = Snapshot & {
     [measureId: MeasureId]: number;
   };
 };
+
+export type Dispatch<Msg> = (msg: Msg) => void;

@@ -1,4 +1,4 @@
-import { Dispatch } from "../tea";
+import { Dispatch } from "../types";
 import { assertUnreachable } from "../util/utils";
 import { ReportCardMain, Msg as ReportCardMsg } from "../views/reportcard/main";
 import { MeasureStats } from "../../iso/protocol";
@@ -37,7 +37,7 @@ export class Explore {
         measureStats: initialParams.measureStats,
         mySnapshot: undefined,
       },
-      { myDispatch: (msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+      { myDispatch: (msg: ReportCardMsg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
     );
 
     this.state = {

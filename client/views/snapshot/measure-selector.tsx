@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { HydratedSnapshot } from "../../types";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { UnitValue, unitValueToString } from "../../../iso/units";
 import { MEASURES } from "../../constants";
 import { isSubsequence } from "../../util/utils";

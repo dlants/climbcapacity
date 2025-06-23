@@ -1,6 +1,6 @@
 import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../../types";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import {
   assertLoaded,
   assertUnreachable,
@@ -156,7 +156,7 @@ export class ReportCardMain {
       measures: {},
     };
     const queryHashParts: string[] = [];
-    
+
     editQuery.state.filters.forEach((filter) => {
       const measureId = editQuery.getFilterMeasureId(filter);
       query.measures[measureId] = editQuery.getFilterQuery(filter);

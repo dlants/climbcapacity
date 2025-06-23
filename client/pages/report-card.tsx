@@ -1,6 +1,5 @@
 import React from "react";
-import type { HydratedSnapshot, Snapshot } from "../types";
-import { Dispatch } from "../tea";
+import type { HydratedSnapshot, Snapshot, Dispatch } from "../types";
 import {
   assertUnreachable,
   GetLoadedRequest as GetLoadedRequestType,
@@ -138,7 +137,7 @@ export class ReportCard {
                   measureStats: this.state.measureStats,
                   mySnapshot: msg.request.response,
                 },
-                { myDispatch: (msg) => this.context.myDispatch({ type: "LOADED_MSG", msg }) }
+                { myDispatch: (msg: ReportCardMainMsg) => this.context.myDispatch({ type: "LOADED_MSG", msg }) }
               );
 
               this.state.mySnapshotRequest = {

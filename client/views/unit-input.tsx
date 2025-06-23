@@ -19,7 +19,7 @@ import {
   inchesToFeetAndInches,
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../main";
 import { getSpec, MeasureId } from "../../iso/measures";
 import { ExtractFromDisjointUnion } from "../util/utils";
 

@@ -1,8 +1,6 @@
-import React from "react";
-import {
-  createApp,
-  Dispatch,
-} from "./tea";
+import React, { useCallback, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import { SendLink } from "./pages/send-link";
 import * as UserSnapshotsPage from "./pages/users-snapshots";
 import { SnapshotPage } from "./pages/snapshot";
@@ -116,6 +114,8 @@ type Msg =
     type: "REPORT_CARD_MSG";
     msg: any;
   };
+
+export type Dispatch<Msg> = (msg: Msg) => void;
 
 export class MainApp {
   state: Model;
@@ -430,6 +430,53 @@ export class MainApp {
 }
 
 
+function App({ initialModel }: { initialModel: Model }) {
+  const [appState, setAppState] = useState<{ status: "running"; model: Model } | { status: "error"; error: string }>({
+    status: "running",
+    model: initialModel,
+  });
+
+  const [mainApp, setMainApp] = useState<MainApp | null>(null);
+
+  const dispatch = useCallback((msg: Msg) => {
+    setAppState((currentState) => {
+      if (currentState.status === "error") {
+        return currentState;
+      }
+
+      try {
+        if (!mainApp) {
+          return currentState;
+        }
+
+        mainApp.update(msg);
+        return { status: "running", model: mainApp.state };
+      } catch (e) {
+        console.error(e);
+        return { status: "error", error: (e as Error).message };
+      }
+    });
+  }, [mainApp]);
+
+  // Initialize mainApp once
+  React.useEffect(() => {
+    if (!mainApp) {
+      const app = new MainApp(initialModel, { myDispatch: dispatch });
+      setMainApp(app);
+    }
+  }, [initialModel, dispatch, mainApp]);
+
+  if (appState.status === "error") {
+    return <div>Error: {appState.error}</div>;
+  }
+
+  if (!mainApp) {
+    return <div>Loading...</div>;
+  }
+
+  return mainApp.view();
+}
+
 async function run() {
   const router = new Router();
   const response = await fetch("/api/auth", {
@@ -455,13 +502,12 @@ async function run() {
   }
 
   let initialModel: Model;
-  let mainApp: MainApp;
-  let dispatchFn: Dispatch<Msg>;
+  let dispatchRef: { current: Dispatch<Msg> | undefined } = { current: undefined };
 
   // We'll create a temporary dispatch function that will be replaced later
   const tempDispatch = (msg: Msg) => {
-    if (dispatchFn) {
-      dispatchFn(msg);
+    if (dispatchRef.current) {
+      dispatchRef.current(msg);
     }
   };
 
@@ -485,27 +531,72 @@ async function run() {
     };
   }
 
-  const app = createApp<Model, Msg>({
-    initialModel,
-    update: (msg) => {
-      mainApp.update(msg);
-      return mainApp.state;
-    },
-    View: () => {
-      return mainApp.view();
-    },
+  const root = createRoot(document.getElementById("app")!);
+
+  // Create a wrapper component to capture dispatch
+  function AppWrapper() {
+    const [appState, setAppState] = useState<{ status: "running"; model: Model } | { status: "error"; error: string }>({
+      status: "running",
+      model: initialModel,
+    });
+
+    const [mainApp, setMainApp] = useState<MainApp | null>(null);
+
+    const dispatch = useCallback((msg: Msg) => {
+      setAppState((currentState) => {
+        if (currentState.status === "error") {
+          return currentState;
+        }
+
+        try {
+          if (!mainApp) {
+            return currentState;
+          }
+
+          mainApp.update(msg);
+          return { status: "running", model: mainApp.state };
+        } catch (e) {
+          console.error(e);
+          return { status: "error", error: (e as Error).message };
+        }
+      });
+    }, [mainApp]);
+
+    // Set the dispatch reference for external use
+    React.useEffect(() => {
+      dispatchRef.current = dispatch;
+    }, [dispatch]);
+
+    // Initialize mainApp once
+    React.useEffect(() => {
+      if (!mainApp) {
+        const app = new MainApp(initialModel, { myDispatch: dispatch });
+        setMainApp(app);
+      }
+    }, [dispatch, mainApp]);
+
+    if (appState.status === "error") {
+      return <div>Error: {appState.error}</div>;
+    }
+
+    if (!mainApp) {
+      return <div>Loading...</div>;
+    }
+
+    return mainApp.view();
+  }
+
+  flushSync(() => root.render(<AppWrapper />));
+
+  router.subscribe((msg) => {
+    if (dispatchRef.current) {
+      dispatchRef.current(msg);
+    }
   });
-  const { dispatchRef } = app.mount(document.getElementById("app")!);
-
-  dispatchFn = dispatchRef.current!;
-  mainApp = new MainApp(initialModel, { myDispatch: dispatchFn });
-
-  // Attach the dispatcher to the router
-  router.subscribe(dispatchFn);
 
   const navMsg = parseRoute(window.location.pathname);
-  if (navMsg) {
-    dispatchRef.current!(navMsg);
+  if (navMsg && dispatchRef.current) {
+    dispatchRef.current(navMsg);
   }
 }
 

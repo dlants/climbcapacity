@@ -1,5 +1,5 @@
 import React from "react";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../main";
 import { MEASURES } from "../constants";
 import { assertUnreachable, filterMeasures } from "../util/utils";
 import { MeasureId, MeasureSpec } from "../../iso/measures/index";

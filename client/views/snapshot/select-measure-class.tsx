@@ -5,7 +5,7 @@ import {
   MeasureId,
   parseId,
 } from "../../../iso/measures";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { MeasureStats } from "../../../iso/protocol";
 import { CountTree, measureStatsToCountTree, getFromCountTree } from "./utils";
 

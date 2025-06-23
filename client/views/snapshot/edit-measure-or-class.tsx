@@ -3,7 +3,7 @@ import { EditMeasure } from "./edit-measure";
 import { EditMeasureClass } from "./edit-measure-class";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
 

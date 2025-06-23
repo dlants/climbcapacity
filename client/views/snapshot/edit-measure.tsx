@@ -7,7 +7,7 @@ import {
 import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
 import { UnitInputComponent } from "../unit-input";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { UnitToggle } from "../unit-toggle";
 import { MeasureStats } from "../../../iso/protocol";
 

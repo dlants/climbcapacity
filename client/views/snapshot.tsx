@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { HydratedSnapshot } from "../types";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../main";
 import { convertToStandardUnit, UnitValue } from "../../iso/units";
 import { RequestStatus, RequestStatusView } from "../util/utils";
 import {

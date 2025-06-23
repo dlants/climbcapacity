@@ -1,6 +1,5 @@
 import React from "react";
-import type { Snapshot } from "../types";
-import { Dispatch } from "../tea";
+import type { Snapshot, Dispatch } from "../types";
 import { Snapshot as LoadedSnapshot, Msg as LoadedSnapshotMsg } from "../views/snapshot";
 import {
   assertUnreachable,
@@ -64,7 +63,7 @@ export class SnapshotPage {
           measureStats: this.state.measureStats,
           snapshot: hydrateSnapshot(snapshot),
         },
-        { myDispatch: (msg) => this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }) }
+        { myDispatch: (msg: LoadedSnapshotMsg) => this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }) }
       );
       this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",

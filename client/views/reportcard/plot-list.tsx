@@ -3,7 +3,7 @@ import { HydratedSnapshot } from "../../types";
 import * as Plot from "../plot";
 import * as ReportCardFilter from "./filter";
 import * as Filter from "../filters/filter";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import {
   MeasureId,
   generateTrainingMeasureId,
@@ -224,7 +224,7 @@ export class PlotList {
           interpolationOptions: this.getInterpolationOptions(interpolate),
           filterModel: filter,
         }),
-        { myDispatch: () => {} }
+        { myDispatch: () => { } }
       );
 
       plots.push({

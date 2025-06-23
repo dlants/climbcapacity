@@ -4,7 +4,7 @@ import {
   convertToTargetUnit,
   UnitValue,
 } from "../../../iso/units";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
 import { UnitToggle } from "../unit-toggle";
 import type { Msg as UnitToggleMsg } from "../unit-toggle";
@@ -42,7 +42,7 @@ export class ToggleFilter {
           selectedUnit: initialParams.value.unit,
           possibleUnits: measure.units,
         },
-        { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+        { myDispatch: (msg: UnitToggleMsg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
       ),
     };
   }

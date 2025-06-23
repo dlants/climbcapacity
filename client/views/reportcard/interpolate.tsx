@@ -1,5 +1,5 @@
 import React from "react";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../main";
 import { assertUnreachable } from "../../util/utils";
 import { generateId, getSpec, MeasureId, parseId, } from "../../../iso/measures";
 import * as typestyle from "typestyle";

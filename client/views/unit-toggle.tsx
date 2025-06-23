@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 import { UnitType } from "../../iso/units";
 import { assertUnreachable } from "../../iso/utils";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../main";
 import { MeasureId } from "../../iso/measures";
 
 export type Model = {

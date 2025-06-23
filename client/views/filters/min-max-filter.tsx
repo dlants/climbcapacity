@@ -1,6 +1,6 @@
 import React from "react";
 import { convertToStandardUnit, UnitValue } from "../../../iso/units";
-import { Dispatch } from "../../tea";
+import { Dispatch } from "../../types";
 import { UnitInputComponent } from "../unit-input";
 import { UnitToggle } from "../unit-toggle";
 import { assertUnreachable } from "../../util/utils";
@@ -59,12 +59,12 @@ export class MinMaxFilter {
   ) {
     const minInput = new UnitInputComponent(
       initialParams.measureId,
-      { myDispatch: (msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg }) },
+      { myDispatch: (msg: import("../unit-input").Msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg }) },
       initialParams.minValue
     );
     const maxInput = new UnitInputComponent(
       initialParams.measureId,
-      { myDispatch: (msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg }) },
+      { myDispatch: (msg: import("../unit-input").Msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg }) },
       initialParams.maxValue
     );
     const unitToggle = new UnitToggle(
@@ -73,7 +73,7 @@ export class MinMaxFilter {
         selectedUnit: minInput.state.selectedUnit,
         possibleUnits: minInput.state.possibleUnits,
       },
-      { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+      { myDispatch: (msg: import("../unit-toggle").Msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
     );
 
     this.state = {

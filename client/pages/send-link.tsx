@@ -1,5 +1,5 @@
 import React from "react";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../types";
 import { RequestStatus } from "../util/utils";
 
 export type Model = {
@@ -54,7 +54,7 @@ export class SendLink {
           key="email"
           type="email"
           value={this.state.email}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             this.context.myDispatch({
               type: "SET_EMAIL",
               email: e.target.value,

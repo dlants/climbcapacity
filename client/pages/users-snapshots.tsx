@@ -1,6 +1,5 @@
 import React from "react";
-import type { Snapshot } from "../types";
-import { Dispatch } from "../tea";
+import type { Snapshot, Dispatch } from "../types";
 import { assertUnreachable, RequestStatus } from "../util/utils";
 
 type SnapshotListItem = {
@@ -50,10 +49,10 @@ export class UsersSnapshotsPage {
       newSnapshotRequest: { status: "not-sent" },
     };
 
-    this.fetchSnapshots().catch(console.error);
+    this.fetchSnapshots().catch((error: any) => console.error(error));
   }
 
-  private async fetchSnapshots() {
+  private async fetchSnapshots(): Promise<void> {
     const response = await fetch("/api/my-snapshots", { method: "POST" });
     if (response.ok) {
       const snapshots = (await response.json()) as Snapshot[];
@@ -75,7 +74,7 @@ export class UsersSnapshotsPage {
     }
   }
 
-  update(msg: Msg) {
+  update(msg: Msg): void {
     switch (msg.type) {
       case "SNAPSHOT_RESPONSE":
         this.state.snapshotRequest = msg.request;
@@ -87,7 +86,7 @@ export class UsersSnapshotsPage {
       case "NEW_SNAPSHOT":
         this.state.newSnapshotRequest = { status: "loading" };
 
-        (async () => {
+        (async (): Promise<void> => {
           const response = await fetch("/api/snapshots/new", {
             method: "POST",
           });
@@ -111,7 +110,7 @@ export class UsersSnapshotsPage {
               request: { status: "error", error: await response.text() },
             });
           }
-        })().catch(console.error);
+        })().catch((error: any) => console.error(error));
         break;
 
       case "SELECT_SNAPSHOT":
@@ -134,7 +133,7 @@ export class UsersSnapshotsPage {
         }
         snapshot.deleteRequest = { status: "loading" };
 
-        (async () => {
+        (async (): Promise<void> => {
           const response = await fetch(`/api/snapshot`, {
             method: "DELETE",
             headers: {
@@ -159,7 +158,7 @@ export class UsersSnapshotsPage {
               request: { status: "error", error: await response.text() },
             });
           }
-        })().catch(console.error);
+        })().catch((error: any) => console.error(error));
         break;
 
       case "DELETE_SNAPSHOT_RESPONSE":
@@ -185,7 +184,7 @@ export class UsersSnapshotsPage {
     }
   }
 
-  view() {
+  view(): JSX.Element {
     const NewSnapshot = () => {
       const NewSnapshotButton = () => (
         <button onPointerDown={() => this.context.myDispatch({ type: "NEW_SNAPSHOT" })}>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../main";
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 import { assertUnreachable } from "../util/utils";

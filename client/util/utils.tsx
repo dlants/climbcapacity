@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Dispatch } from "../tea";
+import { Dispatch } from "../types";
 import { MeasureSpec } from "../../iso/measures";
 
 export type LoadedRequest<T> = {
@@ -90,7 +90,7 @@ export function filterMeasures(
   const queryTerms = query
     .toLowerCase()
     .split(" ")
-    .filter((t) => t.length > 0);
+    .filter((t: string) => t.length > 0);
   if (queryTerms.length === 0) return measures;
 
   return measures.filter((measure) => {
