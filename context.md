@@ -1,12 +1,12 @@
 # ClimbCapacity Development Guide
 
 ## Project Overview
-ClimbCapacity is a climbing performance tracking web application that allows users to record, analyze, and compare their climbing metrics. Built with TypeScript, Express.js, React, and MongoDB.
+ClimbCapacity is a climbing performance tracking web application that allows users to record, analyze, and compare their climbing metrics. Built with TypeScript, Express.js, DCGView, and MongoDB.
 
 ## Architecture
 - **Monorepo**: Four main packages - `backend/`, `client/`, `iso/`, `scripts/`
 - **Backend**: Express.js API server with MongoDB
-- **Frontend**: React SPA built with Vite
+- **Frontend**: DCGView application built with Vite
 - **Shared**: `iso/` package contains shared types and utilities
 - **Scripts**: Database management and data import utilities
 
@@ -162,9 +162,9 @@ backend/
 ```
 client/
 ├── src/
-│   ├── components/ # React UI components
+│   ├── components/ # DCGView UI components
 │   ├── util/       # Frontend utilities
-│   ├── App.tsx     # Main React application
+│   ├── App.tsx     # Main DCGView application entry
 │   └── main.tsx    # Application entry point
 ├── e2e/            # Playwright E2E tests
 └── dist/           # Built assets (generated)
@@ -208,29 +208,95 @@ iso/
 ### Adding New Measures
 1. Define measure in `iso/measures/` directory
 2. Update measure stats: `npx tsx scripts/update-measure-stats.ts`
-3. Add UI components in `client/src/components/`
+3. Add DCGView components in `client/src/components/`
 
 ### Error Handling
 - Use `HandledError` for user-facing errors
 - All API routes automatically handle errors and return proper HTTP status codes
 - Frontend should handle loading states and error messages
 
-### React Component Patterns
-- When using class components with methods that return JSX, define them as arrow functions to maintain proper `this` binding
-- Use JSX syntax (`<Component />`) instead of `React.createElement` when the component is a method of the current class
-- Example:
-  ```typescript
-  // Correct - arrow function for proper this binding
-  private renderPage = () => {
-    return <div>Content</div>;
+### DCGView Component Patterns
+
+DCGView is a one-directional view library that renders data to DOM and updates it efficiently. Views are class-based with getter functions for dynamic data binding.
+
+**Basic View Structure:**
+```typescript
+interface Props {
+  user: () => User | undefined;
+  dispatch: (action: Action) => void;
+}
+
+class UserView extends DCGView.Class<Props> {
+  init() {
+    // Initialize member variables here (never in constructor)
   }
 
-  // In render method
-  render() {
-    return <div><this.renderPage /></div>;
+  template() {
+    return (
+      <div class={() => ({ active: !!this.props.user() })}>
+        {/* Dynamic text binding */}
+        {() => this.props.user()?.name || 'Guest'}
+
+        {/* Event handlers */}
+        <button onTap={() => this.handleClick()}>
+          Click me
+        </button>
+      </div>
+    );
   }
-  ```
-- Avoid creating component functions inside render methods to prevent unnecessary re-creation on each render
+
+  handleClick() {
+    this.props.dispatch({ type: 'user-clicked' });
+  }
+}
+```
+
+**Control Flow & Type Safety:**
+```typescript
+const { If, Each, SwitchUnion } = DCGView.Components;
+
+class DataView extends DCGView.Class<{
+  items: () => Item[];
+  status: () => 'loading' | 'loaded' | 'error';
+}> {
+  template() {
+    return (
+      <div>
+        {/* Conditional rendering */}
+        <If predicate={() => this.props.items().length > 0}>
+          {() => <span>Has items</span>}
+        </If>
+
+        {/* Dynamic lists with keys */}
+        {Each(() => this.props.items(), {
+          key: (item) => item.id,
+          item: (item) => <ItemView item={() => item} />
+        })}
+
+        {/* Type-safe switching - statusProp is narrowed to specific union member */}
+        {SwitchUnion(() => this.props.status(), {
+          loading: (statusProp) => <div>Status: {() => statusProp()}</div>, // statusProp: () => 'loading'
+          loaded: (statusProp) => <div>Status: {() => statusProp()}</div>,   // statusProp: () => 'loaded'
+          error: (statusProp) => <div>Error: {() => statusProp()}</div>      // statusProp: () => 'error'
+        })}
+      </div>
+    );
+  }
+}
+```
+
+**Critical Rules:**
+- **All dynamic props must be getter functions** - enables re-evaluation during updates
+- **Never break the getter chain** - don't store `this.props.getter()` in variables
+- **Use `init()` for initialization** - never use constructor or field initialization
+- **Maintain unique keys** for dynamic lists to enable efficient DOM diffing
+
+**Type Safety:**
+- Use `DCGView.Components.IfDefined` for nullable props
+- `SwitchUnion` provides automatic type narrowing for union types
+- Manual type casts may be needed when TypeScript can't infer getter consistency
+
+See [DCGView Introduction](client/dcgview/introduction.md) and [Components](client/dcgview/components.md) for complete documentation.
 
 ## Common Commands
 
