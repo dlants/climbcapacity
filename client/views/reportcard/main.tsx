@@ -2,7 +2,6 @@ import React from "react";
 import type { HydratedSnapshot, Snapshot } from "../../types";
 import { Dispatch } from "../../main";
 import {
-  assertLoaded,
   assertUnreachable,
   GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
@@ -317,7 +316,7 @@ export class ReportCardMain {
     }
   }
 
-  private FetchButton() {
+  private FetchButton = () => {
     return (
       <button
         onPointerDown={() => this.context.myDispatch({ type: "REQUEST_DATA" })}
@@ -331,15 +330,15 @@ export class ReportCardMain {
     );
   }
 
-  private LoadedView({
+  private LoadedView = ({
     response,
   }: {
     response: GetLoadedRequestType<Model["dataRequest"]>["response"];
-  }) {
+  }) => {
     return response.reportCardModel.view();
   }
 
-  private OutputMeasureView() {
+  private OutputMeasureView = () => {
     return (
       <div className={styles.outputMeasureContainer}>
         Output Measure:
@@ -349,7 +348,7 @@ export class ReportCardMain {
     );
   }
 
-  private SnapshotStatsView() {
+  private SnapshotStatsView = () => {
     return (
       this.state.dataRequest.status == "loaded" && (
         <span>

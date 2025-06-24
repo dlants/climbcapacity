@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { SendLink } from "./pages/send-link";
@@ -117,14 +117,38 @@ type Msg =
 
 export type Dispatch<Msg> = (msg: Msg) => void;
 
-export class MainApp {
-  state: Model;
+interface MainAppProps {
+  auth: RequestStatus<AuthStatus>;
+  measureStats: MeasureStats;
+  dispatch: Dispatch<Msg>;
+}
 
-  constructor(
-    initialModel: Model,
-    private context: { myDispatch: Dispatch<Msg> }
-  ) {
-    this.state = initialModel;
+export class MainApp extends React.Component<MainAppProps> {
+  state: Model;
+  error: string | null = null;
+
+  constructor(props: MainAppProps) {
+    super(props);
+
+    if (props.auth.status == "loaded" && props.auth.response.status == "logged in") {
+      this.state = {
+        auth: props.auth,
+        measureStats: props.measureStats,
+        page: { route: "/" },
+      };
+    } else {
+      const sendLinkPage = new SendLink(
+        { myDispatch: (msg) => props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+      );
+      this.state = {
+        auth: props.auth,
+        measureStats: props.measureStats,
+        page: {
+          route: "/send-link",
+          sendLinkPage,
+        },
+      };
+    }
   }
 
   private navigate(msg: NavigateMsg) {
@@ -147,7 +171,7 @@ export class MainApp {
           this.state.page = { route: "/" };
         } else {
           const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
             route: "/send-link",
@@ -160,7 +184,7 @@ export class MainApp {
         if (user) {
           const userSnapshotsPage = new UserSnapshotsPage.UsersSnapshotsPage(
             user.id,
-            { myDispatch: (msg) => this.context.myDispatch({ type: "USER_SNAPSHOTS_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "USER_SNAPSHOTS_MSG", msg }) }
           );
           this.state.page = {
             route: "/snapshots",
@@ -168,7 +192,7 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
             route: "/send-link",
@@ -184,7 +208,7 @@ export class MainApp {
               userId: user.id,
               measureStats: this.state.measureStats,
             },
-            { myDispatch: (msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "REPORT_CARD_MSG", msg }) }
           );
           this.state.page = {
             route: "/report-card",
@@ -192,7 +216,7 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
             route: "/send-link",
@@ -208,7 +232,7 @@ export class MainApp {
               snapshotId: msg.target.snapshotId,
               measureStats: this.state.measureStats,
             },
-            { myDispatch: (msg) => this.context.myDispatch({ type: "SNAPSHOT_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "SNAPSHOT_MSG", msg }) }
           );
           this.state.page = {
             route: "/snapshot",
@@ -216,7 +240,7 @@ export class MainApp {
           };
         } else {
           const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.context.myDispatch({ type: "SEND_LINK_MSG", msg }) }
+            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
           );
           this.state.page = {
             route: "/send-link",
@@ -230,7 +254,7 @@ export class MainApp {
           {
             measureStats: this.state.measureStats,
           },
-          { myDispatch: (msg) => this.context.myDispatch({ type: "EXPLORE_MSG", msg }) }
+          { myDispatch: (msg) => this.props.dispatch({ type: "EXPLORE_MSG", msg }) }
         );
         this.state.page = {
           route: "/explore",
@@ -244,6 +268,8 @@ export class MainApp {
 
     this.navigationThunk().catch(console.error);
   }
+
+
 
   update(msg: Msg) {
     switch (msg.type) {
@@ -282,7 +308,7 @@ export class MainApp {
         if (msg.msg.type == "SELECT_SNAPSHOT") {
           const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
           (async () => {
-            this.context.myDispatch({
+            this.props.dispatch({
               type: "NAVIGATE",
               target: {
                 route: "/snapshot",
@@ -383,7 +409,11 @@ export class MainApp {
     window.history.replaceState({}, "", newUrl);
   }
 
-  view() {
+  render() {
+    if (this.error) {
+      return <div>Error: {this.error}</div>;
+    }
+
     const Page = () => {
       switch (this.state.page.route) {
         case "/send-link":
@@ -429,54 +459,6 @@ export class MainApp {
   }
 }
 
-
-function App({ initialModel }: { initialModel: Model }) {
-  const [appState, setAppState] = useState<{ status: "running"; model: Model } | { status: "error"; error: string }>({
-    status: "running",
-    model: initialModel,
-  });
-
-  const [mainApp, setMainApp] = useState<MainApp | null>(null);
-
-  const dispatch = useCallback((msg: Msg) => {
-    setAppState((currentState) => {
-      if (currentState.status === "error") {
-        return currentState;
-      }
-
-      try {
-        if (!mainApp) {
-          return currentState;
-        }
-
-        mainApp.update(msg);
-        return { status: "running", model: mainApp.state };
-      } catch (e) {
-        console.error(e);
-        return { status: "error", error: (e as Error).message };
-      }
-    });
-  }, [mainApp]);
-
-  // Initialize mainApp once
-  React.useEffect(() => {
-    if (!mainApp) {
-      const app = new MainApp(initialModel, { myDispatch: dispatch });
-      setMainApp(app);
-    }
-  }, [initialModel, dispatch, mainApp]);
-
-  if (appState.status === "error") {
-    return <div>Error: {appState.error}</div>;
-  }
-
-  if (!mainApp) {
-    return <div>Loading...</div>;
-  }
-
-  return mainApp.view();
-}
-
 async function run() {
   const router = new Router();
   const response = await fetch("/api/auth", {
@@ -501,102 +483,39 @@ async function run() {
     measureStats = {};
   }
 
-  let initialModel: Model;
-  let dispatchRef: { current: Dispatch<Msg> | undefined } = { current: undefined };
+  const root = createRoot(document.getElementById("app")!);
+  let mainAppInstance: MainApp;
 
-  // We'll create a temporary dispatch function that will be replaced later
-  const tempDispatch = (msg: Msg) => {
-    if (dispatchRef.current) {
-      dispatchRef.current(msg);
+  const dispatch = (msg: Msg) => {
+    if (!mainAppInstance || mainAppInstance.error) {
+      return;
+    }
+
+    try {
+      mainAppInstance.update(msg);
+      mainAppInstance.forceUpdate();
+    } catch (e) {
+      console.error(e);
+      mainAppInstance.error = (e as Error).message;
+      mainAppInstance.forceUpdate();
     }
   };
 
-  if (auth.status == "loaded" && auth.response.status == "logged in") {
-    initialModel = {
+  flushSync(() => {
+    const element = React.createElement(MainApp, {
       auth,
       measureStats,
-      page: { route: "/" },
-    };
-  } else {
-    const sendLinkPage = new SendLink(
-      { myDispatch: (msg) => tempDispatch({ type: "SEND_LINK_MSG", msg }) }
-    );
-    initialModel = {
-      auth,
-      measureStats,
-      page: {
-        route: "/send-link",
-        sendLinkPage,
-      },
-    };
-  }
-
-  const root = createRoot(document.getElementById("app")!);
-
-  // Create a wrapper component to capture dispatch
-  function AppWrapper() {
-    const [appState, setAppState] = useState<{ status: "running"; model: Model } | { status: "error"; error: string }>({
-      status: "running",
-      model: initialModel,
+      dispatch,
+      ref: (instance: MainApp) => { mainAppInstance = instance; }
     });
-
-    const [mainApp, setMainApp] = useState<MainApp | null>(null);
-
-    const dispatch = useCallback((msg: Msg) => {
-      setAppState((currentState) => {
-        if (currentState.status === "error") {
-          return currentState;
-        }
-
-        try {
-          if (!mainApp) {
-            return currentState;
-          }
-
-          mainApp.update(msg);
-          return { status: "running", model: mainApp.state };
-        } catch (e) {
-          console.error(e);
-          return { status: "error", error: (e as Error).message };
-        }
-      });
-    }, [mainApp]);
-
-    // Set the dispatch reference for external use
-    React.useEffect(() => {
-      dispatchRef.current = dispatch;
-    }, [dispatch]);
-
-    // Initialize mainApp once
-    React.useEffect(() => {
-      if (!mainApp) {
-        const app = new MainApp(initialModel, { myDispatch: dispatch });
-        setMainApp(app);
-      }
-    }, [dispatch, mainApp]);
-
-    if (appState.status === "error") {
-      return <div>Error: {appState.error}</div>;
-    }
-
-    if (!mainApp) {
-      return <div>Loading...</div>;
-    }
-
-    return mainApp.view();
-  }
-
-  flushSync(() => root.render(<AppWrapper />));
-
-  router.subscribe((msg) => {
-    if (dispatchRef.current) {
-      dispatchRef.current(msg);
-    }
+    root.render(element);
   });
 
+  router.subscribe(dispatch);
+
   const navMsg = parseRoute(window.location.pathname);
-  if (navMsg && dispatchRef.current) {
-    dispatchRef.current(navMsg);
+  if (navMsg) {
+    dispatch(navMsg);
   }
 }
 
