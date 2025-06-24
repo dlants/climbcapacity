@@ -1,0 +1,99 @@
+.dcg-search-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+
+  i.dcg-remove-x {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: $medium-gray;
+    padding: 8px;
+    border-radius: 50%;
+    &.dcg-hovered {
+      color: $dark-gray;
+      background: $transparent-light-gray;
+    }
+    &.dcg-depressed {
+      color: $off-black-text;
+      background: $transparent-medium-light-gray;
+    }
+  }
+
+  input {
+    //remove default select styling
+    outline: none;
+    width: 100%;
+    border: 2px solid $transparent-border-gray;
+    background: #fff;
+    font-size: 100%;
+    color: $off-black-text;
+    padding: 10px 30px 10px 10px; //room for the X
+    border-radius: 5px 5px 0 0;
+    margin-bottom: 0;
+    &.dcg-results-hidden {
+      border-radius: 5px;
+    }
+    &:focus {
+      border-color: $blue;
+    }
+  }
+
+  .dcg-searchable-dropdown-list-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    &:not(.dcg-render-as-popover) {
+      overflow: hidden;
+    }
+
+    &.dcg-render-as-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 500px;
+    }
+  }
+
+  .dcg-searchable-dropdown-list {
+    font-size: 110%;
+    border: 1px solid $transparent-border-gray;
+    border-radius: 0 0 5px 5px;
+    background-color: #fff;
+    text-align: left;
+    z-index: 2; //so it's over the buttons below
+    // adds momentum scrolling
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    overflow-y: auto;
+    &:not(.dcg-no-input) {
+      border-top-width: 0;
+      max-height: 100%;
+    }
+    &.dcg-no-input {
+      border-radius: 5px;
+      flex: 1;
+    }
+
+    &.dcg-no-search-results {
+      text-align: center;
+      padding: 25px;
+    }
+
+    .dcg-searchable-dropdown-option {
+      padding: 7px 10px;
+      font-size: 90%;
+      &.dcg-hovered,
+      &:focus {
+        background: $light-gray;
+        outline: none;
+      }
+      &.dcg-depressed {
+        background: $medium-light-gray;
+      }
+    }
+  }
+}

@@ -2,30 +2,43 @@
   "compilerOptions": {
     // Modern JS features, good browser support
     "target": "ES2020",
-
     // Use modern JS modules, esbuild will handle bundling
     "module": "ESNext",
-
     // Enables all strict type checking, catches more bugs
     "strict": true,
-
+    // Allow properties without initializers (needed for DCGView pattern)
+    "strictPropertyInitialization": false,
     // Better import compatibility with CommonJS modules
     "esModuleInterop": true,
-
     // Faster builds, skip type checking of node_modules
     "skipLibCheck": true,
-
     // Prevents cross-platform path issues
     "forceConsistentCasingInFileNames": true,
-
     // Required for modern package resolution
     "moduleResolution": "node",
-
     // Include browser APIs and modern JS features
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-
-    "types": ["vitest/globals"],
-
-    "jsx": "react"
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "vitest/globals"
+    ],
+    // `DCGView.createElement` is still used by ESBuild, but this tells TypeScript that it isn't so that explicit
+    // `import * as DCGView from 'dcgview;' statements can be omitted from files that don't need them and auto-imported
+    // by ESBuild. Without `preserve`, TypeScript would complain about the missing import.
+    "jsx": "react-jsx",
+    "jsxImportSource": "dcgview/jsx",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "dcgview": [
+        "./dcgview"
+      ],
+      "dcgview/*": [
+        "./dcgview/*"
+      ]
+    }
   }
 }

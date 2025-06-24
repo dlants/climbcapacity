@@ -1,0 +1,89 @@
+.dcg-checkbox-flex-container {
+  display: flex;
+  align-items: center;
+}
+.dcg-component-checkbox {
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  .dcg-checkbox {
+    border: 1px solid $border-gray;
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 3px;
+    vertical-align: middle;
+    display: inline-block;
+    position: relative;
+
+    i {
+      display: none;
+      font-size: 115%;
+      position: absolute;
+      top: -0.15em;
+      left: 0.1em;
+      @include text-outline(1px, var(--dcg-checkbox-outline-color, #fff));
+    }
+  }
+
+  .dcg-checkbox-children {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.dcg-hovered:not(.dcg-checked) {
+    .dcg-checkbox {
+      border: 1px solid $medium-gray;
+      i {
+        display: block;
+        color: $transparent-light-gray;
+      }
+    }
+  }
+
+  &.dcg-checked {
+    .dcg-checkbox {
+      i {
+        display: block;
+        color: var(--dcg-accent-color, $blue);
+      }
+    }
+    &.dcg-hovered {
+      .dcg-checkbox {
+        border: 1px solid $transparent-medium-gray;
+      }
+    }
+  }
+
+  &.dcg-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    .dcg-checkbox {
+      background: $transparent-light-gray;
+    }
+    &.dcg-checked {
+      i {
+        display: block;
+        color: $transparent-medium-gray;
+      }
+    }
+  }
+
+  &.dcg-small {
+    font-size: 85%;
+  }
+}
+
+// putting a <Checkbox> in a .dcg-component-checkbox-hover-container will show hover styling
+// when that parent component is hovered
+.dcg-component-checkbox-hover-container.dcg-hovered
+  .dcg-component-checkbox:not(.dcg-checked)
+  .dcg-checkbox {
+  border: 1px solid $medium-gray;
+  i {
+    display: block;
+    color: $transparent-light-gray;
+  }
+}

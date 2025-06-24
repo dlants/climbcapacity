@@ -1,0 +1,34 @@
+@include dcg-delayed-fadeIn();
+
+.dcg-tooltipped-error {
+  color: $error-color;
+  font-size: 22px;
+  width: 1.18em;
+  height: 1.18em;
+  font-style: normal;
+  display: inline-block;
+  text-align: center;
+  &:not(.dcg-tooltipped-error__instant) {
+    animation: dcg-delayed-fadeIn 1s;
+  }
+  &.dcg-small {
+    font-size: 14px;
+  }
+  &.dcg-medium-small {
+    font-size: 1rem;
+  }
+  &.dcg-white {
+    color: #fff;
+  }
+}
+
+.dcg-tooltipped-error-container {
+  &.dcg-focus-visible {
+    outline: 2px solid $light-purple;
+    border-radius: 3px;
+  }
+}
+
+.dcg-mq-math-mode i.dcg-icon-error {
+  font-style: normal;
+}

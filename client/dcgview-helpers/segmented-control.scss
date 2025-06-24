@@ -1,0 +1,146 @@
+//Colors are semitransparent black so they will work on colored backgrounds as well
+$selected-btn-dark-gray: rgba(#000, 0.65);
+$text-color: rgba(#000, 0.85);
+$text-color-hovered: #000;
+$border-radius: $dcg-shared-btn-border-radius;
+$large-button-height: 34px;
+
+.dcg-segmented-control-container {
+  display: flex;
+  padding-right: 1px;
+  padding-bottom: 1px; //account for the -1px margin on the bottom of each button
+  .dcg-segmented-control-btn {
+    color: var(--dcg-custom-text-color, $text-color);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--dcg-custom-text-color, $gray-on-white-3-1);
+    //these avoid double-borders
+    margin-right: -1px;
+    margin-bottom: -1px;
+
+    i {
+      position: relative;
+      top: 1px; //I don't know why we need this, but everywhere looks better with it
+    }
+
+    &:not(.dcg-disabled) {
+      &.dcg-hovered:not(.dcg-selected) {
+        color: var(--dcg-custom-text-color-shaded, $text-color-hovered);
+      }
+
+      &.dcg-depressed:not(.dcg-selected) {
+        background: $transparent-lighter-gray;
+      }
+    }
+    &:first-of-type {
+      border-top-left-radius: $border-radius;
+      border-bottom-left-radius: $border-radius;
+    }
+    &:last-of-type {
+      border-top-right-radius: $border-radius;
+      border-bottom-right-radius: $border-radius;
+    }
+    &.dcg-selected {
+      color: var(--dcg-custom-background-color, #fff);
+      position: relative;
+
+      // If this option is selected, generally we want it to show default cursor, because clicking it is a
+      // no-op. But if the whole control is disabled, then we don't want to override any cursor styling coming
+      // from upstream, b/c we might be wrapping this in something else that wants a pointer cursor, like a sticky
+      // tooltip.
+      &:not(.dcg-disabled) {
+        cursor: default;
+      }
+    }
+    &.dcg-disabled {
+      opacity: 0.4;
+    }
+  }
+
+  &.dcg-theme-default .dcg-segmented-control-btn {
+    flex: 1;
+    .dcg-segmented-control-interior {
+      height: $large-button-height;
+      line-height: $large-button-height;
+      padding: 0 8px;
+    }
+    &.dcg-hovered:not(.dcg-selected):not(.dcg-disabled) {
+      border-color: var(
+        --dcg-custom-text-color-shaded,
+        $gray-on-white-3-1-hovered
+      );
+    }
+    &.dcg-selected {
+      border: 1px solid var(--dcg-custom-text-color, $selected-btn-dark-gray);
+      background: var(--dcg-custom-text-color, $selected-btn-dark-gray);
+    }
+  }
+
+  &.dcg-theme-full-width-mini .dcg-segmented-control-btn {
+    flex: 1;
+    font-size: 0.9rem;
+  }
+
+  &.dcg-theme-mini,
+  &.dcg-theme-vertical,
+  &.dcg-theme-full-width-mini {
+    .dcg-segmented-control-btn {
+      border-color: var(--dcg-custom-text-color, $border-gray);
+
+      .dcg-segmented-control-interior {
+        padding: var(--segmented-control-vertical-padding, 4px) 6px;
+      }
+
+      &.dcg-hovered:not(.dcg-selected):not(.dcg-disabled) {
+        background: $transparent-lighter-gray;
+      }
+
+      &.dcg-depressed:not(.dcg-selected):not(.dcg-disabled) {
+        background: $transparent-medium-light-gray;
+      }
+
+      &.dcg-selected {
+        background: color-mix(
+          in srgb,
+          var(--dcg-accent-color, $blue) 15%,
+          transparent
+        );
+        border-color: var(--dcg-accent-color, $blue);
+        color: var(--dcg-accent-color, $blue);
+      }
+
+      &.dcg-disabled {
+        pointer-events: none;
+
+        &.dcg-selected + .dcg-segmented-control-btn {
+          border-left: 1px solid $dark-gray;
+        }
+
+        &.dcg-selected {
+          background: $transparent-light-gray;
+          border-color: $dark-gray;
+          color: var(--dcg-custom-text-color-shaded, #000);
+        }
+      }
+    }
+  }
+
+  &.dcg-theme-vertical {
+    flex-direction: column;
+
+    .dcg-segmented-control-btn {
+      &:first-of-type {
+        border-top-left-radius: $border-radius;
+        border-top-right-radius: $border-radius;
+        border-bottom-left-radius: unset;
+      }
+      &:last-of-type {
+        border-top-right-radius: unset;
+        border-bottom-left-radius: $border-radius;
+        border-bottom-right-radius: $border-radius;
+      }
+    }
+  }
+}
