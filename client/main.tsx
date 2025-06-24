@@ -409,35 +409,35 @@ export class MainApp extends React.Component<MainAppProps> {
     window.history.replaceState({}, "", newUrl);
   }
 
+  private renderPage = () => {
+    switch (this.state.page.route) {
+      case "/send-link":
+        return <this.state.page.sendLinkPage.view />;
+
+      case "/snapshots":
+        return <this.state.page.userSnapshotsPage.view />;
+
+      case "/report-card":
+        return <this.state.page.reportCardPage.view />;
+
+      case "/snapshot":
+        return <this.state.page.snapshotPage.view />;
+
+      case "/explore":
+        return <this.state.page.explorePage.view />;
+
+      case "/":
+        return <div>TODO: add homepage content</div>;
+
+      default:
+        assertUnreachable(this.state.page);
+    }
+  }
+
   render() {
     if (this.error) {
       return <div>Error: {this.error}</div>;
     }
-
-    const Page = () => {
-      switch (this.state.page.route) {
-        case "/send-link":
-          return this.state.page.sendLinkPage.view();
-
-        case "/snapshots":
-          return this.state.page.userSnapshotsPage.view();
-
-        case "/report-card":
-          return this.state.page.reportCardPage.view();
-
-        case "/snapshot":
-          return this.state.page.snapshotPage.view();
-
-        case "/explore":
-          return this.state.page.explorePage.view();
-
-        case "/":
-          return <div>TODO: add homepage content</div>;
-
-        default:
-          assertUnreachable(this.state.page);
-      }
-    };
 
     return (
       <div className={styles.root}>
@@ -451,7 +451,7 @@ export class MainApp extends React.Component<MainAppProps> {
             />
           </div>
           <div className={styles.lastPageItem}>
-            <Page />
+            <this.renderPage />
           </div>
         </div>
       </div>

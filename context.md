@@ -10,32 +10,6 @@ ClimbCapacity is a climbing performance tracking web application that allows use
 - **Shared**: `iso/` package contains shared types and utilities
 - **Scripts**: Database management and data import utilities
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Yarn package manager
-- Docker (for local MongoDB)
-
-### Local Development Setup
-```bash
-# Install dependencies
-yarn install
-
-# Start local MongoDB
-docker-compose up -d
-
-# Start both frontend and backend
-npm run dev
-# This starts:
-# - Frontend dev server on http://localhost:5173
-# - Backend API server on http://localhost:3000
-
-# Or run individually:
-npm run dev:frontend  # Vite dev server
-npm run dev:backend   # TypeScript compilation + nodemon
-```
-
 ### Environment Variables
 Create `.env` files in both `backend/` and `client/` directories:
 
@@ -54,17 +28,8 @@ VITE_API_BASE_URL=http://localhost:3000
 
 ### Database Setup
 ```bash
-cd scripts
-
-# Create database indexes
-npx tsx create-indexes.ts
-
-# Import sample datasets (optional)
-npx tsx import-climbharder-v3.ts
-npx tsx import-powercompany.ts
-
 # Update measure statistics
-npx tsx update-measure-stats.ts
+cd scripts & npx tsx update-measure-stats.ts
 ```
 
 ## Testing
@@ -249,6 +214,23 @@ iso/
 - Use `HandledError` for user-facing errors
 - All API routes automatically handle errors and return proper HTTP status codes
 - Frontend should handle loading states and error messages
+
+### React Component Patterns
+- When using class components with methods that return JSX, define them as arrow functions to maintain proper `this` binding
+- Use JSX syntax (`<Component />`) instead of `React.createElement` when the component is a method of the current class
+- Example:
+  ```typescript
+  // Correct - arrow function for proper this binding
+  private renderPage = () => {
+    return <div>Content</div>;
+  }
+
+  // In render method
+  render() {
+    return <div><this.renderPage /></div>;
+  }
+  ```
+- Avoid creating component functions inside render methods to prevent unnecessary re-creation on each render
 
 ## Common Commands
 
