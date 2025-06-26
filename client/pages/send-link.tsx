@@ -1,4 +1,4 @@
-import React from "react";
+import * as DCGView from 'dcgview'
 import { Dispatch } from "../types";
 import { RequestStatus } from "../util/utils";
 
@@ -12,19 +12,17 @@ export type Msg =
   | { type: "SEND_MAGIC_LINK" }
   | { type: "UPDATE_STATUS"; request: RequestStatus<void> };
 
-export class SendLink {
+export class SendLinkController {
   state: Model;
 
-  constructor(
-    private context: { myDispatch: Dispatch<Msg> }
-  ) {
+  constructor(public myDispatch: Dispatch<Msg>) {
     this.state = {
       email: "",
       signinRequest: { status: "not-sent" }
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SET_EMAIL":
         this.state.email = msg.email;
@@ -33,7 +31,7 @@ export class SendLink {
       case "SEND_MAGIC_LINK": {
         this.state.signinRequest = { status: "loading" };
 
-        (this.sendLink()).catch(console.error);
+        this.sendLink().catch(console.error);
         break;
       }
 
@@ -47,33 +45,7 @@ export class SendLink {
     }
   }
 
-  view() {
-    return (
-      <div>
-        <input
-          key="email"
-          type="email"
-          value={this.state.email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            this.context.myDispatch({
-              type: "SET_EMAIL",
-              email: e.target.value,
-            })
-          }
-        />
-        <button
-          disabled={this.state.signinRequest.status === "loading"}
-          onPointerDown={() => this.context.myDispatch({ type: "SEND_MAGIC_LINK" })}
-        >
-          Send Magic Link
-        </button>
-        {this.state.signinRequest.status === "loaded" && <p>Check your email!</p>}
-        {this.state.signinRequest.status === "error" && (
-          <p>{this.state.signinRequest.error}</p>
-        )}
-      </div>
-    );
-  }
+
 
   async sendLink() {
     const response = await fetch("/api/send-login-link", {
@@ -85,16 +57,50 @@ export class SendLink {
     });
 
     if (response.ok) {
-      this.context.myDispatch({
+      this.myDispatch({
         type: "UPDATE_STATUS",
         request: { status: "loaded", response: undefined },
       });
     } else {
-      this.context.myDispatch({
+      this.myDispatch({
         type: "UPDATE_STATUS",
         request: { status: "error", error: await response.text() },
       });
     }
   };
 }
+export class SendLinkView extends DCGView.View<{
+  controller: () => SendLinkController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+    const { SwitchUnion } = DCGView.Components;
 
+    return (
+      <div>
+        <input
+          type="email"
+          value={() => stateProp().email}
+          onChange={(e) =>
+            this.props.controller().myDispatch({
+              type: "SET_EMAIL",
+              email: (e.target as HTMLInputElement).value,
+            })
+          }
+        />
+        <button
+          disabled={() => stateProp().signinRequest.status === "loading"}
+          onPointerDown={() => this.props.controller().myDispatch({ type: "SEND_MAGIC_LINK" })}
+        >
+          Send Magic Link
+        </button>
+        {SwitchUnion(() => stateProp().signinRequest, 'status', {
+          "not-sent": () => <div />,
+          "loading": () => <div />,
+          "loaded": () => <div>Check your email!</div>,
+          "error": (errorRequest: () => { status: "error"; error: string }) => <div>{() => errorRequest().error}</div>,
+        })}
+      </div>
+    );
+  }
+}

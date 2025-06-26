@@ -1,13 +1,15 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import {
   generateId,
   MeasureClassSpec,
   MeasureId,
   parseId,
 } from "../../../iso/measures";
-import { Dispatch } from "../../main";
+import { Dispatch } from "../../types";
 import { MeasureStats } from "../../../iso/protocol";
 import { CountTree, measureStatsToCountTree, getFromCountTree } from "./utils";
+
+const { For } = DCGView.Components;
 
 type Selected = {
   measureClass: MeasureClassSpec;
@@ -37,7 +39,7 @@ export type Msg =
     value: string;
   };
 
-export class SelectMeasureClass {
+export class SelectMeasureClassController {
   state: Model;
 
   constructor(
@@ -50,7 +52,7 @@ export class SelectMeasureClass {
       measureId?: MeasureId;
       measureStats: MeasureStats;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public context: { myDispatch: Dispatch<Msg> }
   ) {
     const hydratedMeasureClasses = measureClasses.map((c) => {
       const countTree = measureStatsToCountTree(
@@ -68,16 +70,14 @@ export class SelectMeasureClass {
     this.state = {
       measureStats,
       measureClasses: hydratedMeasureClasses,
-      selected: this.initSelected({ measureStats, measureClasses, measureId }),
+      selected: this.initSelected({ measureClasses, measureId }),
     };
   }
 
   private initSelected({
-    measureStats,
     measureClasses,
     measureId,
   }: {
-    measureStats: MeasureStats;
     measureClasses: MeasureClassSpec[];
     measureId?: MeasureId;
   }): Selected {
@@ -111,7 +111,7 @@ export class SelectMeasureClass {
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SELECT_MEASURE_CLASS_MSG":
         const selected = this.state.selected;
@@ -155,12 +155,12 @@ export class SelectMeasureClass {
     }
   }
 
-  private getCountForMeasureClass(measureClass: MeasureClassSpec) {
+  getCountForMeasureClass(measureClass: MeasureClassSpec) {
     const m = this.state.measureClasses.find((mc) => mc.spec === measureClass);
     return m ? getFromCountTree(m.countTree, []) : 0;
   }
 
-  private getCountForParam(paramName: string, paramValue: string) {
+  getCountForParam(paramName: string, paramValue: string) {
     const measureClass = this.state.measureClasses.find(
       (mc) => mc.spec === this.state.selected.measureClass,
     );
@@ -176,57 +176,67 @@ export class SelectMeasureClass {
 
     return getFromCountTree(measureClass.countTree, paramValues);
   }
+}
 
-  view() {
+export class SelectMeasureClassView extends DCGView.View<{
+  controller: SelectMeasureClassController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
     return (
       <div>
         <select
           onChange={(e) => {
-            const measureClass = this.state.measureClasses.find(
-              (c) => c.spec.className == e.target.value,
+            const measureClass = stateProp().measureClasses.find(
+              (c) => c.spec.className == (e.target as HTMLSelectElement).value,
             );
             if (!measureClass) {
-              throw new Error(`Unexpected measure class ${e.target.value}`);
+              throw new Error(`Unexpected measure class ${(e.target as HTMLSelectElement).value}`);
             }
 
-            this.context.myDispatch({
+            this.props.controller().context.myDispatch({
               type: "SELECT_MEASURE_CLASS_MSG",
               measureClass: measureClass.spec,
             });
           }}
-          value={this.state.selected.measureClass.className}
+          value={() => stateProp().selected.measureClass.className}
         >
-          {this.state.measureClasses.map((measureClass) => (
-            <option
-              key={measureClass.spec.className}
-              value={measureClass.spec.className}
-            >
-              {measureClass.spec.className} (
-              {this.getCountForMeasureClass(measureClass.spec)})
-            </option>
-          ))}
+          <For each={() => stateProp().measureClasses} key={(mc) => mc.spec.className}>
+            {(getMeasureClass) => (
+              <option
+                value={() => getMeasureClass().spec.className}
+              >
+                {() => getMeasureClass().spec.className} (
+                {() => this.props.controller().getCountForMeasureClass(getMeasureClass().spec)})
+              </option>
+            )}
+          </For>
         </select>
 
-        {this.state.selected.measureClass.params.map((param) => (
-          <select
-            key={param.name}
-            onChange={(e) =>
-              this.context.myDispatch({
-                type: "UPDATE_PARAM_MSG",
-                param: param.name,
-                value: e.target.value,
-              })
-            }
-            value={this.state.selected.params[param.name]}
-          >
-            {param.values.map((value) => (
-              <option key={value} value={value}>
-                {value}
-                {param.suffix} ({this.getCountForParam(param.name, value)})
-              </option>
-            ))}
-          </select>
-        ))}
+        <For each={() => stateProp().selected.measureClass.params} key={(param) => param.name}>
+          {(getParam) => (
+            <select
+              onChange={(e) =>
+                this.props.controller().context.myDispatch({
+                  type: "UPDATE_PARAM_MSG",
+                  param: getParam().name,
+                  value: (e.target as HTMLSelectElement).value,
+                })
+              }
+              value={() => stateProp().selected.params[getParam().name]}
+            >
+              <For each={() => getParam().values} key={(value) => value}>
+                {(getValue) => (
+                  <option value={() => getValue()}>
+                    {() => getValue()}
+                    {() => getParam().suffix} ({() => this.props.controller().getCountForParam(getParam().name, getValue())})
+                  </option>
+                )}
+              </For>
+            </select>
+          )}
+        </For>
       </div>
     );
   }

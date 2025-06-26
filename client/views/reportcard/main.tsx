@@ -1,17 +1,16 @@
-import React from "react";
+import DCGView from "dcgview";
 import type { HydratedSnapshot, Snapshot } from "../../types";
-import { Dispatch } from "../../main";
+import { Dispatch } from "../../types";
 import {
   assertUnreachable,
-  GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
 } from "../../util/utils";
 import { SnapshotQuery, MeasureStats } from "../../../iso/protocol";
-import { EditQuery } from "../../views/edit-query";
-import { PlotList } from "./plot-list";
+import { EditQueryController, EditQueryView } from "../../views/edit-query";
+import { PlotListController, PlotListView, Msg as PlotListMsg } from "./plot-list";
 import { hydrateSnapshot } from "../../util/snapshot";
-import { SelectMeasureClass } from "../snapshot/select-measure-class";
-import { UnitToggle } from "../unit-toggle";
+import { SelectMeasureClassController, SelectMeasureClassView } from "../snapshot/select-measure-class";
+import { UnitToggleController, UnitToggleView } from "../unit-toggle";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -20,10 +19,10 @@ import { boulderGradeClass, sportGradeClass } from "../../../iso/measures/grades
 import { getSpec } from "../../../iso/measures";
 
 export type Model = {
-  filtersModel: EditQuery;
+  filtersModel: EditQueryController;
   outputMeasure: {
-    selector: SelectMeasureClass;
-    toggle: UnitToggle;
+    selector: SelectMeasureClassController;
+    toggle: UnitToggleController;
   };
   measureStats: MeasureStats;
   query: {
@@ -34,7 +33,7 @@ export type Model = {
   dataRequest: RequestStatus<
     {
       snapshots: HydratedSnapshot[];
-      reportCardModel: PlotList;
+      reportCardModel: PlotListController;
     },
     { queryHash: string }
   >;
@@ -65,7 +64,7 @@ export type Msg =
     msg: import("../../views/edit-query").Msg;
   };
 
-export class ReportCardMain {
+export class ReportCardMainController {
   state: Model;
 
   constructor(
@@ -78,14 +77,14 @@ export class ReportCardMain {
       measureStats: MeasureStats;
       mySnapshot?: HydratedSnapshot;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public context: { myDispatch: Dispatch<Msg> }
   ) {
-    const filtersModel = new EditQuery(
+    const filtersModel = new EditQueryController(
       {
+        initialFilters,
         measureStats,
-        initialFilters: initialFilters,
       },
-      { myDispatch: (msg: import("../../views/edit-query").Msg) => this.context.myDispatch({ type: "FILTERS_MSG", msg }) }
+      (msg: import("../../views/edit-query").Msg) => this.context.myDispatch({ type: "FILTERS_MSG", msg })
     );
     const query = this.getQuery(filtersModel);
 
@@ -117,7 +116,7 @@ export class ReportCardMain {
     }
 
     const outputMeasure: Model["outputMeasure"] = {
-      selector: new SelectMeasureClass(
+      selector: new SelectMeasureClassController(
         {
           measureClasses: [boulderGradeClass, sportGradeClass],
           measureStats,
@@ -126,7 +125,7 @@ export class ReportCardMain {
         { myDispatch: (msg: import("../snapshot/select-measure-class").Msg) => this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }) }
       ),
 
-      toggle: new UnitToggle(
+      toggle: new UnitToggleController(
         {
           measureId: initialMeasure.measureId,
           selectedUnit: initialMeasure.unit,
@@ -149,7 +148,7 @@ export class ReportCardMain {
     this.fetchData().catch(console.error);
   }
 
-  private getQuery(editQuery: EditQuery): { body: SnapshotQuery; hash: string } {
+  private getQuery(editQuery: EditQueryController): { body: SnapshotQuery; hash: string } {
     const query: SnapshotQuery = {
       datasets: {},
       measures: {},
@@ -204,7 +203,7 @@ export class ReportCardMain {
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SNAPSHOT_RESPONSE":
         switch (msg.request.status) {
@@ -214,7 +213,7 @@ export class ReportCardMain {
             this.state.dataRequest = msg.request;
             return;
           case "loaded":
-            const next = new PlotList(
+            const next = new PlotListController(
               {
                 snapshots: msg.request.response,
                 outputMeasure: {
@@ -224,7 +223,7 @@ export class ReportCardMain {
                 measureStats: this.state.measureStats,
                 mySnapshot: this.state.mySnapshot,
               },
-              { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+              { myDispatch: (msg: PlotListMsg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
             );
 
             this.state.dataRequest = {
@@ -250,12 +249,12 @@ export class ReportCardMain {
           console.warn(`Unexpected msg ${msg.type} when model is not loaded.`);
           return;
         }
-        this.state.dataRequest.response.reportCardModel.update(msg.msg);
+        this.state.dataRequest.response.reportCardModel.handleDispatch(msg.msg);
         break;
 
       case "FILTERS_MSG":
         const oldQueryHash = this.state.query.hash;
-        this.state.filtersModel.update(msg.msg);
+        this.state.filtersModel.handleDispatch(msg.msg);
         this.state.query = this.getQuery(this.state.filtersModel);
         if (this.state.query.hash != oldQueryHash) {
           this.state.dataRequest = { status: "not-sent" };
@@ -263,9 +262,9 @@ export class ReportCardMain {
         break;
 
       case "SELECT_MEASURE_CLASS_MSG":
-        this.state.outputMeasure.selector.update(msg.msg);
+        this.state.outputMeasure.selector.handleDispatch(msg.msg);
         const measure = getSpec(this.state.outputMeasure.selector.state.selected.measureId);
-        this.state.outputMeasure.toggle = new UnitToggle(
+        this.state.outputMeasure.toggle = new UnitToggleController(
           {
             measureId: measure.id,
             selectedUnit: measure.units[0],
@@ -275,7 +274,7 @@ export class ReportCardMain {
         );
 
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = new PlotList(
+          const nextReportCardModel = new PlotListController(
             {
               snapshots: this.state.dataRequest.response.snapshots,
               outputMeasure: {
@@ -285,17 +284,17 @@ export class ReportCardMain {
               measureStats: this.state.measureStats,
               mySnapshot: this.state.mySnapshot,
             },
-            { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+            { myDispatch: (msg: PlotListMsg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
           );
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
         break;
 
       case "OUTPUT_MEASURE_TOGGLE_MSG":
-        this.state.outputMeasure.toggle.update(msg.msg);
+        this.state.outputMeasure.toggle.handleDispatch(msg.msg);
 
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = new PlotList(
+          const nextReportCardModel = new PlotListController(
             {
               snapshots: this.state.dataRequest.response.snapshots,
               outputMeasure: {
@@ -305,7 +304,7 @@ export class ReportCardMain {
               measureStats: this.state.measureStats,
               mySnapshot: this.state.mySnapshot,
             },
-            { myDispatch: (msg: import("./plot-list").Msg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+            { myDispatch: (msg: PlotListMsg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
           );
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
@@ -315,82 +314,72 @@ export class ReportCardMain {
         assertUnreachable(msg);
     }
   }
+}
 
-  private FetchButton = () => {
+export class ReportCardMainView extends DCGView.View<{
+  controller: () => ReportCardMainController;
+}> {
+  template() {
+    const state = () => this.props.controller().state;
+
     return (
-      <button
-        onPointerDown={() => this.context.myDispatch({ type: "REQUEST_DATA" })}
-        disabled={
-          this.state.dataRequest.status === "loaded" &&
-          this.state.dataRequest.queryHash === this.state.query.hash
-        }
-      >
-        Fetch Data
-      </button>
-    );
-  }
+      <div class={styles.reportCardRoot}>
+        <div class={styles.filter}>
+          <EditQueryView controller={() => state().filtersModel} />
 
-  private LoadedView = ({
-    response,
-  }: {
-    response: GetLoadedRequestType<Model["dataRequest"]>["response"];
-  }) => {
-    return response.reportCardModel.view();
-  }
+          {() => {
+            if (state().dataRequest.status === "loaded") {
+              return (
+                <span>
+                  {() => {
+                    const dataRequest = state().dataRequest
+                    return dataRequest.status === "loaded" ? dataRequest.response.snapshots.length : 0
+                  }} snapshots loaded.
+                </span>
+              );
+            }
+            return null;
+          }}
 
-  private OutputMeasureView = () => {
-    return (
-      <div className={styles.outputMeasureContainer}>
-        Output Measure:
-        {this.state.outputMeasure.selector.view()}
-        {this.state.outputMeasure.toggle.view()}
-      </div>
-    );
-  }
-
-  private SnapshotStatsView = () => {
-    return (
-      this.state.dataRequest.status == "loaded" && (
-        <span>
-          {this.state.dataRequest.response.snapshots.length} snapshots loaded.
-        </span>
-      )
-    );
-  }
-
-  view() {
-    return (
-      <div className={styles.reportCardRoot}>
-        <div className={styles.filter}>
-          {this.state.filtersModel.view()}
-
-          <this.SnapshotStatsView />
-          <this.OutputMeasureView />
+          <div class={styles.outputMeasureContainer}>
+            Output Measure:
+            <SelectMeasureClassView controller={() => state().outputMeasure.selector} />
+            <UnitToggleView controller={() => state().outputMeasure.toggle} />
+          </div>
         </div>
-        {(() => {
-          switch (this.state.dataRequest.status) {
+        {() => {
+          const dataRequest = state().dataRequest;
+          switch (dataRequest.status) {
             case "not-sent":
-              return <this.FetchButton />;
+              return (
+                <button
+                  onTap={() => this.props.controller().context.myDispatch({ type: "REQUEST_DATA" })}
+                  disabled={() => {
+                    const dataRequest = state().dataRequest;
+                    const query = state().query;
+                    return dataRequest.status === "loaded" && dataRequest.queryHash === query.hash;
+                  }}
+                >
+                  Fetch Data
+                </button>
+              );
             case "loading":
               return <div>Fetching...</div>;
             case "error":
-              return <div>Error: {this.state.dataRequest.error}</div>;
+              return <div>Error: {() => dataRequest.status === "error" ? dataRequest.error : ""}</div>;
             case "loaded":
               return (
-                <div className={styles.graphs}>
-                  <this.LoadedView
-                    response={this.state.dataRequest.response}
-                  />
+                <div class={styles.graphs}>
+                  <PlotListView controller={() => dataRequest.response.reportCardModel} />
                 </div>
               );
             default:
-              assertUnreachable(this.state.dataRequest);
+              assertUnreachable(dataRequest);
           }
-        })()}
+        }}
       </div>
     );
   }
-
 }
 
 const styles = typestyle.stylesheet({
@@ -414,5 +403,3 @@ const styles = typestyle.stylesheet({
     ...csstips.horizontal,
   },
 });
-
-

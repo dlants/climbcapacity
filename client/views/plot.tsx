@@ -1,7 +1,5 @@
-import React from "react";
-import { Dispatch } from "../main";
+import * as DCGView from "dcgview";
 import * as d3 from "d3";
-import { useEffect, useRef } from "react";
 import { assertUnreachable } from "../util/utils";
 import * as Histogram from "./plots/histogram";
 import * as Dotplot from "./plots/dotplot";
@@ -9,65 +7,69 @@ import * as Heatmap from "./plots/heatmap";
 
 export type Model = Histogram.Model | Dotplot.Model | Heatmap.Model;
 
-export type Msg = never;
-
-export class Plot {
+export class Plot extends DCGView.View<{
+  initialModel: Model;
+}> {
   state: Model;
+  svgElement: SVGSVGElement | null = null;
 
-  constructor(
-    initialModel: Model,
-    private context: { myDispatch: Dispatch<Msg> }
-  ) {
-    this.state = initialModel;
+  init() {
+    this.state = this.props.initialModel();
   }
 
-  update(msg: Msg) {
-    // No messages are currently handled by this component
-    // This method is kept for consistency with the class-based pattern
+  template() {
+    return (
+      <div class="plot-container"
+        didMount={this.divDidMount.bind(this)}
+        willUnmount={this.divWillUnmount.bind(this)}
+      ></div>
+    );
   }
 
-  view() {
-    const PlotComponent = () => {
-      const containerRef = useRef<SVGSVGElement>(null);
+  divDidMount(el: HTMLDivElement) {
+    // Create SVG element
+    this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.svgElement.setAttribute('width', '100%');
+    this.svgElement.setAttribute('height', '100%');
+    this.svgElement.setAttribute('viewBox', '0 0 600 400');
+    this.svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-      useEffect(() => {
-        if (!containerRef.current) return;
-        const svg = d3.select(containerRef.current);
-        switch (this.state.style) {
-          case "histogram":
-            Histogram.view({ model: this.state, svg });
-            break;
+    el.appendChild(this.svgElement);
+    this.renderPlot();
+  }
 
-          case "dotplot":
-            Dotplot.view({ model: this.state, svg });
-            break;
+  divWillUnmount() {
+    // Clean up references when the specific div element is unmounted
+    this.svgElement = null;
+  }
 
-          case "heatmap":
-            Heatmap.view({ model: this.state, svg });
-            break;
+  renderPlot() {
+    if (!this.svgElement) return;
 
-          default:
-            assertUnreachable(this.state);
-        }
-        return () => {
-          if (containerRef.current) {
-            d3.select(containerRef.current).selectAll("*").remove();
-          }
-        };
-      }, [this.state]);
+    const svg = d3.select(this.svgElement);
+    // Clear previous content
+    svg.selectAll("*").remove();
 
-      return (
-        <svg
-          className="plot-container"
-          ref={containerRef}
-          width="100%"
-          height="100%"
-          viewBox="0 0 600 400"
-          preserveAspectRatio="xMidYMid meet"
-        ></svg>
-      );
-    };
+    switch (this.state.style) {
+      case "histogram":
+        Histogram.view({ model: this.state, svg });
+        break;
 
-    return <PlotComponent />;
+      case "dotplot":
+        Dotplot.view({ model: this.state, svg });
+        break;
+
+      case "heatmap":
+        Heatmap.view({ model: this.state, svg });
+        break;
+
+      default:
+        assertUnreachable(this.state);
+    }
+  }
+
+  didUpdate() {
+    // Re-render the plot when the component updates
+    this.renderPlot();
   }
 }

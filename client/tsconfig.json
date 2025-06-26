@@ -30,8 +30,6 @@
     // by ESBuild. Without `preserve`, TypeScript would complain about the missing import.
     "jsx": "react-jsx",
     "jsxImportSource": "dcgview/jsx",
-    "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "dcgview": [
         "./dcgview"

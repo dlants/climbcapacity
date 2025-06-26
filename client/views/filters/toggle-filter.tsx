@@ -1,4 +1,4 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import {
   convertToStandardUnit,
   convertToTargetUnit,
@@ -6,23 +6,21 @@ import {
 } from "../../../iso/units";
 import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
-import { UnitToggle } from "../unit-toggle";
+import { UnitToggleController } from "../unit-toggle";
 import type { Msg as UnitToggleMsg } from "../unit-toggle";
 import { getSpec, MeasureId } from "../../../iso/measures";
 
 export type Model = {
   measureId: MeasureId;
   value: UnitValue;
-  unitToggle: UnitToggle;
+  unitToggleController: UnitToggleController;
 };
 
 export type Msg =
   | { type: "SELECT_VALUE"; value: UnitValue }
   | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggleMsg };
 
-
-
-export class ToggleFilter {
+export class ToggleFilterController {
   state: Model;
 
   constructor(
@@ -30,41 +28,45 @@ export class ToggleFilter {
       measureId: MeasureId;
       value: UnitValue;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public myDispatch: Dispatch<Msg>
   ) {
     const measure = getSpec(initialParams.measureId);
     this.state = {
       measureId: initialParams.measureId,
       value: initialParams.value,
-      unitToggle: new UnitToggle(
+      unitToggleController: new UnitToggleController(
         {
           measureId: initialParams.measureId,
           selectedUnit: initialParams.value.unit,
           possibleUnits: measure.units,
         },
-        { myDispatch: (msg: UnitToggleMsg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+        { myDispatch: (msg: UnitToggleMsg) => this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
       ),
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SELECT_VALUE":
         this.state.value = msg.value;
         break;
 
       case "UNIT_TOGGLE_MSG":
-        this.state.unitToggle.update(msg.msg);
+        this.state.unitToggleController.handleDispatch(msg.msg);
 
         this.state.value = convertToTargetUnit(
           convertToStandardUnit(this.state.value),
-          this.state.unitToggle.state.selectedUnit,
+          this.state.unitToggleController.state.selectedUnit,
         );
         break;
 
       default:
         assertUnreachable(msg);
     }
+  }
+
+  getUnit() {
+    return this.state.unitToggleController.state.selectedUnit;
   }
 
   getQuery() {
@@ -79,9 +81,15 @@ export class ToggleFilter {
     const normalizedFilterValue = convertToStandardUnit(this.state.value);
     return normalizedValue === normalizedFilterValue;
   }
+}
 
-  view() {
-    if (this.state.value.unit != "sex-at-birth") {
+export class ToggleFilterView extends DCGView.View<{
+  controller: () => ToggleFilterController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
+    if (stateProp().value.unit != "sex-at-birth") {
       throw new Error("Unexpected unit for toggle filter.");
     }
 
@@ -92,9 +100,9 @@ export class ToggleFilter {
           name="sex"
           value="male"
           id="male"
-          checked={this.state.value.value === "male"}
+          checked={() => stateProp().value.value === "male"}
           onChange={() =>
-            this.context.myDispatch({
+            this.props.controller().myDispatch({
               type: "SELECT_VALUE",
               value: {
                 unit: "sex-at-birth",
@@ -103,16 +111,16 @@ export class ToggleFilter {
             })
           }
         />
-        <label htmlFor="male">Male</label>
+        <label html-for="male">Male</label>
 
         <input
           type="radio"
           name="sex"
           value="female"
           id="female"
-          checked={this.state.value.value === "female"}
+          checked={() => stateProp().value.value === "female"}
           onChange={() =>
-            this.context.myDispatch({
+            this.props.controller().myDispatch({
               type: "SELECT_VALUE",
               value: {
                 unit: "sex-at-birth",
@@ -121,7 +129,7 @@ export class ToggleFilter {
             })
           }
         />
-        <label htmlFor="female">Female</label>
+        <label html-for="female">Female</label>
       </div>
     );
   }

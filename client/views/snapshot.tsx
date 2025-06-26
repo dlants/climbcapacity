@@ -1,9 +1,9 @@
-import React from "react";
+import * as DCGView from "dcgview";
 
 import type { HydratedSnapshot } from "../types";
-import { Dispatch } from "../main";
-import { convertToStandardUnit, UnitValue } from "../../iso/units";
-import { RequestStatus, RequestStatusView } from "../util/utils";
+import { Dispatch } from "../types";
+import { convertToStandardUnit } from "../../iso/units";
+import { RequestStatus } from "../util/utils";
 import {
   MeasureStats,
   SnapshotId,
@@ -14,14 +14,14 @@ import {
   getSpec,
   MeasureId,
 } from "../../iso/measures";
-import { MeasureSelector } from "./snapshot/measure-selector";
+import { MeasureSelectorController, MeasureSelectorView } from "./snapshot/measure-selector";
 import type { Msg as MeasureSelectorMsg } from "./snapshot/measure-selector";
-import { EditMeasureOrClass } from "./snapshot/edit-measure-or-class";
+import { EditMeasureOrClassController, EditMeasureOrClassView } from "./snapshot/edit-measure-or-class";
 import type { Msg as EditMeasureOrClassMsg } from "./snapshot/edit-measure-or-class";
 
 type EditingEditingState = {
   state: "editing";
-  editMeasureOrClass: EditMeasureOrClass;
+  editMeasureOrClass: EditMeasureOrClassController;
 };
 
 type SubmittingEditingState = {
@@ -40,7 +40,7 @@ type EditingState =
 export type Model = {
   snapshot: HydratedSnapshot;
   measureStats: MeasureStats;
-  measureSelector: MeasureSelector;
+  measureSelector: MeasureSelectorController;
   editingState: EditingState;
 };
 
@@ -64,45 +64,44 @@ export type Msg =
     request: RequestStatus<void>;
   };
 
-export class Snapshot {
+export class SnapshotController {
   state: Model;
 
   constructor(
-    {
-      snapshot,
-      measureStats,
-    }: {
-      snapshot: HydratedSnapshot;
-      measureStats: MeasureStats;
-    },
-    private context: { myDispatch: Dispatch<Msg> }
+    { snapshot, measureStats }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
+    public myDispatch: Dispatch<Msg>
   ) {
     this.state = {
       snapshot,
       measureStats,
-      measureSelector: new MeasureSelector(
-        { snapshot, measureStats },
-        { myDispatch: (msg: MeasureSelectorMsg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
+      measureSelector: new MeasureSelectorController(
+        {
+          snapshot,
+          measureStats
+        }, {
+        myDispatch: (msg: MeasureSelectorMsg) => this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+      }
       ),
       editingState: { state: "not-editing" },
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "MEASURE_SELECTOR_MSG":
-        this.state.measureSelector.update(msg.msg);
+        this.state.measureSelector.handleDispatch(msg.msg);
 
         if (msg.msg.type == "INIT_UPDATE") {
           this.state.editingState = {
             state: "editing",
-            editMeasureOrClass: new EditMeasureOrClass(
+            editMeasureOrClass: new EditMeasureOrClassController(
               {
                 init: msg.msg.update,
                 snapshot: this.state.snapshot,
                 measureStats: this.state.measureStats,
-              },
-              { myDispatch: (msg: EditMeasureOrClassMsg) => this.context.myDispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg }) }
+              }, {
+              myDispatch: (msg: EditMeasureOrClassMsg) => this.handleDispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg })
+            }
             ),
           };
         } else if (msg.msg.type == "DELETE_MEASURE") {
@@ -134,7 +133,7 @@ export class Snapshot {
             });
 
             if (response.ok) {
-              this.context.myDispatch({
+              this.handleDispatch({
                 type: "MEASURE_REQUEST_UPDATE",
                 request: {
                   status: "loaded",
@@ -142,7 +141,7 @@ export class Snapshot {
                 },
               });
             } else {
-              this.context.myDispatch({
+              this.handleDispatch({
                 type: "MEASURE_REQUEST_UPDATE",
                 request: { status: "error", error: await response.text() },
               });
@@ -184,13 +183,13 @@ export class Snapshot {
 
           this.state.snapshot = nextSnapshot;
           this.state.editingState = { state: "not-editing" };
-          this.state.measureSelector = new MeasureSelector(
+          this.state.measureSelector = new MeasureSelectorController(
             {
               snapshot: nextSnapshot,
               measureStats: this.state.measureStats,
-            },
-            { myDispatch: (msg: MeasureSelectorMsg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
-          );
+            }, {
+            myDispatch: (msg: MeasureSelectorMsg) => this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+          });
         } else {
           const editingState = this.state.editingState;
           if (!(editingState.state == "submitting")) {
@@ -208,7 +207,7 @@ export class Snapshot {
         if (this.state.editingState.state != "editing") {
           throw new Error(`Unexpected editingState when editing`);
         }
-        this.state.editingState.editMeasureOrClass.update(msg.msg);
+        this.state.editingState.editMeasureOrClass.handleDispatch(msg.msg);
         break;
 
       case "SUBMIT_MEASURE_UPDATE": {
@@ -255,7 +254,7 @@ export class Snapshot {
           });
 
           if (response.ok) {
-            this.context.myDispatch({
+            this.handleDispatch({
               type: "MEASURE_REQUEST_UPDATE",
               request: {
                 status: "loaded",
@@ -263,7 +262,7 @@ export class Snapshot {
               },
             });
           } else {
-            this.context.myDispatch({
+            this.handleDispatch({
               type: "MEASURE_REQUEST_UPDATE",
               request: { status: "error", error: await response.text() },
             });
@@ -274,65 +273,72 @@ export class Snapshot {
     }
   }
 
-  view() {
-    const NotEditingView = () => (
-      <div className="measures-list">
-        {this.state.measureSelector.view()}
-      </div>
-    );
+}
+
+export class SnapshotView extends DCGView.View<{
+  controller: SnapshotController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+    const { SwitchUnion } = DCGView.Components;
 
     return (
-      <div className="snapshot-view">
-        {(() => {
-          switch (this.state.editingState.state) {
-            case "not-editing":
-              return <NotEditingView />;
-
-            case "editing":
-              const editingState = this.state.editingState;
-              return (
-                <div>
-                  {editingState.editMeasureOrClass.view()}
-                  <button
-                    onPointerDown={() => {
-                      if (editingState.editMeasureOrClass.canSubmit) {
-                        this.context.myDispatch({
-                          type: "SUBMIT_MEASURE_UPDATE",
-                        });
-                      }
-                    }}
-                    disabled={editingState.editMeasureOrClass.canSubmit == undefined}
-                  >
-                    Submit
-                  </button>{" "}
-                  <button
-                    onPointerDown={() => {
-                      this.context.myDispatch({
-                        type: "DISCARD_MEASURE_UPDATE",
-                      });
-                    }}
-                  >
-                    Discard Changes
-                  </button>
-                </div>
-              );
-
-            case "submitting":
-              return (
-                <RequestStatusView
-                  request={this.state.editingState.writeRequest}
-                  dispatch={this.context.myDispatch}
-                  viewMap={{
-                    "not-sent": () => <div>Not Sent</div>,
-                    loading: () => <div>Submitting...</div>,
-                    error: ({ error }) => <div>Error: {error}</div>,
-                    loaded: () => <div>Done.</div>,
-                  }}
-                />
-              );
-          }
-        })()}
+      <div class="snapshot-view">
+        {SwitchUnion(() => stateProp().editingState, 'state', {
+          "not-editing": () => this.renderNotEditing(stateProp),
+          "editing": (editingStateProp) => this.renderEditing(editingStateProp),
+          "submitting": (submittingStateProp) => this.renderSubmitting(submittingStateProp),
+        })}
       </div>
     );
   }
-}
+
+  private renderNotEditing(stateProp: () => Model) {
+    return (
+      <div class="measures-list">
+        <MeasureSelectorView controller={() => stateProp().measureSelector} />
+      </div>
+    );
+  }
+
+  private renderEditing(editingStateProp: () => EditingEditingState) {
+    return (
+      <div>
+        <EditMeasureOrClassView controller={() => editingStateProp().editMeasureOrClass} />
+        <button
+          onPointerDown={() => {
+            if (editingStateProp().editMeasureOrClass.canSubmit) {
+              this.props.controller().handleDispatch({
+                type: "SUBMIT_MEASURE_UPDATE",
+              });
+            }
+          }}
+          disabled={() => editingStateProp().editMeasureOrClass.canSubmit == undefined}
+        >
+          Submit
+        </button>{" "}
+        <button
+          onPointerDown={() => {
+            this.props.controller().handleDispatch({
+              type: "DISCARD_MEASURE_UPDATE",
+            });
+          }}
+        >
+          Discard Changes
+        </button>
+      </div>
+    );
+  }
+
+  private renderSubmitting(submittingStateProp: () => SubmittingEditingState) {
+    const { SwitchUnion } = DCGView.Components;
+
+    return SwitchUnion(() => submittingStateProp().writeRequest, 'status', {
+      "not-sent": () => <div>Not Sent</div>,
+      loading: () => <div>Submitting...</div>,
+      error: (errorProp) => <div>Error: {() => errorProp().error}</div>,
+      loaded: () => <div>Done.</div>,
+    });
+  }
+}// Legacy compatibility export
+export const Snapshot = SnapshotController;

@@ -1,5 +1,5 @@
-import React from "react";
-import { Dispatch } from "../main";
+import * as DCGView from "dcgview";
+import { Dispatch } from "../types";
 import { MEASURES } from "../constants";
 import { assertUnreachable, filterMeasures } from "../util/utils";
 import { MeasureId, MeasureSpec } from "../../iso/measures/index";
@@ -28,22 +28,22 @@ export type Msg =
     measureId: MeasureId;
   };
 
-export class MeasureSelectionBox {
+export class MeasureSelectionBox extends DCGView.View<{
+  measureStats: () => MeasureStats;
+  myDispatch: Dispatch<Msg>;
+}> {
   state: Model;
 
-  constructor(
-    { measureStats }: { measureStats: MeasureStats },
-    private context: { myDispatch: Dispatch<Msg> }
-  ) {
+  init() {
     this.state = {
-      measureStats,
+      measureStats: this.props.measureStats(),
       state: "typing",
       query: "",
       measures: [],
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "TYPE_QUERY":
         this.state = {
@@ -67,47 +67,46 @@ export class MeasureSelectionBox {
     }
   }
 
-  view() {
-    if (this.state.state === "typing") {
-      return (
-        <div className="measure-selection-box">
+  template() {
+    const { For, SwitchUnion } = DCGView.Components;
+
+    return SwitchUnion(() => this.state, 'state', {
+      typing: (getState) => (
+        <div class="measure-selection-box">
           <input
             type="text"
-            value={this.state.query}
+            value={() => getState().query}
             onChange={(e) =>
-              this.context.myDispatch({ type: "TYPE_QUERY", query: e.target.value })
+              this.props.myDispatch({ type: "TYPE_QUERY", query: (e.target as HTMLInputElement).value })
             }
             placeholder="Search measures..."
           />
           <ul>
-            {this.state.measures.map((measure) => (
-              <li
-                key={measure.id}
-                onPointerDown={() =>
-                  this.context.myDispatch({ type: "SELECT_MEASURE", measureId: measure.id })
-                }
-              >
-                {measure.id}({this.state.measureStats[measure.id] || 0} snapshots)
-              </li>
-            ))}
+            <For each={() => getState().measures} key={(measure: MeasureSpec) => measure.id}>
+              {(getMeasure: () => MeasureSpec) => (
+                <li
+                  onPointerDown={() =>
+                    this.props.myDispatch({ type: "SELECT_MEASURE", measureId: getMeasure().id })
+                  }
+                >
+                  {() => getMeasure().id}({() => getState().measureStats[getMeasure().id] || 0} snapshots)
+                </li>
+              )}
+            </For>
           </ul>
         </div>
-      );
-    } else if (this.state.state === "selected") {
-      const measureId = this.state.measureId;
-      return (
-        <div className="measure-selection-box">
+      ),
+      selected: (getState) => (
+        <div class="measure-selection-box">
           <span
             onPointerDown={() =>
-              this.context.myDispatch({ type: "TYPE_QUERY", query: measureId })
+              this.props.myDispatch({ type: "TYPE_QUERY", query: getState().measureId })
             }
           >
-            {this.state.measureId}
+            {() => getState().measureId}
           </span>
         </div>
-      );
-    } else {
-      return assertUnreachable(this.state);
-    }
+      )
+    });
   }
 }

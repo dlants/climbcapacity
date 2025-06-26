@@ -1,13 +1,10 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import type { HydratedSnapshot, Snapshot, Dispatch } from "../types";
 import {
   assertUnreachable,
-  GetLoadedRequest as GetLoadedRequestType,
   RequestStatus,
-  RequestStatusView,
-  RequestStatusViewMap,
 } from "../util/utils";
-import { ReportCardMain, Msg as ReportCardMainMsg } from "../views/reportcard/main";
+import { ReportCardMainController, ReportCardMainView, Msg as ReportCardMainMsg } from "../views/reportcard/main";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";
@@ -33,7 +30,7 @@ export type Model = {
     }
     | {
       state: "has-snapshot";
-      model: ReportCardMain;
+      model: ReportCardMainController;
     }
   >;
 };
@@ -48,18 +45,13 @@ export type Msg =
     msg: ReportCardMainMsg;
   };
 
-export class ReportCard {
+export class ReportCardController {
   state: Model;
 
   constructor(
-    {
-      userId,
-      measureStats,
-    }: {
-      userId: string;
-      measureStats: MeasureStats;
-    },
-    private context: { myDispatch: Dispatch<Msg> }
+    userId: string,
+    measureStats: MeasureStats,
+    public myDispatch: Dispatch<Msg>
   ) {
     this.state = {
       userId,
@@ -80,7 +72,7 @@ export class ReportCard {
       const { snapshot } = (await response.json()) as {
         snapshot: Snapshot | undefined;
       };
-      this.context.myDispatch({
+      this.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: {
           status: "loaded",
@@ -88,14 +80,14 @@ export class ReportCard {
         },
       });
     } else {
-      this.context.myDispatch({
+      this.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "MY_SNAPSHOT_RESPONSE": {
         switch (msg.request.status) {
@@ -131,13 +123,13 @@ export class ReportCard {
                 );
               }
 
-              const loadedModel = new ReportCardMain(
+              const loadedModel = new ReportCardMainController(
                 {
                   initialFilters,
                   measureStats: this.state.measureStats,
                   mySnapshot: msg.request.response,
                 },
-                { myDispatch: (msg: ReportCardMainMsg) => this.context.myDispatch({ type: "LOADED_MSG", msg }) }
+                { myDispatch: (msg: ReportCardMainMsg) => this.myDispatch({ type: "LOADED_MSG", msg }) }
               );
 
               this.state.mySnapshotRequest = {
@@ -168,7 +160,7 @@ export class ReportCard {
           );
         }
 
-        this.state.mySnapshotRequest.response.model.update(msg.msg);
+        this.state.mySnapshotRequest.response.model.handleDispatch(msg.msg);
         break;
       }
 
@@ -177,46 +169,39 @@ export class ReportCard {
     }
   }
 
-  view() {
-    const viewMap: RequestStatusViewMap<
-      GetLoadedRequestType<Model["mySnapshotRequest"]>["response"],
-      Msg
-    > = {
-      "not-sent": () => <div />,
-      loading: () => <div>Fetching...</div>,
-      error: ({ error }) => <div>Error when fetching data: {error}</div>,
-      loaded: ({ response }) => (
-        <div>
-          {(() => {
-            switch (response.state) {
-              case "no-snapshot":
-                return <NoSnapshotView />;
-              case "has-snapshot":
-                return response.model.view();
-              default:
-                assertUnreachable(response);
-            }
-          })()}
-        </div>
-      ),
-    };
+}
 
-    const NoSnapshotView = () => {
-      return (
-        <div>
-          You haven't added any snapshots. You can do that on the{" "}
-          <a href="/snapshots">Snapshots</a> page.
-        </div>
-      );
-    };
+export class ReportCardView extends DCGView.View<{
+  controller: () => ReportCardController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+    const { SwitchUnion } = DCGView.Components;
 
     return (
       <div>
-        <RequestStatusView
-          dispatch={this.context.myDispatch}
-          request={this.state.mySnapshotRequest}
-          viewMap={viewMap}
-        />
+        {SwitchUnion(() => stateProp().mySnapshotRequest, 'status', {
+          "not-sent": () => <div />,
+          loading: () => <div>Fetching...</div>,
+          error: (errorProp) => <div>Error when fetching data: {() => errorProp().error}</div>,
+          loaded: (loadedProp) => (
+            <div>
+              {SwitchUnion(() => loadedProp().response, 'state', {
+                "no-snapshot": () => this.renderNoSnapshot(),
+                "has-snapshot": (hasSnapshotProp) => <ReportCardMainView controller={() => hasSnapshotProp().model} />,
+              })}
+            </div>
+          ),
+        })}
+      </div>
+    );
+  }
+
+  private renderNoSnapshot() {
+    return (
+      <div>
+        You haven't added any snapshots. You can do that on the{" "}
+        <a href="/snapshots">Snapshots</a> page.
       </div>
     );
   }
@@ -406,3 +391,5 @@ function getInitialFilter(
     return { type: "minmax", minValue: min, maxValue: max };
   }
 }
+// Legacy compatibility export
+export const ReportCard = ReportCardController;

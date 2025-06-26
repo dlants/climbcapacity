@@ -1,4 +1,4 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import {
   generateTrainingMeasureId,
   getSpec,
@@ -6,17 +6,19 @@ import {
 } from "../../../iso/measures";
 import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
-import { UnitInputComponent } from "../unit-input";
-import { Dispatch } from "../../main";
-import { UnitToggle } from "../unit-toggle";
+import { UnitInputController, UnitInputView } from "../unit-input";
+import { Dispatch } from "../../types";
+import { UnitToggleController, UnitToggleView, Msg as UnitToggleMsg } from "../unit-toggle";
 import { MeasureStats } from "../../../iso/protocol";
 
 export type Model = {
-  unitInputComponent: UnitInputComponent;
+  unitInputController: UnitInputController;
+  unitToggleController: UnitToggleController;
   measureStats: MeasureStats;
   trainingMeasure?: {
     measureId: MeasureId;
-    unitInputComponent: UnitInputComponent;
+    unitInputController: UnitInputController;
+    unitToggleController: UnitToggleController;
   };
   canSubmit:
   | {
@@ -42,7 +44,7 @@ export type Msg =
     msg: import("../unit-input").Msg;
   };
 
-export class EditMeasure {
+export class EditMeasureController {
   state: Model;
 
   constructor(
@@ -55,69 +57,98 @@ export class EditMeasure {
       measureStats: MeasureStats;
       snapshot: HydratedSnapshot;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public myDispatch: Dispatch<Msg>
   ) {
-    const unitInputComponent = new UnitInputComponent(
+    const unitInputController = new UnitInputController(
       measureId,
-      { myDispatch: (msg) => this.context.myDispatch({ type: "UNIT_INPUT_MSG", msg }) },
+      (msg) => this.myDispatch({ type: "UNIT_INPUT_MSG", msg }),
       snapshot.measures[measureId] as UnitValue | undefined,
+    );
+
+    const unitToggleController = new UnitToggleController(
+      {
+        measureId: unitInputController.state.measureId,
+        selectedUnit: unitInputController.state.selectedUnit,
+        possibleUnits: unitInputController.state.possibleUnits,
+      },
+      {
+        myDispatch: (msg: UnitToggleMsg) => this.myDispatch({
+          type: "UNIT_INPUT_MSG",
+          msg
+        })
+      }
     );
 
     const measure = getSpec(measureId);
     let trainingMeasure;
     if (measure.type == "input") {
       const trainingMeasureId = generateTrainingMeasureId(measureId);
-      const trainingUnitInputComponent = new UnitInputComponent(
+      const trainingUnitInputController = new UnitInputController(
         trainingMeasureId,
-        { myDispatch: (msg) => this.context.myDispatch({ type: "TRAINING_UNIT_INPUT_MSG", msg }) },
+        (msg) => this.myDispatch({ type: "TRAINING_UNIT_INPUT_MSG", msg }),
         snapshot.measures[trainingMeasureId] as UnitValue | undefined,
+      );
+      const trainingUnitToggleController = new UnitToggleController(
+        {
+          measureId: trainingUnitInputController.state.measureId,
+          selectedUnit: trainingUnitInputController.state.selectedUnit,
+          possibleUnits: trainingUnitInputController.state.possibleUnits,
+        },
+        {
+          myDispatch: (msg: UnitToggleMsg) => this.myDispatch({
+            type: "TRAINING_UNIT_INPUT_MSG",
+            msg
+          })
+        }
       );
       trainingMeasure = {
         measureId: trainingMeasureId,
-        unitInputComponent: trainingUnitInputComponent,
+        unitInputController: trainingUnitInputController,
+        unitToggleController: trainingUnitToggleController,
       };
     }
 
     this.state = {
-      unitInputComponent,
+      unitInputController: unitInputController,
+      unitToggleController: unitToggleController,
       measureStats,
       trainingMeasure,
-      canSubmit: this.canSubmit({ unitInputComponent, trainingMeasure }),
+      canSubmit: this.canSubmit({ unitInputController, trainingMeasure }),
     };
   }
 
-  private canSubmit(
-    model: Omit<Model, "canSubmit" | "measureStats">,
+  public canSubmit(
+    model: Omit<Model, "canSubmit" | "measureStats" | "unitToggleController">,
   ): Model["canSubmit"] {
     let value;
-    if (model.unitInputComponent.state.parseResult.status == "success") {
-      value = model.unitInputComponent.state.parseResult.value;
+    if (model.unitInputController.state.parseResult.status == "success") {
+      value = model.unitInputController.state.parseResult.value;
     } else {
       return undefined;
     }
 
     if (model.trainingMeasure) {
-      if (model.trainingMeasure.unitInputComponent.state.parseResult.status == "success") {
+      if (model.trainingMeasure.unitInputController.state.parseResult.status == "success") {
         return {
-          measureId: model.unitInputComponent.state.measureId,
+          measureId: model.unitInputController.state.measureId,
           value,
           trainingMeasure: {
             measureId: model.trainingMeasure.measureId,
-            value: model.trainingMeasure.unitInputComponent.state.parseResult.value,
+            value: model.trainingMeasure.unitInputController.state.parseResult.value,
           },
         };
       } else {
         return undefined;
       }
     } else {
-      return { measureId: model.unitInputComponent.state.measureId, value };
+      return { measureId: model.unitInputController.state.measureId, value };
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "UNIT_INPUT_MSG":
-        this.state.unitInputComponent.update(msg.msg);
+        this.state.unitInputController.handleDispatch(msg.msg);
         this.state.canSubmit = this.canSubmit(this.state);
         break;
       case "TRAINING_UNIT_INPUT_MSG":
@@ -125,53 +156,53 @@ export class EditMeasure {
           throw new Error("No training measure");
         }
 
-        this.state.trainingMeasure.unitInputComponent.update(msg.msg);
+        this.state.trainingMeasure.unitInputController.handleDispatch(msg.msg);
         this.state.canSubmit = this.canSubmit(this.state);
         break;
     }
   }
+}
 
-  view() {
-    const EditMeasureView = ({
-      unitInputComponent,
-      isTraining = false
-    }: {
-      unitInputComponent: UnitInputComponent;
-      isTraining?: boolean;
-    }) => {
-      const measure = getSpec(unitInputComponent.state.measureId);
-      const unitToggle = new UnitToggle(
-        {
-          measureId: unitInputComponent.state.measureId,
-          selectedUnit: unitInputComponent.state.selectedUnit,
-          possibleUnits: unitInputComponent.state.possibleUnits,
-        },
-        {
-          myDispatch: (msg) => this.context.myDispatch({
-            type: isTraining ? "TRAINING_UNIT_INPUT_MSG" : "UNIT_INPUT_MSG",
-            msg
-          })
-        }
-      );
-
-      return (
-        <div className={`measure-item`}>
-          <label>{measure.name}</label>
-          <pre>{measure.description}</pre>
-          {unitInputComponent.view()}
-          {measure.units.length > 1 && unitToggle.view()}
-        </div>
-      );
-    };
+export class EditMeasureView extends DCGView.View<{
+  controller: EditMeasureController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
 
     return (
       <div>
-        <EditMeasureView unitInputComponent={this.state.unitInputComponent} />
-        {this.state.trainingMeasure && (
-          <EditMeasureView
-            unitInputComponent={this.state.trainingMeasure.unitInputComponent}
-            isTraining={true}
+        <EditMeasureItemView
+          unitInputController={() => stateProp().unitInputController}
+          unitToggleController={() => stateProp().unitToggleController}
+        />
+        {() => stateProp().trainingMeasure && (
+          <EditMeasureItemView
+            unitInputController={() => stateProp().trainingMeasure!.unitInputController}
+            unitToggleController={() => stateProp().trainingMeasure!.unitToggleController}
           />
+        )}
+      </div>
+    );
+  }
+}
+
+class EditMeasureItemView extends DCGView.View<{
+  unitInputController: () => UnitInputController;
+  unitToggleController: () => UnitToggleController;
+}> {
+  template() {
+    const unitInputController = this.props.unitInputController();
+    const measure = getSpec(unitInputController.state.measureId);
+
+    return (
+      <div class="measure-item">
+        <label>{measure.name}</label>
+        <pre>{measure.description}</pre>
+        <UnitInputView
+          controller={() => this.props.unitInputController()}
+        />
+        {() => measure.units.length > 1 && (
+          <UnitToggleView controller={() => this.props.unitToggleController()} />
         )}
       </div>
     );

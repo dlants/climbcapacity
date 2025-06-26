@@ -1,5 +1,3 @@
-import type { EmptyObject } from '@knox/common';
-
 import {
   type DCGElement,
   DCGFragmentElement,
@@ -22,6 +20,16 @@ type ViewChildren = NormalizedChild | NormalizedChildren | undefined;
 
 export type ValidProp<T> = T | (() => T | undefined);
 export type ValidProps = Record<PropertyKey, unknown>;
+
+/**
+ * An object with no properties.
+ *
+ * Recommended by TypeScript ESLint as an alternative to `{}`. `{}` means any non-nullish value, not just an object
+ * or empty object.
+ *
+ * @see {@link https://typescript-eslint.io/rules/ban-types}
+ */
+export type EmptyObject = Record<PropertyKey, never>;
 
 export type DefaultProps = EmptyObject;
 

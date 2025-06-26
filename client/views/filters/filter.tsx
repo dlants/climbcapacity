@@ -1,24 +1,27 @@
-import { MinMaxFilter } from "./min-max-filter";
-import { ToggleFilter } from "./toggle-filter";
+import * as DCGView from "dcgview";
+import { MinMaxFilterController, MinMaxFilterView } from "./min-max-filter";
+import { ToggleFilterController, ToggleFilterView } from "./toggle-filter";
 import { InitialFilter, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 
+const { SwitchUnion } = DCGView.Components;
+
 export type Model =
   | {
     type: "minmax";
-    model: MinMaxFilter;
+    controller: MinMaxFilterController;
   }
   | {
     type: "toggle";
-    model: ToggleFilter;
+    controller: ToggleFilterController;
   };
 
 export type Msg =
   | { type: "MINMAX_FILTER_MSG"; msg: import("./min-max-filter").Msg }
   | { type: "TOGGLE_FILTER_MSG"; msg: import("./toggle-filter").Msg };
 
-export class Filter {
+export class FilterController {
   state: Model;
 
   constructor(
@@ -26,7 +29,7 @@ export class Filter {
       measureId: MeasureId;
       initialFilter: InitialFilter;
     },
-    private context: { myDispatch: (msg: Msg) => void }
+    public context: { myDispatch: (msg: Msg) => void }
   ) {
     const { measureId, initialFilter } = initialParams;
 
@@ -34,13 +37,11 @@ export class Filter {
       case "minmax":
         this.state = {
           type: "minmax",
-          model: new MinMaxFilter(
-            {
-              measureId,
-              minValue: initialFilter.minValue,
-              maxValue: initialFilter.maxValue,
-            },
-            { myDispatch: (msg) => this.context.myDispatch({ type: "MINMAX_FILTER_MSG", msg }) }
+          controller: new MinMaxFilterController(
+            measureId,
+            initialFilter.minValue,
+            initialFilter.maxValue,
+            (msg) => this.context.myDispatch({ type: "MINMAX_FILTER_MSG", msg })
           ),
         };
         break;
@@ -48,12 +49,12 @@ export class Filter {
       case "toggle":
         this.state = {
           type: "toggle",
-          model: new ToggleFilter(
+          controller: new ToggleFilterController(
             {
               measureId,
               value: initialFilter.value,
             },
-            { myDispatch: (msg) => this.context.myDispatch({ type: "TOGGLE_FILTER_MSG", msg }) }
+            (msg) => this.context.myDispatch({ type: "TOGGLE_FILTER_MSG", msg })
           ),
         };
         break;
@@ -66,20 +67,20 @@ export class Filter {
   getUnit() {
     switch (this.state.type) {
       case "minmax":
-        return this.state.model.state.unitToggle.state.selectedUnit;
+        return this.state.controller.getUnit();
 
       case "toggle":
-        return this.state.model.state.unitToggle.state.selectedUnit;
+        return this.state.controller.getUnit();
     }
   }
 
   filterApplies(value: UnitValue) {
     switch (this.state.type) {
       case "minmax":
-        return this.state.model.filterApplies(value);
+        return this.state.controller.filterApplies(value);
 
       case "toggle":
-        return this.state.model.filterApplies(value);
+        return this.state.controller.filterApplies(value);
 
       default:
         assertUnreachable(this.state);
@@ -89,41 +90,48 @@ export class Filter {
   getQuery() {
     switch (this.state.type) {
       case "minmax":
-        return this.state.model.getQuery();
+        return this.state.controller.getQuery();
 
       case "toggle":
-        return this.state.model.getQuery();
+        return this.state.controller.getQuery();
 
       default:
         assertUnreachable(this.state);
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (this.state.type) {
       case "minmax":
         if (msg.type !== "MINMAX_FILTER_MSG") {
           throw new Error("Unexpected message type");
         }
-        this.state.model.update(msg.msg);
+        this.state.controller.handleDispatch(msg.msg);
         break;
 
       case "toggle":
         if (msg.type !== "TOGGLE_FILTER_MSG") {
           throw new Error("Unexpected message type");
         }
-        this.state.model.update(msg.msg);
+        this.state.controller.handleDispatch(msg.msg);
         break;
     }
   }
+}
 
-  view() {
-    switch (this.state.type) {
-      case "minmax":
-        return this.state.model.view();
+export class FilterView extends DCGView.View<{
+  controller: () => FilterController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
 
-      case "toggle":
-        return this.state.model.view();
-    }
+    return SwitchUnion(() => stateProp(), 'type', {
+      minmax: (filterProp: () => { type: "minmax"; controller: MinMaxFilterController }) => (
+        <MinMaxFilterView controller={() => filterProp().controller} />
+      ),
+      toggle: (filterProp: () => { type: "toggle"; controller: ToggleFilterController }) => (
+        <ToggleFilterView controller={() => filterProp().controller} />
+      ),
+    });
   }
 }

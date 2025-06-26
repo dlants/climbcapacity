@@ -3,11 +3,10 @@ import lodash from "lodash";
 import { assertUnreachable } from "../../util/utils";
 import { displayInches, Point } from "./util";
 import * as d3 from "d3";
-import * as immer from "immer";
 import { HEIGHT, MARGIN, WIDTH } from "./constants";
 import { EWBANK, FONT, FRENCH_SPORT, VGRADE, YDS } from "../../../iso/grade";
 
-export type Model = immer.Immutable<{
+export type Model = {
   style: "dotplot";
   data: Point[];
   xLabel: string;
@@ -15,7 +14,7 @@ export type Model = immer.Immutable<{
   yLabel: string;
   yUnit?: UnitType;
   myData?: { x: number; y: number };
-}>;
+};
 
 export function generateDotplotTicks(
   data: readonly number[],

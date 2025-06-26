@@ -1,6 +1,30 @@
-import type { Coalesce, EmptyObject } from '@knox/common';
+/**
+ * Select the first type when it isn't `never`, otherwise use the fallback type. Equivalent to the nullish coalescing
+ * operator (`??`) where `never` is equivalent to `null` or `undefined`.
+ *
+ * @example
+ * // Given a union type for different message formats
+ * type Message =
+ *   | { type: 'text'; content: string }
+ *   | { type: 'image'; url: string };
+ *
+ * // Extract works for the first case
+ * type TextMessage = Coalesce
+ *   Extract<Message, { type: 'text' }>,  // { type: 'text'; content: string }
+ *   never                                // Not used (fallback)
+ * >; // Result: { type: 'text'; content: string }
+ *
+ * // But if we try to extract a non-existent type, it falls back
+ * type AudioMessage = Coalesce
+ *   Extract<Message, { type: 'audio' }>, // never (no match)
+ *   { type: 'audio'; src: string }       // Fallback used
+ * >; // Result: { type: 'audio'; src: string }
+ */
+export type Coalesce<Preferred, Fallback> = [Preferred] extends [never]
+  ? Fallback
+  : Preferred;
 
-import { createSpec, type Spec, type ViewSpec } from './create-spec';
+import { createSpec, EmptyObject, type Spec, type ViewSpec } from './create-spec';
 import { Switch } from './switch';
 
 export function SwitchUnion<
@@ -26,8 +50,8 @@ export function SwitchUnion<
         Extract<Union, { [_ in DiscriminantKey]: Discriminant }>,
         {
           [Key in keyof Union]: Key extends DiscriminantKey
-            ? Discriminant
-            : Union[Key];
+          ? Discriminant
+          : Union[Key];
         }
       >
     ) => Spec;
@@ -45,8 +69,8 @@ export function SwitchUnion<Union extends string>(
   childByMember: string extends Union
     ? EmptyObject // Disallow `Union` when not a subset of `string`.
     : {
-        [Member in Union]: (getMember: () => Member) => Spec;
-      }
+      [Member in Union]: (getMember: () => Member) => Spec;
+    }
 ): ViewSpec;
 
 export function SwitchUnion(

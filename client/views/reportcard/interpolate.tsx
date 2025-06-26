@@ -1,5 +1,5 @@
-import React from "react";
-import { Dispatch } from "../../main";
+import * as DCGView from "dcgview";
+import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
 import { generateId, getSpec, MeasureId, parseId, } from "../../../iso/measures";
 import * as typestyle from "typestyle";
@@ -50,7 +50,7 @@ const styles = typestyle.stylesheet({
   },
 });
 
-export class Interpolate {
+export class InterpolateController {
   state: Model;
 
   constructor(
@@ -58,7 +58,7 @@ export class Interpolate {
       measureId: MeasureId;
       measureStats: MeasureStats
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public myDispatch: Dispatch<Msg>
   ) {
     const { measureId, measureStats } = initialParams;
     const measureSpec = getSpec(measureId);
@@ -110,7 +110,7 @@ export class Interpolate {
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "TOGGLE_INTERPOLATION":
         if (this.state.interpolationOptions[msg.paramName]) {
@@ -122,31 +122,50 @@ export class Interpolate {
     }
   }
 
+  // Legacy view method for backward compatibility
   view() {
+    const view = new InterpolateView({ controller: () => this });
+    return view.template();
+  }
+}
+
+export class InterpolateView extends DCGView.View<{
+  controller: () => InterpolateController;
+}> {
+  template() {
+    const { For } = DCGView.Components;
+    const stateProp = () => this.props.controller().state;
+
     return (
       <div>
-        <div className={styles.container}>
-          {Object.entries(this.state.interpolationOptions).map(([paramName, options]) => (
-            <div key={paramName} className={styles.row}>
-              <label className={styles.label}>
-                <input
-                  type="checkbox"
-                  checked={options.enabled}
-                  onChange={(e) =>
-                    this.context.myDispatch({
-                      type: "TOGGLE_INTERPOLATION",
-                      paramName: paramName as ParamName,
-                      enabled: e.target.checked,
-                    })
-                  }
-                />
+        <div class={styles.container}>
+          <For each={() => Object.entries(stateProp().interpolationOptions)} key={(item) => item[0]}>
+            {(entryProp) => {
+              const [paramName, options] = entryProp();
 
-                <span className={styles.text}>
-                  Interpolate {paramName} {options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
-                </span>
-              </label>
-            </div>
-          ))}
+              return (
+                <div class={styles.row}>
+                  <label class={styles.label}>
+                    <input
+                      type="checkbox"
+                      checked={() => options.enabled}
+                      onChange={(e) =>
+                        this.props.controller().myDispatch({
+                          type: "TOGGLE_INTERPOLATION",
+                          paramName: paramName as ParamName,
+                          enabled: (e.target as HTMLInputElement).checked,
+                        })
+                      }
+                    />
+
+                    <span class={styles.text}>
+                      Interpolate {paramName} {() => options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
+                    </span>
+                  </label>
+                </div>
+              );
+            }}
+          </For>
         </div>
       </div>
     );

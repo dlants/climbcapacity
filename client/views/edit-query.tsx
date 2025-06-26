@@ -1,4 +1,5 @@
-import React, { Dispatch } from "react";
+import DCGView from "dcgview";
+import { Dispatch } from "../types";
 import { MeasureSelectionBox } from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
@@ -9,7 +10,7 @@ import {
   Dataset,
   DATASETS,
 } from "../../iso/protocol";
-import { Filter } from "./filters/filter";
+import { FilterController, FilterView } from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
@@ -23,11 +24,14 @@ export type FilterMapping = {
 
 export type Model = {
   measureStats: MeasureStats;
-  filters: Filter[];
+  filters: FilterController[];
   datasets: {
     [dataset in Dataset]: boolean;
   };
-  measureSelectionBox: MeasureSelectionBox;
+  measureSelectionBoxProps: {
+    measureStats: () => MeasureStats;
+    myDispatch: Dispatch<any>;
+  };
 };
 
 export type Msg =
@@ -47,7 +51,7 @@ export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter;
 };
 
-export class EditQuery {
+export class EditQueryController {
   state: Model;
 
   constructor(
@@ -58,15 +62,15 @@ export class EditQuery {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public myDispatch: Dispatch<Msg>
   ) {
-    const filters: Filter[] = [];
+    const filters: FilterController[] = [];
     for (const measureIdStr in initialFilters) {
       const measureId = measureIdStr as MeasureId;
       const initialFilter = initialFilters[measureId];
-      filters.push(new Filter(
+      filters.push(new FilterController(
         { measureId, initialFilter },
-        { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+        { myDispatch: (msg) => this.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
       ));
     }
 
@@ -77,33 +81,33 @@ export class EditQuery {
         climbharder: true,
       },
       filters,
-      measureSelectionBox: new MeasureSelectionBox(
-        { measureStats },
-        { myDispatch: (msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
-      ),
+      measureSelectionBoxProps: {
+        measureStats: () => measureStats,
+        myDispatch: (msg: any) => this.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+      },
     };
   }
 
-  getFilterMeasureId(filter: Filter): MeasureId {
+  getFilterMeasureId(filter: FilterController): MeasureId {
     switch (filter.state.type) {
       case "minmax":
-        return filter.state.model.state.measureId;
+        return filter.state.controller.state.measureId;
       case "toggle":
-        return filter.state.model.state.measureId;
+        return filter.state.controller.state.measureId;
       default:
         throw new Error("Unknown filter type");
     }
   }
 
-  getFilterUnit(filter: Filter): UnitType {
+  getFilterUnit(filter: FilterController): UnitType {
     return filter.getUnit();
   }
 
-  getFilterQuery(filter: Filter) {
+  getFilterQuery(filter: FilterController) {
     return filter.getQuery();
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "REMOVE_FILTER":
         this.state.filters = this.state.filters.filter(
@@ -112,28 +116,28 @@ export class EditQuery {
         break;
 
       case "MEASURE_SELECTOR_MSG":
-        this.state.measureSelectionBox.update(msg.msg);
-        if (this.state.measureSelectionBox.state.state == "selected") {
-          const measureId = this.state.measureSelectionBox.state.measureId;
+        // Handle the message dispatching logic - we need to check if a measure was selected
+        if (msg.msg.type === "SELECT_MEASURE") {
+          const measureId = msg.msg.measureId;
           const spec = MEASURES.find((spec) => spec.id == measureId);
           if (!spec) {
             throw new Error(`Unexpected measureId ${measureId}`);
           }
 
           this.state.filters.push(
-            new Filter(
+            new FilterController(
               {
                 measureId: measureId,
                 initialFilter: spec.initialFilter,
               },
-              { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+              { myDispatch: (msg) => this.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
             ),
           );
 
-          this.state.measureSelectionBox = new MeasureSelectionBox(
-            { measureStats: this.state.measureStats },
-            { myDispatch: (msg) => this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }) }
-          );
+          this.state.measureSelectionBoxProps = {
+            measureStats: () => this.state.measureStats,
+            myDispatch: (msg: any) => this.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+          };
         }
         break;
 
@@ -144,7 +148,7 @@ export class EditQuery {
         if (!filter) {
           throw new Error(`Unexpected filter id ${msg.measureId}`);
         }
-        filter.update(msg.msg);
+        filter.handleDispatch(msg.msg);
         break;
 
       case "TOGGLE_DATASET":
@@ -156,71 +160,86 @@ export class EditQuery {
     }
   }
 
+  // Legacy view method for backward compatibility
   view() {
-    const FilterView = ({
-      filter,
-    }: {
-      filter: Filter;
-    }) => {
-      const measureId = this.getFilterMeasureId(filter);
-      return (
-        <div className={styles.container}>
-          <div className={styles.item}>
-            <strong>{measureId}</strong>(
-            {this.state.measureStats[measureId] || 0} snapshots)
-          </div>
-          <div className={styles.item}>
-            {filter.view()}
-          </div>
-          <div className={styles.item}>
-            <button
-              onPointerDown={() =>
-                this.context.myDispatch({
-                  type: "REMOVE_FILTER",
-                  measureId: measureId,
-                })
-              }
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      );
-    };
+    const view = new EditQueryView({ controller: () => this });
+    return view.template();
+  }
+
+  // Legacy template method for backward compatibility
+  template() {
+    return this.view();
+  }
+}
+
+export class EditQueryView extends DCGView.View<{
+  controller: () => EditQueryController;
+}> {
+  template() {
+    const { For } = DCGView.Components;
+    const controller = () => this.props.controller();
+    const state = () => controller().state;
 
     return (
       <div>
-        {this.state.filters.map((filter) => (
-          <FilterView
-            key={this.getFilterMeasureId(filter)}
-            filter={filter}
-          />
-        ))}
-        {this.state.measureSelectionBox.view()}
-        {DATASETS.map((dataset) => (
-          <div key={dataset}>
-            <label>
-              <input
-                type="checkbox"
-                checked={this.state.datasets[dataset]}
-                onChange={(e) =>
-                  this.context.myDispatch({
-                    type: "TOGGLE_DATASET",
-                    dataset: dataset,
-                    include: e.target.checked,
-                  })
-                }
-              />{" "}
-              {dataset}
-            </label>
-          </div>
-        ))}
+        <For each={() => state().filters} key={(filter: FilterController) => controller().getFilterMeasureId(filter)}>
+          {(getFilter: () => FilterController) => {
+            const measureId = controller().getFilterMeasureId(getFilter());
+            return (
+              <div class={styles.container}>
+                <div class={styles.item}>
+                  <strong>{measureId}</strong>(
+                  {() => state().measureStats[measureId] || 0} snapshots)
+                </div>
+                <div class={styles.item}>
+                  <FilterView controller={getFilter} />
+                </div>
+                <div class={styles.item}>
+                  <button
+                    onTap={() =>
+                      controller().myDispatch({
+                        type: "REMOVE_FILTER",
+                        measureId: measureId,
+                      })
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          }}
+        </For>
+        <MeasureSelectionBox
+          measureStats={() => state().measureStats}
+          myDispatch={(msg: any) => controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
+        />
+        <For.Simple each={() => DATASETS}>
+          {(dataset: Dataset) => (
+            <div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={() => state().datasets[dataset]}
+                  onChange={(e) =>
+                    controller().myDispatch({
+                      type: "TOGGLE_DATASET",
+                      dataset: dataset,
+                      include: (e.target as HTMLInputElement).checked,
+                    })
+                  }
+                />{" "}
+                {dataset}
+              </label>
+            </div>
+          )}
+        </For.Simple>
       </div>
     );
   }
 }
 
-export function generateFiltersMap(editQuery: EditQuery): FilterMapping {
+export function generateFiltersMap(editQuery: EditQueryController): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of editQuery.state.filters) {
     const measureId = editQuery.getFilterMeasureId(filter);
@@ -233,7 +252,7 @@ export function generateFiltersMap(editQuery: EditQuery): FilterMapping {
   return filterMapping;
 }
 
-export function getQuery(editQuery: EditQuery): {
+export function getQuery(editQuery: EditQueryController): {
   body: SnapshotQuery;
   hash: string;
 } {
@@ -280,4 +299,5 @@ const styles = typestyle.stylesheet({
   item: {
     ...csstips.content,
   },
-});
+});// Legacy export for backward compatibility
+export const EditQuery = EditQueryController;

@@ -1,7 +1,7 @@
-import React from "react";
+import * as DCGView from "dcgview";
 
 import type { HydratedSnapshot } from "../../types";
-import { Dispatch } from "../../main";
+import { Dispatch } from "../../types";
 import { UnitValue, unitValueToString } from "../../../iso/units";
 import { MEASURES } from "../../constants";
 import { isSubsequence } from "../../util/utils";
@@ -64,30 +64,29 @@ export type Model = {
   items: Item[];
 };
 
-export class MeasureSelector {
+export class MeasureSelectorController {
   state: Model;
 
   constructor(
-    {
-      snapshot,
-      measureStats,
-    }: {
-      snapshot: HydratedSnapshot;
-      measureStats: MeasureStats;
+    { snapshot, measureStats }: {
+      snapshot: HydratedSnapshot,
+      measureStats: MeasureStats,
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public context: {
+      myDispatch: Dispatch<Msg>
+    }
   ) {
     this.state = {
       query: "",
       measureStats,
-      snapshot: snapshot,
+      snapshot,
       items: [],
     };
 
     this.state.items = getItems(this.state);
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "UPDATE_QUERY":
         this.state.query = msg.query;
@@ -95,138 +94,150 @@ export class MeasureSelector {
         break;
       case "DELETE_MEASURE":
       case "INIT_UPDATE":
-        // do nothing since we will cover this in the parent component
+        this.context.myDispatch(msg);
         break;
       default:
         assertUnreachable(msg);
     }
   }
+}
 
-  view() {
-    const FilterInput = ({
-      value,
-      onChange,
-    }: {
-      value: string;
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    }) => (
-      <input
-        type="text"
-        placeholder="Filter measures..."
-        value={value}
-        onChange={onChange}
-      />
+
+export class MeasureSelectorView extends DCGView.View<{
+  controller: MeasureSelectorController;
+}> {
+  template() {
+    const { For } = DCGView.Components;
+    const stateProp = () => this.props.controller().state;
+
+    return (
+      <div class="measure-selector">
+        <input
+          type="text"
+          placeholder="Filter measures..."
+          value={() => stateProp().query}
+          onChange={(e) =>
+            this.props.controller().handleDispatch({
+              type: "UPDATE_QUERY",
+              query: (e.target as HTMLInputElement).value
+            })
+          }
+        />
+        <For each={() => stateProp().items} key={(item, idx) => item.type + '_' + idx}>
+          {(item) =>
+            DCGView.Components.SwitchUnion(() => item().type, {
+              "measure-item": () => this.renderMeasureItem(item() as MeasureItem, stateProp),
+              "measure-group": () => this.renderMeasureGroup(item() as MeasureGroup, stateProp)
+            })
+          }
+        </For>
+      </div>
     );
+  }
 
-    const MeasureView = ({
-      measureStatsCount,
-      measure,
-    }: {
-      measureStatsCount: number;
-      measure: MeasureSpec;
-    }) => {
-      const unitValue = this.state.snapshot.measures[measure.id];
-      return (
-        <div key={measure.id} className="measure-item">
-          <label>
-            {measure.name} ({measureStatsCount || 0} snapshots)
-          </label>{" "}
-          {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+  private renderMeasureItem(item: MeasureItem, stateProp: () => Model) {
+    const measureStatsCount = stateProp().measureStats[item.spec.id] || 0;
+    const unitValue = stateProp().snapshot.measures[item.spec.id];
+
+    return (
+      <div class="measure-item">
+        <label>
+          {item.spec.name} ({measureStatsCount} snapshots)
+        </label>{" "}
+        {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+        <button
+          onPointerDown={() => {
+            this.props.controller().handleDispatch({
+              type: "INIT_UPDATE",
+              update: {
+                type: "measure",
+                measureId: item.spec.id,
+              },
+            });
+          }}
+        >
+          Edit
+        </button>
+        {unitValue ? (
           <button
             onPointerDown={() => {
-              this.context.myDispatch({
+              this.props.controller().handleDispatch({
+                type: "DELETE_MEASURE",
+                measureId: item.spec.id,
+              });
+            }}
+          >
+            Delete
+          </button>
+        ) : undefined}
+      </div>
+    );
+  }
+
+  private renderMeasureGroup(item: MeasureGroup, stateProp: () => Model) {
+    const { For } = DCGView.Components;
+
+    return (
+      <div class="measure-class">
+        <div>
+          <strong>{item.name}</strong>{" "}
+          <button
+            onPointerDown={() => {
+              this.props.controller().handleDispatch({
                 type: "INIT_UPDATE",
                 update: {
-                  type: "measure",
-                  measureId: measure.id,
+                  type: "measureClasses",
+                  measureClasses: item.measureClasses,
                 },
               });
             }}
           >
-            Edit
+            Add New
           </button>
-          {this.state.snapshot.measures[measure.id] ? (
-            <button
-              onPointerDown={() => {
-                this.context.myDispatch({
-                  type: "DELETE_MEASURE",
-                  measureId: measure.id,
-                });
-              }}
-            >
-              Delete
-            </button>
-          ) : undefined}
         </div>
-      );
-    };
 
-    const MeasureGroupView = ({
-      measureGroup,
-    }: {
-      measureGroup: MeasureGroup;
-    }) => {
-      return (
-        <div className="measure-class">
-          <div>
-            <strong>{measureGroup.name}</strong>{" "}
-            <button
-              onPointerDown={() => {
-                this.context.myDispatch({
-                  type: "INIT_UPDATE",
-                  update: {
-                    type: "measureClasses",
-                    measureClasses: measureGroup.measureClasses,
-                  },
-                });
-              }}
-            >
-              Add New
-            </button>
-          </div>
+        <div class="measure-class-items" style={{ "padding-left": "10px" }}>
+          <For each={() => item.items} key={(item) => item.spec.id}>
+            {(measureItem) => {
+              const measureStatsCount = stateProp().measureStats[measureItem().spec.id] || 0;
+              const unitValue = stateProp().snapshot.measures[measureItem().spec.id];
 
-          <div className="measure-class-items" style={{ paddingLeft: "10px" }}>
-            {measureGroup.items.map((item) => (
-              <MeasureView
-                key={item.spec.id}
-                measureStatsCount={this.state.measureStats[item.spec.id] || 0}
-                measure={item.spec}
-              />
-            ))}
-          </div>
+              return (
+                <div class="measure-item">
+                  <label>
+                    {measureItem().spec.name} ({measureStatsCount} snapshots)
+                  </label>{" "}
+                  {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+                  <button
+                    onPointerDown={() => {
+                      this.props.controller().handleDispatch({
+                        type: "INIT_UPDATE",
+                        update: {
+                          type: "measure",
+                          measureId: measureItem().spec.id,
+                        },
+                      });
+                    }}
+                  >
+                    Edit
+                  </button>
+                  {unitValue ? (
+                    <button
+                      onPointerDown={() => {
+                        this.props.controller().handleDispatch({
+                          type: "DELETE_MEASURE",
+                          measureId: measureItem().spec.id,
+                        });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  ) : undefined}
+                </div>
+              );
+            }}
+          </For>
         </div>
-      );
-    };
-
-    return (
-      <div className="measure-selector">
-        <FilterInput
-          value={this.state.query}
-          onChange={(e) =>
-            this.context.myDispatch({ type: "UPDATE_QUERY", query: e.target.value })
-          }
-        />
-        {this.state.items.map((i) => {
-          switch (i.type) {
-            case "measure-item":
-              return (
-                <MeasureView
-                  key={i.spec.id}
-                  measureStatsCount={this.state.measureStats[i.spec.id]}
-                  measure={i.spec}
-                />
-              );
-            case "measure-group":
-              return (
-                <MeasureGroupView
-                  key={i.name}
-                  measureGroup={i}
-                />
-              );
-            default:
-              assertUnreachable(i);
-          }
-        })}
       </div>
     );
   }
@@ -447,9 +458,3 @@ export type Msg =
     type: "DELETE_MEASURE";
     measureId: MeasureId;
   };
-
-
-
-
-
-

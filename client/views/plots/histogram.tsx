@@ -1,16 +1,15 @@
 import { UnitType } from "../../../iso/units";
-import * as immer from "immer";
 import { Bin, generateBinThresholds, tickFormatBins } from "./util";
 import * as d3 from "d3";
 import { HEIGHT, MARGIN, WIDTH } from "./constants";
 
-export type Model = immer.Immutable<{
+export type Model = {
   style: "histogram";
   data: number[];
   xLabel: string;
   xUnit?: UnitType;
   myData?: number;
-}>;
+};
 
 export function view({
   model,

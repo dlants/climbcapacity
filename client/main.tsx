@@ -1,11 +1,9 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
-import { SendLink } from "./pages/send-link";
-import * as UserSnapshotsPage from "./pages/users-snapshots";
-import { SnapshotPage } from "./pages/snapshot";
-import { Explore } from "./pages/explore";
-import { ReportCard } from "./pages/report-card";
+import * as DCGView from "dcgview";
+import { SendLinkController, SendLinkView } from "./pages/send-link";
+import { UsersSnapshotsController, UsersSnapshotsView } from "./pages/users-snapshots";
+import { SnapshotPageController, SnapshotPageView } from "./pages/snapshot";
+import { ExploreController, ExploreView } from "./pages/explore";
+import { ReportCardController, ReportCardView } from "./pages/report-card";
 import {
   assertUnreachable,
   ExtractFromDisjointUnion,
@@ -17,8 +15,7 @@ import { Nav } from "./views/navigation";
 import * as typestyle from "typestyle";
 import * as csx from "csx";
 import * as csstips from "csstips";
-
-
+import { Dispatch } from "./types";
 
 const styles = typestyle.stylesheet({
   root: {
@@ -65,28 +62,34 @@ export type Model = {
   page:
   | {
     route: "/send-link";
-    sendLinkPage: SendLink;
+    sendLinkPage: SendLinkController;
   }
   | {
     route: "/snapshots";
-    userSnapshotsPage: UserSnapshotsPage.UsersSnapshotsPage;
+    userSnapshotsPage: UsersSnapshotsController;
   }
   | {
     route: "/snapshot";
-    snapshotPage: SnapshotPage;
+    snapshotPage: SnapshotPageController;
   }
   | {
     route: "/explore";
-    explorePage: Explore;
+    explorePage: ExploreController;
   }
   | {
     route: "/report-card";
-    reportCardPage: ReportCard;
+    reportCardPage: ReportCardController;
   }
   | {
     route: "/";
   };
 };
+
+import { Msg as SendLinkMsg } from "./pages/send-link";
+import { Msg as UsersSnapshotsMsg } from "./pages/users-snapshots";
+import { Msg as SnapshotPageMsg } from "./pages/snapshot";
+import { Msg as ExploreMsg } from "./pages/explore";
+import { Msg as ReportCardMsg } from "./pages/report-card";
 
 type Msg =
   | {
@@ -96,53 +99,47 @@ type Msg =
   | NavigateMsg
   | {
     type: "SEND_LINK_MSG";
-    msg: any;
+    msg: SendLinkMsg;
   }
   | {
     type: "USER_SNAPSHOTS_MSG";
-    msg: UserSnapshotsPage.Msg;
+    msg: UsersSnapshotsMsg;
   }
   | {
     type: "SNAPSHOT_MSG";
-    msg: any;
+    msg: SnapshotPageMsg;
   }
   | {
     type: "EXPLORE_MSG";
-    msg: any;
+    msg: ExploreMsg;
   }
   | {
     type: "REPORT_CARD_MSG";
-    msg: any;
+    msg: ReportCardMsg;
   };
 
-export type Dispatch<Msg> = (msg: Msg) => void;
-
-interface MainAppProps {
-  auth: RequestStatus<AuthStatus>;
-  measureStats: MeasureStats;
-  dispatch: Dispatch<Msg>;
-}
-
-export class MainApp extends React.Component<MainAppProps> {
+export class MainAppController {
   state: Model;
   error: string | null = null;
 
-  constructor(props: MainAppProps) {
-    super(props);
-
-    if (props.auth.status == "loaded" && props.auth.response.status == "logged in") {
+  constructor(
+    auth: RequestStatus<AuthStatus>,
+    measureStats: MeasureStats,
+    public myDispatch: Dispatch<Msg>
+  ) {
+    if (auth.status == "loaded" && auth.response.status == "logged in") {
       this.state = {
-        auth: props.auth,
-        measureStats: props.measureStats,
+        auth,
+        measureStats,
         page: { route: "/" },
       };
     } else {
-      const sendLinkPage = new SendLink(
-        { myDispatch: (msg) => props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+      const sendLinkPage = new SendLinkController(
+        (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
       );
       this.state = {
-        auth: props.auth,
-        measureStats: props.measureStats,
+        auth,
+        measureStats,
         page: {
           route: "/send-link",
           sendLinkPage,
@@ -156,10 +153,10 @@ export class MainApp extends React.Component<MainAppProps> {
       throw new Error(`Unexpected msg passed to navigate fn ${msg.type}`);
     }
 
-    const user =
-      this.state.auth.status == "loaded" &&
-      this.state.auth.response.status == "logged in" &&
-      this.state.auth.response.user;
+    let user: any = false;
+    if (this.state.auth.status == "loaded" && this.state.auth.response.status == "logged in") {
+      user = this.state.auth.response.user;
+    }
 
     switch (msg.target.route) {
       case "/":
@@ -170,8 +167,8 @@ export class MainApp extends React.Component<MainAppProps> {
         if (user) {
           this.state.page = { route: "/" };
         } else {
-          const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+          const sendLinkPage = new SendLinkController(
+            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
           );
           this.state.page = {
             route: "/send-link",
@@ -182,17 +179,17 @@ export class MainApp extends React.Component<MainAppProps> {
 
       case "/snapshots":
         if (user) {
-          const userSnapshotsPage = new UserSnapshotsPage.UsersSnapshotsPage(
+          const userSnapshotsPage = new UsersSnapshotsController(
             user.id,
-            { myDispatch: (msg) => this.props.dispatch({ type: "USER_SNAPSHOTS_MSG", msg }) }
+            (msg: UsersSnapshotsMsg) => this.myDispatch({ type: "USER_SNAPSHOTS_MSG", msg })
           );
           this.state.page = {
             route: "/snapshots",
             userSnapshotsPage,
           };
         } else {
-          const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+          const sendLinkPage = new SendLinkController(
+            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
           );
           this.state.page = {
             route: "/send-link",
@@ -203,20 +200,18 @@ export class MainApp extends React.Component<MainAppProps> {
 
       case "/report-card":
         if (user) {
-          const reportCardPage = new ReportCard(
-            {
-              userId: user.id,
-              measureStats: this.state.measureStats,
-            },
-            { myDispatch: (msg) => this.props.dispatch({ type: "REPORT_CARD_MSG", msg }) }
+          const reportCardPage = new ReportCardController(
+            user.id,
+            this.state.measureStats,
+            (msg: ReportCardMsg) => this.myDispatch({ type: "REPORT_CARD_MSG", msg })
           );
           this.state.page = {
             route: "/report-card",
             reportCardPage,
           };
         } else {
-          const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+          const sendLinkPage = new SendLinkController(
+            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
           );
           this.state.page = {
             route: "/send-link",
@@ -227,20 +222,18 @@ export class MainApp extends React.Component<MainAppProps> {
 
       case "/snapshot":
         if (user) {
-          const snapshotPage = new SnapshotPage(
-            {
-              snapshotId: msg.target.snapshotId,
-              measureStats: this.state.measureStats,
-            },
-            { myDispatch: (msg) => this.props.dispatch({ type: "SNAPSHOT_MSG", msg }) }
+          const snapshotPage = new SnapshotPageController(
+            msg.target.snapshotId,
+            this.state.measureStats,
+            (msg: SnapshotPageMsg) => this.myDispatch({ type: "SNAPSHOT_MSG", msg })
           );
           this.state.page = {
             route: "/snapshot",
             snapshotPage,
           };
         } else {
-          const sendLinkPage = new SendLink(
-            { myDispatch: (msg) => this.props.dispatch({ type: "SEND_LINK_MSG", msg }) }
+          const sendLinkPage = new SendLinkController(
+            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
           );
           this.state.page = {
             route: "/send-link",
@@ -250,11 +243,9 @@ export class MainApp extends React.Component<MainAppProps> {
         break;
 
       case "/explore":
-        const explorePage = new Explore(
-          {
-            measureStats: this.state.measureStats,
-          },
-          { myDispatch: (msg) => this.props.dispatch({ type: "EXPLORE_MSG", msg }) }
+        const explorePage = new ExploreController(
+          this.state.measureStats,
+          (msg: ExploreMsg) => this.myDispatch({ type: "EXPLORE_MSG", msg })
         );
         this.state.page = {
           route: "/explore",
@@ -271,7 +262,7 @@ export class MainApp extends React.Component<MainAppProps> {
 
 
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "NAVIGATE":
         this.navigate(msg);
@@ -284,7 +275,7 @@ export class MainApp extends React.Component<MainAppProps> {
       case "SEND_LINK_MSG":
         if (this.state.page.route != "/send-link") {
           console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
           return;
         }
@@ -294,13 +285,13 @@ export class MainApp extends React.Component<MainAppProps> {
             "route",
             "/send-link"
           >
-        ).sendLinkPage.update(msg.msg);
+        ).sendLinkPage.handleDispatch(msg.msg);
         break;
 
       case "USER_SNAPSHOTS_MSG":
         if (this.state.page.route != "/snapshots") {
           console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
           return;
         }
@@ -308,7 +299,7 @@ export class MainApp extends React.Component<MainAppProps> {
         if (msg.msg.type == "SELECT_SNAPSHOT") {
           const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
           (async () => {
-            this.props.dispatch({
+            this.myDispatch({
               type: "NAVIGATE",
               target: {
                 route: "/snapshot",
@@ -325,13 +316,13 @@ export class MainApp extends React.Component<MainAppProps> {
             "route",
             "/snapshots"
           >
-        ).userSnapshotsPage.update(msg.msg);
+        ).userSnapshotsPage.handleDispatch(msg.msg);
         break;
 
       case "SNAPSHOT_MSG":
         if (this.state.page.route != "/snapshot") {
           console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
           return;
         }
@@ -341,13 +332,13 @@ export class MainApp extends React.Component<MainAppProps> {
             "route",
             "/snapshot"
           >
-        ).snapshotPage.update(msg.msg);
+        ).snapshotPage.handleDispatch(msg.msg);
         break;
 
       case "EXPLORE_MSG":
         if (this.state.page.route != "/explore") {
           console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
           return;
         }
@@ -357,13 +348,13 @@ export class MainApp extends React.Component<MainAppProps> {
             "route",
             "/explore"
           >
-        ).explorePage.update(msg.msg);
+        ).explorePage.handleDispatch(msg.msg);
         break;
 
       case "REPORT_CARD_MSG":
         if (this.state.page.route != "/report-card") {
           console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ingoring.`,
+            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
           return;
         }
@@ -373,7 +364,7 @@ export class MainApp extends React.Component<MainAppProps> {
             "route",
             "/report-card"
           >
-        ).reportCardPage.update(msg.msg);
+        ).reportCardPage.handleDispatch(msg.msg);
         break;
 
       default:
@@ -409,53 +400,59 @@ export class MainApp extends React.Component<MainAppProps> {
     window.history.replaceState({}, "", newUrl);
   }
 
-  private renderPage = () => {
-    switch (this.state.page.route) {
-      case "/send-link":
-        return <this.state.page.sendLinkPage.view />;
+}
 
-      case "/snapshots":
-        return <this.state.page.userSnapshotsPage.view />;
+export class MainAppView extends DCGView.View<{
+  controller: () => MainAppController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
 
-      case "/report-card":
-        return <this.state.page.reportCardPage.view />;
-
-      case "/snapshot":
-        return <this.state.page.snapshotPage.view />;
-
-      case "/explore":
-        return <this.state.page.explorePage.view />;
-
-      case "/":
-        return <div>TODO: add homepage content</div>;
-
-      default:
-        assertUnreachable(this.state.page);
-    }
-  }
-
-  render() {
-    if (this.error) {
-      return <div>Error: {this.error}</div>;
+    if (this.props.controller().error) {
+      return <div>Error: {this.props.controller().error}</div>;
     }
 
     return (
-      <div className={styles.root}>
-        <div className={styles.page}>
-          <div className={styles.pageItem}>
+      <div class={styles.root}>
+        <div class={styles.page}>
+          <div class={styles.pageItem}>
             <Nav
-              loggedIn={
-                this.state.auth.status == "loaded" &&
-                this.state.auth.response.status == "logged in"
-              }
+              loggedIn={() => {
+                const auth = stateProp().auth;
+                return auth.status == "loaded" && auth.response.status == "logged in";
+              }}
             />
           </div>
-          <div className={styles.lastPageItem}>
-            <this.renderPage />
+          <div class={styles.lastPageItem}>
+            {this.renderPage(stateProp)}
           </div>
         </div>
       </div>
     );
+  }
+
+  private renderPage(stateProp: () => Model) {
+    const { SwitchUnion } = DCGView.Components;
+
+    return SwitchUnion(() => stateProp().page, 'route', {
+      "/send-link": (pageProp) =>
+        <SendLinkView controller={() => pageProp().sendLinkPage} />,
+
+      "/snapshots": (pageProp) =>
+        <UsersSnapshotsView controller={() => pageProp().userSnapshotsPage} />,
+
+      "/report-card": (pageProp) =>
+        <ReportCardView controller={() => pageProp().reportCardPage} />,
+
+      "/snapshot": (pageProp) =>
+        <SnapshotPageView controller={() => pageProp().snapshotPage} />,
+
+      "/explore": (pageProp) =>
+        <ExploreView controller={() => pageProp().explorePage} />,
+
+      "/": () =>
+        <div>TODO: add homepage content</div>,
+    });
   }
 }
 
@@ -483,33 +480,28 @@ async function run() {
     measureStats = {};
   }
 
-  const root = createRoot(document.getElementById("app")!);
-  let mainAppInstance: MainApp;
+  let mainAppController: MainAppController;
+  let mainAppView: MainAppView;
 
   const dispatch = (msg: Msg) => {
-    if (!mainAppInstance || mainAppInstance.error) {
+    if (!mainAppController || mainAppController.error) {
       return;
     }
 
     try {
-      mainAppInstance.update(msg);
-      mainAppInstance.forceUpdate();
+      mainAppController.handleDispatch(msg);
+      mainAppView.update();
     } catch (e) {
       console.error(e);
-      mainAppInstance.error = (e as Error).message;
-      mainAppInstance.forceUpdate();
+      mainAppController.error = (e as Error).message;
+      mainAppView.update();
     }
   };
 
-  flushSync(() => {
-    const element = React.createElement(MainApp, {
-      auth,
-      measureStats,
-      dispatch,
-      ref: (instance: MainApp) => { mainAppInstance = instance; }
-    });
-    root.render(element);
-  });
+  mainAppController = new MainAppController(auth, measureStats, dispatch);
+  mainAppView = new MainAppView({ controller: () => mainAppController });
+
+  document.getElementById("app")!.appendChild(mainAppView._element as unknown as Node);
 
   router.subscribe(dispatch);
 
@@ -522,3 +514,6 @@ async function run() {
 run().catch((err) => {
   console.error(err);
 });
+
+// Legacy compatibility export
+export const MainApp = MainAppController;

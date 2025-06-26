@@ -1,5 +1,3 @@
-import * as React from "react";
-import { Dispatch } from "../types";
 import { MeasureSpec } from "../../iso/measures";
 
 export type LoadedRequest<T> = {
@@ -28,49 +26,6 @@ export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {
     throw new Error(`Expected request to be loaded.`);
   }
   return request;
-}
-
-export type RequestStatusViewMap<T, Msg = never> = {
-  "not-sent": (props: { dispatch: Dispatch<Msg> }) => JSX.Element;
-  loading: (props: { dispatch: Dispatch<Msg> }) => JSX.Element;
-  loaded: ({
-    response,
-    dispatch,
-  }: {
-    response: T;
-    dispatch: Dispatch<Msg>;
-  }) => JSX.Element;
-  error: (props: { error: string; dispatch: Dispatch<Msg> }) => JSX.Element;
-};
-
-export function RequestStatusView<T, Msg = never>({
-  request,
-  dispatch,
-  viewMap,
-}: {
-  request: RequestStatus<T>;
-  dispatch: Dispatch<Msg>;
-  viewMap: RequestStatusViewMap<T, Msg>;
-}): JSX.Element {
-  switch (request.status) {
-    case "not-sent": {
-      const View = viewMap["not-sent"];
-      return <View dispatch={dispatch} />;
-    }
-    case "loading": {
-      const View = viewMap["loading"];
-      return <View dispatch={dispatch} />;
-    }
-    case "error": {
-      const View = viewMap["error"];
-      return <View dispatch={dispatch} error={request.error} />;
-    }
-    case "loaded":
-      const View = viewMap["loaded"];
-      return <View response={request.response} dispatch={dispatch} />;
-    default:
-      assertUnreachable(request);
-  }
 }
 
 export function assertUnreachable(value: never): never {

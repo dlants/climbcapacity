@@ -1,37 +1,37 @@
-import { Dispatch } from "react";
+import { Dispatch } from "./types";
 import { SnapshotId } from "../iso/protocol";
 import { Snapshot } from "./types";
 
 export type NavigateMsg = {
   type: "NAVIGATE";
   target:
-    | {
-        route: "/send-link";
-      }
-    | {
-        route: "/snapshots";
-      }
-    | {
-        route: "/report-card";
-      }
-    | {
-        route: "/snapshot";
-        snapshotId: SnapshotId;
-      }
-    | {
-        route: "/explore";
-        mySnapshot?: Snapshot;
-      }
-    | {
-        route: "/";
-      };
+  | {
+    route: "/send-link";
+  }
+  | {
+    route: "/snapshots";
+  }
+  | {
+    route: "/report-card";
+  }
+  | {
+    route: "/snapshot";
+    snapshotId: SnapshotId;
+  }
+  | {
+    route: "/explore";
+    mySnapshot?: Snapshot;
+  }
+  | {
+    route: "/";
+  };
 };
 
 export class Router {
   private onpopstate: ((e: PopStateEvent) => void) | undefined;
   private onhrefclick: ((e: MouseEvent) => void) | undefined;
 
-  constructor() {}
+  constructor() { }
 
   subscribe(dispatch: Dispatch<NavigateMsg>) {
     if (this.onpopstate || this.onhrefclick) {

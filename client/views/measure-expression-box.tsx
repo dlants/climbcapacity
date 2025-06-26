@@ -1,4 +1,4 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import { Dispatch } from "../types";
 import { parseExpression, ParseResult } from "../parser/parser";
 
@@ -12,22 +12,21 @@ export type Msg = {
   value: string;
 };
 
-export class MeasureExpressionBox {
+export class MeasureExpressionBox extends DCGView.View<{
+  myDispatch: Dispatch<Msg>;
+}> {
   state: Model;
 
-  constructor(
-    expression: string,
-    private context: { myDispatch: Dispatch<Msg> }
-  ) {
-    const evalResult = parseExpression(expression);
+  init() {
+    const evalResult = parseExpression("");
 
     this.state = {
-      expression,
+      expression: "",
       evalResult,
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "EXPRESSION_CHANGED": {
         const evalResult = parseExpression(msg.value);
@@ -38,25 +37,25 @@ export class MeasureExpressionBox {
     }
   }
 
-  view() {
+  template() {
     return (
       <div>
         <input
           type="text"
           value={this.state.expression}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            this.context.myDispatch({
+          onChange={(e) =>
+            this.props.myDispatch({
               type: "EXPRESSION_CHANGED",
-              value: e.target.value,
+              value: (e.target as HTMLInputElement).value,
             })
           }
           style={{
-            borderColor: this.state.evalResult.status == 'success' ? "initial" : "red",
+            "border-color": this.state.evalResult.status == 'success' ? "initial" : "red",
           }}
           placeholder="Enter expression (e.g. a + b * 2)"
         />
         {this.state.evalResult.status != 'success' && (
-          <div style={{ color: "red", fontSize: "small" }}>
+          <div style={{ color: "red", "font-size": "small" }}>
             {this.state.evalResult.error}
           </div>
         )}

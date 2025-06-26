@@ -253,7 +253,7 @@ class UserView extends DCGView.Class<Props> {
 
 **Control Flow & Type Safety:**
 ```typescript
-const { If, Each, SwitchUnion } = DCGView.Components;
+const { If, For, SwitchUnion } = DCGView.Components;
 
 class DataView extends DCGView.Class<{
   items: () => Item[];
@@ -268,10 +268,9 @@ class DataView extends DCGView.Class<{
         </If>
 
         {/* Dynamic lists with keys */}
-        {Each(() => this.props.items(), {
-          key: (item) => item.id,
-          item: (item) => <ItemView item={() => item} />
-        })}
+        <For each={() => this.props.items()} key={(item) => item.id}>
+          {(item) => <ItemView item={() => item} />}
+        </For>
 
         {/* Type-safe switching - statusProp is narrowed to specific union member */}
         {SwitchUnion(() => this.props.status(), {

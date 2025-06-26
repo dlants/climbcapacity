@@ -1,8 +1,8 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import { convertToStandardUnit, UnitValue } from "../../../iso/units";
 import { Dispatch } from "../../types";
-import { UnitInputComponent } from "../unit-input";
-import { UnitToggle } from "../unit-toggle";
+import { UnitInputController, UnitInputView } from "../unit-input";
+import { UnitToggleController, UnitToggleView } from "../unit-toggle";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
@@ -11,17 +11,15 @@ import * as csx from "csx";
 
 export type Model = {
   measureId: MeasureId;
-  minInput: UnitInputComponent;
-  maxInput: UnitInputComponent;
-  unitToggle: UnitToggle;
+  minInputController: UnitInputController;
+  maxInputController: UnitInputController;
+  unitToggleController: UnitToggleController;
 };
 
 export type Msg =
   | { type: "MAX_INPUT_MSG"; msg: import("../unit-input").Msg }
   | { type: "MIN_INPUT_MSG"; msg: import("../unit-input").Msg }
   | { type: "UNIT_TOGGLE_MSG"; msg: import("../unit-toggle").Msg };
-
-
 
 const styles = typestyle.stylesheet({
   container: {
@@ -46,65 +44,62 @@ const styles = typestyle.stylesheet({
   },
 });
 
-export class MinMaxFilter {
+export class MinMaxFilterController {
   state: Model;
 
   constructor(
-    initialParams: {
-      measureId: MeasureId;
-      minValue: UnitValue;
-      maxValue: UnitValue;
-    },
-    private context: { myDispatch: Dispatch<Msg> }
+    measureId: MeasureId,
+    minValue: UnitValue,
+    maxValue: UnitValue,
+    public myDispatch: Dispatch<Msg>
   ) {
-    const minInput = new UnitInputComponent(
-      initialParams.measureId,
-      { myDispatch: (msg: import("../unit-input").Msg) => this.context.myDispatch({ type: "MIN_INPUT_MSG", msg }) },
-      initialParams.minValue
+    const minInputController = new UnitInputController(
+      measureId,
+      (msg: import("../unit-input").Msg) => this.myDispatch({ type: "MIN_INPUT_MSG", msg }),
+      minValue
     );
-    const maxInput = new UnitInputComponent(
-      initialParams.measureId,
-      { myDispatch: (msg: import("../unit-input").Msg) => this.context.myDispatch({ type: "MAX_INPUT_MSG", msg }) },
-      initialParams.maxValue
+    const maxInputController = new UnitInputController(
+      measureId,
+      (msg: import("../unit-input").Msg) => this.myDispatch({ type: "MAX_INPUT_MSG", msg }),
+      maxValue
     );
-    const unitToggle = new UnitToggle(
+    const unitToggleController = new UnitToggleController(
       {
-        measureId: initialParams.measureId,
-        selectedUnit: minInput.state.selectedUnit,
-        possibleUnits: minInput.state.possibleUnits,
+        measureId,
+        selectedUnit: minInputController.state.selectedUnit,
+        possibleUnits: minInputController.state.possibleUnits,
       },
-      { myDispatch: (msg: import("../unit-toggle").Msg) => this.context.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+      { myDispatch: (msg: import("../unit-toggle").Msg) => this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
     );
-
     this.state = {
-      measureId: initialParams.measureId,
-      minInput,
-      maxInput,
-      unitToggle,
+      measureId,
+      minInputController,
+      maxInputController,
+      unitToggleController,
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "MIN_INPUT_MSG":
-        this.state.minInput.update(msg.msg);
+        this.state.minInputController.handleDispatch(msg.msg);
         break;
 
       case "MAX_INPUT_MSG":
-        this.state.maxInput.update(msg.msg);
+        this.state.maxInputController.handleDispatch(msg.msg);
         break;
 
       case "UNIT_TOGGLE_MSG":
-        this.state.unitToggle.update(msg.msg);
+        this.state.unitToggleController.handleDispatch(msg.msg);
 
         // Update both inputs to use the new selected unit
-        this.state.minInput.update({
+        this.state.minInputController.handleDispatch({
           type: "SELECT_UNIT",
-          unit: this.state.unitToggle.state.selectedUnit,
+          unit: this.state.unitToggleController.state.selectedUnit,
         });
-        this.state.maxInput.update({
-          type: "SELECT_UNIT", 
-          unit: this.state.unitToggle.state.selectedUnit,
+        this.state.maxInputController.handleDispatch({
+          type: "SELECT_UNIT",
+          unit: this.state.unitToggleController.state.selectedUnit,
         });
         break;
 
@@ -113,27 +108,9 @@ export class MinMaxFilter {
     }
   }
 
-  view() {
-    return (
-      <div className={styles.container}>
-        <div className={styles.item}>
-          min: {this.state.minInput.view()}
-        </div>
-        <div className={styles.item}>
-          max: {this.state.maxInput.view()}
-        </div>
-        {this.state.minInput.state.possibleUnits.length > 1 && (
-          <div className={styles.item}>
-            {this.state.unitToggle.view()}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   getQuery() {
-    const minResult = this.state.minInput.state.parseResult;
-    const maxResult = this.state.maxInput.state.parseResult;
+    const minResult = this.state.minInputController.state.parseResult;
+    const maxResult = this.state.maxInputController.state.parseResult;
 
     return {
       min: minResult.status == "success" ? minResult.value : undefined,
@@ -144,8 +121,8 @@ export class MinMaxFilter {
   filterApplies(value: UnitValue): boolean {
     const normalizedValue = convertToStandardUnit(value);
 
-    const minInputModel = this.state.minInput.state;
-    const maxInputModel = this.state.maxInput.state;
+    const minInputModel = this.state.minInputController.state;
+    const maxInputModel = this.state.maxInputController.state;
 
     if (minInputModel.parseResult.status == "success") {
       const minValue = convertToStandardUnit(minInputModel.parseResult.value);
@@ -162,5 +139,33 @@ export class MinMaxFilter {
     }
 
     return true;
+  }
+
+  getUnit() {
+    return this.state.unitToggleController.state.selectedUnit;
+  }
+}
+
+export class MinMaxFilterView extends DCGView.View<{
+  controller: () => MinMaxFilterController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
+    return (
+      <div class={styles.container}>
+        <div class={styles.item}>
+          min: <UnitInputView controller={() => stateProp().minInputController} />
+        </div>
+        <div class={styles.item}>
+          max: <UnitInputView controller={() => stateProp().maxInputController} />
+        </div>
+        {() => stateProp().minInputController.state.possibleUnits.length > 1 && (
+          <div class={styles.item}>
+            <UnitToggleView controller={() => stateProp().unitToggleController} />
+          </div>
+        )}
+      </div>
+    );
   }
 }

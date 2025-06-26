@@ -1,23 +1,23 @@
-import React from "react";
-import { EditMeasure } from "./edit-measure";
-import { EditMeasureClass } from "./edit-measure-class";
+import * as DCGView from "dcgview";
+import { EditMeasureController, EditMeasureView } from "./edit-measure";
+import { EditMeasureClassController, EditMeasureClassView } from "./edit-measure-class";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
-import { Dispatch } from "../../main";
+import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
 
 export type Model =
   | {
     type: "measure";
-    editMeasure: EditMeasure;
+    editMeasure: EditMeasureController;
     measureStats: MeasureStats;
     measureId: MeasureId;
     trainingMeasureId?: MeasureId;
   }
   | {
     type: "measureClass";
-    editMeasureClass: EditMeasureClass;
+    editMeasureClass: EditMeasureClassController;
     measureStats: MeasureStats;
     measureId: MeasureId;
     trainingMeasureId?: MeasureId;
@@ -43,52 +43,51 @@ export type Msg =
     msg: import("./edit-measure-class").Msg;
   };
 
-export class EditMeasureOrClass {
+export class EditMeasureOrClassController {
   state: Model;
 
-  constructor(
-    initialParams: {
-      init: InitOptions;
-      snapshot: HydratedSnapshot;
-      measureStats: MeasureStats;
-    },
-    private context: { myDispatch: Dispatch<Msg> }
+  constructor({ init, snapshot, measureStats }: {
+    init: InitOptions,
+    snapshot: HydratedSnapshot,
+    measureStats: MeasureStats,
+  }, public context: {
+    myDispatch: Dispatch<Msg>
+  }
   ) {
     // Initialize state based on init options
-    switch (initialParams.init.type) {
+    switch (init.type) {
       case "measure": {
-        const editMeasure = new EditMeasure(
+        const editMeasure = new EditMeasureController(
           {
-            measureId: initialParams.init.measureId,
-            measureStats: initialParams.measureStats,
-            snapshot: initialParams.snapshot,
+            measureId: init.measureId,
+            measureStats: measureStats,
+            snapshot: snapshot,
           },
-          { myDispatch: (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg }) }
+          (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg })
         );
         this.state = {
           type: "measure",
           editMeasure,
-          measureStats: initialParams.measureStats,
-          measureId: editMeasure.state.unitInputComponent.state.measureId,
+          measureStats: measureStats,
+          measureId: editMeasure.state.unitInputController.state.measureId,
           trainingMeasureId: editMeasure.state.trainingMeasure?.measureId,
         };
         break;
       }
 
       case "measureClasses": {
-        const editMeasureClass = new EditMeasureClass(
-          {
-            measureClasses: initialParams.init.measureClasses,
-            measureStats: initialParams.measureStats,
-            snapshot: initialParams.snapshot,
-          },
-          { myDispatch: (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_CLASS_MSG", msg }) }
+        const editMeasureClass = new EditMeasureClassController(
+          init.measureClasses,
+          measureStats,
+          snapshot,
+          undefined,
+          (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_CLASS_MSG", msg })
         );
         this.state = {
           type: "measureClass",
           editMeasureClass,
-          measureStats: initialParams.measureStats,
-          measureId: editMeasureClass.state.editMeasurePage.state.unitInputComponent.state.measureId,
+          measureStats: measureStats,
+          measureId: editMeasureClass.state.editMeasurePage.state.unitInputController.state.measureId,
           trainingMeasureId: editMeasureClass.state.editMeasurePage.state.trainingMeasure?.measureId,
         };
         break;
@@ -107,15 +106,15 @@ export class EditMeasureOrClass {
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "EDIT_MEASURE_MSG": {
         if (this.state.type !== "measure") {
           throw new Error("Unexpected model state does not match msg type");
         }
 
-        this.state.editMeasure.update(msg.msg);
-        this.state.measureId = this.state.editMeasure.state.unitInputComponent.state.measureId;
+        this.state.editMeasure.handleDispatch(msg.msg);
+        this.state.measureId = this.state.editMeasure.state.unitInputController.state.measureId;
         this.state.trainingMeasureId = this.state.editMeasure.state.trainingMeasure?.measureId;
         break;
       }
@@ -124,8 +123,8 @@ export class EditMeasureOrClass {
           throw new Error("Unexpected model state does not match msg type");
         }
 
-        this.state.editMeasureClass.update(msg.msg);
-        this.state.measureId = this.state.editMeasureClass.state.editMeasurePage.state.unitInputComponent.state.measureId;
+        this.state.editMeasureClass.handleDispatch(msg.msg);
+        this.state.measureId = this.state.editMeasureClass.state.editMeasurePage.state.unitInputController.state.measureId;
         this.state.trainingMeasureId = this.state.editMeasureClass.state.editMeasurePage.state.trainingMeasure?.measureId;
         break;
       }
@@ -133,15 +132,22 @@ export class EditMeasureOrClass {
         assertUnreachable(msg);
     }
   }
+}
 
-  view() {
-    switch (this.state.type) {
-      case "measure":
-        return this.state.editMeasure.view();
-      case "measureClass":
-        return this.state.editMeasureClass.view();
-      default:
-        return assertUnreachable(this.state);
-    }
+export class EditMeasureOrClassView extends DCGView.View<{
+  controller: EditMeasureOrClassController;
+}> {
+  template() {
+    const { SwitchUnion } = DCGView.Components;
+    const stateProp = () => this.props.controller().state;
+
+    return SwitchUnion(() => stateProp(), 'type', {
+      measure: (measureProp) => (
+        <EditMeasureView controller={() => measureProp().editMeasure} />
+      ),
+      measureClass: (measureClassProp) => (
+        <EditMeasureClassView controller={() => measureClassProp().editMeasureClass} />
+      ),
+    });
   }
 }

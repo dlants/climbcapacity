@@ -1,17 +1,64 @@
-import React, { Dispatch } from "react";
-import { Identifier } from "../../parser/types";
+import * as DCGView from "dcgview";
+import { Identifier }
+  from "../../parser/types";
 import { InitialFilter, UnitType } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
 import * as Filter from "../filters/filter";
 import { MeasureId } from "../../../iso/measures";
+import { Dispatch } from "../../types";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
 
+export class ReportCardFilterView extends DCGView.View<{
+  controller: () => ReportCardFilterController;
+}> {
+  template() {
+    const { For } = DCGView.Components;
+    const stateProp = () => this.props.controller().state;
+
+    return (
+      <div>
+        <For each={() => stateProp().filters} key={(filter: ToggleableFilter) => this.props.controller().getMeasureId(filter.filter)}>
+          {(filterProp: () => ToggleableFilter) => this.renderFilterView(filterProp)}
+        </For>
+      </div>
+    );
+  }
+
+  private renderFilterView(filterProp: () => ToggleableFilter) {
+    const measureId = () => this.props.controller().getMeasureId(filterProp().filter);
+
+    return (
+      <div class={styles.filterView}>
+        <div class={styles.filterItem}>
+          <input
+            type="checkbox"
+            checked={() => filterProp().enabled}
+            onChange={(e) =>
+              this.props.controller().context.myDispatch({
+                type: "TOGGLE_FILTER",
+                measureId: measureId(),
+                enabled: (e.target as HTMLInputElement).checked,
+              })
+            }
+          />
+        </div>
+        <div class={styles.filterItem}>
+          <strong>{() => measureId()}</strong>{" "}
+        </div>
+        <div class={styles.filterItem}>
+          <Filter.FilterView controller={() => filterProp().filter} />
+        </div>
+      </div>
+    );
+  }
+}
+
 export type ToggleableFilter = {
   enabled: boolean;
-  filter: Filter.Filter;
+  filter: Filter.FilterController;
 };
 
 export type FilterMapping = {
@@ -34,7 +81,7 @@ export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter & { enabled: boolean };
 };
 
-export class ReportCardFilter {
+export class ReportCardFilterController {
   state: Model;
 
   constructor(
@@ -42,7 +89,7 @@ export class ReportCardFilter {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    public context: { myDispatch: Dispatch<Msg> }
   ) {
     const filters: ToggleableFilter[] = [];
     for (const measureIdStr in initialParams.initialFilters) {
@@ -50,27 +97,27 @@ export class ReportCardFilter {
       const initialFilter = initialParams.initialFilters[measureId];
       filters.push({
         enabled: initialFilter.enabled,
-        filter: new Filter.Filter(
+        filter: new Filter.FilterController(
           { measureId, initialFilter },
-          { myDispatch: (msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+          { myDispatch: (msg: Filter.Msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
         ),
       });
     }
     this.state = { measureStats: initialParams.measureStats, filters };
   }
 
-  private getMeasureId(filter: Filter.Filter): MeasureId {
+  getMeasureId(filter: Filter.FilterController): MeasureId {
     switch (filter.state.type) {
       case "minmax":
-        return filter.state.model.state.measureId;
+        return filter.state.controller.state.measureId;
       case "toggle":
-        return filter.state.model.state.measureId;
+        return filter.state.controller.state.measureId;
       default:
         assertUnreachable(filter.state);
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "TOGGLE_FILTER":
         const toggleFilter = this.state.filters.find(
@@ -90,52 +137,18 @@ export class ReportCardFilter {
           throw new Error(`Filter not found for measureId ${msg.measureId}`);
         }
 
-        msgFilter.filter.update(msg.msg);
+        msgFilter.filter.handleDispatch(msg.msg);
         break;
       default:
         assertUnreachable(msg);
     }
   }
-
+  // Legacy view method for backward compatibility
   view() {
-    const FilterView = ({ filter }: { filter: ToggleableFilter }) => {
-      const measureId = this.getMeasureId(filter.filter);
-      return (
-        <div className={styles.filterView}>
-          <div className={styles.filterItem}>
-            <input
-              type="checkbox"
-              checked={filter.enabled}
-              onChange={(e) =>
-                this.context.myDispatch({
-                  type: "TOGGLE_FILTER",
-                  measureId,
-                  enabled: e.target.checked,
-                })
-              }
-            />
-          </div>
-          <div className={styles.filterItem}>
-            <strong>{measureId}</strong>{" "}
-          </div>
-          <div className={styles.filterItem}>
-            {filter.filter.view()}
-          </div>
-        </div>
-      );
-    };
-
-    return (
-      <div>
-        {this.state.filters.map((filter) => (
-          <FilterView
-            key={this.getMeasureId(filter.filter)}
-            filter={filter}
-          />
-        ))}
-      </div>
-    );
+    const view = new ReportCardFilterView({ controller: () => this });
+    return view.template();
   }
+
 }
 
 const styles = typestyle.stylesheet({

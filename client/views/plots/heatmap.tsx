@@ -3,9 +3,8 @@ import { HEIGHT, MARGIN, WIDTH } from "./constants";
 import { Bin2D, generateBinThresholds, Point, tickFormatBins } from "./util";
 import * as d3 from "d3";
 import lodash from "lodash";
-import * as immer from "immer";
 
-export type Model = immer.Immutable<{
+export type Model = {
   style: "heatmap";
   data: Point[];
   xLabel: string;
@@ -13,7 +12,7 @@ export type Model = immer.Immutable<{
   yLabel: string;
   yUnit?: UnitType;
   myData?: { x: number; y: number };
-}>;
+};
 
 export function view({
   model,
@@ -165,8 +164,8 @@ export function view({
         .style("visibility", "visible")
         .html(
           `Frequency: ${d.frequency}<br/>` +
-            `${model.xLabel}: ${xRange}<br/>` +
-            `${model.yLabel}: ${yRange}`,
+          `${model.xLabel}: ${xRange}<br/>` +
+          `${model.yLabel}: ${yRange}`,
         )
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 10 + "px");

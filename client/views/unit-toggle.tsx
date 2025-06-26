@@ -1,8 +1,10 @@
-import React, { useId } from "react";
+import * as DCGView from 'dcgview';
 import { UnitType } from "../../iso/units";
 import { assertUnreachable } from "../../iso/utils";
-import { Dispatch } from "../main";
+import { Dispatch } from "../types";
 import { MeasureId } from "../../iso/measures";
+
+const { For } = DCGView.Components;
 
 export type Model = {
   measureId: MeasureId;
@@ -15,11 +17,11 @@ export type Msg = {
   unit: UnitType;
 };
 
-export class UnitToggle {
+export class UnitToggleController {
   state: Model;
 
   constructor(
-    initialParams: {
+    initialState: {
       measureId: MeasureId;
       selectedUnit: UnitType;
       possibleUnits: UnitType[];
@@ -27,13 +29,13 @@ export class UnitToggle {
     private context: { myDispatch: Dispatch<Msg> }
   ) {
     this.state = {
-      measureId: initialParams.measureId,
-      selectedUnit: initialParams.selectedUnit,
-      possibleUnits: initialParams.possibleUnits,
+      measureId: initialState.measureId,
+      selectedUnit: initialState.selectedUnit,
+      possibleUnits: initialState.possibleUnits,
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SELECT_UNIT": {
         if (!this.state.possibleUnits.includes(msg.unit)) {
@@ -43,31 +45,42 @@ export class UnitToggle {
         }
 
         this.state.selectedUnit = msg.unit;
+        this.context.myDispatch(msg);
         break;
       }
       default:
         assertUnreachable(msg.type);
     }
   }
+}
 
-  view() {
-    const toggleId = useId(); // React 18+ feature
+export class UnitToggleView extends DCGView.View<{
+  controller: UnitToggleController;
+}> {
+  toggleId: string;
 
+  init() {
+    this.toggleId = `unit-toggle-${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  template() {
     return (
       <span>
-        {this.state.possibleUnits.map((unit) => (
-          <span key={unit}>
-            <input
-              type="radio"
-              id={toggleId + ":" + unit}
-              name={toggleId}
-              value={unit}
-              checked={unit === this.state.selectedUnit}
-              onChange={() => this.context.myDispatch({ type: "SELECT_UNIT", unit })}
-            />
-            <label key={unit}>{unit}</label>
-          </span>
-        ))}
+        <For.Simple each={() => this.props.controller().state.possibleUnits}>
+          {(unit) => (
+            <span>
+              <input
+                type="radio"
+                id={this.toggleId + ":" + unit}
+                name={this.toggleId}
+                value={unit}
+                checked={unit === this.props.controller().state.selectedUnit}
+                onChange={() => this.props.controller().handleDispatch({ type: "SELECT_UNIT", unit })}
+              />
+              <label>{unit}</label>
+            </span>
+          )}
+        </For.Simple>
       </span>
     );
   }

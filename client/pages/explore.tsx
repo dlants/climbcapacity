@@ -1,13 +1,14 @@
+import * as DCGView from "dcgview";
 import { Dispatch } from "../types";
 import { assertUnreachable } from "../util/utils";
-import { ReportCardMain, Msg as ReportCardMsg } from "../views/reportcard/main";
+import { ReportCardMainController, ReportCardMainView, Msg as ReportCardMsg } from "../views/reportcard/main";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../constants";
 
 export type Model = {
   measureStats: MeasureStats;
-  reportCardMain: ReportCardMain;
+  reportCardMain: ReportCardMainController;
 };
 
 export type Msg = {
@@ -15,41 +16,40 @@ export type Msg = {
   msg: ReportCardMsg;
 };
 
-export class Explore {
+export class ExploreController {
   state: Model;
 
   constructor(
-    initialParams: { measureStats: MeasureStats },
-    private context: { myDispatch: Dispatch<Msg> }
+    measureStats: MeasureStats,
+    public myDispatch: Dispatch<Msg>
   ) {
     const initialFilters: InitialFilters = {};
     for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
-      const count = initialParams.measureStats[measure.id] || 0;
+      const count = measureStats[measure.id] || 0;
       if (count < 100) {
         continue;
       }
       initialFilters[measure.id] = measure.initialFilter;
     }
 
-    const reportCardMain = new ReportCardMain(
-      {
-        initialFilters,
-        measureStats: initialParams.measureStats,
-        mySnapshot: undefined,
-      },
-      { myDispatch: (msg: ReportCardMsg) => this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+    const reportCardMain = new ReportCardMainController({
+      initialFilters,
+      measureStats,
+      mySnapshot: undefined,
+    },
+      { myDispatch: (msg: ReportCardMsg) => this.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
     );
 
     this.state = {
-      measureStats: initialParams.measureStats,
+      measureStats: measureStats,
       reportCardMain,
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "REPORT_CARD_MSG": {
-        this.state.reportCardMain.update(msg.msg);
+        this.state.reportCardMain.handleDispatch(msg.msg);
         break;
       }
 
@@ -57,8 +57,17 @@ export class Explore {
         assertUnreachable(msg.type);
     }
   }
+}
 
-  view() {
-    return this.state.reportCardMain.view();
+export class ExploreView extends DCGView.View<{
+  controller: () => ExploreController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
+    return (
+      <ReportCardMainView controller={() => stateProp().reportCardMain} />
+    );
   }
 }
+

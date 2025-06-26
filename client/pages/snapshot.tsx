@@ -1,11 +1,9 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import type { Snapshot, Dispatch } from "../types";
-import { Snapshot as LoadedSnapshot, Msg as LoadedSnapshotMsg } from "../views/snapshot";
+import { SnapshotController, SnapshotView, Msg as LoadedSnapshotMsg } from "../views/snapshot";
 import {
   assertUnreachable,
   RequestStatus,
-  RequestStatusView,
-  RequestStatusViewMap,
 } from "../util/utils";
 import { MeasureStats, SnapshotId } from "../../iso/protocol";
 import { hydrateSnapshot } from "../util/snapshot";
@@ -13,32 +11,30 @@ import { hydrateSnapshot } from "../util/snapshot";
 export type Model = {
   snapshotId: SnapshotId;
   measureStats: MeasureStats;
-  snapshotRequest: RequestStatus<LoadedSnapshot>;
+  snapshotRequest: RequestStatus<SnapshotController>;
 };
 
 export type Msg =
   | {
     type: "SNAPSHOT_RESPONSE";
-    request: RequestStatus<LoadedSnapshot>;
+    request: RequestStatus<SnapshotController>;
   }
   | {
     type: "LOADED_SNAPSHOT_MSG";
     msg: LoadedSnapshotMsg;
   };
 
-export class SnapshotPage {
+export class SnapshotPageController {
   state: Model;
 
   constructor(
-    initialParams: {
-      snapshotId: SnapshotId;
-      measureStats: MeasureStats;
-    },
-    private context: { myDispatch: Dispatch<Msg> }
+    snapshotId: SnapshotId,
+    measureStats: MeasureStats,
+    public myDispatch: Dispatch<Msg>
   ) {
     this.state = {
-      snapshotId: initialParams.snapshotId,
-      measureStats: initialParams.measureStats,
+      snapshotId,
+      measureStats,
       snapshotRequest: { status: "loading" },
     };
 
@@ -58,26 +54,26 @@ export class SnapshotPage {
 
     if (response.ok) {
       const snapshot = (await response.json()) as Snapshot;
-      const loadedSnapshot = new LoadedSnapshot(
+      const loadedSnapshot = new SnapshotController(
         {
           measureStats: this.state.measureStats,
           snapshot: hydrateSnapshot(snapshot),
         },
-        { myDispatch: (msg: LoadedSnapshotMsg) => this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }) }
+        (msg: LoadedSnapshotMsg) => this.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg })
       );
-      this.context.myDispatch({
+      this.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "loaded", response: loadedSnapshot },
       });
     } else {
-      this.context.myDispatch({
+      this.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
     }
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "SNAPSHOT_RESPONSE":
         this.state.snapshotRequest = msg.request;
@@ -85,7 +81,7 @@ export class SnapshotPage {
 
       case "LOADED_SNAPSHOT_MSG":
         if (this.state.snapshotRequest.status == "loaded") {
-          this.state.snapshotRequest.response.update(msg.msg);
+          this.state.snapshotRequest.response.handleDispatch(msg.msg);
         }
         break;
 
@@ -94,20 +90,24 @@ export class SnapshotPage {
     }
   }
 
-  view() {
-    const snapshotRequestViewMap: RequestStatusViewMap<LoadedSnapshot, Msg> = {
-      "not-sent": () => <div />,
-      loading: () => <div>Loading...</div>,
-      error: ({ error }) => <div>Error loading snapshot: {error}</div>,
-      loaded: ({ response }) => response.view(),
-    };
+}
+
+export class SnapshotPageView extends DCGView.View<{
+  controller: () => SnapshotPageController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+    const { SwitchUnion } = DCGView.Components;
 
     return (
-      <RequestStatusView
-        dispatch={this.context.myDispatch}
-        request={this.state.snapshotRequest}
-        viewMap={snapshotRequestViewMap}
-      />
+      <div>
+        {SwitchUnion(() => stateProp().snapshotRequest, 'status', {
+          "not-sent": () => <div />,
+          "loading": () => <div>Loading...</div>,
+          "error": (errorProp: () => { status: 'error'; error: string }) => <div>Error loading snapshot: {() => errorProp().error}</div>,
+          "loaded": (loadedProp: () => { status: 'loaded'; response: SnapshotController }) => <SnapshotView controller={() => loadedProp().response} />,
+        })}
+      </div>
     );
   }
 }

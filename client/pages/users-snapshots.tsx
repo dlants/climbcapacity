@@ -1,6 +1,8 @@
-import React from "react";
+import * as DCGView from "dcgview";
 import type { Snapshot, Dispatch } from "../types";
-import { assertUnreachable, RequestStatus } from "../util/utils";
+import { RequestStatus } from "../util/utils";
+
+const { SwitchUnion, For } = DCGView.Components;
 
 type SnapshotListItem = {
   snapshot: Snapshot;
@@ -39,10 +41,10 @@ export type Msg =
     snapshotId: string;
   };
 
-export class UsersSnapshotsPage {
+export class UsersSnapshotsController {
   state: Model;
 
-  constructor(userId: string, private context: { myDispatch: Dispatch<Msg> }) {
+  constructor(userId: string, public myDispatch: Dispatch<Msg>) {
     this.state = {
       userId,
       snapshotRequest: { status: "loading" },
@@ -56,7 +58,7 @@ export class UsersSnapshotsPage {
     const response = await fetch("/api/my-snapshots", { method: "POST" });
     if (response.ok) {
       const snapshots = (await response.json()) as Snapshot[];
-      this.context.myDispatch({
+      this.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: {
           status: "loaded",
@@ -67,14 +69,14 @@ export class UsersSnapshotsPage {
         },
       });
     } else {
-      this.context.myDispatch({
+      this.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
     }
   }
 
-  update(msg: Msg): void {
+  handleDispatch(msg: Msg): void {
     switch (msg.type) {
       case "SNAPSHOT_RESPONSE":
         this.state.snapshotRequest = msg.request;
@@ -92,20 +94,20 @@ export class UsersSnapshotsPage {
           });
           if (response.ok) {
             const snapshot = (await response.json()) as Snapshot;
-            this.context.myDispatch({
+            this.myDispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
               request: { status: "loaded", response: snapshot },
             });
 
             // re-fetch snapshots
-            this.context.myDispatch({
+            this.myDispatch({
               type: "SNAPSHOT_RESPONSE",
               request: { status: "loading" },
             });
 
             await this.fetchSnapshots();
           } else {
-            this.context.myDispatch({
+            this.myDispatch({
               type: "NEW_SNAPSHOT_RESPONSE",
               request: { status: "error", error: await response.text() },
             });
@@ -144,7 +146,7 @@ export class UsersSnapshotsPage {
             }),
           });
           if (response.ok) {
-            this.context.myDispatch({
+            this.myDispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
               request: { status: "loaded", response: undefined },
@@ -152,7 +154,7 @@ export class UsersSnapshotsPage {
             // Refresh the list
             await this.fetchSnapshots();
           } else {
-            this.context.myDispatch({
+            this.myDispatch({
               type: "DELETE_SNAPSHOT_RESPONSE",
               snapshotId: msg.snapshotId,
               request: { status: "error", error: await response.text() },
@@ -184,118 +186,107 @@ export class UsersSnapshotsPage {
     }
   }
 
-  view(): JSX.Element {
-    const NewSnapshot = () => {
-      const NewSnapshotButton = () => (
-        <button onPointerDown={() => this.context.myDispatch({ type: "NEW_SNAPSHOT" })}>
-          Create New Snapshot
-        </button>
-      );
+}
 
-      if (this.state.newSnapshotRequest.status == "not-sent") {
-        return <NewSnapshotButton />;
-      }
+export class UsersSnapshotsView extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
 
-      switch (this.state.newSnapshotRequest.status) {
-        case "loading":
-          return <div>Creating new snapshot...</div>;
-        case "loaded":
-          return (
-            <div>
-              created new snapshot <NewSnapshotButton />
-            </div>
-          );
-        case "error":
-          return (
-            <div>
-              error when creating new snapshot: {this.state.newSnapshotRequest.error}
-            </div>
-          );
-        default:
-          assertUnreachable(this.state.newSnapshotRequest);
-      }
-    };
+    return (
+      <div>
+        <h2>Your Snapshots</h2>
+        <div class="new-snapshot">
+          {this.renderNewSnapshot(stateProp)}
+        </div>
+        <div class="list-snapshots">
+          {this.renderSnapshotList(stateProp)}
+        </div>
+      </div>
+    );
+  }
 
-    const SnapshotResponse = ({
-      snapshot: item,
-    }: {
-      snapshot: SnapshotListItem;
-    }) => (
-      <div key={item.snapshot._id}>
-        {new Date(item.snapshot.createdAt).toLocaleString()}
+  private renderNewSnapshot(stateProp: () => Model) {
+    const NewSnapshotButton = () => (
+      <button onPointerDown={() => this.props.controller().myDispatch({ type: "NEW_SNAPSHOT" })}>
+        Create New Snapshot
+      </button>
+    );
+
+    return SwitchUnion(() => stateProp().newSnapshotRequest, 'status', {
+      "not-sent": () => <NewSnapshotButton />,
+      "loading": () => <div>Creating new snapshot...</div>,
+      "loaded": () => (
+        <div>
+          created new snapshot <NewSnapshotButton />
+        </div>
+      ),
+      "error": (errorProp) => (
+        <div>
+          error when creating new snapshot: {() => errorProp().error}
+        </div>
+      ),
+    });
+  }
+
+  private renderSnapshotList(stateProp: () => Model) {
+    return SwitchUnion(() => stateProp().snapshotRequest, 'status', {
+      "not-sent": () => <div />,
+      "loading": () => <div>Loading...</div>,
+      "error": (errorProp) => <div class="error">{() => errorProp().error}</div>,
+      "loaded": (loadedProp) => (
+        <div class="loaded">
+          <For each={() => loadedProp().response} key={(item: SnapshotListItem) => item.snapshot._id}>
+            {(getItem: () => SnapshotListItem) => this.renderSnapshotItem(getItem)}
+          </For>
+        </div>
+      ),
+    });
+  }
+
+  private renderSnapshotItem(getItem: () => SnapshotListItem) {
+    return (
+      <div>
+        {() => new Date(getItem().snapshot.createdAt).toLocaleString()}
         <button
           onPointerDown={() =>
-            this.context.myDispatch({ type: "SELECT_SNAPSHOT", snapshot: item })
+            this.props.controller().myDispatch({ type: "SELECT_SNAPSHOT", snapshot: getItem() })
           }
         >
           Edit
         </button>
 
-        {(() => {
-          switch (item.deleteRequest.status) {
-            case "not-sent":
-            case "error":
-              return (
-                <span>
-                  {item.deleteRequest.status == "error" && (
-                    <span>{item.deleteRequest.error}</span>
-                  )}
-                  <button
-                    onPointerDown={() =>
-                      this.context.myDispatch({
-                        type: "DELETE_SNAPSHOT",
-                        snapshotId: item.snapshot._id,
-                      })
-                    }
-                  >
-                    Delete
-                  </button>
-                </span>
-              );
-            case "loading":
-              return <button disabled>Edit</button>;
-
-            case "loaded":
-              return <div>Deleted</div>;
-          }
-        })()}
-      </div>
-    );
-
-    const SnapshotList = () => {
-      switch (this.state.snapshotRequest.status) {
-        case "not-sent":
-          return <div />;
-        case "loading":
-          return <div>Loading...</div>;
-        case "error":
-          return <div className="error">{this.state.snapshotRequest.error}</div>;
-        case "loaded":
-          return (
-            <div className="loaded">
-              {this.state.snapshotRequest.response.map((snapshot) => (
-                <SnapshotResponse
-                  key={snapshot.snapshot._id}
-                  snapshot={snapshot}
-                />
-              ))}
-            </div>
-          );
-        default:
-          assertUnreachable(this.state.snapshotRequest);
-      }
-    };
-
-    return (
-      <div>
-        <h2>Your Snapshots</h2>
-        <div className="new-snapshot">
-          <NewSnapshot />
-        </div>
-        <div className="list-snapshots">
-          <SnapshotList />
-        </div>
+        {SwitchUnion(() => getItem().deleteRequest, 'status', {
+          "not-sent": () => this.renderDeleteButton(getItem),
+          "error": (errorProp) => (
+            <span>
+              <span>{() => errorProp().error}</span>
+              {this.renderDeleteButton(getItem)}
+            </span>
+          ),
+          "loading": () => <button disabled>Deleting...</button>,
+          "loaded": () => <div>Deleted</div>,
+        })}
       </div>
     );
   }
+
+  private renderDeleteButton(getItem: () => SnapshotListItem) {
+    return (
+      <button
+        onPointerDown={() =>
+          this.props.controller().myDispatch({
+            type: "DELETE_SNAPSHOT",
+            snapshotId: getItem().snapshot._id,
+          })
+        }
+      >
+        Delete
+      </button>
+    );
+  }
 }
+
+// Legacy compatibility export
+export const UsersSnapshotsPage = UsersSnapshotsController;

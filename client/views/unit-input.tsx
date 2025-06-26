@@ -1,4 +1,5 @@
-import React from "react";
+import * as DCGView from "../dcgview";
+const { For, SwitchUnion } = DCGView.Components;
 import {
   EWBANK,
   EwbankGrade,
@@ -19,7 +20,7 @@ import {
   inchesToFeetAndInches,
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
-import { Dispatch } from "../main";
+import { Dispatch } from "../types";
 import { getSpec, MeasureId } from "../../iso/measures";
 import { ExtractFromDisjointUnion } from "../util/utils";
 
@@ -63,17 +64,29 @@ export type Model = {
   parseResult: Result<UnitValue>;
 };
 
+
+export type Msg =
+  | {
+    type: "MEASURE_TYPED";
+    measureId: MeasureId;
+    unitInput: UnitInput;
+  }
+  | {
+    type: "SELECT_UNIT";
+    unit: UnitType;
+  };
+
 export type HasParseResultModel = Omit<Model, "parseResult"> & {
   parseResult: Success<UnitValue>;
 };
 
-export class UnitInputComponent {
+export class UnitInputController {
   state: Model;
 
   constructor(
     measureId: MeasureId,
-    private context: { myDispatch: Dispatch<Msg> },
-    initialValue?: UnitValue,
+    public myDispatch: Dispatch<Msg>,
+    initialValue?: UnitValue
   ) {
     const measureSpec = getSpec(measureId);
     const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
@@ -88,7 +101,7 @@ export class UnitInputComponent {
     };
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "MEASURE_TYPED": {
         const parseResult = parseUnitValue(this.state.selectedUnit, msg.unitInput);
@@ -120,326 +133,181 @@ export class UnitInputComponent {
         assertUnreachable(msg);
     }
   }
+}
 
-  view() {
+export class UnitInputView extends DCGView.View<{
+  controller: UnitInputController;
+}> {
+  template() {
+    const controller = this.props.controller;
+    const stateProp = () => controller().state;
+    const handleChange = (unitInput: UnitInput) => controller().myDispatch({
+      type: "MEASURE_TYPED",
+      measureId: stateProp().measureId,
+      unitInput
+    });
+
     return (
-      <span className={"unitInput"}>
-        {this.innerUnitInput()}
+      <span class="unitInput">
+        {SwitchUnion(() => stateProp().selectedUnit, {
+          second: () => this.renderNumberInput(stateProp, handleChange),
+          month: () => this.renderNumberInput(stateProp, handleChange),
+          year: () => this.renderNumberInput(stateProp, handleChange),
+          lb: () => this.renderNumberInput(stateProp, handleChange),
+          "lb/s": () => this.renderNumberInput(stateProp, handleChange),
+          kg: () => this.renderNumberInput(stateProp, handleChange),
+          "kg/s": () => this.renderNumberInput(stateProp, handleChange),
+          m: () => this.renderNumberInput(stateProp, handleChange),
+          cm: () => this.renderNumberInput(stateProp, handleChange),
+          mm: () => this.renderNumberInput(stateProp, handleChange),
+          count: () => this.renderNumberInput(stateProp, handleChange),
+          strengthtoweightratio: () => this.renderNumberInput(stateProp, handleChange),
+          training: () => (
+            <span>
+              <select
+                value={() => stateProp().unitInput as string}
+                onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              >
+                <For.Simple each={() => ["", "1", "2", "3", "4"]}>
+                  {(val: string) => (
+                    <option value={val}>
+                      {val}
+                    </option>
+                  )}
+                </For.Simple>
+              </select>
+              <span>{() => stateProp().selectedUnit}</span>
+            </span>
+          ),
+          inch: () => {
+            const value = () => stateProp().unitInput as { feet: string; inches: string };
+            return (
+              <span>
+                <input
+                  type="number"
+                  value={() => value().feet}
+                  onChange={(e) => handleChange({ ...value(), feet: (e.target as HTMLInputElement).value })}
+                />
+                <span>'</span>
+                <input
+                  type="number"
+                  value={() => value().inches}
+                  onChange={(e) => handleChange({ ...value(), inches: (e.target as HTMLInputElement).value })}
+                />
+                <span>"</span>
+              </span>
+            );
+          },
+          "sex-at-birth": () => (
+            <select
+              value={() => stateProp().unitInput as "female" | "male" | ""}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value as "" | "female" | "male")
+              }
+            >
+              <option value=""></option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          ),
+          ircra: () => (
+            <span>
+              <input
+                type="number"
+                value={() => stateProp().unitInput as string}
+                onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
+              />
+              <span>IRCRA</span>
+            </span>
+          ),
+          vermin: () => (
+            <select
+              value={() => stateProp().unitInput as string}
+              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+            >
+              <For.Simple each={() => VGRADE}>
+                {(grade: VGrade) => (
+                  <option value={grade.toString()}>
+                    V{grade}
+                  </option>
+                )}
+              </For.Simple>
+            </select>
+          ),
+          ewbank: () => (
+            <select
+              value={() => stateProp().unitInput as string}
+              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+            >
+              <For.Simple each={() => EWBANK}>
+                {(grade: EwbankGrade) => (
+                  <option value={grade.toString()}>
+                    {grade}
+                  </option>
+                )}
+              </For.Simple>
+            </select>
+          ),
+          font: () => (
+            <select
+              value={() => stateProp().unitInput as string}
+              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+            >
+              <For.Simple each={() => FONT}>
+                {(grade: Font) => (
+                  <option value={grade}>
+                    {grade}
+                  </option>
+                )}
+              </For.Simple>
+            </select>
+          ),
+          frenchsport: () => (
+            <select
+              value={() => stateProp().unitInput as string}
+              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+            >
+              <For.Simple each={() => FRENCH_SPORT}>
+                {(grade: FrenchSport) => (
+                  <option value={grade}>
+                    {grade}
+                  </option>
+                )}
+              </For.Simple>
+            </select>
+          ),
+          yds: () => (
+            <select
+              value={() => stateProp().unitInput as string}
+              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+            >
+              <For.Simple each={() => YDS}>
+                {(grade: string) => (
+                  <option value={grade}>
+                    {grade}
+                  </option>
+                )}
+              </For.Simple>
+            </select>
+          ),
+        })}
       </span>
     );
   }
 
-  private innerUnitInput() {
-    const handleChange = (unitInput: typeof this.state.unitInput) => {
-      this.context.myDispatch({
-        type: "MEASURE_TYPED",
-        measureId: this.state.measureId,
-        unitInput,
-      });
-    };
-
-    switch (this.state.selectedUnit) {
-      case "second":
-      case "month":
-      case "year":
-      case "lb":
-      case "lb/s":
-      case "kg":
-      case "kg/s":
-      case "m":
-      case "cm":
-      case "mm":
-      case "count":
-      case "strengthtoweightratio":
-        return (
-          <span>
-            <input
-              type="number"
-              value={this.state.unitInput as string}
-              onChange={(e) => handleChange(e.target.value)}
-            />
-            <span>{this.state.selectedUnit}</span>
-          </span>
-        );
-
-      case "training":
-        return (
-          <span>
-            <select
-              value={this.state.unitInput as string}
-              onChange={(e) => handleChange(e.target.value)}
-            >
-              {["", "1", "2", "3", "4"].map((val) => (
-                <option key={val} value={val}>
-                  {val}
-                </option>
-              ))}
-            </select>
-            <span>{this.state.selectedUnit}</span>
-          </span>
-        );
-
-      case "inch": {
-        const value = this.state.unitInput as { feet: string; inches: string };
-        return (
-          <span>
-            <input
-              type="number"
-              value={value.feet}
-              onChange={(e) => handleChange({ ...value, feet: e.target.value })}
-            />
-            <span>'</span>
-            <input
-              type="number"
-              value={value.inches}
-              onChange={(e) => handleChange({ ...value, inches: e.target.value })}
-            />
-            <span>"</span>
-          </span>
-        );
-      }
-
-      case "sex-at-birth":
-        return (
-          <select
-            value={this.state.unitInput as "female" | "male" | ""}
-            onChange={(e) =>
-              handleChange(e.target.value as "" | "female" | "male")
-            }
-          >
-            <option value=""></option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-          </select>
-        );
-
-      case "ircra":
-        return (
-          <span>
-            <input
-              type="number"
-              value={this.state.unitInput as string}
-              onChange={(e) => handleChange(e.target.value)}
-            />
-            <span>IRCRA</span>
-          </span>
-        );
-
-      case "vermin":
-        return (
-          <select
-            value={this.state.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {VGRADE.map((grade) => (
-              <option key={grade} value={grade}>
-                V{grade}
-              </option>
-            ))}
-          </select>
-        );
-
-      case "ewbank":
-        return (
-          <select
-            value={this.state.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {EWBANK.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        );
-
-      case "font":
-        return (
-          <select
-            value={this.state.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {FONT.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        );
-
-      case "frenchsport":
-        return (
-          <select
-            value={this.state.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {FRENCH_SPORT.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        );
-
-      case "yds":
-        return (
-          <select
-            value={this.state.unitInput as string}
-            onChange={(e) => handleChange(e.target.value)}
-          >
-            {YDS.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        );
-
-      default:
-        assertUnreachable(this.state.selectedUnit);
-    }
+  private renderNumberInput(stateProp: () => Model, handleChange: (unitInput: UnitInput) => void) {
+    return (
+      <span>
+        <input
+          type="number"
+          value={() => stateProp().unitInput as string}
+          onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
+        />
+        <span>{() => stateProp().selectedUnit}</span>
+      </span>
+    );
   }
 }
-
-function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
-  switch (unit) {
-    case "second":
-    case "month":
-    case "year":
-    case "lb":
-    case "lb/s":
-    case "kg":
-    case "kg/s":
-    case "m":
-    case "cm":
-    case "mm":
-    case "inch":
-    case "count":
-    case "strengthtoweightratio":
-      return {
-        unit,
-        value: 0,
-      };
-    case "vermin":
-      return {
-        unit,
-        value: 0,
-      };
-    case "font":
-      return {
-        unit,
-        value: "3",
-      };
-    case "frenchsport":
-      return {
-        unit,
-        value: "5",
-      };
-
-    case "yds":
-      return {
-        unit,
-        value: "5.6",
-      };
-    case "ewbank":
-      return {
-        unit,
-        value: 1,
-      };
-    case "ircra":
-      return {
-        unit,
-        value: 1 as IRCRAGrade,
-      };
-    case "sex-at-birth":
-      return {
-        unit,
-        value: "female",
-      };
-
-    case "training":
-      return {
-        unit,
-        value: 1,
-      };
-    default:
-      assertUnreachable(unit);
-  }
-}
-
-function getInitialInput(
-  targetUnit: UnitType,
-  initialValue?: UnitValue,
-): UnitInput {
-  const targetValue: UnitValue | undefined =
-    initialValue &&
-    (initialValue.unit == targetUnit
-      ? initialValue
-      : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit));
-
-  switch (targetUnit) {
-    case "second":
-    case "month":
-    case "year":
-    case "lb":
-    case "lb/s":
-    case "kg":
-    case "kg/s":
-    case "m":
-    case "cm":
-    case "mm":
-    case "vermin":
-    case "font":
-    case "frenchsport":
-    case "yds":
-    case "ewbank":
-    case "ircra":
-    case "count":
-    case "training":
-    case "strengthtoweightratio":
-      return targetValue ? targetValue.value.toString() : "";
-    case "inch":
-      const { feet, inches } = inchesToFeetAndInches(
-        targetValue ? (targetValue.value as number) : 0,
-      );
-      return { feet: feet.toString(), inches: inches.toString() };
-    case "sex-at-birth":
-      return targetValue
-        ? (
-          targetValue as ExtractFromDisjointUnion<
-            UnitValue,
-            "unit",
-            "sex-at-birth"
-          >
-        ).value
-        : "";
-    default:
-      assertUnreachable(targetUnit);
-  }
-}
-
-export type HasParseResult = Omit<Model, "parseResult"> & {
-  parseResult: Success<UnitValue>;
-};
-
-export function hasParseResult(
-  model: Model | undefined,
-): model is HasParseResult {
-  return !!(model && model.parseResult.status == "success");
-}
-
-export type Msg =
-  | {
-    type: "MEASURE_TYPED";
-    measureId: MeasureId;
-    unitInput: UnitInput;
-  }
-  | {
-    type: "SELECT_UNIT";
-    unit: UnitType;
-  };
-
-
 
 export function parseUnitValue<UnitName extends keyof UnitInputMap>(
   unit: UnitName,
@@ -630,6 +498,133 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
       error: e instanceof Error ? e.message : "Unknown error",
     };
   }
+}
+
+function getDefaultValueFromUnitType(unit: UnitType): UnitValue {
+  switch (unit) {
+    case "second":
+    case "month":
+    case "year":
+    case "lb":
+    case "lb/s":
+    case "kg":
+    case "kg/s":
+    case "m":
+    case "cm":
+    case "mm":
+    case "inch":
+    case "count":
+    case "strengthtoweightratio":
+      return {
+        unit,
+        value: 0,
+      };
+    case "vermin":
+      return {
+        unit,
+        value: 0,
+      };
+    case "font":
+      return {
+        unit,
+        value: "3",
+      };
+    case "frenchsport":
+      return {
+        unit,
+        value: "5",
+      };
+
+    case "yds":
+      return {
+        unit,
+        value: "5.6",
+      };
+    case "ewbank":
+      return {
+        unit,
+        value: 1,
+      };
+    case "ircra":
+      return {
+        unit,
+        value: 1 as IRCRAGrade,
+      };
+    case "sex-at-birth":
+      return {
+        unit,
+        value: "female",
+      };
+
+    case "training":
+      return {
+        unit,
+        value: 1,
+      };
+    default:
+      assertUnreachable(unit);
+  }
+}
+
+function getInitialInput(
+  targetUnit: UnitType,
+  initialValue?: UnitValue,
+): UnitInput {
+  const targetValue: UnitValue | undefined =
+    initialValue &&
+    (initialValue.unit == targetUnit
+      ? initialValue
+      : convertToTargetUnit(convertToStandardUnit(initialValue), targetUnit));
+
+  switch (targetUnit) {
+    case "second":
+    case "month":
+    case "year":
+    case "lb":
+    case "lb/s":
+    case "kg":
+    case "kg/s":
+    case "m":
+    case "cm":
+    case "mm":
+    case "vermin":
+    case "font":
+    case "frenchsport":
+    case "yds":
+    case "ewbank":
+    case "ircra":
+    case "count":
+    case "training":
+    case "strengthtoweightratio":
+      return targetValue ? targetValue.value.toString() : "";
+    case "inch":
+      const { feet, inches } = inchesToFeetAndInches(
+        targetValue ? (targetValue.value as number) : 0,
+      );
+      return { feet: feet.toString(), inches: inches.toString() };
+    case "sex-at-birth":
+      return targetValue
+        ? (
+          targetValue as ExtractFromDisjointUnion<
+            UnitValue,
+            "unit",
+            "sex-at-birth"
+          >
+        ).value
+        : "";
+    default:
+      assertUnreachable(targetUnit);
+  }
+}
+
+export type HasParseResult = Omit<Model, "parseResult"> & {
+  parseResult: Success<UnitValue>;
+};
+
+export function hasParseResult(
+  model: Model | undefined,
+): model is HasParseResult {
+  return !!(model && model.parseResult.status == "success");
 }
 
 
