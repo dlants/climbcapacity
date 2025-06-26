@@ -25,9 +25,10 @@
     "types": [
       "vitest/globals"
     ],
-    // `DCGView.createElement` is still used by ESBuild, but this tells TypeScript that it isn't so that explicit
-    // `import * as DCGView from 'dcgview;' statements can be omitted from files that don't need them and auto-imported
-    // by ESBuild. Without `preserve`, TypeScript would complain about the missing import.
+    // We need to convert react into `DCGView.createElement`, but we will be relying on build process (vite) to do this.
+    // For typescript, we want to preserve the jsx, so that
+    // `import * as DCGView from 'dcgview;' statements can be omitted from files that don't need them.
+    // Otherwise TypeScript would complain about the missing import.
     "jsx": "react-jsx",
     "jsxImportSource": "dcgview/jsx",
     "paths": {

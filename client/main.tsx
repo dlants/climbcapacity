@@ -499,9 +499,9 @@ async function run() {
   };
 
   mainAppController = new MainAppController(auth, measureStats, dispatch);
-  mainAppView = new MainAppView({ controller: () => mainAppController });
-
-  document.getElementById("app")!.appendChild(mainAppView._element as unknown as Node);
+  mainAppView = DCGView.mountToNode(MainAppView, document.getElementById("app")!, {
+    controller: () => mainAppController
+  });
 
   router.subscribe(dispatch);
 
