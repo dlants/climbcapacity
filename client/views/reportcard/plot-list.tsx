@@ -12,7 +12,6 @@ import {
   adjustGrade,
   castInitialFilter,
   castUnit,
-  extractDataPoint,
   UnitType,
   UnitValue,
 } from "../../../iso/units";
@@ -22,8 +21,9 @@ import { MEASURES } from "../../constants";
 import { MeasureStats } from "../../../iso/protocol";
 import * as UnitToggle from "../unit-toggle";
 import * as Interpolate from "./interpolate";
-import { InterpolationOption } from "../../../iso/interpolate";
+import { InterpolationOption } from "../../util/interpolate";
 import { ParamName } from "../../../iso/measures/params";
+import { extractDataPoint } from "../../util/units";
 
 type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
@@ -336,7 +336,7 @@ export class PlotListController {
     const myData =
       mySnapshot &&
       extractDataPoint({
-        measures: mySnapshot.measures as any,
+        measures: mySnapshot.measures,
         interpolations: interpolationOptions,
         xMeasure: xMeasure,
         yMeasure: {
@@ -347,7 +347,7 @@ export class PlotListController {
 
     for (const snapshot of snapshots) {
       const dataPoint = extractDataPoint({
-        measures: snapshot.measures as any,
+        measures: snapshot.measures,
         interpolations: interpolationOptions,
         xMeasure: xMeasure,
         yMeasure: {
@@ -420,7 +420,7 @@ export class PlotListController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "FILTER_MSG":
+      case "FILTER_MSG": {
         const filterPlot = this.state.plots.find(
           (p) => p.inputMeasure.id === msg.measureId,
         );
@@ -437,8 +437,9 @@ export class PlotListController {
           },
         });
         break;
+      }
 
-      case "TOGGLE_MSG":
+      case "TOGGLE_MSG": {
         const togglePlot = this.state.plots.find(
           (p) => p.inputMeasure.id === msg.measureId,
         );
@@ -455,8 +456,9 @@ export class PlotListController {
           },
         });
         break;
+      }
 
-      case "INTERPOLATE_MSG":
+      case "INTERPOLATE_MSG": {
         const interpolatePlot = this.state.plots.find(
           (p) => p.inputMeasure.id === msg.measureId,
         );
@@ -473,6 +475,7 @@ export class PlotListController {
           },
         });
         break;
+      }
 
       default:
         assertUnreachable(msg);

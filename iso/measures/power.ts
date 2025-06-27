@@ -38,7 +38,7 @@ export const powerClass: MeasureClassSpec = {
   },
   generateDescription: (params: { powerMovement: PowerMovement }) => {
     return `Your maximum distance for the following movement:
-    
+
     ${powerMovementDesc[params.powerMovement]}`;
   }
 };
@@ -66,7 +66,7 @@ export const unilateralPowerClass: MeasureClassSpec = {
   },
   generateDescription: (params: { unilateralPowerMovement: UnilateralPowerMovement, dominantSide: ParamValue<"dominantSide"> }) => {
     return `Your maximum distance using your ${params.dominantSide} side:
-    
+
     ${unilateralPowerMovementDesc[params.unilateralPowerMovement]}
     `
   }

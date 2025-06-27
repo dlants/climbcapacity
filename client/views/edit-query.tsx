@@ -1,6 +1,6 @@
 import DCGView from "dcgview";
 import { Dispatch } from "../types";
-import { MeasureSelectionBox } from "./measure-selection-box";
+import { MeasureSelectionBox, Msg as MeasureSelectionMsg } from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../constants";
@@ -10,7 +10,7 @@ import {
   Dataset,
   DATASETS,
 } from "../../iso/protocol";
-import { FilterController, FilterView } from "./filters/filter";
+import { FilterController, FilterView, Msg as FilterMsg } from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
@@ -28,24 +28,20 @@ export type Model = {
   datasets: {
     [dataset in Dataset]: boolean;
   };
-  measureSelectionBoxProps: {
-    measureStats: () => MeasureStats;
-    myDispatch: Dispatch<any>;
-  };
 };
 
 export type Msg =
   | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
     type: "MEASURE_SELECTOR_MSG";
-    msg: any;
+    msg: MeasureSelectionMsg;
   }
   | {
     type: "TOGGLE_DATASET";
     dataset: Dataset;
     include: boolean;
   }
-  | { type: "FILTER_MSG"; measureId: MeasureId; msg: any };
+  | { type: "FILTER_MSG"; measureId: MeasureId; msg: FilterMsg };
 
 export type InitialFilters = {
   [measureId: MeasureId]: InitialFilter;
@@ -81,10 +77,6 @@ export class EditQueryController {
         climbharder: true,
       },
       filters,
-      measureSelectionBoxProps: {
-        measureStats: () => measureStats,
-        myDispatch: (msg: any) => this.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
-      },
     };
   }
 
@@ -134,14 +126,10 @@ export class EditQueryController {
             ),
           );
 
-          this.state.measureSelectionBoxProps = {
-            measureStats: () => this.state.measureStats,
-            myDispatch: (msg: any) => this.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
-          };
         }
         break;
 
-      case "FILTER_MSG":
+      case "FILTER_MSG": {
         const filter = this.state.filters.find(
           (f) => this.getFilterMeasureId(f) === msg.measureId,
         );
@@ -150,6 +138,7 @@ export class EditQueryController {
         }
         filter.handleDispatch(msg.msg);
         break;
+      }
 
       case "TOGGLE_DATASET":
         this.state.datasets[msg.dataset] = msg.include;
@@ -186,15 +175,15 @@ export class EditQueryView extends DCGView.View<{
           {(getFilter: () => FilterController) => {
             const measureId = controller().getFilterMeasureId(getFilter());
             return (
-              <div class={styles.container}>
-                <div class={styles.item}>
+              <div class={DCGView.const(styles.container)}>
+                <div class={DCGView.const(styles.item)}>
                   <strong>{measureId}</strong>(
                   {() => state().measureStats[measureId] || 0} snapshots)
                 </div>
-                <div class={styles.item}>
+                <div class={DCGView.const(styles.item)}>
                   <FilterView controller={getFilter} />
                 </div>
-                <div class={styles.item}>
+                <div class={DCGView.const(styles.item)}>
                   <button
                     onTap={() =>
                       controller().myDispatch({
@@ -212,7 +201,7 @@ export class EditQueryView extends DCGView.View<{
         </For>
         <MeasureSelectionBox
           measureStats={() => state().measureStats}
-          myDispatch={(msg: any) => controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
+          myDispatch={(msg: MeasureSelectionMsg) => controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
         />
         <For.Simple each={() => DATASETS}>
           {(dataset: Dataset) => (

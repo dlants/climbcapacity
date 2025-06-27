@@ -164,7 +164,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   const p90VGradeStr = row[9];
   try {
@@ -179,7 +181,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   function parseEwbankGrade(str: string) {
     const grade = parseFloat(str);
@@ -202,7 +206,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   const p90RouteGradeStr = row[12];
   try {
@@ -217,7 +223,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   const maxWeight18mmHalfStr = row[19];
   {

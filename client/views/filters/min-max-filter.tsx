@@ -81,15 +81,17 @@ export class MinMaxFilterController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "MIN_INPUT_MSG":
+      case "MIN_INPUT_MSG": {
         this.state.minInputController.handleDispatch(msg.msg);
         break;
+      }
 
-      case "MAX_INPUT_MSG":
+      case "MAX_INPUT_MSG": {
         this.state.maxInputController.handleDispatch(msg.msg);
         break;
+      }
 
-      case "UNIT_TOGGLE_MSG":
+      case "UNIT_TOGGLE_MSG": {
         this.state.unitToggleController.handleDispatch(msg.msg);
 
         // Update both inputs to use the new selected unit
@@ -102,6 +104,7 @@ export class MinMaxFilterController {
           unit: this.state.unitToggleController.state.selectedUnit,
         });
         break;
+      }
 
       default:
         assertUnreachable(msg);
@@ -153,15 +156,15 @@ export class MinMaxFilterView extends DCGView.View<{
     const stateProp = () => this.props.controller().state;
 
     return (
-      <div class={styles.container}>
-        <div class={styles.item}>
+      <div class={DCGView.const(styles.container)}>
+        <div class={DCGView.const(styles.item)}>
           min: <UnitInputView controller={() => stateProp().minInputController} />
         </div>
-        <div class={styles.item}>
+        <div class={DCGView.const(styles.item)}>
           max: <UnitInputView controller={() => stateProp().maxInputController} />
         </div>
         {() => stateProp().minInputController.state.possibleUnits.length > 1 && (
-          <div class={styles.item}>
+          <div class={DCGView.const(styles.item)}>
             <UnitToggleView controller={() => stateProp().unitToggleController} />
           </div>
         )}

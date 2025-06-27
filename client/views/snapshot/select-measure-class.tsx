@@ -91,7 +91,9 @@ export class SelectMeasureClassController {
         try {
           selectedParams = parseId(measureId, spec);
           selectedSpec = spec;
-        } catch { }
+        } catch {
+          // do nothing
+        }
       }
     }
 
@@ -113,7 +115,7 @@ export class SelectMeasureClassController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "SELECT_MEASURE_CLASS_MSG":
+      case "SELECT_MEASURE_CLASS_MSG": {
         const selected = this.state.selected;
         const oldParams = { ...selected.params };
 
@@ -130,8 +132,9 @@ export class SelectMeasureClassController {
         selected.params = paramMap;
         selected.measureId = generateId(selected.measureClass, selected.params);
         break;
+      }
 
-      case "UPDATE_PARAM_MSG":
+      case "UPDATE_PARAM_MSG": {
         const selectedForParam = this.state.selected;
         const param = selectedForParam.measureClass.params.find(
           (p) => p.name === msg.param,
@@ -141,7 +144,7 @@ export class SelectMeasureClassController {
             `Invalid param ${msg.param} for measure class ${selectedForParam.measureClass.className}`,
           );
         }
-        if (!(param.values as any).includes(msg.value)) {
+        if (!(param.values as readonly string[]).includes(msg.value)) {
           throw new Error(
             `invalid value ${msg.value} for param ${param.name}`,
           );
@@ -152,6 +155,7 @@ export class SelectMeasureClassController {
           selectedForParam.params,
         );
         break;
+      }
     }
   }
 

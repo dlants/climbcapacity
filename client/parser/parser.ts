@@ -27,8 +27,8 @@ class Parser {
         status: "success",
         value: (evalPoints) => evaluate(ast, evalPoints),
       };
-    } catch (e: any) {
-      return { status: "fail", error: e.message };
+    } catch (e: unknown) {
+      return { status: "fail", error: (e as Error).message };
     }
   }
 

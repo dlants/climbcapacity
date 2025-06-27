@@ -160,7 +160,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   function parseVgrade(maxBoulderStr: string): VGrade {
     switch (maxBoulderStr) {
@@ -210,7 +212,9 @@ table.slice(1).forEach((row, idx) => {
         value: grade,
       },
     );
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   const parseAge = (climbingExpStr: string) => {
     switch (climbingExpStr) {
@@ -239,7 +243,9 @@ table.slice(1).forEach((row, idx) => {
       unit: "year",
       value: parseAge(climbingExpStr),
     });
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   let trainAge: number | undefined;
   try {
@@ -248,7 +254,9 @@ table.slice(1).forEach((row, idx) => {
       unit: "year",
       value: trainAge,
     });
-  } catch { }
+  } catch {
+    // do nothing
+  }
 
   const heightStr = row[TSV_COLS.findIndex((c) => c == "height")];
   const height = Number(heightStr);

@@ -323,7 +323,8 @@ describe("SnapshotsModel", () => {
 
       // Create another snapshot with different values
       await model.newSnapshot(mockUser);
-      const [_, snapshot2] = await model.getUsersSnapshots(mockUser.id);
+      const snapshots = await model.getUsersSnapshots(mockUser.id);
+      const snapshot2 = snapshots[1];
       await model.updateMeasure({
         userId: mockUser.id,
         requestParams: {

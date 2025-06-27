@@ -5,7 +5,7 @@ export type LoadedRequest<T> = {
   response: T;
 };
 
-export type RequestStatus<T, Ext = {}> =
+export type RequestStatus<T, Ext = object> =
   | {
     status: "not-sent";
   }
@@ -18,7 +18,7 @@ export type RequestStatus<T, Ext = {}> =
     error: string;
   };
 
-export type GetLoadedRequest<T extends RequestStatus<any>> =
+export type GetLoadedRequest<T extends RequestStatus<unknown>> =
   T extends LoadedRequest<infer U> ? LoadedRequest<U> : never;
 
 export function assertLoaded<T>(request: RequestStatus<T>): LoadedRequest<T> {

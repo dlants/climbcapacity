@@ -153,7 +153,7 @@ async function run() {
 
   app.post(
     "/api/snapshots/query",
-    apiRoute(async (req, _res) => {
+    apiRoute(async (req) => {
       const query: SnapshotQuery = req.body.query;
 
       assert.equal(typeof query, "object", "query must be an object");

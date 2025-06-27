@@ -1,7 +1,6 @@
 import mongodb from "mongodb";
 import {
   Dataset,
-  MeasureFilter,
   SnapshotQuery,
   SnapshotUpdateRequest,
 } from "../../iso/protocol.js";
@@ -223,7 +222,7 @@ export class SnapshotsModel {
     }
 
     const datasets = Object.entries(query.datasets)
-      .filter(([_, isSelected]) => isSelected)
+      .filter(([, isSelected]) => isSelected)
       .map(([dataset]) => dataset);
 
     const findQuery: mongodb.Filter<SnapshotDoc> = {

@@ -433,7 +433,6 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
 
       case "font": {
         if (!FONT.includes(input as UnitInputMap["font"] as Font)) {
-          debugger;
           return { status: "fail", error: `Invalid Font grade ${input}` };
         }
         return {
@@ -597,12 +596,13 @@ function getInitialInput(
     case "training":
     case "strengthtoweightratio":
       return targetValue ? targetValue.value.toString() : "";
-    case "inch":
+    case "inch": {
       const { feet, inches } = inchesToFeetAndInches(
         targetValue ? (targetValue.value as number) : 0,
       );
       return { feet: feet.toString(), inches: inches.toString() };
-    case "sex-at-birth":
+    }
+    case "sex-at-birth": {
       return targetValue
         ? (
           targetValue as ExtractFromDisjointUnion<
@@ -612,6 +612,7 @@ function getInitialInput(
           >
         ).value
         : "";
+    }
     default:
       assertUnreachable(targetUnit);
   }

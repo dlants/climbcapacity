@@ -8,10 +8,18 @@
   "dependencies": {
     "typescript": "^5.6.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.29.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
+    "eslint": "^9.29.0"
+  },
   "scripts": {
     "dev:frontend": "cd client && npm run dev",
     "dev:backend": "cd backend && npm run dev",
-    "dev": "npm run dev:frontend & npm run dev:backend"
+    "dev": "npm run dev:frontend & npm run dev:backend",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck:watch": "node scripts/typecheck-watch.js"
   }
 }

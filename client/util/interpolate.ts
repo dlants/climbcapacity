@@ -1,7 +1,7 @@
-import { MeasureId } from "./measures/index.js";
-import { ParamName, ParamValue } from "./measures/params.js";
-import { Snapshot } from "./protocol.js";
-import { UnitValue } from "./units.js";
+import { MeasureId } from "../../iso/measures/index.js";
+import { ParamName, ParamValue } from "../../iso/measures/params.js";
+import { UnitValue } from "../../iso/units.js";
+import { HydratedSnapshot } from "../types.js";
 
 function brzycki_to_1rm(weight: number, reps: number) {
   return weight * (36 / (37 - reps));
@@ -27,14 +27,14 @@ export type InterpolationOption<P extends ParamName> = {
   targetParamValue: ParamValue<P>
 }
 
-export function interpolate(measures: Snapshot["measures"], interpolation: InterpolationOption<ParamName>): UnitValue | undefined {
+export function interpolate(measures: HydratedSnapshot["measures"], interpolation: InterpolationOption<ParamName>): UnitValue | undefined {
   const value = measures[interpolation.sourceMeasureId];
   if (!value) {
     return undefined;
   }
 
   switch (interpolation.param) {
-    case 'repMax':
+    case 'repMax': {
       const startingRepMax = parseInt(interpolation.measureParamValue);
       const targetRepMax = parseInt(interpolation.targetParamValue);
 
@@ -42,13 +42,15 @@ export function interpolate(measures: Snapshot["measures"], interpolation: Inter
         unit: value.unit,
         value: brzycki_from_1rm(brzycki_to_1rm(value.value as number, startingRepMax), targetRepMax)
       } as UnitValue;
-    case 'edgeSize':
+    }
+    case 'edgeSize': {
       const startingEdgeSize = parseInt(interpolation.measureParamValue);
       const targetEdgeSize = parseInt(interpolation.targetParamValue);
       return {
         unit: value.unit,
         value: edgesize_from_20mm(edgesize_to_20mm(value.value as number, startingEdgeSize), targetEdgeSize)
       } as UnitValue;
+    }
   }
   return undefined
 }

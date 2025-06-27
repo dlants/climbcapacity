@@ -375,7 +375,7 @@ export function getItemsForSnapshot(snapshot: HydratedSnapshot) {
       case "measure-item":
         outItems.push(item);
         break;
-      case "measure-group":
+      case "measure-group": {
         const matchingChildren = item.items.filter(
           (i) => snapshot.measures[i.spec.id],
         );
@@ -385,6 +385,7 @@ export function getItemsForSnapshot(snapshot: HydratedSnapshot) {
         });
 
         break;
+      }
 
       default:
         assertUnreachable(item);

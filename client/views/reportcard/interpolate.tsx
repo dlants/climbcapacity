@@ -112,11 +112,12 @@ export class InterpolateController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "TOGGLE_INTERPOLATION":
+      case "TOGGLE_INTERPOLATION": {
         if (this.state.interpolationOptions[msg.paramName]) {
           this.state.interpolationOptions[msg.paramName]!.enabled = msg.enabled;
         }
         break;
+      }
       default:
         assertUnreachable(msg.type);
     }
@@ -138,14 +139,14 @@ export class InterpolateView extends DCGView.View<{
 
     return (
       <div>
-        <div class={styles.container}>
+        <div class={DCGView.const(styles.container)}>
           <For each={() => Object.entries(stateProp().interpolationOptions)} key={(item) => item[0]}>
             {(entryProp) => {
               const [paramName, options] = entryProp();
 
               return (
-                <div class={styles.row}>
-                  <label class={styles.label}>
+                <div class={DCGView.const(styles.row)}>
+                  <label class={DCGView.const(styles.label)}>
                     <input
                       type="checkbox"
                       checked={() => options.enabled}
@@ -158,7 +159,7 @@ export class InterpolateView extends DCGView.View<{
                       }
                     />
 
-                    <span class={styles.text}>
+                    <span class={DCGView.const(styles.text)}>
                       Interpolate {paramName} {() => options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
                     </span>
                   </label>

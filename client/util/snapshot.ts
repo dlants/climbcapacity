@@ -14,6 +14,7 @@ export function hydrateSnapshot(snapshot: Snapshot): HydratedSnapshot {
   }
   return {
     ...snapshot,
+    measures: snapshot.measures as { [measureId: MeasureId]: UnitValue },
     normalizedMeasures,
   };
 }

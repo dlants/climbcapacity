@@ -212,7 +212,7 @@ export class ReportCardMainController {
           case "error":
             this.state.dataRequest = msg.request;
             return;
-          case "loaded":
+          case "loaded": {
             const next = new PlotListController(
               {
                 snapshots: msg.request.response,
@@ -235,14 +235,17 @@ export class ReportCardMainController {
               },
             };
             return;
+          }
           default:
             assertUnreachable(msg.request);
         }
 
-      case "REQUEST_DATA":
+      // eslint-disable-next-line no-fallthrough
+      case "REQUEST_DATA": {
         this.state.dataRequest = { status: "loading", queryHash: this.state.query.hash };
         this.fetchData().catch(console.error);
         break;
+      }
 
       case "REPORT_CARD_MSG":
         if (this.state.dataRequest.status != "loaded") {
@@ -252,7 +255,7 @@ export class ReportCardMainController {
         this.state.dataRequest.response.reportCardModel.handleDispatch(msg.msg);
         break;
 
-      case "FILTERS_MSG":
+      case "FILTERS_MSG": {
         const oldQueryHash = this.state.query.hash;
         this.state.filtersModel.handleDispatch(msg.msg);
         this.state.query = this.getQuery(this.state.filtersModel);
@@ -260,8 +263,9 @@ export class ReportCardMainController {
           this.state.dataRequest = { status: "not-sent" };
         }
         break;
+      }
 
-      case "SELECT_MEASURE_CLASS_MSG":
+      case "SELECT_MEASURE_CLASS_MSG": {
         this.state.outputMeasure.selector.handleDispatch(msg.msg);
         const measure = getSpec(this.state.outputMeasure.selector.state.selected.measureId);
         this.state.outputMeasure.toggle = new UnitToggleController(
@@ -289,8 +293,9 @@ export class ReportCardMainController {
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
         break;
+      }
 
-      case "OUTPUT_MEASURE_TOGGLE_MSG":
+      case "OUTPUT_MEASURE_TOGGLE_MSG": {
         this.state.outputMeasure.toggle.handleDispatch(msg.msg);
 
         if (this.state.dataRequest.status == "loaded") {
@@ -309,6 +314,7 @@ export class ReportCardMainController {
           this.state.dataRequest.response.reportCardModel = nextReportCardModel;
         }
         break;
+      }
 
       default:
         assertUnreachable(msg);
@@ -323,8 +329,8 @@ export class ReportCardMainView extends DCGView.View<{
     const state = () => this.props.controller().state;
 
     return (
-      <div class={styles.reportCardRoot}>
-        <div class={styles.filter}>
+      <div class={DCGView.const(styles.reportCardRoot)}>
+        <div class={DCGView.const(styles.filter)}>
           <EditQueryView controller={() => state().filtersModel} />
 
           {() => {
@@ -341,7 +347,7 @@ export class ReportCardMainView extends DCGView.View<{
             return null;
           }}
 
-          <div class={styles.outputMeasureContainer}>
+          <div class={DCGView.const(styles.outputMeasureContainer)}>
             Output Measure:
             <SelectMeasureClassView controller={() => state().outputMeasure.selector} />
             <UnitToggleView controller={() => state().outputMeasure.toggle} />
@@ -369,7 +375,7 @@ export class ReportCardMainView extends DCGView.View<{
               return <div>Error: {() => dataRequest.status === "error" ? dataRequest.error : ""}</div>;
             case "loaded":
               return (
-                <div class={styles.graphs}>
+                <div class={DCGView.const(styles.graphs)}>
                   <PlotListView controller={() => dataRequest.response.reportCardModel} />
                 </div>
               );

@@ -30,7 +30,7 @@ function evaluateInternal(expr: Expr, idPt: EvalPoint): number {
       if (!(expr.name in idPt))
         throw new Error(`Unknown identifier: ${expr.name}`);
       return idPt[expr.name].value;
-    case "binary":
+    case "binary": {
       const left = evaluateInternal(expr.left, idPt);
       const right = evaluateInternal(expr.right, idPt);
       switch (expr.op) {
@@ -47,5 +47,6 @@ function evaluateInternal(expr: Expr, idPt: EvalPoint): number {
         default:
           throw new Error(`Unknown operator: ${expr.op}`);
       }
+    }
   }
 }

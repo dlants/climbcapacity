@@ -31,8 +31,8 @@ export class ReportCardFilterView extends DCGView.View<{
     const measureId = () => this.props.controller().getMeasureId(filterProp().filter);
 
     return (
-      <div class={styles.filterView}>
-        <div class={styles.filterItem}>
+      <div class={DCGView.const(styles.filterView)}>
+        <div class={DCGView.const(styles.filterItem)}>
           <input
             type="checkbox"
             checked={() => filterProp().enabled}
@@ -45,10 +45,10 @@ export class ReportCardFilterView extends DCGView.View<{
             }
           />
         </div>
-        <div class={styles.filterItem}>
+        <div class={DCGView.const(styles.filterItem)}>
           <strong>{() => measureId()}</strong>{" "}
         </div>
-        <div class={styles.filterItem}>
+        <div class={DCGView.const(styles.filterItem)}>
           <Filter.FilterView controller={() => filterProp().filter} />
         </div>
       </div>
@@ -108,10 +108,12 @@ export class ReportCardFilterController {
 
   getMeasureId(filter: Filter.FilterController): MeasureId {
     switch (filter.state.type) {
-      case "minmax":
+      case "minmax": {
         return filter.state.controller.state.measureId;
-      case "toggle":
+      }
+      case "toggle": {
         return filter.state.controller.state.measureId;
+      }
       default:
         assertUnreachable(filter.state);
     }
@@ -119,7 +121,7 @@ export class ReportCardFilterController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "TOGGLE_FILTER":
+      case "TOGGLE_FILTER": {
         const toggleFilter = this.state.filters.find(
           (f) => this.getMeasureId(f.filter) === msg.measureId,
         );
@@ -129,7 +131,8 @@ export class ReportCardFilterController {
           toggleFilter.enabled = msg.enabled;
         }
         break;
-      case "FILTER_MSG":
+      }
+      case "FILTER_MSG": {
         const msgFilter = this.state.filters.find(
           (f) => this.getMeasureId(f.filter) === msg.measureId,
         );
@@ -139,6 +142,7 @@ export class ReportCardFilterController {
 
         msgFilter.filter.handleDispatch(msg.msg);
         break;
+      }
       default:
         assertUnreachable(msg);
     }

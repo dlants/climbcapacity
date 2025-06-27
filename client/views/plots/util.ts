@@ -9,15 +9,19 @@ const fmt = new Intl.NumberFormat("en", {
 
 export type Point = { x: number; y: number };
 
-export interface Bin extends d3.Bin<number, number> {
+export interface Bin {
   x0: number | undefined;
   x1: number | undefined;
+  length: number;
+  [index: number]: number;
 }
 
-export interface Bin2D extends d3.Bin<Point, number> {
+export interface Bin2D {
   frequency: number;
   row: number;
   col: number;
+  length: number;
+  [index: number]: Point;
 }
 
 export function tickFormatBins(

@@ -51,7 +51,7 @@ export class UsersSnapshotsController {
       newSnapshotRequest: { status: "not-sent" },
     };
 
-    this.fetchSnapshots().catch((error: any) => console.error(error));
+    this.fetchSnapshots().catch((error: unknown) => console.error(error));
   }
 
   private async fetchSnapshots(): Promise<void> {
@@ -85,7 +85,7 @@ export class UsersSnapshotsController {
         this.state.newSnapshotRequest = msg.request;
         break;
 
-      case "NEW_SNAPSHOT":
+      case "NEW_SNAPSHOT": {
         this.state.newSnapshotRequest = { status: "loading" };
 
         (async (): Promise<void> => {
@@ -112,14 +112,15 @@ export class UsersSnapshotsController {
               request: { status: "error", error: await response.text() },
             });
           }
-        })().catch((error: any) => console.error(error));
+        })().catch((error: unknown) => console.error(error));
         break;
+      }
 
       case "SELECT_SNAPSHOT":
         // will be intercepted by parent view
         break;
 
-      case "DELETE_SNAPSHOT":
+      case "DELETE_SNAPSHOT": {
         if (this.state.snapshotRequest.status != "loaded") {
           throw new Error(
             `Unexpected snapshotRequest status when deleting snapshot`,
@@ -160,10 +161,11 @@ export class UsersSnapshotsController {
               request: { status: "error", error: await response.text() },
             });
           }
-        })().catch((error: any) => console.error(error));
+        })().catch((error: unknown) => console.error(error));
         break;
+      }
 
-      case "DELETE_SNAPSHOT_RESPONSE":
+      case "DELETE_SNAPSHOT_RESPONSE": {
         if (this.state.snapshotRequest.status != "loaded") {
           throw new Error(
             `Unexpected snapshotRequest status when handling delete response`,
@@ -179,6 +181,7 @@ export class UsersSnapshotsController {
         }
         responseSnapshot.deleteRequest = msg.request;
         break;
+      }
 
       default:
         msg satisfies never;

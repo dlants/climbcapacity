@@ -38,7 +38,9 @@ export function measureStatsToCountTree(
         currentNode = currentNode.children[value];
         currentNode.count += count;
       }
-    } catch { }
+    } catch {
+      // do nothing
+    }
   }
 
   return root;

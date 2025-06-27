@@ -1,6 +1,5 @@
 import express from "express";
 import assert from "assert";
-import { addSyntheticTrailingComment } from "typescript";
 
 export function assertEnv(varName: string) {
   const value = process.env[varName];

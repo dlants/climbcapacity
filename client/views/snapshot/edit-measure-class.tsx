@@ -61,7 +61,7 @@ export class EditMeasureClassController {
         this.state.editMeasurePage.handleDispatch(msg.msg);
         break;
 
-      case "SELECT_MEASURE_CLASS_MSG":
+      case "SELECT_MEASURE_CLASS_MSG": {
         const previousMeasureId = this.state.selectMeasurePage.state.selected.measureId;
         this.state.selectMeasurePage.handleDispatch(msg.msg);
 
@@ -75,6 +75,7 @@ export class EditMeasureClassController {
           );
         }
         break;
+      }
 
       default:
         msg satisfies never;

@@ -77,7 +77,7 @@ export class Auth {
     app.post(
       "/api/send-login-link",
       loginLinkIpLimiter,
-      apiRoute(async (req, _res) => {
+      apiRoute(async (req) => {
         const email: string = req.body.email;
         assert.equal(typeof email, "string");
 

@@ -153,7 +153,7 @@ export class MainAppController {
       throw new Error(`Unexpected msg passed to navigate fn ${msg.type}`);
     }
 
-    let user: any = false;
+    let user: { id: string } | false = false;
     if (this.state.auth.status == "loaded" && this.state.auth.response.status == "logged in") {
       user = this.state.auth.response.user;
     }
@@ -177,7 +177,7 @@ export class MainAppController {
         }
         break;
 
-      case "/snapshots":
+      case "/snapshots": {
         if (user) {
           const userSnapshotsPage = new UsersSnapshotsController(
             user.id,
@@ -197,8 +197,9 @@ export class MainAppController {
           };
         }
         break;
+      }
 
-      case "/report-card":
+      case "/report-card": {
         if (user) {
           const reportCardPage = new ReportCardController(
             user.id,
@@ -219,8 +220,9 @@ export class MainAppController {
           };
         }
         break;
+      }
 
-      case "/snapshot":
+      case "/snapshot": {
         if (user) {
           const snapshotPage = new SnapshotPageController(
             msg.target.snapshotId,
@@ -241,8 +243,9 @@ export class MainAppController {
           };
         }
         break;
+      }
 
-      case "/explore":
+      case "/explore": {
         const explorePage = new ExploreController(
           this.state.measureStats,
           (msg: ExploreMsg) => this.myDispatch({ type: "EXPLORE_MSG", msg })
@@ -252,6 +255,7 @@ export class MainAppController {
           explorePage,
         };
         break;
+      }
 
       default:
         assertUnreachable(msg.target);
@@ -413,9 +417,9 @@ export class MainAppView extends DCGView.View<{
     }
 
     return (
-      <div class={styles.root}>
-        <div class={styles.page}>
-          <div class={styles.pageItem}>
+      <div class={DCGView.const(styles.root)}>
+        <div class={DCGView.const(styles.page)}>
+          <div class={DCGView.const(styles.pageItem)}>
             <Nav
               loggedIn={() => {
                 const auth = stateProp().auth;
@@ -423,7 +427,7 @@ export class MainAppView extends DCGView.View<{
               }}
             />
           </div>
-          <div class={styles.lastPageItem}>
+          <div class={DCGView.const(styles.lastPageItem)}>
             {this.renderPage(stateProp)}
           </div>
         </div>
