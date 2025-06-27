@@ -1,0 +1,43 @@
+{
+  "extends": "../build-tools/tsconfig.base.json",
+  "compilerOptions": {
+    // Modern JS features, good browser support
+    "target": "ES2020",
+    // Use modern JS modules, esbuild will handle bundling
+    "module": "ESNext",
+    // Allow properties without initializers (needed for DCGView pattern)
+    "strictPropertyInitialization": false,
+    // Required for modern package resolution
+    "moduleResolution": "node",
+    // Include browser APIs and modern JS features
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "vitest/globals"
+    ],
+    // We need to convert react into `DCGView.createElement`, but we will be relying on build process (vite) to do this.
+    // For typescript, we want to preserve the jsx, so that
+    // `import * as DCGView from 'dcgview;' statements can be omitted from files that don't need them.
+    // Otherwise TypeScript would complain about the missing import.
+    "jsx": "react-jsx",
+    "jsxImportSource": "dcgview/jsx",
+    "paths": {
+      "dcgview": [
+        "./dcgview"
+      ],
+      "dcgview/*": [
+        "./dcgview/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dcgview"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@lucia-auth/adapter-mongodb": "^1.0.3",
+    "@types/express": "^5.0.0",
+    "@types/mongodb": "^4.0.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "iso": "workspace:*",
+    "lucia": "^3.2.2",
+    "mongodb": "^6.10.0",
+    "oslo": "^1.2.1",
+    "resend": "^4.0.1-alpha.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.0.1",
+    "@types/mocha": "^10.0.9",
+    "mongodb-memory-server": "^10.1.2",
+    "nodemon": "^3.1.7",
+    "tsx": "^4.19.2"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "dist",
+      "../dist"
+    ],
+    "ext": "*"
+  },
+  "scripts": {
+    "dev": "tsc -w --pretty false >> tsc.log & nodemon dist/backend/app.js",
+    "build": "tsc --pretty false",
+    "test": "vitest"
+  }
+}

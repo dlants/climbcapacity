@@ -1,0 +1,25 @@
+{
+  "name": "@climbcapacity/eslint-rules",
+  "version": "1.0.0",
+  "description": "ESLint rules for ClimbCapacity DCGView components",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@typescript-eslint/types": "^8.35.0",
+    "@typescript-eslint/utils": "^8.35.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/rule-tester": "^8.35.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0"
+  }
+}

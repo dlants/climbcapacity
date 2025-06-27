@@ -1,0 +1,4 @@
+{
+  "extends": "../build-tools/tsconfig.base.json",
+  "exclude": ["node_modules"]
+}

@@ -4,11 +4,40 @@
 ClimbCapacity is a climbing performance tracking web application that allows users to record, analyze, and compare their climbing metrics. Built with TypeScript, Express.js, DCGView, and MongoDB.
 
 ## Architecture
-- **Monorepo**: Four main packages - `backend/`, `client/`, `iso/`, `scripts/`
+- **Yarn Workspaces Monorepo**: Centralized dependency management with workspaces for each package
+- **Application Packages**: `backend/`, `client/`, `iso/`, `scripts/`, `eslint-rules/`
+- **Build Tools Package**: `build-tools/` contains all build configurations and dependencies
 - **Backend**: Express.js API server with MongoDB
 - **Frontend**: DCGView application built with Vite
 - **Shared**: `iso/` package contains shared types and utilities
 - **Scripts**: Database management and data import utilities
+
+### Package Structure
+```
+ClimbCapacity/
+├── build-tools/           # Build tooling hub (Vite, Playwright, ESLint, TypeScript)
+├── client/                # Browser application (runtime deps only)
+├── backend/               # Server application (runtime deps only)
+├── iso/                   # Shared code
+├── scripts/               # Database utilities
+├── eslint-rules/          # Custom linting rules
+├── package.json           # Root workspace configuration
+└── yarn.lock              # Centralized dependency lock file
+```
+
+### Yarn Workspaces Organization
+Dependencies are managed centrally through yarn workspaces:
+- **Root package.json**: Defines workspaces and orchestration scripts
+- **Workspace Commands**: Use `yarn workspace <name> <command>` to run commands in specific packages
+- **Cross-workspace Dependencies**: Packages can depend on each other using workspace protocol
+- **Centralized Lock File**: Single `yarn.lock` at root manages all dependencies
+
+### Build Tools Organization
+All build-time tooling is centralized in `build-tools/`:
+- **Configurations**: `vite.config.ts`, `playwright.config.ts`, `eslint.config.js`
+- **Dependencies**: Vite, Playwright, ESLint, TypeScript, etc.
+- **Base Config**: `tsconfig.base.json` inherited by all packages
+- **Type Checking**: `tsconfig.typecheck.json` for entire monorepo
 
 ### Environment Variables
 Create `.env` files in both `backend/` and `client/` directories:
@@ -36,25 +65,28 @@ cd scripts & npx tsx update-measure-stats.ts
 
 ### Backend Tests
 ```bash
-cd backend
-npm test              # Run all tests
-npm run test:watch    # Watch mode
+yarn workspace backend test              # Run all tests
+yarn workspace backend test:watch        # Watch mode (if available)
 ```
 - Uses Vitest with MongoDB Memory Server
 - Tests located in `backend/__tests__/`
 
 ### Frontend E2E Tests
 ```bash
-cd client
-npm run test:e2e      # Run Playwright tests
+yarn test:e2e         # Run Playwright tests
+yarn test:e2e:ui      # Run with UI
 ```
 - Playwright tests with screenshot capture
 - Tests located in `client/e2e/`
 
 ### Unit Tests (Shared utilities)
 ```bash
-cd iso
-npm test              # Test shared utilities
+yarn workspace iso test              # Test shared utilities
+```
+
+### All Tests
+```bash
+yarn test             # Run tests in all workspaces
 ```
 
 ## TypeScript
@@ -62,12 +94,12 @@ npm test              # Test shared utilities
 ### Type Checking
 ```bash
 # Check all packages
-npm run typecheck
+yarn typecheck
 
 # Individual packages
-cd backend && npx tsc --noEmit
-cd client && npx tsc --noEmit
-cd iso && npx tsc --noEmit
+yarn workspace backend exec tsc --noEmit
+yarn workspace client exec tsc --noEmit
+yarn workspace iso exec tsc --noEmit
 ```
 
 ### Configuration
@@ -111,16 +143,14 @@ cd iso && npx tsc --noEmit
 
 ### Data Utilities
 ```bash
-cd scripts
-
 # Reset database (development only)
-MONGODB_URL="mongodb://localhost:27018/climbcapacity" npx tsx refresh-db.ts
+MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace scripts exec tsx refresh-db.ts
 
 # Import new datasets
-npx tsx import-[dataset].ts
+yarn workspace scripts exec tsx import-[dataset].ts
 
 # Update statistics after data changes
-npx tsx update-measure-stats.ts
+yarn workspace scripts exec tsx update-measure-stats.ts
 ```
 
 ## API Structure
@@ -301,26 +331,43 @@ See [DCGView Introduction](client/dcgview/introduction.md) and [Components](clie
 
 ```bash
 # Development
-npm run dev                    # Start both frontend and backend
-npm run dev:frontend          # Frontend only
-npm run dev:backend           # Backend only
+yarn dev                     # Start both frontend and backend
+yarn dev:frontend           # Frontend only (via build-tools)
+yarn dev:backend            # Backend only
 
 # Testing
-npm run test                  # Run all tests
-cd backend && npm test        # Backend tests only
-cd client && npm run test:e2e # E2E tests only
+yarn test                   # Run all tests across workspaces
+yarn workspace backend test # Backend tests only
+yarn test:e2e              # E2E tests (via build-tools)
+yarn test:e2e:ui           # E2E tests with UI (via build-tools)
 
 # TypeScript
-npm run typecheck            # Check all packages
-npx tsc --noEmit            # Check current directory
+yarn typecheck             # Check all packages (via build-tools)
+
+# Linting
+yarn lint                  # Lint entire monorepo (via build-tools)
+yarn lint:fix              # Auto-fix lint issues (via build-tools)
+
+# Workspace Management
+yarn install               # Install all workspace dependencies
+yarn workspace <name> add <pkg>    # Add dependency to specific workspace
+yarn workspace <name> <command>    # Run command in specific workspace
+yarn workspaces foreach <command>  # Run command in all workspaces
 
 # Database
-docker-compose up -d         # Start MongoDB
-cd scripts && npx tsx reset-db.ts  # Reset database (dev only)
+docker-compose up -d       # Start MongoDB
+yarn workspace scripts exec tsx refresh-db.ts  # Reset database (dev only)
 
 # Build
-npm run build               # Build for production
+yarn build                 # Build for production (build-tools handles frontend)
+yarn build:frontend        # Frontend build only (via build-tools)
 ```
+
+### Command Flow
+Root scripts delegate to workspace commands which execute build tools:
+- `yarn dev:frontend` → `yarn workspace build-tools dev:frontend` → `vite --config vite.config.ts`
+- `yarn lint` → `yarn workspace build-tools lint` → `eslint --config eslint.config.js ../`
+- `yarn typecheck` → `yarn workspace build-tools typecheck` → `tsc --project tsconfig.typecheck.json`
 
 ## Troubleshooting
 
@@ -331,9 +378,9 @@ npm run build               # Build for production
 4. **Environment Variables**: Check both backend and client `.env` files
 
 ### Database Issues
-- Reset database: `cd scripts && MONGODB_URL="mongodb://localhost:27018/climbcapacity" npx tsx refresh-db.ts`
+- Reset database: `MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace scripts exec tsx refresh-db.ts`
 - Check connection: `docker-compose logs mongodb`
-- Verify indexes: `cd scripts && npx tsx create-indexes.ts`
+- Verify indexes: `yarn workspace scripts exec tsx create-indexes.ts`
 
 ### Type Errors
 - Run `npm run typecheck` to see all TypeScript errors

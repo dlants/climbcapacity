@@ -5,21 +5,24 @@
   "author": "Denis Lantsman <dlantsman@amplify.com>",
   "type": "module",
   "license": "ISC",
-  "dependencies": {
-    "typescript": "^5.6.3"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.29.0",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
-    "@typescript-eslint/parser": "^8.35.0",
-    "eslint": "^9.29.0"
-  },
+  "private": true,
+  "packageManager": "yarn@4.9.2",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev:frontend": "cd client && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev": "npm run dev:frontend & npm run dev:backend",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "dev:frontend": "yarn workspace build-tools dev:frontend",
+    "dev:backend": "yarn workspace backend dev",
+    "dev": "yarn dev:frontend & yarn dev:backend",
+    "build:frontend": "yarn workspace build-tools build:frontend",
+    "build:eslint-rules": "yarn workspace @climbcapacity/eslint-rules build",
+    "build": "yarn build:eslint-rules && yarn build:frontend",
+    "test:e2e": "yarn workspace build-tools test:e2e",
+    "test:e2e:ui": "yarn workspace build-tools test:e2e:ui",
+    "test": "yarn workspaces foreach -A run test",
+    "lint": "yarn workspace build-tools lint",
+    "lint:fix": "yarn workspace build-tools lint:fix",
+    "typecheck": "yarn workspace build-tools typecheck",
     "typecheck:watch": "node scripts/typecheck-watch.js"
   }
 }
