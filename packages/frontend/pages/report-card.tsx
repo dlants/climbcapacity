@@ -201,7 +201,7 @@ export class ReportCardView extends DCGView.View<{
     return (
       <div>
         You haven't added any snapshots. You can do that on the{" "}
-        <a href={DCGView.const("/snapshots")}>Snapshots</a> page.
+        <a href="/snapshots">Snapshots</a> page.
       </div>
     );
   }

@@ -5,12 +5,12 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..');
+const rootDir = join(__dirname, '..', '..');
 
 const directories = [
-  { name: 'backend', path: join(rootDir, 'backend') },
-  { name: 'client', path: join(rootDir, 'client') },
-  { name: 'iso', path: join(rootDir, 'iso') }
+  { name: 'backend', path: join(rootDir, 'packages', 'backend') },
+  { name: 'client', path: join(rootDir, 'packages', 'frontend') },
+  { name: 'iso', path: join(rootDir, 'packages', 'iso') }
 ];
 
 function colorize(text, color) {

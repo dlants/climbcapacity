@@ -1,6 +1,9 @@
 import * as DCGView from "dcgview";
 import { SendLinkController, SendLinkView } from "./pages/send-link";
-import { UsersSnapshotsController, UsersSnapshotsView } from "./pages/users-snapshots";
+import {
+  UsersSnapshotsController,
+  UsersSnapshotsView,
+} from "./pages/users-snapshots";
 import { SnapshotPageController, SnapshotPageView } from "./pages/snapshot";
 import { ExploreController, ExploreView } from "./pages/explore";
 import { ReportCardController, ReportCardView } from "./pages/report-card";
@@ -60,29 +63,29 @@ export type Model = {
   auth: RequestStatus<AuthStatus>;
   measureStats: MeasureStats;
   page:
-  | {
-    route: "/send-link";
-    sendLinkPage: SendLinkController;
-  }
-  | {
-    route: "/snapshots";
-    userSnapshotsPage: UsersSnapshotsController;
-  }
-  | {
-    route: "/snapshot";
-    snapshotPage: SnapshotPageController;
-  }
-  | {
-    route: "/explore";
-    explorePage: ExploreController;
-  }
-  | {
-    route: "/report-card";
-    reportCardPage: ReportCardController;
-  }
-  | {
-    route: "/";
-  };
+    | {
+        route: "/send-link";
+        sendLinkPage: SendLinkController;
+      }
+    | {
+        route: "/snapshots";
+        userSnapshotsPage: UsersSnapshotsController;
+      }
+    | {
+        route: "/snapshot";
+        snapshotPage: SnapshotPageController;
+      }
+    | {
+        route: "/explore";
+        explorePage: ExploreController;
+      }
+    | {
+        route: "/report-card";
+        reportCardPage: ReportCardController;
+      }
+    | {
+        route: "/";
+      };
 };
 
 import { Msg as SendLinkMsg } from "./pages/send-link";
@@ -93,30 +96,30 @@ import { Msg as ReportCardMsg } from "./pages/report-card";
 
 type Msg =
   | {
-    type: "AUTH_RESOLVED";
-    status: AuthStatus;
-  }
+      type: "AUTH_RESOLVED";
+      status: AuthStatus;
+    }
   | NavigateMsg
   | {
-    type: "SEND_LINK_MSG";
-    msg: SendLinkMsg;
-  }
+      type: "SEND_LINK_MSG";
+      msg: SendLinkMsg;
+    }
   | {
-    type: "USER_SNAPSHOTS_MSG";
-    msg: UsersSnapshotsMsg;
-  }
+      type: "USER_SNAPSHOTS_MSG";
+      msg: UsersSnapshotsMsg;
+    }
   | {
-    type: "SNAPSHOT_MSG";
-    msg: SnapshotPageMsg;
-  }
+      type: "SNAPSHOT_MSG";
+      msg: SnapshotPageMsg;
+    }
   | {
-    type: "EXPLORE_MSG";
-    msg: ExploreMsg;
-  }
+      type: "EXPLORE_MSG";
+      msg: ExploreMsg;
+    }
   | {
-    type: "REPORT_CARD_MSG";
-    msg: ReportCardMsg;
-  };
+      type: "REPORT_CARD_MSG";
+      msg: ReportCardMsg;
+    };
 
 export class MainAppController {
   state: Model;
@@ -125,7 +128,7 @@ export class MainAppController {
   constructor(
     auth: RequestStatus<AuthStatus>,
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     if (auth.status == "loaded" && auth.response.status == "logged in") {
       this.state = {
@@ -134,8 +137,8 @@ export class MainAppController {
         page: { route: "/" },
       };
     } else {
-      const sendLinkPage = new SendLinkController(
-        (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
+      const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
+        this.myDispatch({ type: "SEND_LINK_MSG", msg }),
       );
       this.state = {
         auth,
@@ -154,7 +157,10 @@ export class MainAppController {
     }
 
     let user: { id: string } | false = false;
-    if (this.state.auth.status == "loaded" && this.state.auth.response.status == "logged in") {
+    if (
+      this.state.auth.status == "loaded" &&
+      this.state.auth.response.status == "logged in"
+    ) {
       user = this.state.auth.response.user;
     }
 
@@ -167,8 +173,8 @@ export class MainAppController {
         if (user) {
           this.state.page = { route: "/" };
         } else {
-          const sendLinkPage = new SendLinkController(
-            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
+          const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
+            this.myDispatch({ type: "SEND_LINK_MSG", msg }),
           );
           this.state.page = {
             route: "/send-link",
@@ -181,15 +187,16 @@ export class MainAppController {
         if (user) {
           const userSnapshotsPage = new UsersSnapshotsController(
             user.id,
-            (msg: UsersSnapshotsMsg) => this.myDispatch({ type: "USER_SNAPSHOTS_MSG", msg })
+            (msg: UsersSnapshotsMsg) =>
+              this.myDispatch({ type: "USER_SNAPSHOTS_MSG", msg }),
           );
           this.state.page = {
             route: "/snapshots",
             userSnapshotsPage,
           };
         } else {
-          const sendLinkPage = new SendLinkController(
-            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
+          const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
+            this.myDispatch({ type: "SEND_LINK_MSG", msg }),
           );
           this.state.page = {
             route: "/send-link",
@@ -204,15 +211,16 @@ export class MainAppController {
           const reportCardPage = new ReportCardController(
             user.id,
             this.state.measureStats,
-            (msg: ReportCardMsg) => this.myDispatch({ type: "REPORT_CARD_MSG", msg })
+            (msg: ReportCardMsg) =>
+              this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
           );
           this.state.page = {
             route: "/report-card",
             reportCardPage,
           };
         } else {
-          const sendLinkPage = new SendLinkController(
-            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
+          const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
+            this.myDispatch({ type: "SEND_LINK_MSG", msg }),
           );
           this.state.page = {
             route: "/send-link",
@@ -227,15 +235,16 @@ export class MainAppController {
           const snapshotPage = new SnapshotPageController(
             msg.target.snapshotId,
             this.state.measureStats,
-            (msg: SnapshotPageMsg) => this.myDispatch({ type: "SNAPSHOT_MSG", msg })
+            (msg: SnapshotPageMsg) =>
+              this.myDispatch({ type: "SNAPSHOT_MSG", msg }),
           );
           this.state.page = {
             route: "/snapshot",
             snapshotPage,
           };
         } else {
-          const sendLinkPage = new SendLinkController(
-            (msg: SendLinkMsg) => this.myDispatch({ type: "SEND_LINK_MSG", msg })
+          const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
+            this.myDispatch({ type: "SEND_LINK_MSG", msg }),
           );
           this.state.page = {
             route: "/send-link",
@@ -248,7 +257,7 @@ export class MainAppController {
       case "/explore": {
         const explorePage = new ExploreController(
           this.state.measureStats,
-          (msg: ExploreMsg) => this.myDispatch({ type: "EXPLORE_MSG", msg })
+          (msg: ExploreMsg) => this.myDispatch({ type: "EXPLORE_MSG", msg }),
         );
         this.state.page = {
           route: "/explore",
@@ -263,8 +272,6 @@ export class MainAppController {
 
     this.navigationThunk().catch(console.error);
   }
-
-
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
@@ -403,7 +410,6 @@ export class MainAppController {
 
     window.history.replaceState({}, "", newUrl);
   }
-
 }
 
 export class MainAppView extends DCGView.View<{
@@ -423,7 +429,9 @@ export class MainAppView extends DCGView.View<{
             <Nav
               loggedIn={() => {
                 const auth = stateProp().auth;
-                return auth.status == "loaded" && auth.response.status == "logged in";
+                return (
+                  auth.status == "loaded" && auth.response.status == "logged in"
+                );
               }}
             />
           </div>
@@ -438,24 +446,28 @@ export class MainAppView extends DCGView.View<{
   private renderPage(stateProp: () => Model) {
     const { SwitchUnion } = DCGView.Components;
 
-    return SwitchUnion(() => stateProp().page, 'route', {
-      "/send-link": (pageProp) =>
-        <SendLinkView controller={() => pageProp().sendLinkPage} />,
+    return SwitchUnion(() => stateProp().page, "route", {
+      "/send-link": (pageProp) => (
+        <SendLinkView controller={() => pageProp().sendLinkPage} />
+      ),
 
-      "/snapshots": (pageProp) =>
-        <UsersSnapshotsView controller={() => pageProp().userSnapshotsPage} />,
+      "/snapshots": (pageProp) => (
+        <UsersSnapshotsView controller={() => pageProp().userSnapshotsPage} />
+      ),
 
-      "/report-card": (pageProp) =>
-        <ReportCardView controller={() => pageProp().reportCardPage} />,
+      "/report-card": (pageProp) => (
+        <ReportCardView controller={() => pageProp().reportCardPage} />
+      ),
 
-      "/snapshot": (pageProp) =>
-        <SnapshotPageView controller={() => pageProp().snapshotPage} />,
+      "/snapshot": (pageProp) => (
+        <SnapshotPageView controller={() => pageProp().snapshotPage} />
+      ),
 
-      "/explore": (pageProp) =>
-        <ExploreView controller={() => pageProp().explorePage} />,
+      "/explore": (pageProp) => (
+        <ExploreView controller={() => pageProp().explorePage} />
+      ),
 
-      "/": () =>
-        <div>TODO: add homepage content</div>,
+      "/": () => <div>TODO: add homepage content</div>,
     });
   }
 }
@@ -503,9 +515,13 @@ async function run() {
   };
 
   mainAppController = new MainAppController(auth, measureStats, dispatch);
-  mainAppView = DCGView.mountToNode(MainAppView, document.getElementById("app")!, {
-    controller: () => mainAppController
-  });
+  mainAppView = DCGView.mountToNode(
+    MainAppView,
+    document.getElementById("app")!,
+    {
+      controller: () => mainAppController,
+    },
+  );
 
   router.subscribe(dispatch);
 

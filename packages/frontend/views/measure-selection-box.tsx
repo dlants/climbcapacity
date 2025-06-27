@@ -74,12 +74,12 @@ export class MeasureSelectionBox extends DCGView.View<{
       typing: (getState) => (
         <div class="measure-selection-box">
           <input
-            type={DCGView.const("text")}
+            type="text"
             value={() => getState().query}
             onChange={(e) =>
               this.props.myDispatch({ type: "TYPE_QUERY", query: (e.target as HTMLInputElement).value })
             }
-            placeholder={DCGView.const("Search measures...")}
+            placeholder="Search measures..."
           />
           <ul>
             <For each={() => getState().measures} key={(measure: MeasureSpec) => measure.id}>

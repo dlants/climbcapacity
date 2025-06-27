@@ -90,9 +90,55 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@climbcapacity/eslint-rules@workspace:*, @climbcapacity/eslint-rules@workspace:eslint-rules":
+"@climbcapacity/backend@workspace:packages/backend":
   version: 0.0.0-use.local
-  resolution: "@climbcapacity/eslint-rules@workspace:eslint-rules"
+  resolution: "@climbcapacity/backend@workspace:packages/backend"
+  dependencies:
+    "@climbcapacity/iso": "workspace:*"
+    "@lucia-auth/adapter-mongodb": "npm:^1.0.3"
+    "@types/chai": "npm:^5.0.1"
+    "@types/express": "npm:^5.0.0"
+    "@types/mocha": "npm:^10.0.9"
+    "@types/mongodb": "npm:^4.0.7"
+    dotenv: "npm:^16.4.5"
+    express: "npm:^4.21.1"
+    express-rate-limit: "npm:^7.4.1"
+    lucia: "npm:^3.2.2"
+    mongodb: "npm:^6.10.0"
+    mongodb-memory-server: "npm:^10.1.2"
+    nodemon: "npm:^3.1.7"
+    oslo: "npm:^1.2.1"
+    resend: "npm:^4.0.1-alpha.0"
+    tsx: "npm:^4.19.2"
+    typescript: "npm:^5.6.3"
+    vitest: "npm:^2.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@climbcapacity/build-tools@workspace:packages/build-tools":
+  version: 0.0.0-use.local
+  resolution: "@climbcapacity/build-tools@workspace:packages/build-tools"
+  dependencies:
+    "@climbcapacity/eslint-rules": "workspace:*"
+    "@eslint/js": "npm:^9.29.0"
+    "@playwright/test": "npm:^1.49.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.35.0"
+    "@typescript-eslint/parser": "npm:^8.35.0"
+    "@typescript-eslint/rule-tester": "npm:^8.35.0"
+    "@typescript-eslint/types": "npm:^8.35.0"
+    "@typescript-eslint/utils": "npm:^8.35.0"
+    "@vitest/ui": "npm:^2.1.5"
+    eslint: "npm:^9.29.0"
+    tsx: "npm:^4.20.3"
+    typescript: "npm:^5.6.3"
+    vite: "npm:^5.4.10"
+    vitest: "npm:^2.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@climbcapacity/eslint-rules@workspace:*, @climbcapacity/eslint-rules@workspace:packages/eslint-rules":
+  version: 0.0.0-use.local
+  resolution: "@climbcapacity/eslint-rules@workspace:packages/eslint-rules"
   dependencies:
     "@typescript-eslint/rule-tester": "npm:^8.35.0"
     "@typescript-eslint/types": "npm:^8.35.0"
@@ -102,6 +148,49 @@ __metadata:
   peerDependencies:
     "@typescript-eslint/parser": ^8.0.0
     eslint: ^9.0.0
+  languageName: unknown
+  linkType: soft
+
+"@climbcapacity/frontend@workspace:packages/frontend":
+  version: 0.0.0-use.local
+  resolution: "@climbcapacity/frontend@workspace:packages/frontend"
+  dependencies:
+    "@climbcapacity/iso": "workspace:*"
+    "@types/d3": "npm:^7.4.3"
+    "@types/lodash": "npm:^4.17.13"
+    csstips: "npm:^1.2.0"
+    csx: "npm:^10.0.2"
+    d3: "npm:^7.9.0"
+    lodash: "npm:^4.17.21"
+    typestyle: "npm:^2.4.0"
+  languageName: unknown
+  linkType: soft
+
+"@climbcapacity/iso@workspace:*, @climbcapacity/iso@workspace:packages/iso":
+  version: 0.0.0-use.local
+  resolution: "@climbcapacity/iso@workspace:packages/iso"
+  dependencies:
+    vitest: "npm:^2.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@climbcapacity/scripts@workspace:packages/scripts":
+  version: 0.0.0-use.local
+  resolution: "@climbcapacity/scripts@workspace:packages/scripts"
+  dependencies:
+    "@babel/generator": "npm:^7.27.5"
+    "@babel/parser": "npm:^7.27.7"
+    "@babel/traverse": "npm:^7.27.7"
+    "@babel/types": "npm:^7.27.7"
+    "@climbcapacity/iso": "workspace:*"
+    "@types/babel__generator": "npm:^7.27.0"
+    "@types/babel__traverse": "npm:^7.20.7"
+    "@types/mongodb": "npm:^4.0.7"
+    esbuild: "npm:^0.25.5"
+    mongodb: "npm:^6.10.0"
+    tsx: "npm:^4.19.2"
+    typescript: "npm:^5.6.3"
+    zx: "npm:^8.2.2"
   languageName: unknown
   linkType: soft
 
@@ -2112,31 +2201,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"backend@workspace:backend":
-  version: 0.0.0-use.local
-  resolution: "backend@workspace:backend"
-  dependencies:
-    "@lucia-auth/adapter-mongodb": "npm:^1.0.3"
-    "@types/chai": "npm:^5.0.1"
-    "@types/express": "npm:^5.0.0"
-    "@types/mocha": "npm:^10.0.9"
-    "@types/mongodb": "npm:^4.0.7"
-    dotenv: "npm:^16.4.5"
-    express: "npm:^4.21.1"
-    express-rate-limit: "npm:^7.4.1"
-    iso: "workspace:*"
-    lucia: "npm:^3.2.2"
-    mongodb: "npm:^6.10.0"
-    mongodb-memory-server: "npm:^10.1.2"
-    nodemon: "npm:^3.1.7"
-    oslo: "npm:^1.2.1"
-    resend: "npm:^4.0.1-alpha.0"
-    tsx: "npm:^4.19.2"
-    typescript: "npm:^5.6.3"
-    vitest: "npm:^2.1.5"
-  languageName: unknown
-  linkType: soft
-
 "balanced-match@npm:^1.0.0":
   version: 1.0.2
   resolution: "balanced-match@npm:1.0.2"
@@ -2219,27 +2283,6 @@ __metadata:
   checksum: 10c0/cb0a8ddf5cf4f766466db63279e47761eb825693eeba6a5a95ee4ec8cb8f81ede70aa7f9d8aeec083e781d47154290eb5d4d26b3f7a465ec57fb9e7d59c47150
   languageName: node
   linkType: hard
-
-"build-tools@workspace:build-tools":
-  version: 0.0.0-use.local
-  resolution: "build-tools@workspace:build-tools"
-  dependencies:
-    "@climbcapacity/eslint-rules": "workspace:*"
-    "@eslint/js": "npm:^9.29.0"
-    "@playwright/test": "npm:^1.49.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.35.0"
-    "@typescript-eslint/parser": "npm:^8.35.0"
-    "@typescript-eslint/rule-tester": "npm:^8.35.0"
-    "@typescript-eslint/types": "npm:^8.35.0"
-    "@typescript-eslint/utils": "npm:^8.35.0"
-    "@vitest/ui": "npm:^2.1.5"
-    eslint: "npm:^9.29.0"
-    tsx: "npm:^4.20.3"
-    typescript: "npm:^5.6.3"
-    vite: "npm:^5.4.10"
-    vitest: "npm:^2.1.5"
-  languageName: unknown
-  linkType: soft
 
 "bytes@npm:3.1.2":
   version: 3.1.2
@@ -2365,24 +2408,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"client@workspace:client":
-  version: 0.0.0-use.local
-  resolution: "client@workspace:client"
-  dependencies:
-    "@types/d3": "npm:^7.4.3"
-    "@types/lodash": "npm:^4.17.13"
-    csstips: "npm:^1.2.0"
-    csx: "npm:^10.0.2"
-    d3: "npm:^7.9.0"
-    iso: "workspace:*"
-    lodash: "npm:^4.17.21"
-    typestyle: "npm:^2.4.0"
-  languageName: unknown
-  linkType: soft
-
 "climbcapacity@workspace:.":
   version: 0.0.0-use.local
   resolution: "climbcapacity@workspace:."
+  dependencies:
+    eslint: "npm:^9.29.0"
   languageName: unknown
   linkType: soft
 
@@ -4012,14 +4042,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iso@workspace:*, iso@workspace:iso":
-  version: 0.0.0-use.local
-  resolution: "iso@workspace:iso"
-  dependencies:
-    vitest: "npm:^2.1.5"
-  languageName: unknown
-  linkType: soft
-
 "jackspeak@npm:^3.1.2":
   version: 3.4.3
   resolution: "jackspeak@npm:3.4.3"
@@ -5102,26 +5124,6 @@ __metadata:
   checksum: 10c0/7e3c8b2e88a1841c9671094bbaeebd94448111dd90a81a1f606f3f67708a6ec57763b3b47f06da09fc6054193e0e6709e77325415dc8422b04497a8070fa02d4
   languageName: node
   linkType: hard
-
-"scripts@workspace:scripts":
-  version: 0.0.0-use.local
-  resolution: "scripts@workspace:scripts"
-  dependencies:
-    "@babel/generator": "npm:^7.27.5"
-    "@babel/parser": "npm:^7.27.7"
-    "@babel/traverse": "npm:^7.27.7"
-    "@babel/types": "npm:^7.27.7"
-    "@types/babel__generator": "npm:^7.27.0"
-    "@types/babel__traverse": "npm:^7.20.7"
-    "@types/mongodb": "npm:^4.0.7"
-    esbuild: "npm:^0.25.5"
-    iso: "workspace:*"
-    mongodb: "npm:^6.10.0"
-    tsx: "npm:^4.19.2"
-    typescript: "npm:^5.6.3"
-    zx: "npm:^8.2.2"
-  languageName: unknown
-  linkType: soft
 
 "selderee@npm:^0.11.0":
   version: 0.11.0

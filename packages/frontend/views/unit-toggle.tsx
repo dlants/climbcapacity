@@ -1,4 +1,4 @@
-import * as DCGView from 'dcgview';
+import * as DCGView from "dcgview";
 import { UnitType } from "../../iso/units";
 import { assertUnreachable } from "../../iso/utils";
 import { Dispatch } from "../types";
@@ -26,7 +26,7 @@ export class UnitToggleController {
       selectedUnit: UnitType;
       possibleUnits: UnitType[];
     },
-    private context: { myDispatch: Dispatch<Msg> }
+    private context: { myDispatch: Dispatch<Msg> },
   ) {
     this.state = {
       measureId: initialState.measureId,
@@ -70,12 +70,18 @@ export class UnitToggleView extends DCGView.View<{
           {(unit) => (
             <span>
               <input
-                type={DCGView.const("radio")}
-                id={DCGView.const(this.toggleId + ":" + unit)}
-                name={DCGView.const(this.toggleId)}
-                value={DCGView.const(unit)}
-                checked={() => unit === this.props.controller().state.selectedUnit}
-                onChange={() => this.props.controller().handleDispatch({ type: "SELECT_UNIT", unit })}
+                type="radio"
+                id={() => this.toggleId + ":" + unit}
+                name={() => this.toggleId}
+                value={() => unit}
+                checked={() =>
+                  unit === this.props.controller().state.selectedUnit
+                }
+                onChange={() =>
+                  this.props
+                    .controller()
+                    .handleDispatch({ type: "SELECT_UNIT", unit })
+                }
               />
               <label>{unit}</label>
             </span>

@@ -34,7 +34,7 @@ export class ReportCardFilterView extends DCGView.View<{
       <div class={DCGView.const(styles.filterView)}>
         <div class={DCGView.const(styles.filterItem)}>
           <input
-            type={DCGView.const("checkbox")}
+            type="checkbox"
             checked={() => filterProp().enabled}
             onChange={(e) =>
               this.props.controller().context.myDispatch({

@@ -208,7 +208,7 @@ export class EditQueryView extends DCGView.View<{
             <div>
               <label>
                 <input
-                  type={DCGView.const("checkbox")}
+                  type="checkbox"
                   checked={() => state().datasets[dataset]}
                   onChange={(e) =>
                     controller().myDispatch({

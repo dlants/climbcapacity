@@ -1,4 +1,4 @@
-import * as DCGView from 'dcgview'
+import * as DCGView from "dcgview";
 import { Dispatch } from "../types";
 import { RequestStatus } from "../util/utils";
 
@@ -18,7 +18,7 @@ export class SendLinkController {
   constructor(public myDispatch: Dispatch<Msg>) {
     this.state = {
       email: "",
-      signinRequest: { status: "not-sent" }
+      signinRequest: { status: "not-sent" },
     };
   }
 
@@ -45,8 +45,6 @@ export class SendLinkController {
     }
   }
 
-
-
   async sendLink() {
     const response = await fetch("/api/send-login-link", {
       method: "POST",
@@ -67,7 +65,7 @@ export class SendLinkController {
         request: { status: "error", error: await response.text() },
       });
     }
-  };
+  }
 }
 export class SendLinkView extends DCGView.View<{
   controller: () => SendLinkController;
@@ -79,7 +77,7 @@ export class SendLinkView extends DCGView.View<{
     return (
       <div>
         <input
-          type={DCGView.const("email")}
+          type="email"
           value={() => stateProp().email}
           onChange={(e) =>
             this.props.controller().myDispatch({
@@ -90,15 +88,19 @@ export class SendLinkView extends DCGView.View<{
         />
         <button
           disabled={() => stateProp().signinRequest.status === "loading"}
-          onPointerDown={() => this.props.controller().myDispatch({ type: "SEND_MAGIC_LINK" })}
+          onPointerDown={() =>
+            this.props.controller().myDispatch({ type: "SEND_MAGIC_LINK" })
+          }
         >
           Send Magic Link
         </button>
-        {SwitchUnion(() => stateProp().signinRequest, 'status', {
+        {SwitchUnion(() => stateProp().signinRequest, "status", {
           "not-sent": () => <div />,
-          "loading": () => <div />,
-          "loaded": () => <div>Check your email!</div>,
-          "error": (errorRequest: () => { status: "error"; error: string }) => <div>{() => errorRequest().error}</div>,
+          loading: () => <div />,
+          loaded: () => <div>Check your email!</div>,
+          error: (errorRequest: () => { status: "error"; error: string }) => (
+            <div>{() => errorRequest().error}</div>
+          ),
         })}
       </div>
     );

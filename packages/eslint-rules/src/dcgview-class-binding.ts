@@ -1,35 +1,37 @@
-import type { TSESTree } from '@typescript-eslint/types';
-import { ESLintUtils } from '@typescript-eslint/utils';
+import type { TSESTree } from "@typescript-eslint/types";
+import { ESLintUtils } from "@typescript-eslint/utils";
 
 export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
-      description: 'Enforce correct DCGView attribute binding patterns',
+      description: "Enforce correct DCGView attribute binding patterns",
     },
-    fixable: 'code',
+    fixable: "code",
     hasSuggestions: true,
     schema: [],
     messages: {
-      invalidAttributeBinding: 'Invalid attribute binding in DCGView. Use string literal, getter function, or DCGView.const() for static values.',
-      suggestGetter: 'Consider wrapping in a getter function: {{attributeName}}={() => value}',
-      suggestDCGViewConst: 'For static values, consider using DCGView.const(value)',
-      stringLiteralNotAllowed: 'String literals are only allowed for the "class" attribute in DCGView components',
-      nonFunctionExpression: 'DCGView attribute must be a function, DCGView.const(), or string literal (for class only)',
-      functionCallNotAllowed: 'Function calls are not allowed in DCGView attributes. Use a getter function instead: () => functionCall()',
+      invalidAttributeBinding:
+        "Invalid attribute binding in DCGView. Use string literal, getter function, or DCGView.const() for static values.",
+      suggestGetter:
+        "Consider wrapping in a getter function: {{attributeName}}={() => value}",
+      suggestDCGViewConst:
+        "For static values, consider using DCGView.const(value)",
+      nonFunctionExpression:
+        "DCGView attribute must be a function, DCGView.const(), or string literal",
+      functionCallNotAllowed:
+        "Function calls are not allowed in DCGView attributes. Use a getter function instead: () => functionCall()",
     },
   },
   defaultOptions: [],
 
   create(context) {
-
     function isFunctionType(expression: TSESTree.Expression): boolean {
       const services = context.sourceCode.parserServices;
 
       if (!services?.program || !services?.esTreeNodeToTSNodeMap) {
-        throw new Error(`parserServices not available`)
+        throw new Error(`parserServices not available`);
       }
-
 
       const checker = services.program.getTypeChecker();
       const tsNode = services.esTreeNodeToTSNodeMap.get(expression);
@@ -49,14 +51,16 @@ export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
 
     function isDCGViewElement(jsxElement: TSESTree.Node): boolean {
       // Check if this is a DCGView component by looking at the opening element
-      if (jsxElement.type !== 'JSXElement') return false;
+      if (jsxElement.type !== "JSXElement") return false;
 
       const openingElement = (jsxElement as TSESTree.JSXElement).openingElement;
       if (!openingElement?.name) return false;
 
       // Check for intrinsic HTML elements (lowercase names) - these use DCGView binding rules
-      if (openingElement.name.type === 'JSXIdentifier' &&
-        openingElement.name.name.toLowerCase() === openingElement.name.name) {
+      if (
+        openingElement.name.type === "JSXIdentifier" &&
+        openingElement.name.name.toLowerCase() === openingElement.name.name
+      ) {
         return true;
       }
 
@@ -75,77 +79,53 @@ export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
 
         // Find the parent JSX element to check if it's a DCGView element
         let parent: TSESTree.BaseNode = node.parent;
-        while (parent && parent.type !== 'JSXOpeningElement') {
+        while (parent && parent.type !== "JSXOpeningElement") {
           parent = parent.parent as TSESTree.BaseNode;
         }
 
-        if (!parent || parent.type !== 'JSXOpeningElement') return;
+        if (!parent || parent.type !== "JSXOpeningElement") return;
 
         // Get the JSX element from the opening element
         const jsxElement = parent.parent as TSESTree.JSXElement;
-        if (!jsxElement || jsxElement.type !== 'JSXElement') return;
+        if (!jsxElement || jsxElement.type !== "JSXElement") return;
         if (!isDCGViewElement(jsxElement)) {
           return;
         }
 
         const attributeName = (node.name as TSESTree.JSXIdentifier).name;
 
-        if (node.value.type === 'Literal') {
-          // String literal is valid for the 'class' attribute
-          if (attributeName === 'class') {
-            return;
-          }
-
-          // For other attributes, string literals should be wrapped in getter functions
-          const sourceCode = context.sourceCode;
-          const expressionText = sourceCode.getText(node.value);
-
-          context.report({
-            node: node.value,
-            messageId: 'stringLiteralNotAllowed',
-            suggest: [
-              {
-                messageId: 'suggestGetter',
-                data: { attributeName, value: expressionText },
-                fix(fixer) {
-                  return fixer.replaceText(node.value!, `{() => ${expressionText}}`);
-                },
-              },
-              {
-                messageId: 'suggestDCGViewConst',
-                data: { value: expressionText },
-                fix(fixer) {
-                  return fixer.replaceText(node.value!, `{DCGView.const(${expressionText})}`);
-                },
-              },
-            ],
-          });
+        if (node.value.type === "Literal") {
+          // String literals are valid for all attributes
           return;
         }
 
-        if (node.value.type === 'JSXExpressionContainer') {
+        if (node.value.type === "JSXExpressionContainer") {
           const expression = node.value.expression;
 
-          if (expression.type === 'JSXEmptyExpression') {
+          if (expression.type === "JSXEmptyExpression") {
             return; // Skip empty expressions
           }
 
           // Check for DCGView.const call first (special case)
-          if (expression.type === 'CallExpression' &&
-            expression.callee.type === 'MemberExpression' &&
-            expression.callee.object.type === 'Identifier' &&
-            expression.callee.object.name === 'DCGView' &&
-            expression.callee.property.type === 'Identifier' &&
-            expression.callee.property.name === 'const') {
+          if (
+            expression.type === "CallExpression" &&
+            expression.callee.type === "MemberExpression" &&
+            expression.callee.object.type === "Identifier" &&
+            expression.callee.object.name === "DCGView" &&
+            expression.callee.property.type === "Identifier" &&
+            expression.callee.property.name === "const"
+          ) {
             return; // Valid DCGView.const call
           }
 
           // Check for function calls (not allowed as direct bindings)
-          if (expression.type === 'CallExpression') {
+          if (expression.type === "CallExpression") {
             // Special case: .bind() calls return functions and are valid bindings
-            if (expression.callee.type === 'MemberExpression' &&
-              expression.callee.property.type === 'Identifier' &&
-              expression.callee.property.name === 'bind') {
+            if (
+              expression.callee.type === "MemberExpression" &&
+              expression.callee.property.type === "Identifier" &&
+              expression.callee.property.name === "bind"
+            ) {
               return; // Valid .bind() call
             }
 
@@ -154,13 +134,16 @@ export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
 
             context.report({
               node: expression,
-              messageId: 'functionCallNotAllowed',
+              messageId: "functionCallNotAllowed",
               suggest: [
                 {
-                  messageId: 'suggestGetter',
+                  messageId: "suggestGetter",
                   data: { attributeName, value: expressionText },
                   fix(fixer) {
-                    return fixer.replaceText(expression, `() => ${expressionText}`);
+                    return fixer.replaceText(
+                      expression,
+                      `() => ${expressionText}`,
+                    );
                   },
                 },
               ],
@@ -179,23 +162,31 @@ export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
 
           context.report({
             node: expression,
-            messageId: 'nonFunctionExpression',
+            messageId: "nonFunctionExpression",
             suggest: [
               {
-                messageId: 'suggestGetter',
+                messageId: "suggestGetter",
                 data: { attributeName, value: expressionText },
                 fix(fixer) {
-                  return fixer.replaceText(expression, `() => ${expressionText}`);
+                  return fixer.replaceText(
+                    expression,
+                    `() => ${expressionText}`,
+                  );
                 },
               },
               {
-                messageId: 'suggestDCGViewConst',
+                messageId: "suggestDCGViewConst",
                 data: { value: expressionText },
                 fix(fixer) {
-                  if (expression.type === 'Identifier' ||
-                    expression.type === 'Literal' ||
-                    expression.type === 'TemplateLiteral') {
-                    return fixer.replaceText(expression, `DCGView.const(${expressionText})`);
+                  if (
+                    expression.type === "Identifier" ||
+                    expression.type === "Literal" ||
+                    expression.type === "TemplateLiteral"
+                  ) {
+                    return fixer.replaceText(
+                      expression,
+                      `DCGView.const(${expressionText})`,
+                    );
                   }
                   return null;
                 },

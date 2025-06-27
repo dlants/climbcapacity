@@ -113,8 +113,8 @@ export class MeasureSelectorView extends DCGView.View<{
     return (
       <div class="measure-selector">
         <input
-          type={DCGView.const("text")}
-          placeholder={DCGView.const("Filter measures...")}
+          type="text"
+          placeholder="Filter measures..."
           value={() => stateProp().query}
           onChange={(e) =>
             this.props.controller().handleDispatch({

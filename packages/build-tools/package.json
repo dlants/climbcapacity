@@ -1,5 +1,5 @@
 {
-  "name": "build-tools",
+  "name": "@climbcapacity/build-tools",
   "version": "1.0.0",
   "description": "Build tooling and configurations for ClimbCapacity",
   "type": "module",
@@ -24,9 +24,6 @@
     "dev:frontend": "vite --config vite.config.ts",
     "build:frontend": "vite build --config vite.config.ts",
     "test:e2e": "playwright test --config playwright.config.ts",
-    "test:e2e:ui": "playwright test --config playwright.config.ts --ui",
-    "typecheck": "tsc --noEmit --project tsconfig.typecheck.json",
-    "lint": "eslint --config eslint.config.js ../",
-    "lint:fix": "eslint --config eslint.config.js ../ --fix"
+    "test:e2e:ui": "playwright test --config playwright.config.ts --ui"
   }
 }

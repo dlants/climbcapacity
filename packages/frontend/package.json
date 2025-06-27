@@ -1,16 +1,16 @@
 {
-  "name": "client",
+  "name": "@climbcapacity/frontend",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@climbcapacity/iso": "workspace:*",
     "@types/d3": "^7.4.3",
     "@types/lodash": "^4.17.13",
     "csstips": "^1.2.0",
     "csx": "^10.0.2",
     "d3": "^7.9.0",
-    "iso": "workspace:*",
     "lodash": "^4.17.21",
     "typestyle": "^2.4.0"
   }

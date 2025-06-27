@@ -64,17 +64,16 @@ export type Model = {
   parseResult: Result<UnitValue>;
 };
 
-
 export type Msg =
   | {
-    type: "MEASURE_TYPED";
-    measureId: MeasureId;
-    unitInput: UnitInput;
-  }
+      type: "MEASURE_TYPED";
+      measureId: MeasureId;
+      unitInput: UnitInput;
+    }
   | {
-    type: "SELECT_UNIT";
-    unit: UnitType;
-  };
+      type: "SELECT_UNIT";
+      unit: UnitType;
+    };
 
 export type HasParseResultModel = Omit<Model, "parseResult"> & {
   parseResult: Success<UnitValue>;
@@ -86,7 +85,7 @@ export class UnitInputController {
   constructor(
     measureId: MeasureId,
     public myDispatch: Dispatch<Msg>,
-    initialValue?: UnitValue
+    initialValue?: UnitValue,
   ) {
     const measureSpec = getSpec(measureId);
     const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
@@ -104,7 +103,10 @@ export class UnitInputController {
   handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "MEASURE_TYPED": {
-        const parseResult = parseUnitValue(this.state.selectedUnit, msg.unitInput);
+        const parseResult = parseUnitValue(
+          this.state.selectedUnit,
+          msg.unitInput,
+        );
         this.state.unitInput = msg.unitInput;
         this.state.parseResult = parseResult;
         break;
@@ -141,11 +143,12 @@ export class UnitInputView extends DCGView.View<{
   template() {
     const controller = this.props.controller;
     const stateProp = () => controller().state;
-    const handleChange = (unitInput: UnitInput) => controller().myDispatch({
-      type: "MEASURE_TYPED",
-      measureId: stateProp().measureId,
-      unitInput
-    });
+    const handleChange = (unitInput: UnitInput) =>
+      controller().myDispatch({
+        type: "MEASURE_TYPED",
+        measureId: stateProp().measureId,
+        unitInput,
+      });
 
     return (
       <span class="unitInput">
@@ -161,18 +164,19 @@ export class UnitInputView extends DCGView.View<{
           cm: () => this.renderNumberInput(stateProp, handleChange),
           mm: () => this.renderNumberInput(stateProp, handleChange),
           count: () => this.renderNumberInput(stateProp, handleChange),
-          strengthtoweightratio: () => this.renderNumberInput(stateProp, handleChange),
+          strengthtoweightratio: () =>
+            this.renderNumberInput(stateProp, handleChange),
           training: () => (
             <span>
               <select
                 value={() => stateProp().unitInput as string}
-                onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+                onChange={(e) =>
+                  handleChange((e.target as HTMLSelectElement).value)
+                }
               >
                 <For.Simple each={() => ["", "1", "2", "3", "4"]}>
                   {(val: string) => (
-                    <option value={DCGView.const(val)}>
-                      {val}
-                    </option>
+                    <option value={DCGView.const(val)}>{val}</option>
                   )}
                 </For.Simple>
               </select>
@@ -180,19 +184,30 @@ export class UnitInputView extends DCGView.View<{
             </span>
           ),
           inch: () => {
-            const value = () => stateProp().unitInput as { feet: string; inches: string };
+            const value = () =>
+              stateProp().unitInput as { feet: string; inches: string };
             return (
               <span>
                 <input
-                  type={DCGView.const("number")}
+                  type="number"
                   value={() => value().feet}
-                  onChange={(e) => handleChange({ ...value(), feet: (e.target as HTMLInputElement).value })}
+                  onChange={(e) =>
+                    handleChange({
+                      ...value(),
+                      feet: (e.target as HTMLInputElement).value,
+                    })
+                  }
                 />
                 <span>'</span>
                 <input
-                  type={DCGView.const("number")}
+                  type="number"
                   value={() => value().inches}
-                  onChange={(e) => handleChange({ ...value(), inches: (e.target as HTMLInputElement).value })}
+                  onChange={(e) =>
+                    handleChange({
+                      ...value(),
+                      inches: (e.target as HTMLInputElement).value,
+                    })
+                  }
                 />
                 <span>"</span>
               </span>
@@ -202,20 +217,27 @@ export class UnitInputView extends DCGView.View<{
             <select
               value={() => stateProp().unitInput as "female" | "male" | ""}
               onChange={(e) =>
-                handleChange((e.target as HTMLSelectElement).value as "" | "female" | "male")
+                handleChange(
+                  (e.target as HTMLSelectElement).value as
+                    | ""
+                    | "female"
+                    | "male",
+                )
               }
             >
-              <option value={DCGView.const("")}></option>
-              <option value={DCGView.const("female")}>Female</option>
-              <option value={DCGView.const("male")}>Male</option>
+              <option value="" />
+              <option value="female">Female</option>
+              <option value="male">Male</option>
             </select>
           ),
           ircra: () => (
             <span>
               <input
-                type={DCGView.const("number")}
+                type="number"
                 value={() => stateProp().unitInput as string}
-                onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
+                onChange={(e) =>
+                  handleChange((e.target as HTMLInputElement).value)
+                }
               />
               <span>IRCRA</span>
             </span>
@@ -223,13 +245,13 @@ export class UnitInputView extends DCGView.View<{
           vermin: () => (
             <select
               value={() => stateProp().unitInput as string}
-              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value)
+              }
             >
               <For.Simple each={() => VGRADE}>
                 {(grade: VGrade) => (
-                  <option value={() => grade.toString()}>
-                    V{grade}
-                  </option>
+                  <option value={() => grade.toString()}>V{grade}</option>
                 )}
               </For.Simple>
             </select>
@@ -237,13 +259,13 @@ export class UnitInputView extends DCGView.View<{
           ewbank: () => (
             <select
               value={() => stateProp().unitInput as string}
-              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value)
+              }
             >
               <For.Simple each={() => EWBANK}>
                 {(grade: EwbankGrade) => (
-                  <option value={() => grade.toString()}>
-                    {grade}
-                  </option>
+                  <option value={() => grade.toString()}>{grade}</option>
                 )}
               </For.Simple>
             </select>
@@ -251,27 +273,25 @@ export class UnitInputView extends DCGView.View<{
           font: () => (
             <select
               value={() => stateProp().unitInput as string}
-              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value)
+              }
             >
               <For.Simple each={() => FONT}>
-                {(grade: Font) => (
-                  <option value={() => grade}>
-                    {grade}
-                  </option>
-                )}
+                {(grade: Font) => <option value={() => grade}>{grade}</option>}
               </For.Simple>
             </select>
           ),
           frenchsport: () => (
             <select
               value={() => stateProp().unitInput as string}
-              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value)
+              }
             >
               <For.Simple each={() => FRENCH_SPORT}>
                 {(grade: FrenchSport) => (
-                  <option value={() => grade}>
-                    {grade}
-                  </option>
+                  <option value={() => grade}>{grade}</option>
                 )}
               </For.Simple>
             </select>
@@ -279,13 +299,13 @@ export class UnitInputView extends DCGView.View<{
           yds: () => (
             <select
               value={() => stateProp().unitInput as string}
-              onChange={(e) => handleChange((e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                handleChange((e.target as HTMLSelectElement).value)
+              }
             >
               <For.Simple each={() => YDS}>
                 {(grade: string) => (
-                  <option value={() => grade}>
-                    {grade}
-                  </option>
+                  <option value={() => grade}>{grade}</option>
                 )}
               </For.Simple>
             </select>
@@ -295,11 +315,14 @@ export class UnitInputView extends DCGView.View<{
     );
   }
 
-  private renderNumberInput(stateProp: () => Model, handleChange: (unitInput: UnitInput) => void) {
+  private renderNumberInput(
+    stateProp: () => Model,
+    handleChange: (unitInput: UnitInput) => void,
+  ) {
     return (
       <span>
         <input
-          type={DCGView.const("number")}
+          type="number"
           value={() => stateProp().unitInput as string}
           onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
         />
@@ -333,16 +356,15 @@ export function parseUnitValue<UnitName extends keyof UnitInputMap>(
         if (
           !(
             input as UnitInputMap[
-            | "second"
-            | "year"
-            | "lb"
-            | "kg"
-            | "m"
-            | "cm"
-            | "mm"
-            | "count"
-            | "strengthtoweightratio"
-            ]
+              | "second"
+              | "year"
+              | "lb"
+              | "kg"
+              | "m"
+              | "cm"
+              | "mm"
+              | "count"
+              | "strengthtoweightratio"]
           ).length
         ) {
           return { status: "fail", error: "Nothing provided" };
@@ -605,12 +627,12 @@ function getInitialInput(
     case "sex-at-birth": {
       return targetValue
         ? (
-          targetValue as ExtractFromDisjointUnion<
-            UnitValue,
-            "unit",
-            "sex-at-birth"
-          >
-        ).value
+            targetValue as ExtractFromDisjointUnion<
+              UnitValue,
+              "unit",
+              "sex-at-birth"
+            >
+          ).value
         : "";
     }
     default:
@@ -627,5 +649,3 @@ export function hasParseResult(
 ): model is HasParseResult {
   return !!(model && model.parseResult.status == "success");
 }
-
-

@@ -1,5 +1,5 @@
 {
-  "name": "iso",
+  "name": "@climbcapacity/iso",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",

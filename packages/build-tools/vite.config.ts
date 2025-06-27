@@ -1,25 +1,23 @@
 import { defineConfig } from "vite";
 import path from "path";
-import { constWrapTsx } from "../scripts/esbuild/const-wrap-tsx";
+import { constWrapTsx } from "./const-wrap-tsx";
 
 export default defineConfig({
   appType: "spa",
   base: "/",
-  root: "../client", // Point to client directory
-  plugins: [
-    constWrapTsx()
-  ],
+  root: "../frontend", // Point to frontend directory
+  plugins: [constWrapTsx()],
   // Configure JSX transformation for DCGView
   esbuild: {
-    jsx: "transform",
-    jsxFactory: "DCGViewRuntime.createElement",
-    jsxFragment: "DCGViewRuntime.Fragment",
-    jsxInject: "import * as DCGViewRuntime from 'dcgview/jsx/jsx-runtime'"
+    jsx: "automatic",
+    jsxImportSource: "dcgview/jsx",
+    jsxDev: false, // Use jsx-runtime in both dev and prod (no jsx-dev-runtime needed)
   },
+
   // Configure path resolution to match tsconfig paths
   resolve: {
     alias: {
-      "dcgview": path.resolve(__dirname, "../client/dcgview"),
+      dcgview: path.resolve(__dirname, "../frontend/dcgview"),
     },
   },
   // Most esbuild options map directly

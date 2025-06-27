@@ -11,18 +11,21 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:frontend": "yarn workspace build-tools dev:frontend",
-    "dev:backend": "yarn workspace backend dev",
+    "dev:frontend": "yarn workspace @climbcapacity/build-tools dev:frontend",
+    "dev:backend": "yarn workspace @climbcapacity/backend dev",
     "dev": "yarn dev:frontend & yarn dev:backend",
-    "build:frontend": "yarn workspace build-tools build:frontend",
+    "build:frontend": "yarn workspace @climbcapacity/build-tools build:frontend",
     "build:eslint-rules": "yarn workspace @climbcapacity/eslint-rules build",
     "build": "yarn build:eslint-rules && yarn build:frontend",
-    "test:e2e": "yarn workspace build-tools test:e2e",
-    "test:e2e:ui": "yarn workspace build-tools test:e2e:ui",
+    "test:e2e": "yarn workspace @climbcapacity/build-tools test:e2e",
+    "test:e2e:ui": "yarn workspace @climbcapacity/build-tools test:e2e:ui",
     "test": "yarn workspaces foreach -A run test",
-    "lint": "yarn workspace build-tools lint",
-    "lint:fix": "yarn workspace build-tools lint:fix",
-    "typecheck": "yarn workspace build-tools typecheck",
-    "typecheck:watch": "node scripts/typecheck-watch.js"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "yarn workspace @climbcapacity/build-tools typecheck",
+    "typecheck:watch": "node packages/scripts/typecheck-watch.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.29.0"
   }
 }

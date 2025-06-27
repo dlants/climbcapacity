@@ -7,16 +7,16 @@ export class Nav extends DCGView.View<{
     if (this.props.loggedIn()) {
       return (
         <nav>
-          <a href={DCGView.const("/")}>Home</a> <a href={DCGView.const("/snapshots")}>Snapshots</a>{" "}
-          <a href={DCGView.const("/report-card")}>Report Card</a> <a href={DCGView.const("/explore")}>Explore</a>{" "}
-          <a href={DCGView.const("/api/logout")}>Logout</a>
+          <a href="/">Home</a> <a href="/snapshots">Snapshots</a>{" "}
+          <a href="/report-card">Report Card</a> <a href="/explore">Explore</a>{" "}
+          <a href="/api/logout">Logout</a>
         </nav>
       );
     } else {
       return (
         <nav>
-          <a href={DCGView.const("/")}>Home</a> <a href={DCGView.const("/explore")}>Explore</a>{" "}
-          <a href={DCGView.const("/send-link")}>Login</a>
+          <a href="/">Home</a> <a href="/explore">Explore</a>{" "}
+          <a href="/send-link">Login</a>
         </nav>
       );
     }

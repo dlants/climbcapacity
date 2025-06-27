@@ -148,7 +148,7 @@ export class InterpolateView extends DCGView.View<{
                 <div class={DCGView.const(styles.row)}>
                   <label class={DCGView.const(styles.label)}>
                     <input
-                      type={DCGView.const("checkbox")}
+                      type="checkbox"
                       checked={() => options.enabled}
                       onChange={(e) =>
                         this.props.controller().myDispatch({

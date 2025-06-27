@@ -41,7 +41,7 @@ export class MeasureExpressionBox extends DCGView.View<{
     return (
       <div>
         <input
-          type={DCGView.const("text")}
+          type="text"
           value={() => this.state.expression}
           onChange={(e) =>
             this.props.myDispatch({
@@ -52,7 +52,7 @@ export class MeasureExpressionBox extends DCGView.View<{
           style={DCGView.const({
             "border-color": this.state.evalResult.status == 'success' ? "initial" : "red",
           })}
-          placeholder={DCGView.const("Enter expression (e.g. a + b * 2)")}
+          placeholder="Enter expression (e.g. a + b * 2)"
         />
         {this.state.evalResult.status != 'success' && (
           <div style={DCGView.const({ color: "red", "font-size": "small" })}>

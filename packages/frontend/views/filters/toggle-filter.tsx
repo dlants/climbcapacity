@@ -28,7 +28,7 @@ export class ToggleFilterController {
       measureId: MeasureId;
       value: UnitValue;
     },
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     const measure = getSpec(initialParams.measureId);
     this.state = {
@@ -40,7 +40,10 @@ export class ToggleFilterController {
           selectedUnit: initialParams.value.unit,
           possibleUnits: measure.units,
         },
-        { myDispatch: (msg: UnitToggleMsg) => this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+        {
+          myDispatch: (msg: UnitToggleMsg) =>
+            this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }),
+        },
       ),
     };
   }
@@ -96,10 +99,10 @@ export class ToggleFilterView extends DCGView.View<{
     return (
       <div>
         <input
-          type={DCGView.const("radio")}
-          name={DCGView.const("sex")}
-          value={DCGView.const("male")}
-          id={DCGView.const("male")}
+          type="radio"
+          name="sex"
+          value="male"
+          id="male"
           checked={() => stateProp().value.value === "male"}
           onChange={() =>
             this.props.controller().myDispatch({
@@ -111,13 +114,13 @@ export class ToggleFilterView extends DCGView.View<{
             })
           }
         />
-        <label html-for={DCGView.const("male")}>Male</label>
+        <label html-for="male">Male</label>
 
         <input
-          type={DCGView.const("radio")}
-          name={DCGView.const("sex")}
-          value={DCGView.const("female")}
-          id={DCGView.const("female")}
+          type="radio"
+          name="sex"
+          value="female"
+          id="female"
           checked={() => stateProp().value.value === "female"}
           onChange={() =>
             this.props.controller().myDispatch({
@@ -129,7 +132,7 @@ export class ToggleFilterView extends DCGView.View<{
             })
           }
         />
-        <label html-for={DCGView.const("female")}>Female</label>
+        <label html-for="female">Female</label>
       </div>
     );
   }

@@ -1,26 +1,24 @@
 # Client build stage
 FROM node:20-slim
 
-WORKDIR /app/backend
-COPY backend/package.json backend/yarn.lock ./
-RUN yarn install
+WORKDIR /app
 
+COPY packages/iso/package.json packages/iso/yarn.lock ./packages/iso/
+RUN yarn workspace @climbcapacity/iso install
 
-WORKDIR /app/client
-COPY client/package.json client/yarn.lock ./
-RUN yarn install
+COPY packages/backend/package.json packages/backend/yarn.lock ./packages/backend/
+RUN yarn workspace @climbcapacity/backend install
 
-WORKDIR /app/iso
-COPY iso/package.json ./
-COPY iso/ ./
+COPY packages/frontend/package.json packages/frontend/yarn.lock ./packages/frontend/
+RUN yarn workspace @climbcapacity/frontend install
 
-WORKDIR /app/backend
-COPY backend/ ./
-RUN yarn build
+COPY packages/iso/ ./packages/iso/
 
-WORKDIR /app/client
-COPY client/ ./
-RUN yarn build
+COPY packages/backend/ ./packages/backend
+RUN yarn workspace @climbcapacity/backend build
+
+COPY packages/frontend/ ./packages/frontend
+RUN yarn workspace @climbcapacity/frontend build
 
 WORKDIR /app
 
