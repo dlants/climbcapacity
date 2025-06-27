@@ -6,11 +6,11 @@ ClimbCapacity is a climbing performance tracking web application that allows use
 
 ## Architecture
 
-- **Yarn Workspaces Monorepo**: Centralized dependency management with workspaces for each package
-- **Application Packages**: `backend/`, `frontend/`, `iso/`, `scripts/`, `eslint-rules/`
-- **Build Tools Package**: `build-tools/` contains all build configurations and dependencies
+- **Yarn Workspaces Monorepo**: Centralized dependency management with scoped packages
+- **Application Packages**: `@climbcapacity/backend`, `@climbcapacity/frontend`, `@climbcapacity/iso`, `@climbcapacity/scripts`, `@climbcapacity/eslint-rules`
+- **Build Tools Package**: `@climbcapacity/build-tools` contains all build configurations and dependencies
 - **Backend**: Express.js API server with MongoDB
-- **Frontend**: DCGView application built with Vite
+- **Frontend**: DCGView application built with Vite (renamed from client)
 - **Shared**: `iso/` package contains shared types and utilities
 - **Scripts**: Database management and data import utilities
 
@@ -18,12 +18,14 @@ ClimbCapacity is a climbing performance tracking web application that allows use
 
 ```
 ClimbCapacity/
-├── build-tools/           # Build tooling hub (Vite, Playwright, ESLint, TypeScript)
-├── frontend/                # Browser application (runtime deps only)
-├── backend/               # Server application (runtime deps only)
-├── iso/                   # Shared code
-├── scripts/               # Database utilities
-├── eslint-rules/          # Custom linting rules
+├── packages/
+│   ├── backend/           # Server application (runtime + test deps)
+│   ├── frontend/          # Browser application (runtime deps only, renamed from client)
+│   ├── build-tools/       # Build tooling hub (Vite, Playwright, TypeScript)
+│   ├── iso/               # Shared code between frontend/backend
+│   ├── scripts/           # Database utilities and maintenance scripts
+│   └── eslint-rules/      # Custom ESLint rules for DCGView
+├── eslint.config.js       # Root ESLint configuration (flat config)
 ├── package.json           # Root workspace configuration
 └── yarn.lock              # Centralized dependency lock file
 ```
@@ -32,24 +34,31 @@ ClimbCapacity/
 
 Dependencies are managed centrally through yarn workspaces:
 
-- **Root package.json**: Defines workspaces and orchestration scripts
-- **Workspace Commands**: Use `yarn workspace <name> <command>` to run commands in specific packages
+- **Root package.json**: Defines `workspaces: ["packages/*"]` and orchestration scripts
+- **Scoped Package Names**: All packages use `@climbcapacity/[package-name]` naming
+- **Workspace Commands**: Use `yarn workspace @climbcapacity/[package] <command>` to run commands in specific packages
 - **Cross-workspace Dependencies**: Packages can depend on each other using workspace protocol
 - **Centralized Lock File**: Single `yarn.lock` at root manages all dependencies
 
 ### Build Tools Organization
 
-All build-time tooling is centralized in `build-tools/`:
+All build-time tooling is centralized in `packages/build-tools/`:
 
-- **Configurations**: `vite.config.ts`, `playwright.config.ts`, `eslint.config.js`
-- **Dependencies**: Vite, Playwright, ESLint, TypeScript, etc.
+- **Configurations**: `vite.config.ts`, `playwright.config.ts`, `tsconfig.base.json`
+- **Dependencies**: Vite, Playwright, TypeScript, Vitest, etc.
 - **Base Config**: `tsconfig.base.json` inherited by all packages
+- **Custom Plugins**: `const-wrap-tsx.ts` for DCGView JSX transformation
+
+**ESLint Configuration**: Located at root `eslint.config.js` (not in build-tools)
+
+- Uses flat config format with multiple configuration objects
+- Imports custom DCGView rules from `@climbcapacity/eslint-rules`
 
 ### Environment Variables
 
 Create `.env` files in both `backend/` and `frontend/` directories:
 
-**Backend `.env`:**
+**Backend `.env`:** (in `packages/backend/`)
 
 ```
 MONGODB_URL=mongodb://localhost:27018/climbcapacity
@@ -58,7 +67,7 @@ BASE_URL=http://localhost:3000
 RELEASE_STAGE=dev
 ```
 
-**Client `.env`:**
+**Frontend `.env`:** (in `packages/frontend/`)
 
 ```
 VITE_API_BASE_URL=http://localhost:3000
@@ -68,7 +77,7 @@ VITE_API_BASE_URL=http://localhost:3000
 
 ```bash
 # Update measure statistics
-cd scripts & npx tsx update-measure-stats.ts
+yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ```
 
 ## Testing
@@ -76,27 +85,28 @@ cd scripts & npx tsx update-measure-stats.ts
 ### Backend Tests
 
 ```bash
-yarn workspace backend test              # Run all tests
-yarn workspace backend test:watch        # Watch mode (if available)
+yarn workspace @climbcapacity/backend test              # Run all tests
+yarn workspace @climbcapacity/backend test:watch        # Watch mode (if available)
 ```
 
 - Uses Vitest with MongoDB Memory Server
-- Tests located in `backend/__tests__/`
+- Tests located in `packages/backend/__tests__/`
 
 ### Frontend E2E Tests
 
 ```bash
-yarn test:e2e         # Run Playwright tests
-yarn test:e2e:ui      # Run with UI
+yarn test:e2e         # Run Playwright tests (via build-tools)
+yarn test:e2e:ui      # Run with UI (via build-tools)
 ```
 
 - Playwright tests with screenshot capture
-- Tests located in `frontend/e2e/`
+- Tests located in `packages/frontend/e2e/`
+- Configured in `packages/build-tools/playwright.config.ts`
 
 ### Unit Tests (Shared utilities)
 
 ```bash
-yarn workspace iso test              # Test shared utilities
+yarn workspace @climbcapacity/iso test              # Test shared utilities
 ```
 
 ### All Tests
@@ -114,17 +124,17 @@ yarn test             # Run tests in all workspaces
 yarn typecheck
 
 # Individual packages
-yarn workspace backend exec tsc --noEmit
-yarn workspace frontend exec tsc --noEmit
-yarn workspace iso exec tsc --noEmit
+yarn workspace @climbcapacity/backend exec tsc --noEmit
+yarn workspace @climbcapacity/frontend exec tsc --noEmit
+yarn workspace @climbcapacity/iso exec tsc --noEmit
 ```
 
 ### Configuration
 
-- **Root**: NodeNext module resolution, strict mode enabled
-- **Backend**: Compiles to `dist/` directory
-- **Frontend**: Vite handles TypeScript compilation
-- **Shared**: `iso/` package exports shared types
+- **Base Config**: `packages/build-tools/tsconfig.base.json` - NodeNext module resolution, strict mode enabled
+- **Backend**: Extends base config, compiles to `dist/` directory
+- **Frontend**: Extends base config, Vite handles TypeScript compilation with JSX transform
+- **Shared**: `iso/` package exports shared types, extends base config
 
 ## Authentication System
 
@@ -168,13 +178,13 @@ yarn workspace iso exec tsc --noEmit
 
 ```bash
 # Reset database (development only)
-MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace scripts exec tsx refresh-db.ts
+MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts
 
 # Import new datasets
-yarn workspace scripts exec tsx import-[dataset].ts
+yarn workspace @climbcapacity/scripts exec tsx import-[dataset].ts
 
 # Update statistics after data changes
-yarn workspace scripts exec tsx update-measure-stats.ts
+yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ```
 
 ## API Structure
@@ -209,7 +219,7 @@ app.post(
 ### Backend Structure
 
 ```
-backend/
+packages/backend/
 ├── auth/           # Authentication system (Lucia + magic links)
 ├── db/             # Database connection
 ├── models/         # MongoDB data models
@@ -219,23 +229,25 @@ backend/
 └── utils.ts        # Utility functions
 ```
 
-### Frontend Structure
+### Frontend Structure (renamed from client)
 
 ```
-frontend/
-├── src/
-│   ├── components/ # DCGView UI components
-│   ├── util/       # Frontend utilities
-│   ├── App.tsx     # Main DCGView application entry
-│   └── main.tsx    # Application entry point
+packages/frontend/
+├── dcgview/        # DCGView framework code
+├── pages/          # Application pages
+├── views/          # DCGView UI components
+├── util/           # Frontend utilities
+├── parser/         # Data parsing utilities
 ├── e2e/            # Playwright E2E tests
-└── dist/           # Built assets (generated)
+├── main.tsx        # Application entry point
+├── index.html      # HTML template
+└── dist/           # Built assets (generated by Vite)
 ```
 
 ### Shared Code (iso/)
 
 ```
-iso/
+packages/iso/
 ├── measures/       # Climbing measure definitions
 ├── units.ts        # Unit conversion system
 ├── protocol.ts     # API request/response types
@@ -286,7 +298,7 @@ iso/
 
 ### DCGView Component Patterns
 
-DCGView is a one-directional view library that renders data to DOM and updates it efficiently. Views are class-based with getter functions for dynamic data binding.
+DCGView is a one-directional view library that renders data to DOM and updates it efficiently. Views are class-based with getter functions for dynamic data binding. **JSX is transformed by Vite** (not DCGView.createElement) for modern build integration.
 
 **Basic View Structure:**
 
@@ -338,10 +350,15 @@ class DataView extends DCGView.Class<{
           {() => <span>Has items</span>}
         </If>
 
-        {/* Dynamic lists with keys */}
+        {/* Dynamic lists with keys - For has full type support */}
         <For each={() => this.props.items()} key={(item) => item.id}>
           {(item) => <ItemView item={() => item} />}
         </For>
+
+        {/* Simple lists without keys */}
+        <For.Simple each={() => this.props.items()}>
+          {(item) => <span>{() => item.name}</span>}
+        </For.Simple>
 
         {/* Type-safe switching - statusProp is narrowed to specific union member */}
         {SwitchUnion(() => this.props.status(), {
@@ -362,13 +379,25 @@ class DataView extends DCGView.Class<{
 - **Use `init()` for initialization** - never use constructor or field initialization
 - **Maintain unique keys** for dynamic lists to enable efficient DOM diffing
 
+**List Rendering:**
+
+- **`For`**: Full-featured list rendering with keys and type safety
+- **`For.Simple`**: Simplified list rendering without keys (use for static/simple lists)
+- **No more `Each`**: Replaced by `For` with adequate type support
+
 **Type Safety:**
 
 - Use `DCGView.Components.IfDefined` for nullable props
 - `SwitchUnion` provides automatic type narrowing for union types
 - Manual type casts may be needed when TypeScript can't infer getter consistency
 
-See [DCGView Introduction](frontend/dcgview/introduction.md) and [Components](frontend/dcgview/components.md) for complete documentation.
+**JSX Transformation:**
+
+- Vite handles JSX transformation to `jsx`/`jsxs` calls
+- Custom Vite plugin (`const-wrap-tsx.ts`) handles DCGView-specific transformations
+- No longer uses `DCGView.createElement` directly
+
+See [DCGView Introduction](packages/frontend/dcgview/introduction.md) and [Components](packages/frontend/dcgview/components.md) for complete documentation.
 
 ## Common Commands
 
@@ -380,7 +409,7 @@ yarn dev:backend            # Backend only
 
 # Testing
 yarn test                   # Run all tests across workspaces
-yarn workspace backend test # Backend tests only
+yarn workspace @climbcapacity/backend test # Backend tests only
 yarn test:e2e              # E2E tests (via build-tools)
 yarn test:e2e:ui           # E2E tests with UI (via build-tools)
 
@@ -388,18 +417,18 @@ yarn test:e2e:ui           # E2E tests with UI (via build-tools)
 yarn typecheck             # Check all packages (via build-tools)
 
 # Linting
-yarn lint                  # Lint entire monorepo (via build-tools)
-yarn lint:fix              # Auto-fix lint issues (via build-tools)
+yarn lint                  # Lint entire monorepo (root eslint.config.js)
+yarn lint:fix              # Auto-fix lint issues
 
 # Workspace Management
 yarn install               # Install all workspace dependencies
-yarn workspace <name> add <pkg>    # Add dependency to specific workspace
-yarn workspace <name> <command>    # Run command in specific workspace
+yarn workspace @climbcapacity/<name> add <pkg>    # Add dependency to specific workspace
+yarn workspace @climbcapacity/<name> <command>    # Run command in specific workspace
 yarn workspaces foreach <command>  # Run command in all workspaces
 
 # Database
 docker-compose up -d       # Start MongoDB
-yarn workspace scripts exec tsx refresh-db.ts  # Reset database (dev only)
+yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts  # Reset database (dev only)
 
 # Build
 yarn build                 # Build for production (build-tools handles frontend)
@@ -410,8 +439,10 @@ yarn build:frontend        # Frontend build only (via build-tools)
 
 Root scripts delegate to workspace commands which execute build tools:
 
-- `yarn dev:frontend` → `yarn workspace build-tools dev:frontend` → `vite --config vite.config.ts`
-- `yarn lint` → `yarn workspace build-tools lint` → `eslint --config eslint.config.js ../`
+- `yarn dev:frontend` → `yarn workspace @climbcapacity/build-tools dev:frontend` → `vite --config vite.config.ts` (root: ../frontend)
+- `yarn build:frontend` → `yarn workspace @climbcapacity/build-tools build:frontend` → `vite build --config vite.config.ts`
+- `yarn test:e2e` → `yarn workspace @climbcapacity/build-tools test:e2e` → `playwright test --config playwright.config.ts`
+- `yarn lint` → `eslint .` (uses root eslint.config.js, not via build-tools)
 
 ## Troubleshooting
 
@@ -424,9 +455,9 @@ Root scripts delegate to workspace commands which execute build tools:
 
 ### Database Issues
 
-- Reset database: `MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace scripts exec tsx refresh-db.ts`
+- Reset database: `MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts`
 - Check connection: `docker-compose logs mongodb`
-- Verify indexes: `yarn workspace scripts exec tsx create-indexes.ts`
+- Verify indexes: `yarn workspace @climbcapacity/scripts exec tsx create-indexes.ts`
 
 ### Type Errors
 
