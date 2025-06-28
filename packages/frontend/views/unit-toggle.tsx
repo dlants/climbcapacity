@@ -54,7 +54,7 @@ export class UnitToggleController {
 }
 
 export class UnitToggleView extends DCGView.View<{
-  controller: UnitToggleController;
+  controller: () => UnitToggleController;
 }> {
   toggleId: string;
 
@@ -82,7 +82,7 @@ export class UnitToggleView extends DCGView.View<{
                     .context.myDispatch({ type: "SELECT_UNIT", unit })
                 }
               />
-              <label>{unit}</label>
+              <label htmlFor={() => this.toggleId + ":" + unit}>{unit}</label>
             </span>
           )}
         </For.Simple>

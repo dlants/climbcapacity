@@ -15,7 +15,7 @@ export type Param<K extends ParamName> = {
   suffix: string;
 };
 
-export type ParamMap = Partial<{ [K in ParamName]: ParamValue<K> }>
+export type ParamMap = Partial<{ [K in ParamName]: ParamValue<K> }>;
 
 export type MeasureClassSpec = {
   className: string;
@@ -50,10 +50,7 @@ export function generateId(
   return parts.join(":") as MeasureId;
 }
 
-export function parseId(
-  id: MeasureId,
-  spec: MeasureClassSpec,
-): ParamMap {
+export function parseId(id: MeasureId, spec: MeasureClassSpec): ParamMap {
   const parts = id.split(":");
   if (parts[0] !== spec.className) {
     throw new Error(
@@ -99,7 +96,9 @@ export type MeasureSpec = {
 
 export const MEASURES: MeasureSpec[] = [];
 
-export function generateMeasureSpecs(measureClass: MeasureClassSpec): MeasureSpec[] {
+export function generateMeasureSpecs(
+  measureClass: MeasureClassSpec,
+): MeasureSpec[] {
   const result: MeasureSpec[] = [];
   const params = measureClass.params;
   let combinations: { [paramName: string]: string }[] = [{}];
@@ -162,18 +161,18 @@ MEASURES.push(...generateMeasureSpecs(ForceMeter.avgLoadClass));
 MEASURES.push(...generateMeasureSpecs(ForceMeter.rfdClass));
 MEASURES.push(...generateMeasureSpecs(ForceMeter.criticalForceClass));
 
-export const WEIGHT_MEASURE_ID = 'weight' as MeasureId;
+export const WEIGHT_MEASURE_ID = "weight" as MeasureId;
 const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
     type: "anthro",
     name: "height",
     description: "Your height",
-    units: ["m", "cm", "inch"],
+    units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "m", value: 1.53 },
-      maxValue: { unit: "m", value: 1.85 },
+      minValue: { unit: "inch", value: 60 },
+      maxValue: { unit: "inch", value: 73 },
     },
   },
   {
@@ -181,11 +180,11 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     type: "anthro",
     name: "Arm span",
     description: "Your arm span, fingertip to fingertip",
-    units: ["m", "cm", "inch"],
+    units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "m", value: 1.53 },
-      maxValue: { unit: "m", value: 1.85 },
+      minValue: { unit: "inch", value: 60 },
+      maxValue: { unit: "inch", value: 73 },
     },
   },
   {
@@ -194,11 +193,11 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     name: "standing reach",
     description:
       "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
-    units: ["m", "cm", "inch"],
+    units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "m", value: 2.2 },
-      maxValue: { unit: "m", value: 2.8 },
+      minValue: { unit: "inch", value: 87 },
+      maxValue: { unit: "inch", value: 110 },
     },
   },
   {
@@ -206,11 +205,11 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     type: "anthro",
     name: "weight",
     description: "Your weight",
-    units: ["kg", "lb"],
+    units: ["lb", "kg"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "kg", value: 39.7 },
-      maxValue: { unit: "kg", value: 115.5 },
+      minValue: { unit: "lb", value: 87 },
+      maxValue: { unit: "lb", value: 255 },
     },
   },
   {
@@ -289,3 +288,4 @@ export function getSpec(measureId: MeasureId) {
 
   return spec;
 }
+

@@ -44,11 +44,11 @@ export const sportGradeClass: MeasureClassSpec = {
     },
   ],
   measureType: "performance",
-  units: ["ircra", "yds", "frenchsport", "ewbank"],
+  units: ["yds", "ircra", "frenchsport", "ewbank"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "ircra", value: 1 as IRCRAGrade },
-    maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
+    minValue: { unit: "yds", value: "5.6" },
+    maxValue: { unit: "yds", value: "5.15a" },
   },
   generateDescription: (params: {
     sportLocation: SportLocation;
@@ -73,11 +73,11 @@ export const boulderGradeClass: MeasureClassSpec = {
     },
   ],
   measureType: "performance",
-  units: ["ircra", "vermin", "font"],
+  units: ["vermin", "ircra", "font"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "ircra", value: 1 as IRCRAGrade },
-    maxValue: { unit: "ircra", value: 33 as IRCRAGrade },
+    minValue: { unit: "vermin", value: 0 },
+    maxValue: { unit: "vermin", value: 8 },
   },
   generateDescription: (params: {
     boulderLocation: BoulderLocation;

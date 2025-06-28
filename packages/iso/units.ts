@@ -31,14 +31,14 @@ export type NormedMeasure = { measureId: MeasureId; value: number };
 
 export type InitialFilter =
   | {
-    type: "minmax";
-    minValue: UnitValue;
-    maxValue: UnitValue;
-  }
+      type: "minmax";
+      minValue: UnitValue;
+      maxValue: UnitValue;
+    }
   | {
-    type: "toggle";
-    value: UnitValue;
-  };
+      type: "toggle";
+      value: UnitValue;
+    };
 
 export function castInitialFilter(filter: InitialFilter, targetUnit: UnitType) {
   switch (filter.type) {
@@ -204,89 +204,89 @@ export function castUnit(
 export type Training = 1 | 2 | 3 | 4;
 export type UnitValue =
   | {
-    unit: "second";
-    value: number;
-  }
+      unit: "second";
+      value: number;
+    }
   | {
-    unit: "year";
-    value: number;
-  }
+      unit: "year";
+      value: number;
+    }
   | {
-    unit: "month";
-    value: number;
-  }
+      unit: "month";
+      value: number;
+    }
   | {
-    unit: "lb";
-    value: number;
-  }
+      unit: "lb";
+      value: number;
+    }
   | {
-    unit: "lb/s";
-    value: number;
-  }
+      unit: "lb/s";
+      value: number;
+    }
   | {
-    unit: "kg";
-    value: number;
-  }
+      unit: "kg";
+      value: number;
+    }
   | {
-    unit: "kg/s";
-    value: number;
-  }
+      unit: "kg/s";
+      value: number;
+    }
   | {
-    unit: "m";
-    value: number;
-  }
+      unit: "m";
+      value: number;
+    }
   | {
-    unit: "cm";
-    value: number;
-  }
+      unit: "cm";
+      value: number;
+    }
   | {
-    unit: "mm";
-    value: number;
-  }
+      unit: "mm";
+      value: number;
+    }
   | {
-    unit: "inch";
-    value: number;
-  }
+      unit: "inch";
+      value: number;
+    }
   | {
-    unit: "vermin";
-    value: VGrade;
-  }
+      unit: "vermin";
+      value: VGrade;
+    }
   | {
-    unit: "font";
-    value: Font;
-  }
+      unit: "font";
+      value: Font;
+    }
   | {
-    unit: "frenchsport";
-    value: FrenchSport;
-  }
+      unit: "frenchsport";
+      value: FrenchSport;
+    }
   | {
-    unit: "yds";
-    value: YDS;
-  }
+      unit: "yds";
+      value: YDS;
+    }
   | {
-    unit: "ewbank";
-    value: EwbankGrade;
-  }
+      unit: "ewbank";
+      value: EwbankGrade;
+    }
   | {
-    unit: "ircra";
-    value: IRCRAGrade;
-  }
+      unit: "ircra";
+      value: IRCRAGrade;
+    }
   | {
-    unit: "sex-at-birth";
-    value: "female" | "male";
-  }
+      unit: "sex-at-birth";
+      value: "female" | "male";
+    }
   | {
-    unit: "training";
-    value: Training;
-  }
+      unit: "training";
+      value: Training;
+    }
   | {
-    unit: "count";
-    value: number;
-  }
+      unit: "count";
+      value: number;
+    }
   | {
-    unit: "strengthtoweightratio";
-    value: number;
-  };
+      unit: "strengthtoweightratio";
+      value: number;
+    };
 
 export type UnitType = UnitValue["unit"];
 

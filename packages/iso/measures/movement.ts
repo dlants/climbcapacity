@@ -47,11 +47,11 @@ export const weightedClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 0 },
-    maxValue: { unit: "kg", value: 200 },
+    minValue: { unit: "lb", value: 0 },
+    maxValue: { unit: "lb", value: 440 },
   },
   generateDescription: (params: {
     weightedMovement: WeightedMovement;
@@ -98,11 +98,11 @@ export const unilateralWeightedClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 0 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 0 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: {
     unilateralMovement: UnilateralMovement;

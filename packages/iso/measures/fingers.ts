@@ -104,11 +104,11 @@ export const maxhangClass: MeasureClassSpec = {
       suffix: "s",
     },
   ],
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 35 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 77 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: {
     gripType: GripType;
@@ -151,11 +151,11 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 35 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 77 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: {
     gripType: GripType;
@@ -240,11 +240,11 @@ export const blockPullClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 35 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 77 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: {
     allGripType: ParamValue<"allGripType">;

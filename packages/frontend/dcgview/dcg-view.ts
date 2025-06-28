@@ -2,6 +2,7 @@ import { AttrClass } from "./attr-class";
 import { AttrLifeCycle } from "./attr-lifecycle";
 import { AttrStyle } from "./attr-style";
 import { AttrDisabled } from "./attr-disabled";
+import { AttrChecked } from "./attr-checked";
 import { addCustomAttribute } from "./custom-attributes";
 
 export * as Components from "./components";
@@ -27,6 +28,7 @@ export { addWarningHandler, removeWarningHandler } from "./warnings";
 addCustomAttribute("style", AttrStyle);
 addCustomAttribute("class", AttrClass);
 addCustomAttribute("disabled", AttrDisabled);
+addCustomAttribute("checked", AttrChecked);
 
 [
   "willMount",

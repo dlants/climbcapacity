@@ -30,11 +30,11 @@ export const powerClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["m", "cm", "inch"],
+  units: ["inch", "m", "cm"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "m", value: 1 },
-    maxValue: { unit: "m", value: 2 },
+    minValue: { unit: "inch", value: 39 },
+    maxValue: { unit: "inch", value: 79 },
   },
   generateDescription: (params: { powerMovement: PowerMovement }) => {
     return `Your maximum distance for the following movement:
@@ -61,8 +61,8 @@ export const unilateralPowerClass: MeasureClassSpec = {
   units: ["m", "cm", "inch"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "m", value: 0 },
-    maxValue: { unit: "m", value: 2 },
+    minValue: { unit: "inch", value: 0 },
+    maxValue: { unit: "inch", value: 79 },
   },
   generateDescription: (params: { unilateralPowerMovement: UnilateralPowerMovement, dominantSide: ParamValue<"dominantSide"> }) => {
     return `Your maximum distance using your ${params.dominantSide} side:

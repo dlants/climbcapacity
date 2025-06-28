@@ -88,7 +88,7 @@ export class UnitInputController {
     initialValue?: UnitValue,
   ) {
     const measureSpec = getSpec(measureId);
-    const defaultUnit = initialValue ? initialValue.unit : measureSpec.units[0];
+    const defaultUnit = measureSpec.units[0];
     const initialInput = getInitialInput(defaultUnit, initialValue);
 
     this.state = {

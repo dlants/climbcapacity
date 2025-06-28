@@ -54,11 +54,11 @@ export const peakloadClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 35 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 77 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\
@@ -93,11 +93,11 @@ export const avgLoadClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 35 },
-    maxValue: { unit: "kg", value: 100 },
+    minValue: { unit: "lb", value: 77 },
+    maxValue: { unit: "lb", value: 220 },
   },
   generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize; avgLoadDuration: avgLoadDuration; dominantSide: DominantSide }) => {
     return `\
@@ -127,11 +127,11 @@ export const rfdClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg/s", "lb/s"],
+  units: ["lb/s", "kg/s"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg/s", value: 35 },
-    maxValue: { unit: "kg/s", value: 100 },
+    minValue: { unit: "lb/s", value: 77 },
+    maxValue: { unit: "lb/s", value: 220 },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\
@@ -161,11 +161,11 @@ export const criticalForceClass: MeasureClassSpec = {
     },
   ],
   measureType: "input",
-  units: ["kg", "lb"],
+  units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "kg", value: 10 },
-    maxValue: { unit: "kg", value: 50 },
+    minValue: { unit: "lb", value: 22 },
+    maxValue: { unit: "lb", value: 110 },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\
