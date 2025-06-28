@@ -430,6 +430,11 @@ yarn typecheck             # Check all packages (via build-tools)
 yarn lint                  # Lint entire monorepo (root eslint.config.js)
 yarn lint:fix              # Auto-fix lint issues
 
+# ESLint Rules Development
+yarn workspace @climbcapacity/eslint-rules build       # Compile custom ESLint rules to JavaScript
+yarn workspace @climbcapacity/eslint-rules build:watch # Watch mode for rule development
+yarn workspace @climbcapacity/eslint-rules test        # Test custom ESLint rules
+
 # Workspace Management
 yarn install               # Install all workspace dependencies
 yarn workspace @climbcapacity/<name> add <pkg>    # Add dependency to specific workspace

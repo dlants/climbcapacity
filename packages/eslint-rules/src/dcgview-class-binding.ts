@@ -118,6 +118,28 @@ export const dcgviewClassBindingRule = ESLintUtils.RuleCreator.withoutDocs({
             return; // Valid DCGView.const call
           }
 
+          // Check for this.const() call (DCGView helper method)
+          if (
+            expression.type === "CallExpression" &&
+            expression.callee.type === "MemberExpression" &&
+            expression.callee.object.type === "ThisExpression" &&
+            expression.callee.property.type === "Identifier" &&
+            expression.callee.property.name === "const"
+          ) {
+            return; // Valid this.const call
+          }
+
+          // Check for this.bindFn() call (DCGView helper method)
+          if (
+            expression.type === "CallExpression" &&
+            expression.callee.type === "MemberExpression" &&
+            expression.callee.object.type === "ThisExpression" &&
+            expression.callee.property.type === "Identifier" &&
+            expression.callee.property.name === "bindFn"
+          ) {
+            return; // Valid this.bindFn call
+          }
+
           // Check for function calls (not allowed as direct bindings)
           if (expression.type === "CallExpression") {
             // Special case: .bind() calls return functions and are valid bindings

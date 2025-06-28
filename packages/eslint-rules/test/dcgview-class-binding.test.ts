@@ -58,6 +58,18 @@ describe("dcgview-class-binding", () => {
         code: "<div didMount={this.divDidMount.bind(this)} />",
         name: "Method binding with .bind() is valid",
       },
+      {
+        code: '<div class={this.const("static-class")} />',
+        name: "this.const valid for class attribute",
+      },
+      {
+        code: '<div href={this.const("link")} />',
+        name: "this.const valid for other attributes",
+      },
+      {
+        code: "<div onClick={this.bindFn(this.handleClick)} />",
+        name: "this.bindFn valid for event handlers",
+      },
     ],
     invalid: [
       {
