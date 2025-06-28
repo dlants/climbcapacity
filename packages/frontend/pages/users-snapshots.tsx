@@ -17,34 +17,37 @@ export type Model = {
 
 export type Msg =
   | {
-    type: "SNAPSHOT_RESPONSE";
-    request: RequestStatus<SnapshotListItem[]>;
-  }
+      type: "SNAPSHOT_RESPONSE";
+      request: RequestStatus<SnapshotListItem[]>;
+    }
   | {
-    type: "NEW_SNAPSHOT_RESPONSE";
-    request: RequestStatus<Snapshot>;
-  }
+      type: "NEW_SNAPSHOT_RESPONSE";
+      request: RequestStatus<Snapshot>;
+    }
   | {
-    type: "NEW_SNAPSHOT";
-  }
+      type: "NEW_SNAPSHOT";
+    }
   | {
-    type: "SELECT_SNAPSHOT";
-    snapshot: SnapshotListItem;
-  }
+      type: "SELECT_SNAPSHOT";
+      snapshot: SnapshotListItem;
+    }
   | {
-    type: "DELETE_SNAPSHOT";
-    snapshotId: string;
-  }
+      type: "DELETE_SNAPSHOT";
+      snapshotId: string;
+    }
   | {
-    type: "DELETE_SNAPSHOT_RESPONSE";
-    request: RequestStatus<void>;
-    snapshotId: string;
-  };
+      type: "DELETE_SNAPSHOT_RESPONSE";
+      request: RequestStatus<void>;
+      snapshotId: string;
+    };
 
 export class UsersSnapshotsController {
   state: Model;
 
-  constructor(userId: string, public myDispatch: Dispatch<Msg>) {
+  constructor(
+    userId: string,
+    public myDispatch: Dispatch<Msg>,
+  ) {
     this.state = {
       userId,
       snapshotRequest: { status: "loading" },
@@ -188,105 +191,155 @@ export class UsersSnapshotsController {
         break;
     }
   }
+}
 
+// Sub-views as separate classes
+class NewSnapshotView extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
+    return SwitchUnion(() => stateProp().newSnapshotRequest, "status", {
+      "not-sent": () => (
+        <NewSnapshotButton controller={this.props.controller} />
+      ),
+      loading: () => <div>Creating new snapshot...</div>,
+      loaded: () => (
+        <div>
+          created new snapshot{" "}
+          <NewSnapshotButton controller={this.props.controller} />
+        </div>
+      ),
+      error: (errorProp) => (
+        <div>error when creating new snapshot: {() => errorProp().error}</div>
+      ),
+    });
+  }
+}
+
+class NewSnapshotButton extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+}> {
+  template() {
+    return (
+      <button
+        onClick={() =>
+          this.props.controller().myDispatch({ type: "NEW_SNAPSHOT" })
+        }
+      >
+        Create New Snapshot
+      </button>
+    );
+  }
+}
+
+class SnapshotListView extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+
+    return SwitchUnion(() => stateProp().snapshotRequest, "status", {
+      "not-sent": () => <div />,
+      loading: () => <div>Loading...</div>,
+      error: (errorProp) => <div class="error">{() => errorProp().error}</div>,
+      loaded: (loadedProp) => (
+        <div class="loaded">
+          <For
+            each={() => loadedProp().response}
+            key={(item: SnapshotListItem) => item.snapshot._id}
+          >
+            {(getItem: () => SnapshotListItem) => (
+              <SnapshotItemView
+                controller={this.props.controller}
+                item={getItem}
+              />
+            )}
+          </For>
+        </div>
+      ),
+    });
+  }
+}
+
+class SnapshotItemView extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+  item: () => SnapshotListItem;
+}> {
+  template() {
+    return (
+      <div>
+        {() => new Date(this.props.item().snapshot.createdAt).toLocaleString()}
+        <button
+          onClick={() =>
+            this.props.controller().myDispatch({
+              type: "SELECT_SNAPSHOT",
+              snapshot: this.props.item(),
+            })
+          }
+        >
+          Edit
+        </button>
+
+        {SwitchUnion(() => this.props.item().deleteRequest, "status", {
+          "not-sent": () => (
+            <DeleteButton
+              controller={this.props.controller}
+              item={this.props.item}
+            />
+          ),
+          error: (errorProp) => (
+            <span>
+              <span>{() => errorProp().error}</span>
+              <DeleteButton
+                controller={this.props.controller}
+                item={this.props.item}
+              />
+            </span>
+          ),
+          loading: () => <button disabled>Deleting...</button>,
+          loaded: () => <div>Deleted</div>,
+        })}
+      </div>
+    );
+  }
+}
+
+class DeleteButton extends DCGView.View<{
+  controller: () => UsersSnapshotsController;
+  item: () => SnapshotListItem;
+}> {
+  template() {
+    return (
+      <button
+        onClick={() =>
+          this.props.controller().myDispatch({
+            type: "DELETE_SNAPSHOT",
+            snapshotId: this.props.item().snapshot._id,
+          })
+        }
+      >
+        Delete
+      </button>
+    );
+  }
 }
 
 export class UsersSnapshotsView extends DCGView.View<{
   controller: () => UsersSnapshotsController;
 }> {
   template() {
-    const stateProp = () => this.props.controller().state;
-
     return (
       <div>
         <h2>Your Snapshots</h2>
         <div class="new-snapshot">
-          {this.renderNewSnapshot(stateProp)}
+          <NewSnapshotView controller={this.props.controller} />
         </div>
         <div class="list-snapshots">
-          {this.renderSnapshotList(stateProp)}
+          <SnapshotListView controller={this.props.controller} />
         </div>
       </div>
-    );
-  }
-
-  private renderNewSnapshot(stateProp: () => Model) {
-    const NewSnapshotButton = () => (
-      <button onPointerDown={() => this.props.controller().myDispatch({ type: "NEW_SNAPSHOT" })}>
-        Create New Snapshot
-      </button>
-    );
-
-    return SwitchUnion(() => stateProp().newSnapshotRequest, 'status', {
-      "not-sent": () => <NewSnapshotButton />,
-      "loading": () => <div>Creating new snapshot...</div>,
-      "loaded": () => (
-        <div>
-          created new snapshot <NewSnapshotButton />
-        </div>
-      ),
-      "error": (errorProp) => (
-        <div>
-          error when creating new snapshot: {() => errorProp().error}
-        </div>
-      ),
-    });
-  }
-
-  private renderSnapshotList(stateProp: () => Model) {
-    return SwitchUnion(() => stateProp().snapshotRequest, 'status', {
-      "not-sent": () => <div />,
-      "loading": () => <div>Loading...</div>,
-      "error": (errorProp) => <div class="error">{() => errorProp().error}</div>,
-      "loaded": (loadedProp) => (
-        <div class="loaded">
-          <For each={() => loadedProp().response} key={(item: SnapshotListItem) => item.snapshot._id}>
-            {(getItem: () => SnapshotListItem) => this.renderSnapshotItem(getItem)}
-          </For>
-        </div>
-      ),
-    });
-  }
-
-  private renderSnapshotItem(getItem: () => SnapshotListItem) {
-    return (
-      <div>
-        {() => new Date(getItem().snapshot.createdAt).toLocaleString()}
-        <button
-          onPointerDown={() =>
-            this.props.controller().myDispatch({ type: "SELECT_SNAPSHOT", snapshot: getItem() })
-          }
-        >
-          Edit
-        </button>
-
-        {SwitchUnion(() => getItem().deleteRequest, 'status', {
-          "not-sent": () => this.renderDeleteButton(getItem),
-          "error": (errorProp) => (
-            <span>
-              <span>{() => errorProp().error}</span>
-              {this.renderDeleteButton(getItem)}
-            </span>
-          ),
-          "loading": () => <button disabled>Deleting...</button>,
-          "loaded": () => <div>Deleted</div>,
-        })}
-      </div>
-    );
-  }
-
-  private renderDeleteButton(getItem: () => SnapshotListItem) {
-    return (
-      <button
-        onPointerDown={() =>
-          this.props.controller().myDispatch({
-            type: "DELETE_SNAPSHOT",
-            snapshotId: getItem().snapshot._id,
-          })
-        }
-      >
-        Delete
-      </button>
     );
   }
 }

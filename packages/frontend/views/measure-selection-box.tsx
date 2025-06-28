@@ -7,26 +7,26 @@ import { MeasureStats } from "../../iso/protocol";
 
 export type Model =
   | {
-    measureStats: MeasureStats;
-    state: "typing";
-    query: string;
-    measures: MeasureSpec[];
-  }
+      measureStats: MeasureStats;
+      state: "typing";
+      query: string;
+      measures: MeasureSpec[];
+    }
   | {
-    measureStats: MeasureStats;
-    state: "selected";
-    measureId: MeasureId;
-  };
+      measureStats: MeasureStats;
+      state: "selected";
+      measureId: MeasureId;
+    };
 
 export type Msg =
   | {
-    type: "TYPE_QUERY";
-    query: string;
-  }
+      type: "TYPE_QUERY";
+      query: string;
+    }
   | {
-    type: "SELECT_MEASURE";
-    measureId: MeasureId;
-  };
+      type: "SELECT_MEASURE";
+      measureId: MeasureId;
+    };
 
 export class MeasureSelectionBox extends DCGView.View<{
   measureStats: () => MeasureStats;
@@ -70,26 +70,37 @@ export class MeasureSelectionBox extends DCGView.View<{
   template() {
     const { For, SwitchUnion } = DCGView.Components;
 
-    return SwitchUnion(() => this.state, 'state', {
+    return SwitchUnion(() => this.state, "state", {
       typing: (getState) => (
         <div class="measure-selection-box">
           <input
             type="text"
             value={() => getState().query}
             onChange={(e) =>
-              this.props.myDispatch({ type: "TYPE_QUERY", query: (e.target as HTMLInputElement).value })
+              this.props.myDispatch({
+                type: "TYPE_QUERY",
+                query: (e.target as HTMLInputElement).value,
+              })
             }
             placeholder="Search measures..."
           />
           <ul>
-            <For each={() => getState().measures} key={(measure: MeasureSpec) => measure.id}>
+            <For
+              each={() => getState().measures}
+              key={(measure: MeasureSpec) => measure.id}
+            >
               {(getMeasure: () => MeasureSpec) => (
                 <li
-                  onPointerDown={() =>
-                    this.props.myDispatch({ type: "SELECT_MEASURE", measureId: getMeasure().id })
+                  onClick={() =>
+                    this.props.myDispatch({
+                      type: "SELECT_MEASURE",
+                      measureId: getMeasure().id,
+                    })
                   }
                 >
-                  {() => getMeasure().id}({() => getState().measureStats[getMeasure().id] || 0} snapshots)
+                  {() => getMeasure().id}(
+                  {() => getState().measureStats[getMeasure().id] || 0}{" "}
+                  snapshots)
                 </li>
               )}
             </For>
@@ -99,14 +110,17 @@ export class MeasureSelectionBox extends DCGView.View<{
       selected: (getState) => (
         <div class="measure-selection-box">
           <span
-            onPointerDown={() =>
-              this.props.myDispatch({ type: "TYPE_QUERY", query: getState().measureId })
+            onClick={() =>
+              this.props.myDispatch({
+                type: "TYPE_QUERY",
+                query: getState().measureId,
+              })
             }
           >
             {() => getState().measureId}
           </span>
         </div>
-      )
+      ),
     });
   }
 }

@@ -4,6 +4,8 @@
 
 ClimbCapacity is a climbing performance tracking web application that allows users to record, analyze, and compare their climbing metrics. Built with TypeScript, Express.js, DCGView, and MongoDB.
 
+**Current Status**: The project has been successfully refactored from React to DCGView. The refactor is largely complete with all major components converted to DCGView patterns, including proper controller/view separation and DCGView's reactive data binding system.
+
 ## Architecture
 
 - **Yarn Workspaces Monorepo**: Centralized dependency management with scoped packages
@@ -299,6 +301,14 @@ packages/iso/
 ### DCGView Component Patterns
 
 DCGView is a one-directional view library that renders data to DOM and updates it efficiently. Views are class-based with getter functions for dynamic data binding. **JSX is transformed by Vite** (not DCGView.createElement) for modern build integration.
+
+**Refactor Status**: The codebase has been successfully refactored from React to DCGView. Key changes include:
+
+- Controller/View separation pattern implemented throughout
+- Event handlers changed from `onPointerDown` to `onClick` for better accessibility
+- Proper use of DCGView's `If` component instead of conditional rendering
+- Controllers now use `context: { myDispatch }` pattern instead of direct dispatch props
+- View components broken into smaller, focused components for better maintainability
 
 **Basic View Structure:**
 

@@ -78,7 +78,7 @@ export class SnapshotController {
       snapshot,
       measureStats,
     }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
-    public myDispatch: Dispatch<Msg>,
+    public context: { myDispatch: Dispatch<Msg> },
   ) {
     this.state = {
       snapshot,
@@ -90,7 +90,7 @@ export class SnapshotController {
         },
         {
           myDispatch: (msg: MeasureSelectorMsg) =>
-            this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
+            this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
         },
       ),
       editingState: { state: "not-editing" },
@@ -113,7 +113,7 @@ export class SnapshotController {
               },
               {
                 myDispatch: (msg: EditMeasureOrClassMsg) =>
-                  this.handleDispatch({
+                  this.context.myDispatch({
                     type: "EDIT_MEASURE_OR_CLASS_MSG",
                     msg,
                   }),
@@ -150,7 +150,7 @@ export class SnapshotController {
             });
 
             if (response.ok) {
-              this.handleDispatch({
+              this.context.myDispatch({
                 type: "MEASURE_REQUEST_UPDATE",
                 request: {
                   status: "loaded",
@@ -158,7 +158,7 @@ export class SnapshotController {
                 },
               });
             } else {
-              this.handleDispatch({
+              this.context.myDispatch({
                 type: "MEASURE_REQUEST_UPDATE",
                 request: { status: "error", error: await response.text() },
               });
@@ -208,7 +208,7 @@ export class SnapshotController {
             },
             {
               myDispatch: (msg: MeasureSelectorMsg) =>
-                this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
+                this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
             },
           );
         } else {
@@ -273,7 +273,7 @@ export class SnapshotController {
           });
 
           if (response.ok) {
-            this.handleDispatch({
+            this.context.myDispatch({
               type: "MEASURE_REQUEST_UPDATE",
               request: {
                 status: "loaded",
@@ -281,7 +281,7 @@ export class SnapshotController {
               },
             });
           } else {
-            this.handleDispatch({
+            this.context.myDispatch({
               type: "MEASURE_REQUEST_UPDATE",
               request: { status: "error", error: await response.text() },
             });
@@ -293,56 +293,47 @@ export class SnapshotController {
   }
 }
 
-export class SnapshotView extends DCGView.View<{
-  controller: SnapshotController;
+class NotEditingView extends DCGView.View<{
+  measureSelector: () => MeasureSelectorController;
 }> {
   template() {
-    const stateProp = () => this.props.controller().state;
-    const { SwitchUnion } = DCGView.Components;
-
-    return (
-      <div class="snapshot-view">
-        {SwitchUnion(() => stateProp().editingState, "state", {
-          "not-editing": () => this.renderNotEditing(stateProp),
-          editing: (editingStateProp) => this.renderEditing(editingStateProp),
-          submitting: (submittingStateProp) =>
-            this.renderSubmitting(submittingStateProp),
-        })}
-      </div>
-    );
-  }
-
-  private renderNotEditing(stateProp: () => Model) {
     return (
       <div class="measures-list">
-        <MeasureSelectorView controller={() => stateProp().measureSelector} />
+        <MeasureSelectorView controller={this.props.measureSelector} />
       </div>
     );
   }
+}
 
-  private renderEditing(editingStateProp: () => EditingEditingState) {
+class EditingView extends DCGView.View<{
+  editingState: () => EditingEditingState;
+  dispatch: (msg: Msg) => void;
+}> {
+  template() {
+    const editingState = this.props.editingState();
+
     return (
       <div>
         <EditMeasureOrClassView
-          controller={() => editingStateProp().editMeasureOrClass}
+          controller={() => editingState.editMeasureOrClass}
         />
         <button
-          onPointerDown={() => {
-            if (editingStateProp().editMeasureOrClass.canSubmit) {
-              this.props.controller().handleDispatch({
+          onClick={() => {
+            if (editingState.editMeasureOrClass.canSubmit) {
+              this.props.dispatch({
                 type: "SUBMIT_MEASURE_UPDATE",
               });
             }
           }}
           disabled={() =>
-            editingStateProp().editMeasureOrClass.canSubmit == undefined
+            editingState.editMeasureOrClass.canSubmit == undefined
           }
         >
           Submit
         </button>{" "}
         <button
-          onPointerDown={() => {
-            this.props.controller().handleDispatch({
+          onClick={() => {
+            this.props.dispatch({
               type: "DISCARD_MEASURE_UPDATE",
             });
           }}
@@ -352,16 +343,53 @@ export class SnapshotView extends DCGView.View<{
       </div>
     );
   }
+}
 
-  private renderSubmitting(submittingStateProp: () => SubmittingEditingState) {
+class SubmittingView extends DCGView.View<{
+  submittingState: () => SubmittingEditingState;
+}> {
+  template() {
     const { SwitchUnion } = DCGView.Components;
 
-    return SwitchUnion(() => submittingStateProp().writeRequest, "status", {
-      "not-sent": () => <div>Not Sent</div>,
-      loading: () => <div>Submitting...</div>,
-      error: (errorProp) => <div>Error: {() => errorProp().error}</div>,
-      loaded: () => <div>Done.</div>,
-    });
+    return SwitchUnion(
+      () => this.props.submittingState().writeRequest,
+      "status",
+      {
+        "not-sent": () => <div>Not Sent</div>,
+        loading: () => <div>Submitting...</div>,
+        error: (errorProp) => <div>Error: {() => errorProp().error}</div>,
+        loaded: () => <div>Done.</div>,
+      },
+    );
+  }
+}
+
+export class SnapshotView extends DCGView.View<{
+  controller: SnapshotController;
+}> {
+  template() {
+    const stateProp = () => this.props.controller().state;
+    const dispatch = (msg: Msg) =>
+      this.props.controller().context.myDispatch(msg);
+    const { SwitchUnion } = DCGView.Components;
+
+    return (
+      <div class="snapshot-view">
+        {SwitchUnion(() => stateProp().editingState, "state", {
+          "not-editing": () => (
+            <NotEditingView
+              measureSelector={() => stateProp().measureSelector}
+            />
+          ),
+          editing: (editingStateProp) => (
+            <EditingView editingState={editingStateProp} dispatch={dispatch} />
+          ),
+          submitting: (submittingStateProp) => (
+            <SubmittingView submittingState={submittingStateProp} />
+          ),
+        })}
+      </div>
+    );
   }
 } // Legacy compatibility export
 export const Snapshot = SnapshotController;

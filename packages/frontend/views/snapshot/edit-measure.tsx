@@ -8,8 +8,14 @@ import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
 import { UnitInputController, UnitInputView } from "../unit-input";
 import { Dispatch } from "../../types";
-import { UnitToggleController, UnitToggleView, Msg as UnitToggleMsg } from "../unit-toggle";
+import {
+  UnitToggleController,
+  UnitToggleView,
+  Msg as UnitToggleMsg,
+} from "../unit-toggle";
 import { MeasureStats } from "../../../iso/protocol";
+
+const { If } = DCGView.Components;
 
 export type Model = {
   unitInputController: UnitInputController;
@@ -21,28 +27,28 @@ export type Model = {
     unitToggleController: UnitToggleController;
   };
   canSubmit:
-  | {
-    measureId: MeasureId;
-    value: UnitValue;
-    trainingMeasure?: {
-      measureId: MeasureId;
-      value: UnitValue;
-    };
-  }
-  | undefined;
+    | {
+        measureId: MeasureId;
+        value: UnitValue;
+        trainingMeasure?: {
+          measureId: MeasureId;
+          value: UnitValue;
+        };
+      }
+    | undefined;
 };
 
 export type CanSubmit = Model["canSubmit"];
 
 export type Msg =
   | {
-    type: "UNIT_INPUT_MSG";
-    msg: import("../unit-input").Msg;
-  }
+      type: "UNIT_INPUT_MSG";
+      msg: import("../unit-input").Msg;
+    }
   | {
-    type: "TRAINING_UNIT_INPUT_MSG";
-    msg: import("../unit-input").Msg;
-  };
+      type: "TRAINING_UNIT_INPUT_MSG";
+      msg: import("../unit-input").Msg;
+    };
 
 export class EditMeasureController {
   state: Model;
@@ -57,7 +63,7 @@ export class EditMeasureController {
       measureStats: MeasureStats;
       snapshot: HydratedSnapshot;
     },
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     const unitInputController = new UnitInputController(
       measureId,
@@ -72,11 +78,12 @@ export class EditMeasureController {
         possibleUnits: unitInputController.state.possibleUnits,
       },
       {
-        myDispatch: (msg: UnitToggleMsg) => this.myDispatch({
-          type: "UNIT_INPUT_MSG",
-          msg
-        })
-      }
+        myDispatch: (msg: UnitToggleMsg) =>
+          this.myDispatch({
+            type: "UNIT_INPUT_MSG",
+            msg,
+          }),
+      },
     );
 
     const measure = getSpec(measureId);
@@ -95,11 +102,12 @@ export class EditMeasureController {
           possibleUnits: trainingUnitInputController.state.possibleUnits,
         },
         {
-          myDispatch: (msg: UnitToggleMsg) => this.myDispatch({
-            type: "TRAINING_UNIT_INPUT_MSG",
-            msg
-          })
-        }
+          myDispatch: (msg: UnitToggleMsg) =>
+            this.myDispatch({
+              type: "TRAINING_UNIT_INPUT_MSG",
+              msg,
+            }),
+        },
       );
       trainingMeasure = {
         measureId: trainingMeasureId,
@@ -128,13 +136,17 @@ export class EditMeasureController {
     }
 
     if (model.trainingMeasure) {
-      if (model.trainingMeasure.unitInputController.state.parseResult.status == "success") {
+      if (
+        model.trainingMeasure.unitInputController.state.parseResult.status ==
+        "success"
+      ) {
         return {
           measureId: model.unitInputController.state.measureId,
           value,
           trainingMeasure: {
             measureId: model.trainingMeasure.measureId,
-            value: model.trainingMeasure.unitInputController.state.parseResult.value,
+            value:
+              model.trainingMeasure.unitInputController.state.parseResult.value,
           },
         };
       } else {
@@ -175,12 +187,18 @@ export class EditMeasureView extends DCGView.View<{
           unitInputController={() => stateProp().unitInputController}
           unitToggleController={() => stateProp().unitToggleController}
         />
-        {() => stateProp().trainingMeasure && (
-          <EditMeasureItemView
-            unitInputController={() => stateProp().trainingMeasure!.unitInputController}
-            unitToggleController={() => stateProp().trainingMeasure!.unitToggleController}
-          />
-        )}
+        <If predicate={() => !!stateProp().trainingMeasure}>
+          {() => (
+            <EditMeasureItemView
+              unitInputController={() =>
+                stateProp().trainingMeasure!.unitInputController
+              }
+              unitToggleController={() =>
+                stateProp().trainingMeasure!.unitToggleController
+              }
+            />
+          )}
+        </If>
       </div>
     );
   }
@@ -198,12 +216,14 @@ class EditMeasureItemView extends DCGView.View<{
       <div class="measure-item">
         <label>{measure.name}</label>
         <pre>{measure.description}</pre>
-        <UnitInputView
-          controller={() => this.props.unitInputController()}
-        />
-        {() => measure.units.length > 1 && (
-          <UnitToggleView controller={() => this.props.unitToggleController()} />
-        )}
+        <UnitInputView controller={() => this.props.unitInputController()} />
+        <If predicate={() => measure.units.length > 1}>
+          {() => (
+            <UnitToggleView
+              controller={() => this.props.unitToggleController()}
+            />
+          )}
+        </If>
       </div>
     );
   }

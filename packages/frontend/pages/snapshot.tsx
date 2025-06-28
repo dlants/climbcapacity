@@ -1,10 +1,11 @@
 import * as DCGView from "dcgview";
 import type { Snapshot, Dispatch } from "../types";
-import { SnapshotController, SnapshotView, Msg as LoadedSnapshotMsg } from "../views/snapshot";
 import {
-  assertUnreachable,
-  RequestStatus,
-} from "../util/utils";
+  SnapshotController,
+  SnapshotView,
+  Msg as LoadedSnapshotMsg,
+} from "../views/snapshot";
+import { assertUnreachable, RequestStatus } from "../util/utils";
 import { MeasureStats, SnapshotId } from "../../iso/protocol";
 import { hydrateSnapshot } from "../util/snapshot";
 
@@ -16,13 +17,13 @@ export type Model = {
 
 export type Msg =
   | {
-    type: "SNAPSHOT_RESPONSE";
-    request: RequestStatus<SnapshotController>;
-  }
+      type: "SNAPSHOT_RESPONSE";
+      request: RequestStatus<SnapshotController>;
+    }
   | {
-    type: "LOADED_SNAPSHOT_MSG";
-    msg: LoadedSnapshotMsg;
-  };
+      type: "LOADED_SNAPSHOT_MSG";
+      msg: LoadedSnapshotMsg;
+    };
 
 export class SnapshotPageController {
   state: Model;
@@ -30,7 +31,7 @@ export class SnapshotPageController {
   constructor(
     snapshotId: SnapshotId,
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     this.state = {
       snapshotId,
@@ -59,7 +60,10 @@ export class SnapshotPageController {
           measureStats: this.state.measureStats,
           snapshot: hydrateSnapshot(snapshot),
         },
-        (msg: LoadedSnapshotMsg) => this.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg })
+        {
+          myDispatch: (msg: LoadedSnapshotMsg) =>
+            this.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }),
+        },
       );
       this.myDispatch({
         type: "SNAPSHOT_RESPONSE",
@@ -89,7 +93,6 @@ export class SnapshotPageController {
         assertUnreachable(msg);
     }
   }
-
 }
 
 export class SnapshotPageView extends DCGView.View<{
@@ -101,11 +104,18 @@ export class SnapshotPageView extends DCGView.View<{
 
     return (
       <div>
-        {SwitchUnion(() => stateProp().snapshotRequest, 'status', {
+        {SwitchUnion(() => stateProp().snapshotRequest, "status", {
           "not-sent": () => <div />,
-          "loading": () => <div>Loading...</div>,
-          "error": (errorProp: () => { status: 'error'; error: string }) => <div>Error loading snapshot: {() => errorProp().error}</div>,
-          "loaded": (loadedProp: () => { status: 'loaded'; response: SnapshotController }) => <SnapshotView controller={() => loadedProp().response} />,
+          loading: () => <div>Loading...</div>,
+          error: (errorProp: () => { status: "error"; error: string }) => (
+            <div>Error loading snapshot: {() => errorProp().error}</div>
+          ),
+          loaded: (
+            loadedProp: () => {
+              status: "loaded";
+              response: SnapshotController;
+            },
+          ) => <SnapshotView controller={() => loadedProp().response} />,
         })}
       </div>
     );
