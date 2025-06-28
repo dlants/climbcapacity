@@ -34,7 +34,7 @@ export class Checkbox extends DCGView.Class<Props> {
         class={() => ({
           checked: this.props.checked()
         })}
-        onTap={() => this.onChange()}
+        onClick{() => this.onChange()}
       >
         <span tabIndex={0} class="checkbox">
           My check <i class="pillow-icon-check" />;
@@ -58,7 +58,7 @@ A few things to note here.
 2. It accepts `Props`, accessible via `this.props`, containing the `checked` property. This is how the view accesses the current state of the application.
 3. It defines a `template` function, which contains a declaration of what should be rendered on the page.
 4. The template uses `this.props.checked` to define what the class of the rendered checkbox should be.
-5. The template also binds the `onTap` property on the `div` containing the checkbox. This attaches a listener to the DOM that dispatches (via the `dispatch` prop) an action when it is clicked, thus hooking up this view to the update cycle.
+5. The template also binds the `onClick` property on the `div` containing the checkbox. This attaches a listener to the DOM that dispatches (via the `dispatch` prop) an action when it is clicked, thus hooking up this view to the update cycle.
 
 ## The template & TSX/JSX
 
@@ -72,7 +72,7 @@ return (DCGView.createElement("div", {
         checked: this.props.checked()
       };
     },
-    onTap: function () { return _this.onChange(); }
+    onClick; }
   },
   DCGView.createElement("span", { tabIndex: DCGView.const(0), class: DCGView.const("checkbox")},
     DCGView.const("My check"),
@@ -168,7 +168,7 @@ export class Checkbox extends DCGView.Class<{
             checked: this.props.checked()
           })
         }
-        onTap={() => this.props.onChange(!this.props.checked())}
+        onClick={() => this.props.onChange(!this.props.checked())}
       >
         <span
           tabIndex={0}
@@ -201,7 +201,7 @@ So far, we've seen how DCGView can be used to control the text, classes and vari
 In order to accomplish this, DCGView comes with some helper components. Here we will describe a couple of them:
 
 ```tsx
-import * as DCGView from 'dcgview';
+import * as DCGView from "dcgview";
 const { If, For } = DCGView.Components;
 
 class TodoList extends DCGView.Class<{

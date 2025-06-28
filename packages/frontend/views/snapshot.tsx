@@ -14,9 +14,15 @@ import {
   getSpec,
   MeasureId,
 } from "../../iso/measures";
-import { MeasureSelectorController, MeasureSelectorView } from "./snapshot/measure-selector";
+import {
+  MeasureSelectorController,
+  MeasureSelectorView,
+} from "./snapshot/measure-selector";
 import type { Msg as MeasureSelectorMsg } from "./snapshot/measure-selector";
-import { EditMeasureOrClassController, EditMeasureOrClassView } from "./snapshot/edit-measure-or-class";
+import {
+  EditMeasureOrClassController,
+  EditMeasureOrClassView,
+} from "./snapshot/edit-measure-or-class";
 import type { Msg as EditMeasureOrClassMsg } from "./snapshot/edit-measure-or-class";
 
 type EditingEditingState = {
@@ -34,8 +40,8 @@ type EditingState =
   | EditingEditingState
   | SubmittingEditingState
   | {
-    state: "not-editing";
-  };
+      state: "not-editing";
+    };
 
 export type Model = {
   snapshot: HydratedSnapshot;
@@ -46,30 +52,33 @@ export type Model = {
 
 export type Msg =
   | {
-    type: "MEASURE_SELECTOR_MSG";
-    msg: MeasureSelectorMsg;
-  }
+      type: "MEASURE_SELECTOR_MSG";
+      msg: MeasureSelectorMsg;
+    }
   | {
-    type: "EDIT_MEASURE_OR_CLASS_MSG";
-    msg: EditMeasureOrClassMsg;
-  }
+      type: "EDIT_MEASURE_OR_CLASS_MSG";
+      msg: EditMeasureOrClassMsg;
+    }
   | {
-    type: "SUBMIT_MEASURE_UPDATE";
-  }
+      type: "SUBMIT_MEASURE_UPDATE";
+    }
   | {
-    type: "DISCARD_MEASURE_UPDATE";
-  }
+      type: "DISCARD_MEASURE_UPDATE";
+    }
   | {
-    type: "MEASURE_REQUEST_UPDATE";
-    request: RequestStatus<void>;
-  };
+      type: "MEASURE_REQUEST_UPDATE";
+      request: RequestStatus<void>;
+    };
 
 export class SnapshotController {
   state: Model;
 
   constructor(
-    { snapshot, measureStats }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
-    public myDispatch: Dispatch<Msg>
+    {
+      snapshot,
+      measureStats,
+    }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
+    public myDispatch: Dispatch<Msg>,
   ) {
     this.state = {
       snapshot,
@@ -77,10 +86,12 @@ export class SnapshotController {
       measureSelector: new MeasureSelectorController(
         {
           snapshot,
-          measureStats
-        }, {
-        myDispatch: (msg: MeasureSelectorMsg) => this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
-      }
+          measureStats,
+        },
+        {
+          myDispatch: (msg: MeasureSelectorMsg) =>
+            this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
+        },
       ),
       editingState: { state: "not-editing" },
     };
@@ -99,9 +110,14 @@ export class SnapshotController {
                 init: msg.msg.update,
                 snapshot: this.state.snapshot,
                 measureStats: this.state.measureStats,
-              }, {
-              myDispatch: (msg: EditMeasureOrClassMsg) => this.handleDispatch({ type: "EDIT_MEASURE_OR_CLASS_MSG", msg })
-            }
+              },
+              {
+                myDispatch: (msg: EditMeasureOrClassMsg) =>
+                  this.handleDispatch({
+                    type: "EDIT_MEASURE_OR_CLASS_MSG",
+                    msg,
+                  }),
+              },
             ),
           };
         } else if (msg.msg.type == "DELETE_MEASURE") {
@@ -120,7 +136,8 @@ export class SnapshotController {
 
           const measure = getSpec(msg.msg.measureId);
           if (measure.type == "input") {
-            requestParams.deletes![generateTrainingMeasureId(measure.id)] = true;
+            requestParams.deletes![generateTrainingMeasureId(measure.id)] =
+              true;
           }
 
           (async () => {
@@ -173,7 +190,8 @@ export class SnapshotController {
             const measureId = measureIdStr as MeasureId;
             const value = editingState.requestParams.updates![measureId];
             nextSnapshot.measures[measureId] = value;
-            nextSnapshot.normalizedMeasures[measureId] = convertToStandardUnit(value);
+            nextSnapshot.normalizedMeasures[measureId] =
+              convertToStandardUnit(value);
           }
           for (const measureIdStr in editingState.requestParams.deletes || {}) {
             const measureId = measureIdStr as MeasureId;
@@ -187,9 +205,12 @@ export class SnapshotController {
             {
               snapshot: nextSnapshot,
               measureStats: this.state.measureStats,
-            }, {
-            myDispatch: (msg: MeasureSelectorMsg) => this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
-          });
+            },
+            {
+              myDispatch: (msg: MeasureSelectorMsg) =>
+                this.handleDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
+            },
+          );
         } else {
           const editingState = this.state.editingState;
           if (!(editingState.state == "submitting")) {
@@ -222,9 +243,7 @@ export class SnapshotController {
         const canSubmit = editMeasureOrClass.canSubmit;
 
         if (!canSubmit) {
-          throw new Error(
-            `Cannot submit - canSubmit is not available`,
-          );
+          throw new Error(`Cannot submit - canSubmit is not available`);
         }
 
         const requestParams: SnapshotUpdateRequest = {
@@ -272,7 +291,6 @@ export class SnapshotController {
       }
     }
   }
-
 }
 
 export class SnapshotView extends DCGView.View<{
@@ -284,10 +302,11 @@ export class SnapshotView extends DCGView.View<{
 
     return (
       <div class="snapshot-view">
-        {SwitchUnion(() => stateProp().editingState, 'state', {
+        {SwitchUnion(() => stateProp().editingState, "state", {
           "not-editing": () => this.renderNotEditing(stateProp),
-          "editing": (editingStateProp) => this.renderEditing(editingStateProp),
-          "submitting": (submittingStateProp) => this.renderSubmitting(submittingStateProp),
+          editing: (editingStateProp) => this.renderEditing(editingStateProp),
+          submitting: (submittingStateProp) =>
+            this.renderSubmitting(submittingStateProp),
         })}
       </div>
     );
@@ -304,7 +323,9 @@ export class SnapshotView extends DCGView.View<{
   private renderEditing(editingStateProp: () => EditingEditingState) {
     return (
       <div>
-        <EditMeasureOrClassView controller={() => editingStateProp().editMeasureOrClass} />
+        <EditMeasureOrClassView
+          controller={() => editingStateProp().editMeasureOrClass}
+        />
         <button
           onPointerDown={() => {
             if (editingStateProp().editMeasureOrClass.canSubmit) {
@@ -313,7 +334,9 @@ export class SnapshotView extends DCGView.View<{
               });
             }
           }}
-          disabled={() => editingStateProp().editMeasureOrClass.canSubmit == undefined}
+          disabled={() =>
+            editingStateProp().editMeasureOrClass.canSubmit == undefined
+          }
         >
           Submit
         </button>{" "}
@@ -333,12 +356,12 @@ export class SnapshotView extends DCGView.View<{
   private renderSubmitting(submittingStateProp: () => SubmittingEditingState) {
     const { SwitchUnion } = DCGView.Components;
 
-    return SwitchUnion(() => submittingStateProp().writeRequest, 'status', {
+    return SwitchUnion(() => submittingStateProp().writeRequest, "status", {
       "not-sent": () => <div>Not Sent</div>,
       loading: () => <div>Submitting...</div>,
       error: (errorProp) => <div>Error: {() => errorProp().error}</div>,
       loaded: () => <div>Done.</div>,
     });
   }
-}// Legacy compatibility export
+} // Legacy compatibility export
 export const Snapshot = SnapshotController;

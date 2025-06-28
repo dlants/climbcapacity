@@ -320,7 +320,7 @@ class UserView extends DCGView.Class<Props> {
         {() => this.props.user()?.name || 'Guest'}
 
         {/* Event handlers */}
-        <button onTap={() => this.handleClick()}>
+        <button onClick={() => this.handleClick()}>
           Click me
         </button>
       </div>

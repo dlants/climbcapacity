@@ -41,7 +41,7 @@ import {
   criticalForceClass,
 } from "../../../iso/measures/forcemeter";
 import { InitOptions } from "./edit-measure-or-class";
-import { MEASURES } from '../../../iso/measures'
+import { MEASURES } from "../../../iso/measures";
 
 type MeasureItem = {
   type: "measure-item";
@@ -68,13 +68,16 @@ export class MeasureSelectorController {
   state: Model;
 
   constructor(
-    { snapshot, measureStats }: {
-      snapshot: HydratedSnapshot,
-      measureStats: MeasureStats,
+    {
+      snapshot,
+      measureStats,
+    }: {
+      snapshot: HydratedSnapshot;
+      measureStats: MeasureStats;
     },
     public context: {
-      myDispatch: Dispatch<Msg>
-    }
+      myDispatch: Dispatch<Msg>;
+    },
   ) {
     this.state = {
       query: "",
@@ -94,14 +97,13 @@ export class MeasureSelectorController {
         break;
       case "DELETE_MEASURE":
       case "INIT_UPDATE":
-        this.context.myDispatch(msg);
+        // do nothing since we will cover this in the parent component
         break;
       default:
         assertUnreachable(msg);
     }
   }
 }
-
 
 export class MeasureSelectorView extends DCGView.View<{
   controller: MeasureSelectorController;
@@ -119,15 +121,20 @@ export class MeasureSelectorView extends DCGView.View<{
           onChange={(e) =>
             this.props.controller().handleDispatch({
               type: "UPDATE_QUERY",
-              query: (e.target as HTMLInputElement).value
+              query: (e.target as HTMLInputElement).value,
             })
           }
         />
-        <For each={() => stateProp().items} key={(item, idx) => item.type + '_' + idx}>
+        <For
+          each={() => stateProp().items}
+          key={(item, idx) => item.type + "_" + idx}
+        >
           {(item) =>
             DCGView.Components.SwitchUnion(() => item().type, {
-              "measure-item": () => this.renderMeasureItem(item() as MeasureItem, stateProp),
-              "measure-group": () => this.renderMeasureGroup(item() as MeasureGroup, stateProp)
+              "measure-item": () =>
+                this.renderMeasureItem(item() as MeasureItem, stateProp),
+              "measure-group": () =>
+                this.renderMeasureGroup(item() as MeasureGroup, stateProp),
             })
           }
         </For>
@@ -196,18 +203,25 @@ export class MeasureSelectorView extends DCGView.View<{
           </button>
         </div>
 
-        <div class="measure-class-items" style={DCGView.const({ "padding-left": "10px" })}>
+        <div
+          class="measure-class-items"
+          style={DCGView.const({ "padding-left": "10px" })}
+        >
           <For each={() => item.items} key={(item) => item.spec.id}>
             {(measureItem) => {
-              const measureStatsCount = stateProp().measureStats[measureItem().spec.id] || 0;
-              const unitValue = stateProp().snapshot.measures[measureItem().spec.id];
+              const measureStatsCount =
+                stateProp().measureStats[measureItem().spec.id] || 0;
+              const unitValue =
+                stateProp().snapshot.measures[measureItem().spec.id];
 
               return (
                 <div class="measure-item">
                   <label>
                     {measureItem().spec.name} ({measureStatsCount} snapshots)
                   </label>{" "}
-                  {unitValue ? unitValueToString(unitValue as UnitValue) : "N / A"}{" "}
+                  {unitValue
+                    ? unitValueToString(unitValue as UnitValue)
+                    : "N / A"}{" "}
                   <button
                     onPointerDown={() => {
                       this.props.controller().handleDispatch({
@@ -356,7 +370,12 @@ export function getAllItems(): Item[] {
     {
       type: "measure-group",
       name: "force meter",
-      measureClasses: [peakloadClass, avgLoadClass, rfdClass, criticalForceClass],
+      measureClasses: [
+        peakloadClass,
+        avgLoadClass,
+        rfdClass,
+        criticalForceClass,
+      ],
       items: MEASURES.filter(
         (s) =>
           s.spec?.className === peakloadClass.className ||
@@ -448,14 +467,14 @@ export function getItems(model: Omit<Model, "items">): Item[] {
 
 export type Msg =
   | {
-    type: "UPDATE_QUERY";
-    query: string;
-  }
+      type: "UPDATE_QUERY";
+      query: string;
+    }
   | {
-    type: "INIT_UPDATE";
-    update: InitOptions;
-  }
+      type: "INIT_UPDATE";
+      update: InitOptions;
+    }
   | {
-    type: "DELETE_MEASURE";
-    measureId: MeasureId;
-  };
+      type: "DELETE_MEASURE";
+      measureId: MeasureId;
+    };

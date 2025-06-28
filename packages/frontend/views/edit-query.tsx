@@ -1,6 +1,9 @@
 import DCGView from "dcgview";
 import { Dispatch } from "../types";
-import { MeasureSelectionBox, Msg as MeasureSelectionMsg } from "./measure-selection-box";
+import {
+  MeasureSelectionBox,
+  Msg as MeasureSelectionMsg,
+} from "./measure-selection-box";
 import { InitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../../iso/measures";
@@ -10,7 +13,11 @@ import {
   Dataset,
   DATASETS,
 } from "../../iso/protocol";
-import { FilterController, FilterView, Msg as FilterMsg } from "./filters/filter";
+import {
+  FilterController,
+  FilterView,
+  Msg as FilterMsg,
+} from "./filters/filter";
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
@@ -33,14 +40,14 @@ export type Model = {
 export type Msg =
   | { type: "REMOVE_FILTER"; measureId: MeasureId }
   | {
-    type: "MEASURE_SELECTOR_MSG";
-    msg: MeasureSelectionMsg;
-  }
+      type: "MEASURE_SELECTOR_MSG";
+      msg: MeasureSelectionMsg;
+    }
   | {
-    type: "TOGGLE_DATASET";
-    dataset: Dataset;
-    include: boolean;
-  }
+      type: "TOGGLE_DATASET";
+      dataset: Dataset;
+      include: boolean;
+    }
   | { type: "FILTER_MSG"; measureId: MeasureId; msg: FilterMsg };
 
 export type InitialFilters = {
@@ -58,16 +65,21 @@ export class EditQueryController {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     const filters: FilterController[] = [];
     for (const measureIdStr in initialFilters) {
       const measureId = measureIdStr as MeasureId;
       const initialFilter = initialFilters[measureId];
-      filters.push(new FilterController(
-        { measureId, initialFilter },
-        { myDispatch: (msg) => this.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
-      ));
+      filters.push(
+        new FilterController(
+          { measureId, initialFilter },
+          {
+            myDispatch: (msg) =>
+              this.myDispatch({ type: "FILTER_MSG", measureId, msg }),
+          },
+        ),
+      );
     }
 
     this.state = {
@@ -122,10 +134,12 @@ export class EditQueryController {
                 measureId: measureId,
                 initialFilter: spec.initialFilter,
               },
-              { myDispatch: (msg) => this.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+              {
+                myDispatch: (msg) =>
+                  this.myDispatch({ type: "FILTER_MSG", measureId, msg }),
+              },
             ),
           );
-
         }
         break;
 
@@ -171,7 +185,12 @@ export class EditQueryView extends DCGView.View<{
 
     return (
       <div>
-        <For each={() => state().filters} key={(filter: FilterController) => controller().getFilterMeasureId(filter)}>
+        <For
+          each={() => state().filters}
+          key={(filter: FilterController) =>
+            controller().getFilterMeasureId(filter)
+          }
+        >
           {(getFilter: () => FilterController) => {
             const measureId = controller().getFilterMeasureId(getFilter());
             return (
@@ -185,7 +204,7 @@ export class EditQueryView extends DCGView.View<{
                 </div>
                 <div class={DCGView.const(styles.item)}>
                   <button
-                    onTap={() =>
+                    onClick={() =>
                       controller().myDispatch({
                         type: "REMOVE_FILTER",
                         measureId: measureId,
@@ -201,7 +220,9 @@ export class EditQueryView extends DCGView.View<{
         </For>
         <MeasureSelectionBox
           measureStats={() => state().measureStats}
-          myDispatch={(msg: MeasureSelectionMsg) => controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })}
+          myDispatch={(msg: MeasureSelectionMsg) =>
+            controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+          }
         />
         <For.Simple each={() => DATASETS}>
           {(dataset: Dataset) => (
@@ -228,7 +249,9 @@ export class EditQueryView extends DCGView.View<{
   }
 }
 
-export function generateFiltersMap(editQuery: EditQueryController): FilterMapping {
+export function generateFiltersMap(
+  editQuery: EditQueryController,
+): FilterMapping {
   const filterMapping: FilterMapping = {};
   for (const filter of editQuery.state.filters) {
     const measureId = editQuery.getFilterMeasureId(filter);
@@ -254,9 +277,7 @@ export function getQuery(editQuery: EditQueryController): {
     const measureId = editQuery.getFilterMeasureId(filter);
     query.measures[measureId] = editQuery.getFilterQuery(filter);
     queryHashParts.push(
-      measureId +
-      ":" +
-      JSON.stringify(query.measures[measureId]),
+      measureId + ":" + JSON.stringify(query.measures[measureId]),
     );
   });
 
@@ -288,5 +309,5 @@ const styles = typestyle.stylesheet({
   item: {
     ...csstips.content,
   },
-});// Legacy export for backward compatibility
+}); // Legacy export for backward compatibility
 export const EditQuery = EditQueryController;

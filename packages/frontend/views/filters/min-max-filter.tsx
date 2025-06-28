@@ -9,6 +9,8 @@ import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
 
+const { If } = DCGView.Components;
+
 export type Model = {
   measureId: MeasureId;
   minInputController: UnitInputController;
@@ -51,17 +53,19 @@ export class MinMaxFilterController {
     measureId: MeasureId,
     minValue: UnitValue,
     maxValue: UnitValue,
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     const minInputController = new UnitInputController(
       measureId,
-      (msg: import("../unit-input").Msg) => this.myDispatch({ type: "MIN_INPUT_MSG", msg }),
-      minValue
+      (msg: import("../unit-input").Msg) =>
+        this.myDispatch({ type: "MIN_INPUT_MSG", msg }),
+      minValue,
     );
     const maxInputController = new UnitInputController(
       measureId,
-      (msg: import("../unit-input").Msg) => this.myDispatch({ type: "MAX_INPUT_MSG", msg }),
-      maxValue
+      (msg: import("../unit-input").Msg) =>
+        this.myDispatch({ type: "MAX_INPUT_MSG", msg }),
+      maxValue,
     );
     const unitToggleController = new UnitToggleController(
       {
@@ -69,7 +73,10 @@ export class MinMaxFilterController {
         selectedUnit: minInputController.state.selectedUnit,
         possibleUnits: minInputController.state.possibleUnits,
       },
-      { myDispatch: (msg: import("../unit-toggle").Msg) => this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }) }
+      {
+        myDispatch: (msg: import("../unit-toggle").Msg) =>
+          this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }),
+      },
     );
     this.state = {
       measureId,
@@ -158,16 +165,26 @@ export class MinMaxFilterView extends DCGView.View<{
     return (
       <div class={DCGView.const(styles.container)}>
         <div class={DCGView.const(styles.item)}>
-          min: <UnitInputView controller={() => stateProp().minInputController} />
+          min:{" "}
+          <UnitInputView controller={() => stateProp().minInputController} />
         </div>
         <div class={DCGView.const(styles.item)}>
-          max: <UnitInputView controller={() => stateProp().maxInputController} />
+          max:{" "}
+          <UnitInputView controller={() => stateProp().maxInputController} />
         </div>
-        {() => stateProp().minInputController.state.possibleUnits.length > 1 && (
-          <div class={DCGView.const(styles.item)}>
-            <UnitToggleView controller={() => stateProp().unitToggleController} />
-          </div>
-        )}
+        <If
+          predicate={() =>
+            stateProp().minInputController.state.possibleUnits.length > 1
+          }
+        >
+          {() => (
+            <div class={DCGView.const(styles.item)}>
+              <UnitToggleView
+                controller={() => stateProp().unitToggleController}
+              />
+            </div>
+          )}
+        </If>
       </div>
     );
   }

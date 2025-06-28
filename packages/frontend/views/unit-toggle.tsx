@@ -26,7 +26,7 @@ export class UnitToggleController {
       selectedUnit: UnitType;
       possibleUnits: UnitType[];
     },
-    private context: { myDispatch: Dispatch<Msg> },
+    public context: { myDispatch: Dispatch<Msg> },
   ) {
     this.state = {
       measureId: initialState.measureId,
@@ -45,7 +45,6 @@ export class UnitToggleController {
         }
 
         this.state.selectedUnit = msg.unit;
-        this.context.myDispatch(msg);
         break;
       }
       default:
@@ -80,7 +79,7 @@ export class UnitToggleView extends DCGView.View<{
                 onChange={() =>
                   this.props
                     .controller()
-                    .handleDispatch({ type: "SELECT_UNIT", unit })
+                    .context.myDispatch({ type: "SELECT_UNIT", unit })
                 }
               />
               <label>{unit}</label>

@@ -1,7 +1,11 @@
 import * as DCGView from "dcgview";
 import { Dispatch } from "../types";
 import { assertUnreachable } from "../util/utils";
-import { ReportCardMainController, ReportCardMainView, Msg as ReportCardMsg } from "../views/reportcard/main";
+import {
+  ReportCardMainController,
+  ReportCardMainView,
+  Msg as ReportCardMsg,
+} from "../views/reportcard/main";
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../../iso/measures";
@@ -21,7 +25,7 @@ export class ExploreController {
 
   constructor(
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
     const initialFilters: InitialFilters = {};
     for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
@@ -32,12 +36,16 @@ export class ExploreController {
       initialFilters[measure.id] = measure.initialFilter;
     }
 
-    const reportCardMain = new ReportCardMainController({
-      initialFilters,
-      measureStats,
-      mySnapshot: undefined,
-    },
-      { myDispatch: (msg: ReportCardMsg) => this.myDispatch({ type: "REPORT_CARD_MSG", msg }) }
+    const reportCardMain = new ReportCardMainController(
+      {
+        initialFilters,
+        measureStats,
+        mySnapshot: undefined,
+      },
+      {
+        myDispatch: (msg: ReportCardMsg) =>
+          this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
+      },
     );
 
     this.state = {
@@ -65,9 +73,6 @@ export class ExploreView extends DCGView.View<{
   template() {
     const stateProp = () => this.props.controller().state;
 
-    return (
-      <ReportCardMainView controller={() => stateProp().reportCardMain} />
-    );
+    return <ReportCardMainView controller={() => stateProp().reportCardMain} />;
   }
 }
-

@@ -88,7 +88,7 @@ export class SendLinkView extends DCGView.View<{
         />
         <button
           disabled={() => stateProp().signinRequest.status === "loading"}
-          onPointerDown={() =>
+          onClick={() =>
             this.props.controller().myDispatch({ type: "SEND_MAGIC_LINK" })
           }
         >
