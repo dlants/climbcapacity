@@ -1,3 +1,62 @@
-node_modules
-dist
+# Node modules - will be installed fresh in Docker
+node_modules/
+packages/*/node_modules/
+
+# Build outputs - will be generated during Docker build
+dist/
+packages/backend/dist/
+packages/frontend/dist/
+packages/build-tools/dist/
+packages/eslint-rules/dist/
+
+# Development files
+*.log
+tsc.log
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Temporary files
+tmp/
+temp/
+
+# Yarn cache and state
+.yarn/cache/
+.yarn/install-state.gz
+.pnp.*
+
+# Package manager lock files (will use the copied one)
+# yarn.lock is intentionally not ignored as we want the exact versions

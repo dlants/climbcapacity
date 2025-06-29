@@ -14,7 +14,7 @@
     "dev:frontend": "yarn workspace @climbcapacity/build-tools dev:frontend",
     "dev:backend": "yarn workspace @climbcapacity/backend dev",
     "dev": "yarn dev:frontend & yarn dev:backend",
-    "build": "yarn workspace @climbcapacity/build-tools build:frontend",
+    "build": "yarn workspace @climbcapacity/backend build && yarn workspace @climbcapacity/build-tools build:frontend",
     "build:eslint-rules": "yarn workspace @climbcapacity/eslint-rules build",
     "test:e2e": "yarn workspace @climbcapacity/build-tools test:e2e",
     "test:e2e:ui": "yarn workspace @climbcapacity/build-tools test:e2e:ui",
