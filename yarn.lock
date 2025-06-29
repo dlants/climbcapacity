@@ -119,6 +119,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@climbcapacity/build-tools@workspace:packages/build-tools"
   dependencies:
+    "@babel/generator": "npm:^7.27.5"
+    "@babel/parser": "npm:^7.27.7"
+    "@babel/traverse": "npm:^7.27.7"
+    "@babel/types": "npm:^7.27.7"
     "@climbcapacity/eslint-rules": "workspace:*"
     "@eslint/js": "npm:^9.29.0"
     "@playwright/test": "npm:^1.49.0"

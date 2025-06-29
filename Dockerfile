@@ -1,26 +1,44 @@
-# Client build stage
-FROM node:20-slim
+# Build stage
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-COPY packages/iso/package.json packages/iso/yarn.lock ./packages/iso/
-RUN yarn workspace @climbcapacity/iso install
+# Enable Corepack and use the correct Yarn version
+RUN corepack enable
 
-COPY packages/backend/package.json packages/backend/yarn.lock ./packages/backend/
-RUN yarn workspace @climbcapacity/backend install
+# Copy workspace configuration
+COPY package.json yarn.lock ./
+COPY packages/ ./packages/
 
-COPY packages/frontend/package.json packages/frontend/yarn.lock ./packages/frontend/
-RUN yarn workspace @climbcapacity/frontend install
+# Install all dependencies (workspaces)
+RUN yarn install --immutable
 
-COPY packages/iso/ ./packages/iso/
+# Copy source code
+COPY packages/ ./packages/
 
-COPY packages/backend/ ./packages/backend
-RUN yarn workspace @climbcapacity/backend build
+# Build the application
+RUN yarn build
 
-COPY packages/frontend/ ./packages/frontend
-RUN yarn workspace @climbcapacity/frontend build
+# Production stage
+FROM node:20-slim AS production
 
 WORKDIR /app
+
+# Enable Corepack and use the correct Yarn version
+RUN corepack enable
+
+# Copy workspace configuration and only necessary package.json files
+COPY package.json yarn.lock ./
+COPY packages/backend/package.json ./packages/backend/
+COPY packages/iso/package.json ./packages/iso/
+
+# Install only production dependencies for backend and iso
+RUN yarn workspaces focus @climbcapacity/backend --production
+
+# Copy built assets and runtime dependencies from builder stage
+COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+COPY --from=builder /app/packages/frontend/dist ./packages/frontend/dist
+COPY --from=builder /app/packages/iso ./packages/iso
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -29,4 +47,4 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # Start the server
-CMD ["node", "backend/dist/backend/app.js"]
+CMD ["yarn", "node", "packages/backend/dist/backend/app.js"]

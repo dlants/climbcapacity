@@ -42,9 +42,9 @@ async function run() {
   });
 
   app.use(express.json());
-  // once built, this file will be in /app/backend/dist/backend/app.js
-  // the built client assets will be in /app/client/dist/
-  app.use(express.static(path.join(__dirname, "../../../client/dist")));
+  // once built, this file will be in /app/packages/backend/dist/backend/app.js
+  // the built frontend assets will be in /app/packages/frontend/dist/
+  app.use(express.static(path.join(__dirname, "../../../frontend/dist")));
 
   const auth = new Auth({ app, client, env });
   const snapshotModel = new SnapshotsModel({ client });
@@ -312,7 +312,7 @@ async function run() {
   // (for SPA)
   app.use("/*", (req, res, next) => {
     if (!req.path.startsWith("/api")) {
-      res.sendFile(path.join(__dirname, "../../../client/dist/index.html"));
+      res.sendFile(path.join(__dirname, "../../../frontend/dist/index.html"));
     } else {
       next();
     }

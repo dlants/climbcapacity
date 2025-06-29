@@ -468,6 +468,15 @@ yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts  # Reset database (
 # Build
 yarn build                 # Build for production (build-tools handles frontend)
 yarn build:frontend        # Frontend build only (via build-tools)
+
+# Production Docker Deployment
+docker build -t climbcapacity .                    # Build production Docker image
+docker run -p 3000:3000 \                         # Run production container
+  -e MONGODB_URL=mongodb://host:port/database \
+  -e RELEASE_STAGE=prod \
+  -e BASE_URL=https://your-domain.com \
+  -e RESEND_API_KEY=your_resend_api_key \
+  climbcapacity
 ```
 
 ### Command Flow
@@ -478,6 +487,52 @@ Root scripts delegate to workspace commands which execute build tools:
 - `yarn build:frontend` → `yarn workspace @climbcapacity/build-tools build:frontend` → `vite build --config vite.config.ts`
 - `yarn test:e2e` → `yarn workspace @climbcapacity/build-tools test:e2e` → `playwright test --config playwright.config.ts`
 - `yarn lint` → `eslint .` (uses root eslint.config.js, not via build-tools)
+## Production Deployment
+
+### Docker Production Setup
+
+The application is containerized using a multi-stage Docker build:
+
+1. **Builder Stage**: Installs dependencies and builds the application using Vite
+2. **Production Stage**: Creates a minimal runtime image with only production dependencies
+
+### Required Environment Variables
+
+For production deployment, set the following environment variables:
+
+```bash
+MONGODB_URL=mongodb://your-mongo-host:27017/climbcapacity  # MongoDB connection string
+RELEASE_STAGE=prod                                         # Sets production mode
+BASE_URL=https://your-domain.com                          # Base URL for the application
+RESEND_API_KEY=your_resend_api_key                        # Email service API key
+```
+
+### Docker Deployment Commands
+
+```bash
+# Build the production Docker image
+docker build -t climbcapacity .
+
+# Run the container with environment variables
+docker run -d -p 3000:3000 \
+  -e MONGODB_URL=mongodb://your-mongo-host:27017/climbcapacity \
+  -e RELEASE_STAGE=prod \
+  -e BASE_URL=https://your-domain.com \
+  -e RESEND_API_KEY=your_resend_api_key \
+  --name climbcapacity-prod \
+  climbcapacity
+
+# Check container status
+docker logs climbcapacity-prod
+```
+
+### Production Architecture
+
+- **Frontend**: Vite builds the DCGView application into static assets served by Express
+- **Backend**: Express.js serves both API endpoints and static frontend files
+- **Static Files**: Located at `/app/packages/frontend/dist/` in the container
+- **SPA Routing**: Non-API routes fall back to `index.html` for client-side routing
+- **Database**: MongoDB connection required for user data and authentication
 
 ## Troubleshooting
 

@@ -5,6 +5,10 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
+    "@babel/generator": "^7.27.5",
+    "@babel/parser": "^7.27.7",
+    "@babel/traverse": "^7.27.7",
+    "@babel/types": "^7.27.7",
     "@climbcapacity/eslint-rules": "workspace:*",
     "@eslint/js": "^9.29.0",
     "@playwright/test": "^1.49.0",
