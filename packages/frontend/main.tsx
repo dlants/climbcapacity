@@ -63,7 +63,6 @@ const styles = typestyle.stylesheet({
 export type Model = {
   auth: RequestStatus<AuthStatus>;
   measureStats: MeasureStats;
-  locale: Locale;
   page:
     | {
         route: "/send-link";
@@ -136,6 +135,10 @@ export class MainAppController {
   error: string | null = null;
   public localeSelectorController: LocaleSelectorController;
 
+  get locale(): () => Locale {
+    return () => this.localeSelectorController.state.selectedLocale;
+  }
+
   constructor(
     auth: RequestStatus<AuthStatus>,
     measureStats: MeasureStats,
@@ -147,7 +150,6 @@ export class MainAppController {
       this.state = {
         auth,
         measureStats,
-        locale,
         page: { route: "/" },
       };
     } else {
@@ -157,7 +159,6 @@ export class MainAppController {
       this.state = {
         auth,
         measureStats,
-        locale,
         page: {
           route: "/send-link",
           sendLinkPage,
@@ -165,7 +166,6 @@ export class MainAppController {
       };
     }
 
-    // Create locale selector controller
     this.localeSelectorController = new LocaleSelectorController(
       locale,
       (msg: LocaleSelectorMsg) => this.myDispatch({ type: "LOCALE_MSG", msg }),
@@ -233,7 +233,7 @@ export class MainAppController {
             user.id,
             this.state.measureStats,
             {
-              locale: this.localeSelectorController.state.selectedLocale,
+              locale: this.locale,
               myDispatch: (msg: ReportCardMsg) =>
                 this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
             },
@@ -259,8 +259,11 @@ export class MainAppController {
           const snapshotPage = new SnapshotPageController(
             msg.target.snapshotId,
             this.state.measureStats,
-            (msg: SnapshotPageMsg) =>
-              this.myDispatch({ type: "SNAPSHOT_MSG", msg }),
+            {
+              locale: this.locale,
+              myDispatch: (msg: SnapshotPageMsg) =>
+                this.myDispatch({ type: "SNAPSHOT_MSG", msg }),
+            },
           );
           this.state.page = {
             route: "/snapshot",
@@ -282,7 +285,7 @@ export class MainAppController {
         const explorePage = new ExploreController(this.state.measureStats, {
           myDispatch: (msg: ExploreMsg) =>
             this.myDispatch({ type: "EXPLORE_MSG", msg }),
-          locale: this.state.locale,
+          locale: this.locale,
         });
         this.state.page = {
           route: "/explore",

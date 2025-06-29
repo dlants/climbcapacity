@@ -1,24 +1,16 @@
 import * as DCGView from "dcgview";
-import {
-  convertToStandardUnit,
-  convertToTargetUnit,
-  UnitValue,
-} from "../../../iso/units";
+import { convertToStandardUnit, UnitValue } from "../../../iso/units";
 import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
-import { UnitToggleController } from "../unit-toggle";
-import type { Msg as UnitToggleMsg } from "../unit-toggle";
-import { getSpec, MeasureId } from "../../../iso/measures";
+import { getPreferredUnitForMeasure, MeasureId } from "../../../iso/measures";
+import { Locale } from "../../../iso/locale";
 
 export type Model = {
   measureId: MeasureId;
   value: UnitValue;
-  unitToggleController: UnitToggleController;
 };
 
-export type Msg =
-  | { type: "SELECT_VALUE"; value: UnitValue }
-  | { type: "UNIT_TOGGLE_MSG"; msg: UnitToggleMsg };
+export type Msg = { type: "SELECT_VALUE"; value: UnitValue };
 
 export class ToggleFilterController {
   state: Model;
@@ -28,23 +20,11 @@ export class ToggleFilterController {
       measureId: MeasureId;
       value: UnitValue;
     },
-    public myDispatch: Dispatch<Msg>,
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
-    const measure = getSpec(initialParams.measureId);
     this.state = {
       measureId: initialParams.measureId,
       value: initialParams.value,
-      unitToggleController: new UnitToggleController(
-        {
-          measureId: initialParams.measureId,
-          selectedUnit: initialParams.value.unit,
-          possibleUnits: measure.units,
-        },
-        {
-          myDispatch: (msg: UnitToggleMsg) =>
-            this.myDispatch({ type: "UNIT_TOGGLE_MSG", msg }),
-        },
-      ),
     };
   }
 
@@ -54,22 +34,16 @@ export class ToggleFilterController {
         this.state.value = msg.value;
         break;
 
-      case "UNIT_TOGGLE_MSG":
-        this.state.unitToggleController.handleDispatch(msg.msg);
-
-        this.state.value = convertToTargetUnit(
-          convertToStandardUnit(this.state.value),
-          this.state.unitToggleController.state.selectedUnit,
-        );
-        break;
-
       default:
-        assertUnreachable(msg);
+        assertUnreachable(msg.type);
     }
   }
 
   getUnit() {
-    return this.state.unitToggleController.state.selectedUnit;
+    return getPreferredUnitForMeasure(
+      this.state.measureId,
+      this.context.locale(),
+    );
   }
 
   getQuery() {
@@ -105,7 +79,7 @@ export class ToggleFilterView extends DCGView.View<{
           id="male"
           checked={() => stateProp().value.value === "male"}
           onChange={() =>
-            this.props.controller().myDispatch({
+            this.props.controller().context.myDispatch({
               type: "SELECT_VALUE",
               value: {
                 unit: "sex-at-birth",
@@ -123,7 +97,7 @@ export class ToggleFilterView extends DCGView.View<{
           id="female"
           checked={() => stateProp().value.value === "female"}
           onChange={() =>
-            this.props.controller().myDispatch({
+            this.props.controller().context.myDispatch({
               type: "SELECT_VALUE",
               value: {
                 unit: "sex-at-birth",

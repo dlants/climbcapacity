@@ -126,7 +126,7 @@ export class PlotListController {
       snapshots: HydratedSnapshot[];
       outputMeasure: Model["outputMeasure"];
     },
-    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const snapshotStats: {
       [measureId: MeasureId]: number;
@@ -226,7 +226,7 @@ export class PlotListController {
           ...castInitialFilter(
             selectInitialFilter(
               outputMeasureSpec.initialFilter,
-              this.context.locale,
+              this.context.locale(),
             ),
             this.state.outputMeasure.unit,
           ),
@@ -242,7 +242,7 @@ export class PlotListController {
           enabled: false,
           ...selectInitialFilter(
             trainingSpec.initialFilter,
-            this.context.locale,
+            this.context.locale(),
           ),
         };
       }
@@ -260,6 +260,7 @@ export class PlotListController {
           measureStats: this.state.measureStats,
         },
         {
+          locale: this.context.locale,
           myDispatch: (msg: ReportCardFilter.Msg) =>
             this.context.myDispatch({
               type: "FILTER_MSG",

@@ -4,18 +4,19 @@ import { ToggleFilterController, ToggleFilterView } from "./toggle-filter";
 import { InitialFilter, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureId } from "../../../iso/measures";
+import { Locale } from "../../../iso/locale";
 
 const { SwitchUnion } = DCGView.Components;
 
 export type Model =
   | {
-    type: "minmax";
-    controller: MinMaxFilterController;
-  }
+      type: "minmax";
+      controller: MinMaxFilterController;
+    }
   | {
-    type: "toggle";
-    controller: ToggleFilterController;
-  };
+      type: "toggle";
+      controller: ToggleFilterController;
+    };
 
 export type Msg =
   | { type: "MINMAX_FILTER_MSG"; msg: import("./min-max-filter").Msg }
@@ -29,7 +30,7 @@ export class FilterController {
       measureId: MeasureId;
       initialFilter: InitialFilter;
     },
-    public context: { myDispatch: (msg: Msg) => void }
+    public context: { myDispatch: (msg: Msg) => void; locale: () => Locale },
   ) {
     const { measureId, initialFilter } = initialParams;
 
@@ -41,7 +42,11 @@ export class FilterController {
             measureId,
             initialFilter.minValue,
             initialFilter.maxValue,
-            (msg) => this.context.myDispatch({ type: "MINMAX_FILTER_MSG", msg })
+            {
+              locale: this.context.locale,
+              myDispatch: (msg) =>
+                this.context.myDispatch({ type: "MINMAX_FILTER_MSG", msg }),
+            },
           ),
         };
         break;
@@ -54,7 +59,11 @@ export class FilterController {
               measureId,
               value: initialFilter.value,
             },
-            (msg) => this.context.myDispatch({ type: "TOGGLE_FILTER_MSG", msg })
+            {
+              locale: this.context.locale,
+              myDispatch: (msg) =>
+                this.context.myDispatch({ type: "TOGGLE_FILTER_MSG", msg }),
+            },
           ),
         };
         break;
@@ -125,13 +134,19 @@ export class FilterView extends DCGView.View<{
   template() {
     const stateProp = () => this.props.controller().state;
 
-    return SwitchUnion(() => stateProp(), 'type', {
-      minmax: (filterProp: () => { type: "minmax"; controller: MinMaxFilterController }) => (
-        <MinMaxFilterView controller={() => filterProp().controller} />
-      ),
-      toggle: (filterProp: () => { type: "toggle"; controller: ToggleFilterController }) => (
-        <ToggleFilterView controller={() => filterProp().controller} />
-      ),
+    return SwitchUnion(() => stateProp(), "type", {
+      minmax: (
+        filterProp: () => {
+          type: "minmax";
+          controller: MinMaxFilterController;
+        },
+      ) => <MinMaxFilterView controller={() => filterProp().controller} />,
+      toggle: (
+        filterProp: () => {
+          type: "toggle";
+          controller: ToggleFilterController;
+        },
+      ) => <ToggleFilterView controller={() => filterProp().controller} />,
     });
   }
 }

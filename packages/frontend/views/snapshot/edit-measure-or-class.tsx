@@ -1,58 +1,69 @@
 import * as DCGView from "dcgview";
 import { EditMeasureController, EditMeasureView } from "./edit-measure";
-import { EditMeasureClassController, EditMeasureClassView } from "./edit-measure-class";
+import {
+  EditMeasureClassController,
+  EditMeasureClassView,
+} from "./edit-measure-class";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
+import { Locale } from "../../../iso/locale";
 
 export type Model =
   | {
-    type: "measure";
-    editMeasure: EditMeasureController;
-    measureStats: MeasureStats;
-    measureId: MeasureId;
-    trainingMeasureId?: MeasureId;
-  }
+      type: "measure";
+      editMeasure: EditMeasureController;
+      measureStats: MeasureStats;
+      measureId: MeasureId;
+      trainingMeasureId?: MeasureId;
+    }
   | {
-    type: "measureClass";
-    editMeasureClass: EditMeasureClassController;
-    measureStats: MeasureStats;
-    measureId: MeasureId;
-    trainingMeasureId?: MeasureId;
-  };
+      type: "measureClass";
+      editMeasureClass: EditMeasureClassController;
+      measureStats: MeasureStats;
+      measureId: MeasureId;
+      trainingMeasureId?: MeasureId;
+    };
 
 export type InitOptions =
   | {
-    type: "measure";
-    measureId: MeasureId;
-  }
+      type: "measure";
+      measureId: MeasureId;
+    }
   | {
-    type: "measureClasses";
-    measureClasses: MeasureClassSpec[];
-  };
+      type: "measureClasses";
+      measureClasses: MeasureClassSpec[];
+    };
 
 export type Msg =
   | {
-    type: "EDIT_MEASURE_MSG";
-    msg: import("./edit-measure").Msg;
-  }
+      type: "EDIT_MEASURE_MSG";
+      msg: import("./edit-measure").Msg;
+    }
   | {
-    type: "EDIT_MEASURE_CLASS_MSG";
-    msg: import("./edit-measure-class").Msg;
-  };
+      type: "EDIT_MEASURE_CLASS_MSG";
+      msg: import("./edit-measure-class").Msg;
+    };
 
 export class EditMeasureOrClassController {
   state: Model;
 
-  constructor({ init, snapshot, measureStats }: {
-    init: InitOptions,
-    snapshot: HydratedSnapshot,
-    measureStats: MeasureStats,
-  }, public context: {
-    myDispatch: Dispatch<Msg>
-  }
+  constructor(
+    {
+      init,
+      snapshot,
+      measureStats,
+    }: {
+      init: InitOptions;
+      snapshot: HydratedSnapshot;
+      measureStats: MeasureStats;
+    },
+    public context: {
+      myDispatch: Dispatch<Msg>;
+      locale: () => Locale;
+    },
   ) {
     // Initialize state based on init options
     switch (init.type) {
@@ -63,7 +74,11 @@ export class EditMeasureOrClassController {
             measureStats: measureStats,
             snapshot: snapshot,
           },
-          (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg })
+          {
+            myDispatch: (msg) =>
+              this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg }),
+            locale: this.context.locale,
+          },
         );
         this.state = {
           type: "measure",
@@ -81,14 +96,22 @@ export class EditMeasureOrClassController {
           measureStats,
           snapshot,
           undefined,
-          (msg) => this.context.myDispatch({ type: "EDIT_MEASURE_CLASS_MSG", msg })
+          {
+            myDispatch: (msg) =>
+              this.context.myDispatch({ type: "EDIT_MEASURE_CLASS_MSG", msg }),
+            locale: this.context.locale,
+          },
         );
         this.state = {
           type: "measureClass",
           editMeasureClass,
           measureStats: measureStats,
-          measureId: editMeasureClass.state.editMeasurePage.state.unitInputController.state.measureId,
-          trainingMeasureId: editMeasureClass.state.editMeasurePage.state.trainingMeasure?.measureId,
+          measureId:
+            editMeasureClass.state.editMeasurePage.state.unitInputController
+              .state.measureId,
+          trainingMeasureId:
+            editMeasureClass.state.editMeasurePage.state.trainingMeasure
+              ?.measureId,
         };
         break;
       }
@@ -100,7 +123,8 @@ export class EditMeasureOrClassController {
       case "measure":
         return this.state.editMeasure.state.canSubmit;
       case "measureClass":
-        return this.state.editMeasureClass.state.editMeasurePage.state.canSubmit;
+        return this.state.editMeasureClass.state.editMeasurePage.state
+          .canSubmit;
       default:
         return assertUnreachable(this.state);
     }
@@ -114,8 +138,10 @@ export class EditMeasureOrClassController {
         }
 
         this.state.editMeasure.handleDispatch(msg.msg);
-        this.state.measureId = this.state.editMeasure.state.unitInputController.state.measureId;
-        this.state.trainingMeasureId = this.state.editMeasure.state.trainingMeasure?.measureId;
+        this.state.measureId =
+          this.state.editMeasure.state.unitInputController.state.measureId;
+        this.state.trainingMeasureId =
+          this.state.editMeasure.state.trainingMeasure?.measureId;
         break;
       }
       case "EDIT_MEASURE_CLASS_MSG": {
@@ -124,8 +150,10 @@ export class EditMeasureOrClassController {
         }
 
         this.state.editMeasureClass.handleDispatch(msg.msg);
-        this.state.measureId = this.state.editMeasureClass.state.editMeasurePage.state.unitInputController.state.measureId;
-        this.state.trainingMeasureId = this.state.editMeasureClass.state.editMeasurePage.state.trainingMeasure?.measureId;
+        this.state.measureId =
+          this.state.editMeasureClass.state.editMeasurePage.state.unitInputController.state.measureId;
+        this.state.trainingMeasureId =
+          this.state.editMeasureClass.state.editMeasurePage.state.trainingMeasure?.measureId;
         break;
       }
       default:
@@ -141,12 +169,14 @@ export class EditMeasureOrClassView extends DCGView.View<{
     const { SwitchUnion } = DCGView.Components;
     const stateProp = () => this.props.controller().state;
 
-    return SwitchUnion(() => stateProp(), 'type', {
+    return SwitchUnion(() => stateProp(), "type", {
       measure: (measureProp) => (
         <EditMeasureView controller={() => measureProp().editMeasure} />
       ),
       measureClass: (measureClassProp) => (
-        <EditMeasureClassView controller={() => measureClassProp().editMeasureClass} />
+        <EditMeasureClassView
+          controller={() => measureClassProp().editMeasureClass}
+        />
       ),
     });
   }

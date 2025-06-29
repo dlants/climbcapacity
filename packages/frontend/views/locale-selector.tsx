@@ -90,7 +90,7 @@ export class LocaleSelectorController {
     this.state = { type: "closed", selectedLocale: initialLocale };
   }
 
-  handleDispatch(msg: Msg) {
+  handleDispatch(msg: Msg): void {
     switch (msg.type) {
       case "OPEN_DROPDOWN":
         if (this.state.type === "closed") {
@@ -112,13 +112,8 @@ export class LocaleSelectorController {
 
       case "SELECT_LOCALE": {
         const newLocale = msg.locale;
-        const changed = newLocale !== this.state.selectedLocale;
         this.state = { type: "closed", selectedLocale: newLocale };
-
-        if (changed) {
-          return { type: "locale_changed", newLocale };
-        }
-        return { type: "no_change" };
+        return;
       }
 
       default:
@@ -218,4 +213,3 @@ export class LocaleSelectorView extends DCGView.View<{
     }
   }
 }
-

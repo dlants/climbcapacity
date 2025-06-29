@@ -90,7 +90,7 @@ export class ReportCardMainController {
       measureStats: MeasureStats;
       mySnapshot?: HydratedSnapshot;
     },
-    public context: { locale: Locale; myDispatch: Dispatch<Msg> },
+    public context: { locale: () => Locale; myDispatch: Dispatch<Msg> },
   ) {
     const filtersModel = new EditQueryController(
       {

@@ -8,6 +8,7 @@ import {
 import { assertUnreachable, RequestStatus } from "../util/utils";
 import { MeasureStats, SnapshotId } from "../../iso/protocol";
 import { hydrateSnapshot } from "../util/snapshot";
+import { Locale } from "../../iso/locale";
 
 export type Model = {
   snapshotId: SnapshotId;
@@ -31,7 +32,10 @@ export class SnapshotPageController {
   constructor(
     snapshotId: SnapshotId,
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>,
+    public context: {
+      myDispatch: Dispatch<Msg>;
+      locale: () => Locale;
+    },
   ) {
     this.state = {
       snapshotId,
@@ -62,15 +66,16 @@ export class SnapshotPageController {
         },
         {
           myDispatch: (msg: LoadedSnapshotMsg) =>
-            this.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }),
+            this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }),
+          locale: this.context.locale,
         },
       );
-      this.myDispatch({
+      this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "loaded", response: loadedSnapshot },
       });
     } else {
-      this.myDispatch({
+      this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });

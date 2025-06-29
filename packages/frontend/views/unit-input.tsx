@@ -21,8 +21,13 @@ import {
 } from "../../iso/units";
 import { assertUnreachable, Result, Success } from "../../iso/utils";
 import { Dispatch } from "../types";
-import { getSpec, MeasureId } from "../../iso/measures";
+import {
+  getSpec,
+  MeasureId,
+  getPreferredUnitForMeasure,
+} from "../../iso/measures";
 import { ExtractFromDisjointUnion } from "../util/utils";
+import { Locale } from "../../iso/locale";
 
 type UnitInputMap = {
   second: string;
@@ -58,7 +63,7 @@ type UnitInput = UnitInputMap[UnitType];
 
 export type Model = {
   measureId: MeasureId;
-  selectedUnit: UnitType;
+  preferredUnit: UnitType;
   possibleUnits: UnitType[];
   unitInput: UnitInput;
   parseResult: Result<UnitValue>;
@@ -81,22 +86,27 @@ export type HasParseResultModel = Omit<Model, "parseResult"> & {
 
 export class UnitInputController {
   state: Model;
+  context: { myDispatch: Dispatch<Msg>; locale: () => Locale };
 
   constructor(
     measureId: MeasureId,
-    public myDispatch: Dispatch<Msg>,
+    context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
     initialValue?: UnitValue,
   ) {
+    this.context = context;
     const measureSpec = getSpec(measureId);
-    const defaultUnit = measureSpec.units[0];
-    const initialInput = getInitialInput(defaultUnit, initialValue);
+    const preferredUnit = getPreferredUnitForMeasure(
+      measureId,
+      context.locale(),
+    );
+    const initialInput = getInitialInput(preferredUnit, initialValue);
 
     this.state = {
       measureId,
-      selectedUnit: defaultUnit,
+      preferredUnit,
       possibleUnits: measureSpec.units,
       unitInput: initialInput,
-      parseResult: parseUnitValue(defaultUnit, initialInput),
+      parseResult: parseUnitValue(preferredUnit, initialInput),
     };
   }
 
@@ -104,7 +114,7 @@ export class UnitInputController {
     switch (msg.type) {
       case "MEASURE_TYPED": {
         const parseResult = parseUnitValue(
-          this.state.selectedUnit,
+          this.state.preferredUnit,
           msg.unitInput,
         );
         this.state.unitInput = msg.unitInput;
@@ -112,27 +122,34 @@ export class UnitInputController {
         break;
       }
       case "SELECT_UNIT": {
-        if (!this.state.possibleUnits.includes(msg.unit)) {
-          throw new Error(
-            `${msg.unit} is not a possible unit for measure ${this.state.measureId}`,
-          );
-        }
-
-        this.state.selectedUnit = msg.unit;
-        this.state.unitInput = getInitialInput(
-          msg.unit,
-          this.state.parseResult.status == "success"
-            ? this.state.parseResult.value
-            : getDefaultValueFromUnitType(msg.unit),
-        );
-        this.state.parseResult = parseUnitValue(
-          this.state.selectedUnit,
-          this.state.unitInput,
-        );
+        // In the new locale-based system, we ignore manual unit selection
+        // Unit selection is now handled automatically via locale preferences
+        // This case is kept for backward compatibility during the transition
         break;
       }
       default:
         assertUnreachable(msg);
+    }
+  }
+
+  // Method to update the preferred unit when locale changes
+  updatePreferredUnit() {
+    const newPreferredUnit = getPreferredUnitForMeasure(
+      this.state.measureId,
+      this.context.locale(),
+    );
+    if (newPreferredUnit !== this.state.preferredUnit) {
+      this.state.preferredUnit = newPreferredUnit;
+      this.state.unitInput = getInitialInput(
+        newPreferredUnit,
+        this.state.parseResult.status === "success"
+          ? this.state.parseResult.value
+          : getDefaultValueFromUnitType(newPreferredUnit),
+      );
+      this.state.parseResult = parseUnitValue(
+        this.state.preferredUnit,
+        this.state.unitInput,
+      );
     }
   }
 }
@@ -144,7 +161,7 @@ export class UnitInputView extends DCGView.View<{
     const controller = this.props.controller;
     const stateProp = () => controller().state;
     const handleChange = (unitInput: UnitInput) =>
-      controller().myDispatch({
+      controller().context.myDispatch({
         type: "MEASURE_TYPED",
         measureId: stateProp().measureId,
         unitInput,
@@ -152,7 +169,7 @@ export class UnitInputView extends DCGView.View<{
 
     return (
       <span class="unitInput">
-        {SwitchUnion(() => stateProp().selectedUnit, {
+        {SwitchUnion(() => stateProp().preferredUnit, {
           second: () => this.renderNumberInput(stateProp, handleChange),
           month: () => this.renderNumberInput(stateProp, handleChange),
           year: () => this.renderNumberInput(stateProp, handleChange),
@@ -180,7 +197,7 @@ export class UnitInputView extends DCGView.View<{
                   )}
                 </For.Simple>
               </select>
-              <span>{() => stateProp().selectedUnit}</span>
+              <span>{() => stateProp().preferredUnit}</span>
             </span>
           ),
           inch: () => {
@@ -326,7 +343,7 @@ export class UnitInputView extends DCGView.View<{
           value={() => stateProp().unitInput as string}
           onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
         />
-        <span>{() => stateProp().selectedUnit}</span>
+        <span>{() => stateProp().preferredUnit}</span>
       </span>
     );
   }
