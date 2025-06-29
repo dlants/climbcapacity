@@ -5,13 +5,26 @@
   "author": "Denis Lantsman <dlantsman@amplify.com>",
   "type": "module",
   "license": "ISC",
-  "dependencies": {
-    "typescript": "^5.6.3"
-  },
-  "devDependencies": {},
+  "private": true,
+  "packageManager": "yarn@4.9.2",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev:frontend": "cd client && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev": "npm run dev:frontend & npm run dev:backend"
+    "dev:frontend": "yarn workspace @climbcapacity/build-tools dev:frontend",
+    "dev:backend": "yarn workspace @climbcapacity/backend dev",
+    "dev": "yarn dev:frontend & yarn dev:backend",
+    "build": "yarn workspace @climbcapacity/build-tools build:frontend",
+    "build:eslint-rules": "yarn workspace @climbcapacity/eslint-rules build",
+    "test:e2e": "yarn workspace @climbcapacity/build-tools test:e2e",
+    "test:e2e:ui": "yarn workspace @climbcapacity/build-tools test:e2e:ui",
+    "test": "yarn workspaces foreach -A run test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "yarn workspace @climbcapacity/iso exec tsc --noEmit && yarn workspace @climbcapacity/frontend exec tsc --noEmit && yarn workspace @climbcapacity/backend exec tsc --noEmit",
+    "typecheck:watch": "node packages/scripts/typecheck-watch.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.29.0"
   }
 }

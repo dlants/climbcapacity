@@ -2,87 +2,92 @@ name: Run Tests
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  backend:
+  backend-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'
+          node-version: "20"
+          cache: "yarn"
 
       - name: Install dependencies
-        run: |
-          yarn install --frozen-lockfile
-          cd backend
-          yarn install --frozen-lockfile
+        run: yarn install --immutable
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Run tests
-        run: |
-          cd backend
-          yarn test
+      - name: Run backend tests
+        run: yarn workspace @climbcapacity/backend test --run
 
-  iso:
+      - name: Run iso tests
+        run: yarn workspace @climbcapacity/iso test
+
+  frontend-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: |
-          yarn install --frozen-lockfile
-          cd iso
-          yarn install --frozen-lockfile
-
-      - name: Run tests
-        run: |
-          cd iso
-          yarn test
-
-  client:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'
+          node-version: "20"
+          cache: "yarn"
 
       - name: Install dependencies
-        run: |
-          yarn install --frozen-lockfile
-          cd client
-          yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Install Playwright Browsers
-        run: |
-          cd client
-          npx playwright install --with-deps chromium
+        run: yarn workspace @climbcapacity/build-tools exec playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: |
-          cd client
-          yarn test:e2e
+        run: yarn test:e2e
 
       - name: Upload Playwright Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: client/playwright-report/
+          path: packages/frontend/playwright-report/
           retention-days: 30
+
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --immutable
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Build ESLint rules
+        run: yarn workspace @climbcapacity/eslint-rules build
+
+      - name: Run type checking
+        run: yarn typecheck
+
+      - name: Run linting
+        run: yarn lint
 
 permissions:
   contents: read

@@ -1,0 +1,12 @@
+{
+  "name": "@climbcapacity/iso",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "vitest": "^2.1.5"
+  },
+  "scripts": {
+    "test": "vitest"
+  }
+}
