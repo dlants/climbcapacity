@@ -93,6 +93,7 @@ yarn workspace @climbcapacity/backend test:watch        # Watch mode (if availab
 
 - Uses Vitest with MongoDB Memory Server
 - Tests located in `packages/backend/__tests__/`
+- **Note**: Backend tests run in watch mode by default. Use `Ctrl+C` to exit or add `--run` flag for single execution
 
 ### Frontend E2E Tests
 
@@ -439,7 +440,8 @@ yarn dev:backend            # Backend only
 
 # Testing
 yarn test                   # Run all tests across workspaces
-yarn workspace @climbcapacity/backend test # Backend tests only
+yarn workspace @climbcapacity/backend test # Backend tests only (runs in watch mode)
+yarn workspace @climbcapacity/backend test --run # Backend tests single run
 yarn test:e2e              # E2E tests (via build-tools)
 yarn test:e2e:ui           # E2E tests with UI (via build-tools)
 

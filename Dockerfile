@@ -1,6 +1,8 @@
 # Build stage
 FROM node:20-slim AS builder
 
+ARG SKIP_TESTS=true
+
 WORKDIR /app
 
 # Enable Corepack and use the correct Yarn version
@@ -10,7 +12,8 @@ RUN corepack enable
 COPY package.json yarn.lock ./
 COPY packages/ ./packages/
 
-# Install all dependencies (workspaces)
+# Install dependencies but skip Playwright browser downloads
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN yarn install --immutable
 
 # Copy source code

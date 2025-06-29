@@ -7,7 +7,7 @@ declare const process: {
 };
 
 export default defineConfig({
-  testDir: '../client/e2e', // Point to client e2e directory
+  testDir: '../frontend/e2e', // Point to frontend e2e directory
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
