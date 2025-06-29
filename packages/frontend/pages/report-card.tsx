@@ -1,10 +1,11 @@
 import * as DCGView from "dcgview";
 import type { HydratedSnapshot, Snapshot, Dispatch } from "../types";
+import { assertUnreachable, RequestStatus } from "../util/utils";
 import {
-  assertUnreachable,
-  RequestStatus,
-} from "../util/utils";
-import { ReportCardMainController, ReportCardMainView, Msg as ReportCardMainMsg } from "../views/reportcard/main";
+  ReportCardMainController,
+  ReportCardMainView,
+  Msg as ReportCardMainMsg,
+} from "../views/reportcard/main";
 import { hydrateSnapshot } from "../util/snapshot";
 import { MeasureStats } from "../../iso/protocol";
 import { MeasureId } from "../../iso/measures";
@@ -20,30 +21,31 @@ import {
   YDS,
 } from "../../iso/grade";
 import { MEASURES } from "../../iso/measures";
+import { Locale } from "../../iso/locale";
 
 export type Model = {
   userId: string;
   measureStats: MeasureStats;
   mySnapshotRequest: RequestStatus<
     | {
-      state: "no-snapshot";
-    }
+        state: "no-snapshot";
+      }
     | {
-      state: "has-snapshot";
-      model: ReportCardMainController;
-    }
+        state: "has-snapshot";
+        model: ReportCardMainController;
+      }
   >;
 };
 
 export type Msg =
   | {
-    type: "MY_SNAPSHOT_RESPONSE";
-    request: RequestStatus<HydratedSnapshot | undefined>;
-  }
+      type: "MY_SNAPSHOT_RESPONSE";
+      request: RequestStatus<HydratedSnapshot | undefined>;
+    }
   | {
-    type: "LOADED_MSG";
-    msg: ReportCardMainMsg;
-  };
+      type: "LOADED_MSG";
+      msg: ReportCardMainMsg;
+    };
 
 export class ReportCardController {
   state: Model;
@@ -51,7 +53,7 @@ export class ReportCardController {
   constructor(
     userId: string,
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>
+    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
   ) {
     this.state = {
       userId,
@@ -72,7 +74,7 @@ export class ReportCardController {
       const { snapshot } = (await response.json()) as {
         snapshot: Snapshot | undefined;
       };
-      this.myDispatch({
+      this.context.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: {
           status: "loaded",
@@ -80,7 +82,7 @@ export class ReportCardController {
         },
       });
     } else {
-      this.myDispatch({
+      this.context.myDispatch({
         type: "MY_SNAPSHOT_RESPONSE",
         request: { status: "error", error: await response.text() },
       });
@@ -129,7 +131,11 @@ export class ReportCardController {
                   measureStats: this.state.measureStats,
                   mySnapshot: msg.request.response,
                 },
-                { myDispatch: (msg: ReportCardMainMsg) => this.myDispatch({ type: "LOADED_MSG", msg }) }
+                {
+                  locale: this.context.locale,
+                  myDispatch: (msg: ReportCardMainMsg) =>
+                    this.context.myDispatch({ type: "LOADED_MSG", msg }),
+                },
               );
 
               this.state.mySnapshotRequest = {
@@ -168,7 +174,6 @@ export class ReportCardController {
         assertUnreachable(msg);
     }
   }
-
 }
 
 export class ReportCardView extends DCGView.View<{
@@ -180,15 +185,21 @@ export class ReportCardView extends DCGView.View<{
 
     return (
       <div>
-        {SwitchUnion(() => stateProp().mySnapshotRequest, 'status', {
+        {SwitchUnion(() => stateProp().mySnapshotRequest, "status", {
           "not-sent": () => <div />,
           loading: () => <div>Fetching...</div>,
-          error: (errorProp) => <div>Error when fetching data: {() => errorProp().error}</div>,
+          error: (errorProp) => (
+            <div>Error when fetching data: {() => errorProp().error}</div>
+          ),
           loaded: (loadedProp) => (
             <div>
-              {SwitchUnion(() => loadedProp().response, 'state', {
+              {SwitchUnion(() => loadedProp().response, "state", {
                 "no-snapshot": () => this.renderNoSnapshot(),
-                "has-snapshot": (hasSnapshotProp) => <ReportCardMainView controller={() => hasSnapshotProp().model} />,
+                "has-snapshot": (hasSnapshotProp) => (
+                  <ReportCardMainView
+                    controller={() => hasSnapshotProp().model}
+                  />
+                ),
               })}
             </div>
           ),
@@ -207,64 +218,71 @@ export class ReportCardView extends DCGView.View<{
   }
 }
 
-function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min: UnitValue, max: UnitValue } {
-  if (measureId === 'weight' && unitValue.unit === 'kg') {
+function getMinMaxInputValues(
+  measureId: MeasureId,
+  unitValue: UnitValue,
+): { min: UnitValue; max: UnitValue } {
+  if (measureId === "weight" && unitValue.unit === "kg") {
     return {
       min: {
         ...unitValue,
-        value: Math.ceil(unitValue.value - 5)
+        value: Math.ceil(unitValue.value - 5),
       },
       max: {
         ...unitValue,
-        value: Math.floor(unitValue.value + 5)
-      }
+        value: Math.floor(unitValue.value + 5),
+      },
     };
   }
 
-  if (measureId === 'weight' && unitValue.unit === 'lb') {
+  if (measureId === "weight" && unitValue.unit === "lb") {
     return {
       min: {
         ...unitValue,
-        value: Math.ceil(unitValue.value - 10)
+        value: Math.ceil(unitValue.value - 10),
       },
       max: {
         ...unitValue,
-        value: Math.floor(unitValue.value + 10)
-      }
+        value: Math.floor(unitValue.value + 10),
+      },
     };
   }
 
-  if (measureId === 'height' || measureId === 'armspan' || measureId === 'standing-reach') {
+  if (
+    measureId === "height" ||
+    measureId === "armspan" ||
+    measureId === "standing-reach"
+  ) {
     let adjustment = 0;
-    if (unitValue.unit === 'cm') {
+    if (unitValue.unit === "cm") {
       adjustment = 5;
-    } else if (unitValue.unit === 'inch') {
+    } else if (unitValue.unit === "inch") {
       adjustment = 2;
-    } else if (unitValue.unit === 'm') {
+    } else if (unitValue.unit === "m") {
       adjustment = 0.05;
     }
 
-    if (unitValue.unit === 'm') {
+    if (unitValue.unit === "m") {
       return {
         min: {
           ...unitValue,
-          value: Math.ceil((unitValue.value - adjustment) * 100) / 100
+          value: Math.ceil((unitValue.value - adjustment) * 100) / 100,
         },
         max: {
           ...unitValue,
-          value: Math.floor((unitValue.value + adjustment) * 100) / 100
-        }
+          value: Math.floor((unitValue.value + adjustment) * 100) / 100,
+        },
       };
     } else {
       return {
         min: {
           ...unitValue,
-          value: Math.ceil(unitValue.value as number - adjustment)
+          value: Math.ceil((unitValue.value as number) - adjustment),
         } as UnitValue,
         max: {
           ...unitValue,
-          value: Math.floor(unitValue.value as number + adjustment)
-        } as UnitValue
+          value: Math.floor((unitValue.value as number) + adjustment),
+        } as UnitValue,
       };
     }
   }
@@ -290,18 +308,24 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         max: {
           ...unitValue,
           value: unitValue.value * 1.1,
-        }
+        },
       };
     case "count":
       return {
         min: {
           ...unitValue,
-          value: Math.max(Math.floor(unitValue.value * 0.9), unitValue.value - 1),
+          value: Math.max(
+            Math.floor(unitValue.value * 0.9),
+            unitValue.value - 1,
+          ),
         },
         max: {
           ...unitValue,
-          value: Math.min(Math.ceil(unitValue.value * 1.1), unitValue.value + 1),
-        }
+          value: Math.min(
+            Math.ceil(unitValue.value * 1.1),
+            unitValue.value + 1,
+          ),
+        },
       };
     case "vermin":
       return {
@@ -311,8 +335,11 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         },
         max: {
           ...unitValue,
-          value: VGRADE[Math.min(VGRADE.indexOf(unitValue.value) + 2, VGRADE.length - 1)],
-        }
+          value:
+            VGRADE[
+              Math.min(VGRADE.indexOf(unitValue.value) + 2, VGRADE.length - 1)
+            ],
+        },
       };
     case "font":
       return {
@@ -322,19 +349,29 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         },
         max: {
           ...unitValue,
-          value: FONT[Math.min(FONT.indexOf(unitValue.value) + 2, FONT.length - 1)],
-        }
+          value:
+            FONT[Math.min(FONT.indexOf(unitValue.value) + 2, FONT.length - 1)],
+        },
       };
     case "frenchsport":
       return {
         min: {
           ...unitValue,
-          value: FRENCH_SPORT[Math.max(FRENCH_SPORT.indexOf(unitValue.value) - 1, 0)],
+          value:
+            FRENCH_SPORT[
+              Math.max(FRENCH_SPORT.indexOf(unitValue.value) - 1, 0)
+            ],
         },
         max: {
           ...unitValue,
-          value: FRENCH_SPORT[Math.min(FRENCH_SPORT.indexOf(unitValue.value) + 2, FRENCH_SPORT.length - 1)],
-        }
+          value:
+            FRENCH_SPORT[
+              Math.min(
+                FRENCH_SPORT.indexOf(unitValue.value) + 2,
+                FRENCH_SPORT.length - 1,
+              )
+            ],
+        },
       };
     case "yds":
       return {
@@ -344,8 +381,9 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         },
         max: {
           ...unitValue,
-          value: YDS[Math.min(YDS.indexOf(unitValue.value) + 2, YDS.length - 1)],
-        }
+          value:
+            YDS[Math.min(YDS.indexOf(unitValue.value) + 2, YDS.length - 1)],
+        },
       };
     case "ewbank":
       return {
@@ -355,8 +393,11 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         },
         max: {
           ...unitValue,
-          value: EWBANK[Math.min(EWBANK.indexOf(unitValue.value) + 2, EWBANK.length - 1)],
-        }
+          value:
+            EWBANK[
+              Math.min(EWBANK.indexOf(unitValue.value) + 2, EWBANK.length - 1)
+            ],
+        },
       };
     case "ircra":
       return {
@@ -367,14 +408,14 @@ function getMinMaxInputValues(measureId: MeasureId, unitValue: UnitValue): { min
         max: {
           ...unitValue,
           value: Math.min(unitValue.value + 2, 33) as IRCRAGrade,
-        }
+        },
       };
     case "sex-at-birth":
     case "training":
       return {
         min: unitValue,
-        max: unitValue
-      }
+        max: unitValue,
+      };
     default:
       assertUnreachable(unitValue);
   }

@@ -15,6 +15,7 @@ import {
 import { NavigateMsg, parseRoute, Router } from "./router";
 import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
+import { Locale, detectBrowserLocale } from "../iso/locale";
 import * as typestyle from "typestyle";
 import * as csx from "csx";
 import * as csstips from "csstips";
@@ -62,6 +63,7 @@ const styles = typestyle.stylesheet({
 export type Model = {
   auth: RequestStatus<AuthStatus>;
   measureStats: MeasureStats;
+  locale: Locale;
   page:
     | {
         route: "/send-link";
@@ -93,6 +95,10 @@ import { Msg as UsersSnapshotsMsg } from "./pages/users-snapshots";
 import { Msg as SnapshotPageMsg } from "./pages/snapshot";
 import { Msg as ExploreMsg } from "./pages/explore";
 import { Msg as ReportCardMsg } from "./pages/report-card";
+import {
+  Msg as LocaleSelectorMsg,
+  LocaleSelectorController,
+} from "./views/locale-selector";
 
 type Msg =
   | {
@@ -119,21 +125,29 @@ type Msg =
   | {
       type: "REPORT_CARD_MSG";
       msg: ReportCardMsg;
+    }
+  | {
+      type: "LOCALE_MSG";
+      msg: LocaleSelectorMsg;
     };
 
 export class MainAppController {
   state: Model;
   error: string | null = null;
+  public localeSelectorController: LocaleSelectorController;
 
   constructor(
     auth: RequestStatus<AuthStatus>,
     measureStats: MeasureStats,
     public myDispatch: Dispatch<Msg>,
   ) {
+    const locale = detectBrowserLocale();
+
     if (auth.status == "loaded" && auth.response.status == "logged in") {
       this.state = {
         auth,
         measureStats,
+        locale,
         page: { route: "/" },
       };
     } else {
@@ -143,12 +157,19 @@ export class MainAppController {
       this.state = {
         auth,
         measureStats,
+        locale,
         page: {
           route: "/send-link",
           sendLinkPage,
         },
       };
     }
+
+    // Create locale selector controller
+    this.localeSelectorController = new LocaleSelectorController(
+      locale,
+      (msg: LocaleSelectorMsg) => this.myDispatch({ type: "LOCALE_MSG", msg }),
+    );
   }
 
   private navigate(msg: NavigateMsg) {
@@ -211,8 +232,11 @@ export class MainAppController {
           const reportCardPage = new ReportCardController(
             user.id,
             this.state.measureStats,
-            (msg: ReportCardMsg) =>
-              this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
+            {
+              locale: this.localeSelectorController.state.selectedLocale,
+              myDispatch: (msg: ReportCardMsg) =>
+                this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
+            },
           );
           this.state.page = {
             route: "/report-card",
@@ -255,10 +279,11 @@ export class MainAppController {
       }
 
       case "/explore": {
-        const explorePage = new ExploreController(
-          this.state.measureStats,
-          (msg: ExploreMsg) => this.myDispatch({ type: "EXPLORE_MSG", msg }),
-        );
+        const explorePage = new ExploreController(this.state.measureStats, {
+          myDispatch: (msg: ExploreMsg) =>
+            this.myDispatch({ type: "EXPLORE_MSG", msg }),
+          locale: this.state.locale,
+        });
         this.state.page = {
           route: "/explore",
           explorePage,
@@ -378,6 +403,14 @@ export class MainAppController {
         ).reportCardPage.handleDispatch(msg.msg);
         break;
 
+      case "LOCALE_MSG": {
+        if (!this.localeSelectorController) {
+          throw new Error("Locale selector controller not initialized");
+        }
+        this.localeSelectorController.handleDispatch(msg.msg);
+        break;
+      }
+
       default:
         assertUnreachable(msg);
     }
@@ -433,6 +466,9 @@ export class MainAppView extends DCGView.View<{
                   auth.status == "loaded" && auth.response.status == "logged in"
                 );
               }}
+              localeSelectorController={() =>
+                this.props.controller().localeSelectorController!
+              }
             />
           </div>
           <div class={DCGView.const(styles.lastPageItem)}>

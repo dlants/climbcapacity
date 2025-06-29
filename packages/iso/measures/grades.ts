@@ -1,4 +1,3 @@
-import { IRCRAGrade } from "../grade.js";
 import { MeasureClassSpec } from "./index.js";
 import {
   ParamValue,
@@ -47,8 +46,24 @@ export const sportGradeClass: MeasureClassSpec = {
   units: ["yds", "ircra", "frenchsport", "ewbank"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "yds", value: "5.6" },
-    maxValue: { unit: "yds", value: "5.15a" },
+    localeRanges: {
+      US: {
+        minValue: { unit: "yds", value: "5.6" },
+        maxValue: { unit: "yds", value: "5.15a" },
+      },
+      UK: {
+        minValue: { unit: "frenchsport", value: "5" },
+        maxValue: { unit: "frenchsport", value: "9a+" },
+      },
+      Europe: {
+        minValue: { unit: "frenchsport", value: "5" },
+        maxValue: { unit: "frenchsport", value: "9a+" },
+      },
+      Australia: {
+        minValue: { unit: "ewbank", value: 12 },
+        maxValue: { unit: "ewbank", value: 36 },
+      },
+    },
   },
   generateDescription: (params: {
     sportLocation: SportLocation;
@@ -76,8 +91,24 @@ export const boulderGradeClass: MeasureClassSpec = {
   units: ["vermin", "ircra", "font"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "vermin", value: 0 },
-    maxValue: { unit: "vermin", value: 8 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "vermin", value: 0 },
+        maxValue: { unit: "vermin", value: 8 },
+      },
+      UK: {
+        minValue: { unit: "font", value: "3" },
+        maxValue: { unit: "font", value: "8C+" },
+      },
+      Europe: {
+        minValue: { unit: "font", value: "3" },
+        maxValue: { unit: "font", value: "8C+" },
+      },
+      Australia: {
+        minValue: { unit: "vermin", value: 0 },
+        maxValue: { unit: "vermin", value: 8 },
+      },
+    },
   },
   generateDescription: (params: {
     boulderLocation: BoulderLocation;

@@ -84,17 +84,17 @@ We'll support these major climbing locales:
 ### [ ] Update core components to use locale preferences
 
 - [ ] Modify `UnitInputController` constructor in `packages/frontend/views/unit-input.tsx`
-  - [ ] Add required `locale: Locale` parameter
-  - [ ] Use `getPreferredUnitForMeasure(measureId, locale)` to determine preferred unit and set as `selectedUnit`
+  - [ ] Access locale from `this.context.locale`
+  - [ ] Use `getPreferredUnitForMeasure(measureId, this.context.locale)` to determine preferred unit and set as `selectedUnit`
   - [ ] Always start with preferred unit instead of `measureSpec.units[0]`
 - [ ] Modify `UnitToggleController` in unit toggle components
-  - [ ] Add required `locale: Locale` parameter
+  - [ ] Access locale from `this.context.locale`
   - [ ] Use locale to determine preferred unit and reorder units array to show preferred unit first
   - [ ] Initialize with preferred unit selected
 - [ ] Modify `MinMaxFilterController` constructor in `packages/frontend/views/filters/min-max-filter.tsx`
-  - [ ] Add required `locale: Locale` parameter
+  - [ ] Access locale from `this.context.locale`
   - [ ] Use `getInitialFilterForLocale()` to get locale-appropriate min/max values
-  - [ ] Pass locale to both `UnitInputController` instances
+  - [ ] Controllers will automatically get locale from context
 - [ ] Check for type errors and iterate until they pass
 
 ## Phase 3: UI Components
@@ -103,12 +103,28 @@ We'll support these major climbing locales:
 
 - [ ] Create `packages/frontend/views/locale-selector.tsx`
   - [ ] Define `LocaleSelectorController` class
-    - [ ] State: `{ selectedLocale: Locale, availableLocales: Locale[] }`
-    - [ ] Constructor takes initial locale and dispatch function
-    - [ ] `handleDispatch()` for `SELECT_LOCALE` messages
+    - [ ] State: Disjoint union representing dropdown state machine:
+      - [ ] `{ type: "closed", selectedLocale: Locale }` - dropdown closed with current selection
+      - [ ] `{ type: "open", selectedLocale: Locale }` - dropdown open showing options with last selected item
+    - [ ] Constructor accesses initial locale from `this.context.locale`
+    - [ ] `handleDispatch()` with single switch statement handling all actions:
+      - [ ] `LOCALE_CHANGED` - updates selectedLocale in both closed/open states
+      - [ ] `OPEN_DROPDOWN` - transitions from closed to open state
+      - [ ] `CLOSE_DROPDOWN` - transitions from open to closed state
+      - [ ] `SELECT_LOCALE` - transitions to closed state and returns locale change info to parent controller
+    - [ ] Get available locales from `Object.keys(LOCALE_CONFIGS)`
   - [ ] Define `LocaleSelectorView` class
-    - [ ] Render dropdown with locale display names
-    - [ ] Handle onChange events to dispatch locale changes
+    - [ ] Render dropdown with locale display names using `SwitchUnion` for state-based rendering:
+      - [ ] `closed` state: Show selected locale as button/trigger
+      - [ ] `open` state: Show dropdown menu with all locale options
+    - [ ] Handle interaction events by dispatching to controller:
+      - [ ] Click on trigger dispatches `OPEN_DROPDOWN`
+      - [ ] Click on option dispatches `SELECT_LOCALE` with chosen locale
+      - [ ] Escape key dispatches `CLOSE_DROPDOWN`
+      - [ ] Keyboard navigation (Arrow keys, Enter, Escape) dispatches appropriate actions
+      - [ ] Document click listener: Add event listener to document when dropdown opens, remove when closes
+        - [ ] Clicks outside dropdown element dispatch `CLOSE_DROPDOWN`
+        - [ ] Clicks inside dropdown are ignored (preventDefault/stopPropagation)
     - [ ] Style as compact dropdown suitable for header
 - [ ] Iterate until unit tests pass
 
@@ -131,225 +147,11 @@ We'll support these major climbing locales:
   - [ ] Add `locale: Locale` field
   - [ ] Add `unitPreferences: UnitPreferences` computed field
 - [ ] Add locale messages to main app
-  - [ ] Add `LOCALE_CHANGED` message type with locale payload
-  - [ ] Update `Msg` union type to include locale messages
+  - [ ] Add `LOCALE_MSG` wrapper message type that opaquely wraps locale selector messages
+  - [ ] Update `Msg` union type to include `LOCALE_MSG`
 - [ ] Update `MainAppController` to handle locale changes
-  - [ ] Initialize locale from browser detection or user preference
-  - [ ] Handle `LOCALE_CHANGED` messages to update state
-  - [ ] Recompute unit preferences when locale changes
+  - [ ] Initialize locale from browser detection
+  - [ ] Handle `LOCALE_MSG` messages by forwarding to locale selector controller and processing results
+  - [ ] Extract actual locale changes from locale selector controller responses
+  - [ ] Add locale to `context` (alongside `myDispatch`) for propagation to child controllers
 - [ ] Check for type errors and iterate until they pass
-
-### [ ] Propagate preferences through component hierarchy
-
-- [ ] Update page controllers to accept locale
-  - [ ] Modify constructors of `ExploreController`, `ReportCardController`, etc. to accept required `locale: Locale`
-  - [ ] Pass locale down to filter and input components
-- [ ] Update component instantiation in `MainAppController`
-  - [ ] Pass current locale to page controllers
-  - [ ] Ensure all filter components receive locale parameter
-- [ ] Check for type errors and iterate until they pass
-
-## Phase 5: User Persistence
-
-### [ ] Extend user model for locale preferences
-
-- [ ] Add locale field to user document schema
-  - [ ] Modify `UserDoc` interface in `packages/backend/auth/lucia.ts`
-  - [ ] Add optional `locale?: Locale` field
-  - [ ] Update Lucia database user attributes type
-- [ ] Create database migration for existing users
-  - [ ] Create `packages/backend/scripts/add-locale-to-users.ts`
-  - [ ] Script to add default locale to existing user documents
-  - [ ] Set default based on reasonable heuristic (e.g., "US")
-- [ ] Iterate until migration runs successfully
-
-### [ ] Add locale preference API endpoints
-
-- [ ] Add locale endpoints to `packages/backend/app.ts`
-  - [ ] `GET /api/user/locale` - Get user's preferred locale
-  - [ ] `POST /api/user/locale` - Update user's preferred locale
-  - [ ] Use `apiRoute` wrapper for proper error handling
-  - [ ] Require authentication for these endpoints
-- [ ] Add request/response types to `packages/iso/protocol.ts`
-  - [ ] `UserLocaleRequest` type for POST body
-  - [ ] `UserLocaleResponse` type for GET response
-- [ ] Write backend tests for locale endpoints
-  - [ ] Create `packages/backend/__tests__/locale-api.test.ts`
-  - [ ] Test getting and setting user locale preferences
-  - [ ] Test authentication requirements
-- [ ] Iterate until backend tests pass
-
-### [ ] Implement frontend locale persistence
-
-- [ ] Add locale API calls to frontend
-  - [ ] Create `packages/frontend/util/locale-api.ts`
-  - [ ] Functions for getting and setting user locale preferences
-  - [ ] Handle loading states and error cases
-- [ ] Update `MainAppController` to load user locale on startup
-  - [ ] Fetch user locale after authentication resolves
-  - [ ] Fall back to browser detection for logged-out users
-  - [ ] Save locale changes for logged-in users
-- [ ] Add loading states for locale operations
-  - [ ] Show loading indicator when changing locale
-  - [ ] Handle API errors gracefully
-- [ ] Check for type errors and iterate until they pass
-
-## Phase 6: Testing and Integration
-
-### [ ] Write comprehensive unit tests
-
-- [ ] Test locale detection and configuration
-  - [ ] Create `packages/iso/__tests__/locale.test.ts`
-  - [ ] Test browser locale detection
-  - [ ] Test unit preference mapping
-- [ ] Test locale-aware utilities and controller initialization
-  - [ ] Create `packages/iso/__tests__/locale-utilities.test.ts`
-  - [ ] Test `getInitialFilterForLocale()` function
-  - [ ] Test `getPreferredUnitForMeasure()` function with different locales
-  - [ ] Test `reorderUnitsArray()` utility with different locales and measures
-  - [ ] Test that each locale gets appropriate min/max values in their preferred units
-- [ ] Test controller initialization with locale
-  - [ ] Update existing controller tests to verify locale-aware initialization
-  - [ ] Test that controllers start with preferred units for different locales
-  - [ ] Test that all controllers work correctly with all supported locales
-- [ ] Test component integration
-  - [ ] Update existing unit input and filter tests
-  - [ ] Test that components respect unit preferences
-- [ ] Iterate until all unit tests pass
-
-### [ ] Write end-to-end tests
-
-- [ ] Create `packages/frontend/e2e/locale-preferences.spec.ts`
-  - [ ] Test locale selector functionality
-  - [ ] Test that unit preferences persist across page navigation
-  - [ ] Test logged-in user preference persistence
-  - [ ] Test logged-out user browser-based defaults
-- [ ] Test measure input and filtering with different locales
-  - [ ] Verify unit toggles show preferred units first (including both bouldering and sport grades)
-  - [ ] Verify filters use preferred units for initial values
-  - [ ] Test unit conversion continues to work correctly for all unit categories
-  - [ ] Test that bouldering vs sport grade preferences work independently
-- [ ] Iterate until E2E tests pass
-
-## Phase 7: Edge Cases and Polish
-
-### [ ] Handle edge cases and error scenarios
-
-- [ ] Add fallback for unsupported browser locales
-  - [ ] Default to "US" for unrecognized locales
-  - [ ] Log warnings for unsupported locales
-- [ ] Handle API failures gracefully
-  - [ ] Fall back to browser detection if user locale API fails
-  - [ ] Show user-friendly error messages for locale save failures
-- [ ] Handle measure specs without preferred units
-  - [ ] Fall back to original unit order when preferred unit not available for a locale
-  - [ ] Log warnings for missing unit categories
-- [ ] Update all existing controller instantiations to pass locale
-  - [ ] Search codebase for all `UnitInputController`, `UnitToggleController`, `MinMaxFilterController` instantiations
-  - [ ] Add locale parameter to all instantiations
-- [ ] Check for errors and iterate until robust
-
-### [ ] Performance optimizations
-
-- [ ] Add caching for measure spec reordering
-  - [ ] Cache reordered specs by locale to avoid recomputation
-  - [ ] Invalidate cache when locale changes
-- [ ] Optimize locale detection
-  - [ ] Cache browser locale detection result
-  - [ ] Avoid repeated API calls for user locale
-- [ ] Check performance and iterate until satisfactory
-
-### [ ] User experience improvements
-
-- [ ] Add visual feedback for locale changes
-  - [ ] Show confirmation when locale is successfully changed
-  - [ ] Update page content immediately when locale changes
-- [ ] Add keyboard navigation for locale selector
-  - [ ] Ensure dropdown is fully accessible
-  - [ ] Add proper ARIA labels and keyboard support
-- [ ] Add locale indicators where helpful
-  - [ ] Show current locale in tooltip or subtle indicator
-  - [ ] Consider showing unit symbols in relevant places
-- [ ] Check UX and iterate until polished
-
-## Phase 8: Documentation and Deployment
-
-### [ ] Update documentation
-
-- [ ] Update `context.md` with locale system information
-  - [ ] Document locale types and configuration
-  - [ ] Document unit preference system
-  - [ ] Document API endpoints
-- [ ] Add migration notes for deployment
-  - [ ] Document database migration requirements
-  - [ ] Document any breaking changes for existing users
-- [ ] Create user-facing documentation
-  - [ ] Document how to change locale preferences
-  - [ ] Explain what each locale setting does
-- [ ] Iterate until documentation is complete
-
-### [ ] Prepare for deployment
-
-- [ ] Add locale system to build process
-  - [ ] Ensure all new TypeScript files are included
-  - [ ] Verify no missing dependencies
-- [ ] Test migration in staging environment
-  - [ ] Run user locale migration script
-  - [ ] Verify existing users get reasonable defaults
-- [ ] Plan gradual rollout strategy
-  - [ ] Consider feature flag for locale selector
-  - [ ] Plan monitoring for locale-related errors
-- [ ] Iterate until deployment-ready
-
-## Potential Challenges and Edge Cases
-
-### Technical Challenges
-
-1. **Controller Initialization Complexity**: Ensuring all controllers that need locale preferences receive them consistently through the component hierarchy.
-
-2. **Initial Filter Conversion**: Converting `initialFilter` values between units while preserving semantic meaning (e.g., maintaining reasonable min/max ranges).
-
-3. **Breaking Changes**: Since locale becomes required, need to update all existing controller instantiations throughout the codebase.
-
-4. **State Synchronization**: Keeping locale state synchronized between local state, API calls, and component props.
-
-5. **Unit Array Reordering**: Efficiently reordering units arrays for display without modifying the original measure spec constants.
-
-### User Experience Challenges
-
-1. **Locale Detection Accuracy**: Browser locale detection may not always match climbing preferences (e.g., an American living in Europe).
-
-2. **Mid-Session Changes**: Handling locale changes gracefully when users have partially filled forms.
-
-3. **Performance**: Ensuring locale changes feel instant without causing UI lag.
-
-### Data Challenges
-
-1. **Migration Safety**: Ensuring existing users get sensible locale defaults without breaking their experience.
-
-2. **API Reliability**: Handling cases where locale preference API calls fail without breaking core functionality.
-
-3. **Unit Availability**: Handling cases where a locale's preferred unit isn't available for a specific measure.
-
-4. **Locale Range Fallbacks**: Handling cases where a measure spec doesn't have `localeRanges` defined for a specific locale, requiring fallback to a default locale's ranges.
-
-5. **Constant Measure Specs**: Ensuring measure specs remain as immutable constants while still providing locale-aware behavior through controller initialization.
-
-### Testing Challenges
-
-1. **Browser Variation**: Testing locale detection across different browsers and regions.
-
-2. **State Management**: Testing complex state synchronization between locale preferences and unit components.
-
-3. **Migration Testing**: Ensuring database migrations work correctly across different user data scenarios.
-
-## Success Criteria
-
-1. **Functional**: Users can select their locale and see appropriate unit defaults
-2. **Persistent**: Logged-in users' locale preferences persist across sessions
-3. **Performant**: Locale changes feel instant with no noticeable lag
-4. **Robust**: System handles edge cases and API failures gracefully
-5. **Accessible**: Locale selector is fully keyboard and screen-reader accessible
-6. **Tested**: Comprehensive unit and E2E tests ensure reliability
-7. **Documented**: Clear documentation for users and developers
-

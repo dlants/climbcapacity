@@ -22,6 +22,7 @@ import {
 } from "./grade.js";
 import { MeasureId } from "./measures/index.js";
 import { assertUnreachable } from "./utils.js";
+import type { UnitCategory, Locale } from "./locale.js";
 
 /** these are in standard units, used for search (so for example, all grades are in ircra, all distances are in meters);
  *
@@ -39,6 +40,41 @@ export type InitialFilter =
       type: "toggle";
       value: UnitValue;
     };
+
+export type LocaleBasedInitialFilter =
+  | {
+      type: "minmax";
+      localeRanges: {
+        [K in Locale]: {
+          minValue: UnitValue;
+          maxValue: UnitValue;
+        };
+      };
+    }
+  | {
+      type: "toggle";
+      localeValues: {
+        [K in Locale]: UnitValue;
+      };
+    };
+
+export function selectInitialFilter(
+  localeFilters: LocaleBasedInitialFilter,
+  locale: Locale,
+): InitialFilter {
+  if (localeFilters.type == "toggle") {
+    return {
+      type: "toggle",
+      value: localeFilters.localeValues[locale],
+    };
+  } else {
+    return {
+      type: "minmax",
+      minValue: localeFilters.localeRanges[locale].minValue,
+      maxValue: localeFilters.localeRanges[locale].maxValue,
+    };
+  }
+}
 
 export function castInitialFilter(filter: InitialFilter, targetUnit: UnitType) {
   switch (filter.type) {
@@ -289,6 +325,43 @@ export type UnitValue =
     };
 
 export type UnitType = UnitValue["unit"];
+
+export const UNIT_CATEGORIES: Record<UnitType, UnitCategory | null> = {
+  // Weight units
+  lb: "weight",
+  kg: "weight",
+  "lb/s": "weight",
+  "kg/s": "weight",
+
+  // Distance units
+  m: "distance",
+  cm: "distance",
+  mm: "distance",
+  inch: "distance",
+
+  // Bouldering grade units
+  vermin: "bouldering",
+  font: "bouldering",
+
+  // Sport grade units
+  yds: "sport",
+  frenchsport: "sport",
+  ewbank: "sport",
+
+  // Units that don't have categories (miscellaneous)
+  second: null,
+  year: null,
+  month: null,
+  ircra: null,
+  "sex-at-birth": null,
+  training: null,
+  count: null,
+  strengthtoweightratio: null,
+};
+
+export function getUnitCategory(unit: UnitType): UnitCategory | null {
+  return UNIT_CATEGORIES[unit];
+}
 
 export function unitValueToString(unitValue: UnitValue): string {
   switch (unitValue.unit) {

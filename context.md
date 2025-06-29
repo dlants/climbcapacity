@@ -307,7 +307,8 @@ DCGView is a one-directional view library that renders data to DOM and updates i
 - Controller/View separation pattern implemented throughout
 - Event handlers changed from `onPointerDown` to `onClick` for better accessibility
 - Proper use of DCGView's `If` component instead of conditional rendering
-- Controllers now use `context: { myDispatch }` pattern instead of direct dispatch props
+- Controllers now use `context: { myDispatch }` pattern for sending actions up the tree
+- Proper separation between `myDispatch` (actions up) and `handleDispatch` (state updates down)
 - View components broken into smaller, focused components for better maintainability
 
 **Basic View Structure:**
@@ -315,7 +316,7 @@ DCGView is a one-directional view library that renders data to DOM and updates i
 ```typescript
 interface Props {
   user: () => User | undefined;
-  dispatch: (action: Action) => void;
+  myDispatch: (action: Action) => void;
 }
 
 class UserView extends DCGView.Class<Props> {
@@ -338,9 +339,28 @@ class UserView extends DCGView.Class<Props> {
   }
 
   handleClick() {
-    this.props.dispatch({ type: 'user-clicked' });
+    this.props.myDispatch({ type: 'user-clicked' });
   }
 }
+**Action Flow Patterns:**
+
+DCGView follows a unidirectional data flow with two key dispatch patterns:
+
+- **`myDispatch`**: Sends actions UP the component tree to the root application controller
+  - Used when triggering actions from user interactions or component events
+  - Actions propagate to the root where global state is updated
+  - Example: `this.props.myDispatch({ type: 'LOCALE_CHANGED', locale: 'UK' })`
+
+- **`handleDispatch`**: Receives actions flowing DOWN from the root to update local component state
+  - Called by the framework when global actions need to update component state
+  - Each controller implements this to handle relevant actions
+  - Example: `handleDispatch(action) { if (action.type === 'LOCALE_CHANGED') this.model.locale = action.locale }`
+
+**Data Flow:**
+1. User interaction → `myDispatch(action)` → action flows UP to root
+2. Root controller updates global state and processes action
+3. Framework calls `handleDispatch(action)` on all controllers → state flows DOWN
+4. Components re-render with updated state
 ```
 
 **Control Flow & Type Safety:**

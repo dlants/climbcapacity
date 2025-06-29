@@ -22,7 +22,7 @@
     "test": "yarn workspaces foreach -A run test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "yarn workspace @climbcapacity/build-tools typecheck",
+    "typecheck": "yarn workspace @climbcapacity/iso exec tsc --noEmit && yarn workspace @climbcapacity/frontend exec tsc --noEmit && yarn workspace @climbcapacity/backend exec tsc --noEmit",
     "typecheck:watch": "node packages/scripts/typecheck-watch.js"
   },
   "devDependencies": {

@@ -3,7 +3,13 @@ import * as Grades from "./grades.js";
 import * as Movement from "./movement.js";
 import * as Power from "./power.js";
 import * as ForceMeter from "./forcemeter.js";
-import { InitialFilter, UnitType } from "../units.js";
+import {
+  InitialFilter,
+  LocaleBasedInitialFilter,
+  UnitType,
+  getUnitCategory,
+} from "../units.js";
+import { Locale, getDefaultUnitsForLocale } from "../locale.js";
 import { ParamName, ParamValue, PARAMS } from "./params.js";
 
 export type MeasureId = string & { __brand: "measureId" };
@@ -27,7 +33,7 @@ export type MeasureClassSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
-  initialFilter: InitialFilter;
+  initialFilter: LocaleBasedInitialFilter;
   generateDescription(
     params: Partial<{ [K in ParamName]: ParamValue<K> }>,
   ): string;
@@ -91,7 +97,7 @@ export type MeasureSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
-  initialFilter: InitialFilter;
+  initialFilter: LocaleBasedInitialFilter;
 };
 
 export const MEASURES: MeasureSpec[] = [];
@@ -171,8 +177,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "inch", value: 60 },
-      maxValue: { unit: "inch", value: 73 },
+      localeRanges: {
+        US: {
+          minValue: { unit: "inch", value: 60 },
+          maxValue: { unit: "inch", value: 73 },
+        },
+        UK: {
+          minValue: { unit: "inch", value: 60 },
+          maxValue: { unit: "inch", value: 73 },
+        },
+        Europe: {
+          minValue: { unit: "cm", value: 150 },
+          maxValue: { unit: "cm", value: 185 },
+        },
+        Australia: {
+          minValue: { unit: "cm", value: 150 },
+          maxValue: { unit: "cm", value: 185 },
+        },
+      },
     },
   },
   {
@@ -183,8 +205,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "inch", value: 60 },
-      maxValue: { unit: "inch", value: 73 },
+      localeRanges: {
+        US: {
+          minValue: { unit: "inch", value: 60 },
+          maxValue: { unit: "inch", value: 73 },
+        },
+        UK: {
+          minValue: { unit: "inch", value: 60 },
+          maxValue: { unit: "inch", value: 73 },
+        },
+        Europe: {
+          minValue: { unit: "cm", value: 150 },
+          maxValue: { unit: "cm", value: 185 },
+        },
+        Australia: {
+          minValue: { unit: "cm", value: 150 },
+          maxValue: { unit: "cm", value: 185 },
+        },
+      },
     },
   },
   {
@@ -196,8 +234,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["inch", "m", "cm"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "inch", value: 87 },
-      maxValue: { unit: "inch", value: 110 },
+      localeRanges: {
+        US: {
+          minValue: { unit: "inch", value: 87 },
+          maxValue: { unit: "inch", value: 110 },
+        },
+        UK: {
+          minValue: { unit: "inch", value: 87 },
+          maxValue: { unit: "inch", value: 110 },
+        },
+        Europe: {
+          minValue: { unit: "cm", value: 220 },
+          maxValue: { unit: "cm", value: 280 },
+        },
+        Australia: {
+          minValue: { unit: "cm", value: 220 },
+          maxValue: { unit: "cm", value: 280 },
+        },
+      },
     },
   },
   {
@@ -208,8 +262,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["lb", "kg"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "lb", value: 87 },
-      maxValue: { unit: "lb", value: 255 },
+      localeRanges: {
+        US: {
+          minValue: { unit: "lb", value: 87 },
+          maxValue: { unit: "lb", value: 255 },
+        },
+        UK: {
+          minValue: { unit: "lb", value: 87 },
+          maxValue: { unit: "lb", value: 255 },
+        },
+        Europe: {
+          minValue: { unit: "kg", value: 40 },
+          maxValue: { unit: "kg", value: 115 },
+        },
+        Australia: {
+          minValue: { unit: "kg", value: 40 },
+          maxValue: { unit: "kg", value: 115 },
+        },
+      },
     },
   },
   {
@@ -220,7 +290,12 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     units: ["sex-at-birth"],
     initialFilter: {
       type: "toggle",
-      value: { unit: "sex-at-birth", value: "female" },
+      localeValues: {
+        US: { unit: "sex-at-birth", value: "female" },
+        UK: { unit: "sex-at-birth", value: "female" },
+        Europe: { unit: "sex-at-birth", value: "female" },
+        Australia: { unit: "sex-at-birth", value: "female" },
+      },
     },
   },
 ];
@@ -237,8 +312,24 @@ For example, if you climbed for a year, then took a year off, then climbed for a
   units: ["year", "month"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "year", value: 0 },
-    maxValue: { unit: "year", value: 15 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "year", value: 0 },
+        maxValue: { unit: "year", value: 15 },
+      },
+      UK: {
+        minValue: { unit: "year", value: 0 },
+        maxValue: { unit: "year", value: 15 },
+      },
+      Europe: {
+        minValue: { unit: "year", value: 0 },
+        maxValue: { unit: "year", value: 15 },
+      },
+      Australia: {
+        minValue: { unit: "year", value: 0 },
+        maxValue: { unit: "year", value: 15 },
+      },
+    },
   },
 });
 
@@ -260,8 +351,24 @@ export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
     units: ["training"],
     initialFilter: {
       type: "minmax",
-      minValue: { unit: "training", value: 1 },
-      maxValue: { unit: "training", value: 4 },
+      localeRanges: {
+        US: {
+          minValue: { unit: "training", value: 1 },
+          maxValue: { unit: "training", value: 4 },
+        },
+        UK: {
+          minValue: { unit: "training", value: 1 },
+          maxValue: { unit: "training", value: 4 },
+        },
+        Europe: {
+          minValue: { unit: "training", value: 1 },
+          maxValue: { unit: "training", value: 4 },
+        },
+        Australia: {
+          minValue: { unit: "training", value: 1 },
+          maxValue: { unit: "training", value: 4 },
+        },
+      },
     },
   };
 }
@@ -270,6 +377,55 @@ for (const measure of [...MEASURES]) {
   if (measure.type == "input") {
     MEASURES.push(generateTrainingMeasure(measure));
   }
+}
+
+/**
+ * Extracts the appropriate initial filter for a given locale from a locale-based initial filter
+ */
+export function getInitialFilterForLocale(
+  measureSpec: MeasureSpec,
+  locale: Locale,
+): InitialFilter {
+  const localeFilter = measureSpec.initialFilter;
+
+  switch (localeFilter.type) {
+    case "minmax":
+      const range = localeFilter.localeRanges[locale];
+      return {
+        type: "minmax",
+        minValue: range.minValue,
+        maxValue: range.maxValue,
+      };
+    case "toggle":
+      return {
+        type: "toggle",
+        value: localeFilter.localeValues[locale],
+      };
+    default:
+      throw new Error(`Unknown filter type: ${(localeFilter as any).type}`);
+  }
+}
+
+/**
+ * Determines the preferred unit for a measure based on its category and the locale's preferences
+ */
+export function getPreferredUnitForMeasure(
+  measureId: MeasureId,
+  locale: Locale,
+): UnitType {
+  const measureSpec = getSpec(measureId);
+  const unitPreferences = getDefaultUnitsForLocale(locale);
+
+  // Try to find a unit from the measure's available units that matches the locale preferences
+  for (const unit of measureSpec.units) {
+    const category = getUnitCategory(unit);
+    if (category && unitPreferences[category] === unit) {
+      return unit;
+    }
+  }
+
+  // Fallback to the first unit if no preferred unit is found
+  return measureSpec.units[0];
 }
 
 const MEASURE_MAP: {
@@ -288,4 +444,3 @@ export function getSpec(measureId: MeasureId) {
 
   return spec;
 }
-

@@ -50,8 +50,24 @@ export const weightedClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 0 },
-    maxValue: { unit: "lb", value: 440 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 0 },
+        maxValue: { unit: "lb", value: 440 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 0 },
+        maxValue: { unit: "lb", value: 440 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 0 },
+        maxValue: { unit: "kg", value: 200 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 0 },
+        maxValue: { unit: "kg", value: 200 },
+      },
+    },
   },
   generateDescription: (params: {
     weightedMovement: WeightedMovement;
@@ -101,8 +117,24 @@ export const unilateralWeightedClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 0 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 0 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 0 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 0 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 0 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: {
     unilateralMovement: UnilateralMovement;
@@ -141,8 +173,24 @@ export const maxRepsClass: MeasureClassSpec = {
   units: ["count"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "count", value: 0 },
-    maxValue: { unit: "count", value: 100 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      UK: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      Europe: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+    },
   },
   generateDescription: (params: { maxRepsMovement: MaxRepsMovement }) => {
     return `${maxRepsMovementDesc[params.maxRepsMovement]}.`;
@@ -177,8 +225,24 @@ export const unilateralMaxRepsClass: MeasureClassSpec = {
   units: ["count"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "count", value: 0 },
-    maxValue: { unit: "count", value: 100 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      UK: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      Europe: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "count", value: 0 },
+        maxValue: { unit: "count", value: 100 },
+      },
+    },
   },
   generateDescription: (params: {
     unilateralMaxRepsMovement: UnilateralMaxRepsMovement;
@@ -216,8 +280,24 @@ export const isometricClass: MeasureClassSpec = {
   units: ["second"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "second", value: 0 },
-    maxValue: { unit: "second", value: 300 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      UK: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Europe: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Australia: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+    },
   },
   generateDescription: (params: { isometricMovement: IsometricMovement }) => {
     return `Maximum hold time for the following movement:
@@ -252,8 +332,24 @@ export const unilateralIsometricClass: MeasureClassSpec = {
   units: ["second"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "second", value: 0 },
-    maxValue: { unit: "second", value: 300 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      UK: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Europe: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Australia: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+    },
   },
   generateDescription: (params: {
     unilateralIsometricMovement: UnilateralIsometricMovement;
@@ -296,8 +392,24 @@ export const enduranceClass: MeasureClassSpec = {
   units: ["second"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "second", value: 0 },
-    maxValue: { unit: "second", value: 1000 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 1000 },
+      },
+      UK: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 1000 },
+      },
+      Europe: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 1000 },
+      },
+      Australia: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 1000 },
+      },
+    },
   },
   generateDescription: (params: { enduranceMovement: EnduranceMovement }) => {
     return `Maximum duration performing the following movement:

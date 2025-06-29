@@ -14,6 +14,7 @@ import {
   adjustGrade,
   castInitialFilter,
   castUnit,
+  selectInitialFilter,
   UnitType,
   UnitValue,
 } from "../../../iso/units";
@@ -26,6 +27,7 @@ import * as Interpolate from "./interpolate";
 import { InterpolationOption } from "../../util/interpolate";
 import { ParamName } from "../../../iso/measures/params";
 import { extractDataPoint } from "../../util/units";
+import { Locale } from "../../../iso/locale";
 
 type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
@@ -124,7 +126,7 @@ export class PlotListController {
       snapshots: HydratedSnapshot[];
       outputMeasure: Model["outputMeasure"];
     },
-    public context: { myDispatch: Dispatch<Msg> },
+    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
   ) {
     const snapshotStats: {
       [measureId: MeasureId]: number;
@@ -222,7 +224,10 @@ export class PlotListController {
         initialFilters[this.state.outputMeasure.id] = {
           enabled: true,
           ...castInitialFilter(
-            outputMeasureSpec.initialFilter,
+            selectInitialFilter(
+              outputMeasureSpec.initialFilter,
+              this.context.locale,
+            ),
             this.state.outputMeasure.unit,
           ),
         };
@@ -235,7 +240,10 @@ export class PlotListController {
         const trainingSpec = getSpec(trainingMeasureId);
         initialFilters[trainingMeasureId] = {
           enabled: false,
-          ...trainingSpec.initialFilter,
+          ...selectInitialFilter(
+            trainingSpec.initialFilter,
+            this.context.locale,
+          ),
         };
       }
 

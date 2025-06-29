@@ -33,8 +33,24 @@ export const powerClass: MeasureClassSpec = {
   units: ["inch", "m", "cm"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "inch", value: 39 },
-    maxValue: { unit: "inch", value: 79 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "inch", value: 39 },
+        maxValue: { unit: "inch", value: 79 },
+      },
+      UK: {
+        minValue: { unit: "inch", value: 39 },
+        maxValue: { unit: "inch", value: 79 },
+      },
+      Europe: {
+        minValue: { unit: "cm", value: 100 },
+        maxValue: { unit: "cm", value: 200 },
+      },
+      Australia: {
+        minValue: { unit: "cm", value: 100 },
+        maxValue: { unit: "cm", value: 200 },
+      },
+    },
   },
   generateDescription: (params: { powerMovement: PowerMovement }) => {
     return `Your maximum distance for the following movement:
@@ -61,8 +77,24 @@ export const unilateralPowerClass: MeasureClassSpec = {
   units: ["m", "cm", "inch"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "inch", value: 0 },
-    maxValue: { unit: "inch", value: 79 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "inch", value: 0 },
+        maxValue: { unit: "inch", value: 79 },
+      },
+      UK: {
+        minValue: { unit: "inch", value: 0 },
+        maxValue: { unit: "inch", value: 79 },
+      },
+      Europe: {
+        minValue: { unit: "cm", value: 0 },
+        maxValue: { unit: "cm", value: 200 },
+      },
+      Australia: {
+        minValue: { unit: "cm", value: 0 },
+        maxValue: { unit: "cm", value: 200 },
+      },
+    },
   },
   generateDescription: (params: { unilateralPowerMovement: UnilateralPowerMovement, dominantSide: ParamValue<"dominantSide"> }) => {
     return `Your maximum distance using your ${params.dominantSide} side:

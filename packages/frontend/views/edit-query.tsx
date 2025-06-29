@@ -4,7 +4,7 @@ import {
   MeasureSelectionBox,
   Msg as MeasureSelectionMsg,
 } from "./measure-selection-box";
-import { InitialFilter, UnitType } from "../../iso/units";
+import { InitialFilter, selectInitialFilter, UnitType } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../../iso/measures";
 import {
@@ -21,6 +21,7 @@ import {
 import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
+import { Locale } from "../../iso/locale";
 
 export type FilterMapping = {
   [measureId: MeasureId]: {
@@ -65,7 +66,7 @@ export class EditQueryController {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    public myDispatch: Dispatch<Msg>,
+    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
   ) {
     const filters: FilterController[] = [];
     for (const measureIdStr in initialFilters) {
@@ -76,7 +77,7 @@ export class EditQueryController {
           { measureId, initialFilter },
           {
             myDispatch: (msg) =>
-              this.myDispatch({ type: "FILTER_MSG", measureId, msg }),
+              this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }),
           },
         ),
       );
@@ -132,11 +133,18 @@ export class EditQueryController {
             new FilterController(
               {
                 measureId: measureId,
-                initialFilter: spec.initialFilter,
+                initialFilter: selectInitialFilter(
+                  spec.initialFilter,
+                  this.context.locale,
+                ),
               },
               {
                 myDispatch: (msg) =>
-                  this.myDispatch({ type: "FILTER_MSG", measureId, msg }),
+                  this.context.myDispatch({
+                    type: "FILTER_MSG",
+                    measureId,
+                    msg,
+                  }),
               },
             ),
           );
@@ -205,7 +213,7 @@ export class EditQueryView extends DCGView.View<{
                 <div class={DCGView.const(styles.item)}>
                   <button
                     onClick={() =>
-                      controller().myDispatch({
+                      controller().context.myDispatch({
                         type: "REMOVE_FILTER",
                         measureId: measureId,
                       })
@@ -221,7 +229,10 @@ export class EditQueryView extends DCGView.View<{
         <MeasureSelectionBox
           measureStats={() => state().measureStats}
           myDispatch={(msg: MeasureSelectionMsg) =>
-            controller().myDispatch({ type: "MEASURE_SELECTOR_MSG", msg })
+            controller().context.myDispatch({
+              type: "MEASURE_SELECTOR_MSG",
+              msg,
+            })
           }
         />
         <For.Simple each={() => DATASETS}>
@@ -232,7 +243,7 @@ export class EditQueryView extends DCGView.View<{
                   type="checkbox"
                   checked={() => state().datasets[dataset]}
                   onChange={(e) =>
-                    controller().myDispatch({
+                    controller().context.myDispatch({
                       type: "TOGGLE_DATASET",
                       dataset: dataset,
                       include: (e.target as HTMLInputElement).checked,

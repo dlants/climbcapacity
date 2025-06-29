@@ -29,6 +29,7 @@ import {
   sportGradeClass,
 } from "../../../iso/measures/grades";
 import { getSpec } from "../../../iso/measures";
+import { Locale } from "../../../iso/locale";
 
 export type Model = {
   filtersModel: EditQueryController;
@@ -89,15 +90,18 @@ export class ReportCardMainController {
       measureStats: MeasureStats;
       mySnapshot?: HydratedSnapshot;
     },
-    public context: { myDispatch: Dispatch<Msg> },
+    public context: { locale: Locale; myDispatch: Dispatch<Msg> },
   ) {
     const filtersModel = new EditQueryController(
       {
         initialFilters,
         measureStats,
       },
-      (msg: EditQueryMsg) =>
-        this.context.myDispatch({ type: "FILTERS_MSG", msg }),
+      {
+        locale: this.context.locale,
+        myDispatch: (msg: EditQueryMsg) =>
+          this.context.myDispatch({ type: "FILTERS_MSG", msg }),
+      },
     );
     const query = this.getQuery(filtersModel);
 
@@ -247,6 +251,7 @@ export class ReportCardMainController {
                 mySnapshot: this.state.mySnapshot,
               },
               {
+                locale: this.context.locale,
                 myDispatch: (msg: PlotListMsg) =>
                   this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
               },
@@ -326,6 +331,7 @@ export class ReportCardMainController {
               mySnapshot: this.state.mySnapshot,
             },
             {
+              locale: this.context.locale,
               myDispatch: (msg: PlotListMsg) =>
                 this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
             },
@@ -350,6 +356,7 @@ export class ReportCardMainController {
               mySnapshot: this.state.mySnapshot,
             },
             {
+              locale: this.context.locale,
               myDispatch: (msg: PlotListMsg) =>
                 this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
             },

@@ -107,8 +107,24 @@ export const maxhangClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 77 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: {
     gripType: GripType;
@@ -154,8 +170,24 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 77 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: {
     gripType: GripType;
@@ -198,8 +230,24 @@ export const repeatersClass: MeasureClassSpec = {
   units: ["second"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "second", value: 0 },
-    maxValue: { unit: "second", value: 300 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      UK: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Europe: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Australia: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+    },
   },
   generateDescription: (params: {
     timing: Timing;
@@ -243,8 +291,24 @@ export const blockPullClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 77 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: {
     allGripType: ParamValue<"allGripType">;
@@ -279,8 +343,24 @@ export const minEdgeClass: MeasureClassSpec = {
   units: ["mm"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "mm", value: 5 },
-    maxValue: { unit: "mm", value: 25 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      UK: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      Europe: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      Australia: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+    },
   },
   generateDescription: (params: { gripType: GripType; duration: Duration }) => {
     return `Minimum edge size for a ${params.duration} second hang.
@@ -309,8 +389,24 @@ export const minEdgePullupsClass: MeasureClassSpec = {
   units: ["mm"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "mm", value: 5 },
-    maxValue: { unit: "mm", value: 25 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      UK: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      Europe: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+      Australia: {
+        minValue: { unit: "mm", value: 5 },
+        maxValue: { unit: "mm", value: 25 },
+      },
+    },
   },
   generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; repMax: Reps }) => {
     return `Minimum edge size on which you can do ${params.repMax} pull-ups.
@@ -341,8 +437,24 @@ export const continuousHangClass: MeasureClassSpec = {
   units: ["second"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "second", value: 0 },
-    maxValue: { unit: "second", value: 300 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      UK: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Europe: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+      Australia: {
+        minValue: { unit: "second", value: 0 },
+        maxValue: { unit: "second", value: 300 },
+      },
+    },
   },
   generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize }) => {
     return `\

@@ -57,8 +57,24 @@ export const peakloadClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 77 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\
@@ -96,8 +112,24 @@ export const avgLoadClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 77 },
-    maxValue: { unit: "lb", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 77 },
+        maxValue: { unit: "lb", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 35 },
+        maxValue: { unit: "kg", value: 100 },
+      },
+    },
   },
   generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize; avgLoadDuration: avgLoadDuration; dominantSide: DominantSide }) => {
     return `\
@@ -130,8 +162,24 @@ export const rfdClass: MeasureClassSpec = {
   units: ["lb/s", "kg/s"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb/s", value: 77 },
-    maxValue: { unit: "lb/s", value: 220 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb/s", value: 77 },
+        maxValue: { unit: "lb/s", value: 220 },
+      },
+      UK: {
+        minValue: { unit: "lb/s", value: 77 },
+        maxValue: { unit: "lb/s", value: 220 },
+      },
+      Europe: {
+        minValue: { unit: "kg/s", value: 35 },
+        maxValue: { unit: "kg/s", value: 100 },
+      },
+      Australia: {
+        minValue: { unit: "kg/s", value: 35 },
+        maxValue: { unit: "kg/s", value: 100 },
+      },
+    },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\
@@ -164,8 +212,24 @@ export const criticalForceClass: MeasureClassSpec = {
   units: ["lb", "kg"],
   initialFilter: {
     type: "minmax",
-    minValue: { unit: "lb", value: 22 },
-    maxValue: { unit: "lb", value: 110 },
+    localeRanges: {
+      US: {
+        minValue: { unit: "lb", value: 22 },
+        maxValue: { unit: "lb", value: 110 },
+      },
+      UK: {
+        minValue: { unit: "lb", value: 22 },
+        maxValue: { unit: "lb", value: 110 },
+      },
+      Europe: {
+        minValue: { unit: "kg", value: 10 },
+        maxValue: { unit: "kg", value: 50 },
+      },
+      Australia: {
+        minValue: { unit: "kg", value: 10 },
+        maxValue: { unit: "kg", value: 50 },
+      },
+    },
   },
   generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
     return `\

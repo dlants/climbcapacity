@@ -9,6 +9,8 @@ import {
 import { MeasureStats } from "../../iso/protocol";
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../../iso/measures";
+import { Locale } from "../../iso/locale";
+import { selectInitialFilter } from "../../iso/units";
 
 export type Model = {
   measureStats: MeasureStats;
@@ -25,7 +27,7 @@ export class ExploreController {
 
   constructor(
     measureStats: MeasureStats,
-    public myDispatch: Dispatch<Msg>,
+    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
   ) {
     const initialFilters: InitialFilters = {};
     for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
@@ -33,7 +35,10 @@ export class ExploreController {
       if (count < 100) {
         continue;
       }
-      initialFilters[measure.id] = measure.initialFilter;
+      initialFilters[measure.id] = selectInitialFilter(
+        measure.initialFilter,
+        context.locale,
+      );
     }
 
     const reportCardMain = new ReportCardMainController(
@@ -43,8 +48,9 @@ export class ExploreController {
         mySnapshot: undefined,
       },
       {
+        locale: this.context.locale,
         myDispatch: (msg: ReportCardMsg) =>
-          this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
+          this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
       },
     );
 
