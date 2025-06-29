@@ -17,14 +17,14 @@ const styles = typestyle.stylesheet({
     alignItems: "center",
     gap: csx.px(8),
     padding: `${csx.px(8)} ${csx.px(12)}`,
-    border: `1px solid ${csx.rgb(200, 200, 200)}`,
+    border: `1px solid ${csx.rgb(200, 200, 200).toString()}`,
     borderRadius: csx.px(4),
     backgroundColor: "white",
     cursor: "pointer",
     fontSize: csx.em(0.9),
     $nest: {
       "&:hover": {
-        backgroundColor: csx.rgb(248, 248, 248),
+        backgroundColor: csx.rgb(248, 248, 248).toString(),
       },
     },
   },
@@ -40,11 +40,11 @@ const styles = typestyle.stylesheet({
     left: 0,
     right: 0,
     backgroundColor: "white",
-    border: `1px solid ${csx.rgb(200, 200, 200)}`,
+    border: `1px solid ${csx.rgb(200, 200, 200).toString()}`,
     borderTop: "none",
     borderBottomLeftRadius: csx.px(4),
     borderBottomRightRadius: csx.px(4),
-    boxShadow: `0 2px 8px ${csx.rgba(0, 0, 0, 0.1)}`,
+    boxShadow: `0 2px 8px ${csx.rgba(0, 0, 0, 0.1).toString()}`,
     zIndex: 1000,
   },
   localeOption: {
@@ -57,15 +57,15 @@ const styles = typestyle.stylesheet({
     fontSize: csx.em(0.9),
     $nest: {
       "&:hover": {
-        backgroundColor: csx.rgb(248, 248, 248),
+        backgroundColor: csx.rgb(248, 248, 248).toString(),
       },
     },
   },
   localeOptionSelected: {
-    backgroundColor: csx.rgb(240, 248, 255),
+    backgroundColor: csx.rgb(240, 248, 255).toString(),
     $nest: {
       "&:hover": {
-        backgroundColor: csx.rgb(230, 240, 250),
+        backgroundColor: csx.rgb(230, 240, 250).toString(),
       },
     },
   },
