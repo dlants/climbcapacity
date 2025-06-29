@@ -123,37 +123,37 @@ The goal is to remove individual unit toggles throughout the ClimbCapacity appli
 
 ### Phase 5: Update Report Card Components
 
-- [ ] Modify `packages/frontend/views/reportcard/plot-list.tsx`
-  - [ ] Remove `UnitToggle` import and `UnitToggleController` from `PlotModel`
-  - [ ] Update `PlotListController` constructor to use locale for unit selection
-  - [ ] Remove unit toggle state management and message handling
-  - [ ] Update plot rendering to use locale-based units
-  - [ ] Remove `TOGGLE_MSG` from `Msg` type and related handling
-  - [ ] Iterate until no compilation/type errors
-- [ ] Update `PlotListView`
-  - [ ] Remove `UnitToggleView` rendering from `renderPlotWithControls`
-  - [ ] Iterate until no compilation/type errors
-- [ ] Modify `packages/frontend/views/reportcard/main.tsx`
-  - [ ] Remove `UnitToggleController` from output measure selection
-  - [ ] Update `ReportCardMainController` to use locale-based unit selection for output measures
-  - [ ] Remove unit toggle message handling
-  - [ ] Update output measure unit selection logic
-  - [ ] Iterate until no compilation/type errors
-- [ ] Update `ReportCardMainView`
-  - [ ] Remove `UnitToggleView` from output measure container
-  - [ ] Iterate until no compilation/type errors
-- [ ] Write tests for updated report card functionality
-  - [ ] Test plot generation with locale-based units
-  - [ ] Test output measure selection follows locale preferences
-  - [ ] Iterate until tests pass
+- [x] Modify `packages/frontend/views/reportcard/plot-list.tsx`
+  - [x] Remove `UnitToggle` import and `UnitToggleController` from `PlotModel`
+  - [x] Update `PlotListController` constructor to use locale for unit selection
+  - [x] Remove unit toggle state management and message handling
+  - [x] Update plot rendering to use locale-based units
+  - [x] Remove `TOGGLE_MSG` from `Msg` type and related handling
+  - [x] Iterate until no compilation/type errors
+- [x] Update `PlotListView`
+  - [x] Remove `UnitToggleView` rendering from `renderPlotWithControls`
+  - [x] Iterate until no compilation/type errors
+- [x] Modify `packages/frontend/views/reportcard/main.tsx`
+  - [x] Remove `UnitToggleController` from output measure selection
+  - [x] Update `ReportCardMainController` to use locale-based unit selection for output measures
+  - [x] Remove unit toggle message handling
+  - [x] Update output measure unit selection logic
+  - [x] Iterate until no compilation/type errors
+- [x] Update `ReportCardMainView`
+  - [x] Remove `UnitToggleView` from output measure container
+  - [x] Iterate until no compilation/type errors
+- [x] Write tests for updated report card functionality
+  - [x] Test plot generation with locale-based units
+  - [x] Test output measure selection follows locale preferences
+  - [x] Iterate until tests pass
 
 ### Phase 6: Update Page-Level Components
 
-- [ ] Modify `packages/frontend/pages/report-card.tsx`
-  - [ ] Ensure locale is properly passed down to report card components
-  - [ ] Verify no direct unit toggle usage remains
-  - [ ] Iterate until no compilation/type errors
-- [ ] Update any other page components that use unit toggles
-  - [ ] Check snapshot, explore, and custom-query pages
-  - [ ] Update them to pass locale context properly
-  - [ ] Iterate until no compilation/type errors
+- [x] Modify `packages/frontend/pages/report-card.tsx`
+  - [x] Ensure locale is properly passed down to report card components
+  - [x] Verify no direct unit toggle usage remains
+  - [x] Iterate until no compilation/type errors
+- [x] Update any other page components that use unit toggles
+  - [x] Check snapshot, explore, and custom-query pages
+  - [x] Update them to pass locale context properly
+  - [x] Iterate until no compilation/type errors

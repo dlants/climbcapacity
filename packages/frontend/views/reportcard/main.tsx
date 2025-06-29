@@ -18,8 +18,6 @@ import {
   SelectMeasureClassView,
 } from "../snapshot/select-measure-class";
 import type { Msg as SelectMeasureClassMsg } from "../snapshot/select-measure-class";
-import { UnitToggleController, UnitToggleView } from "../unit-toggle";
-import type { Msg as UnitToggleMsg } from "../unit-toggle";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -28,14 +26,13 @@ import {
   boulderGradeClass,
   sportGradeClass,
 } from "../../../iso/measures/grades";
-import { getSpec } from "../../../iso/measures";
+import { getSpec, getPreferredUnitForMeasure } from "../../../iso/measures";
 import { Locale } from "../../../iso/locale";
 
 export type Model = {
   filtersModel: EditQueryController;
   outputMeasure: {
     selector: SelectMeasureClassController;
-    toggle: UnitToggleController;
   };
   measureStats: MeasureStats;
   query: {
@@ -67,10 +64,6 @@ export type Msg =
   | {
       type: "SELECT_MEASURE_CLASS_MSG";
       msg: SelectMeasureClassMsg;
-    }
-  | {
-      type: "OUTPUT_MEASURE_TOGGLE_MSG";
-      msg: UnitToggleMsg;
     }
   | {
       type: "FILTERS_MSG";
@@ -112,11 +105,7 @@ export class ReportCardMainController {
       throw new Error(`No performance measures found`);
     }
 
-    let initialMeasure = {
-      measureId: performanceMeasure.id,
-      unit: performanceMeasure.units[0],
-      possibleUnits: performanceMeasure.units,
-    };
+    let initialMeasureId = performanceMeasure.id;
 
     if (mySnapshot) {
       const performanceMeasure = MEASURES.find(
@@ -124,11 +113,7 @@ export class ReportCardMainController {
       );
 
       if (performanceMeasure) {
-        initialMeasure = {
-          measureId: performanceMeasure.id,
-          unit: mySnapshot.measures[performanceMeasure.id].unit,
-          possibleUnits: performanceMeasure.units,
-        };
+        initialMeasureId = performanceMeasure.id;
       }
     }
 
@@ -137,23 +122,11 @@ export class ReportCardMainController {
         {
           measureClasses: [boulderGradeClass, sportGradeClass],
           measureStats,
-          measureId: initialMeasure.measureId,
+          measureId: initialMeasureId,
         },
         {
           myDispatch: (msg: SelectMeasureClassMsg) =>
             this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }),
-        },
-      ),
-
-      toggle: new UnitToggleController(
-        {
-          measureId: initialMeasure.measureId,
-          selectedUnit: initialMeasure.unit,
-          possibleUnits: initialMeasure.possibleUnits,
-        },
-        {
-          myDispatch: (msg: UnitToggleMsg) =>
-            this.context.myDispatch({ type: "OUTPUT_MEASURE_TOGGLE_MSG", msg }),
         },
       ),
     };
@@ -169,6 +142,11 @@ export class ReportCardMainController {
 
     // Execute initial data fetch
     this.fetchData().catch(console.error);
+  }
+
+  private getOutputMeasureUnit() {
+    const measureId = this.state.outputMeasure.selector.state.selected.measureId;
+    return getPreferredUnitForMeasure(measureId, this.context.locale());
   }
 
   private getQuery(editQuery: EditQueryController): {
@@ -245,7 +223,7 @@ export class ReportCardMainController {
                 outputMeasure: {
                   id: this.state.outputMeasure.selector.state.selected
                     .measureId,
-                  unit: this.state.outputMeasure.toggle.state.selectedUnit,
+                  unit: this.getOutputMeasureUnit(),
                 },
                 measureStats: this.state.measureStats,
                 mySnapshot: this.state.mySnapshot,
@@ -301,23 +279,6 @@ export class ReportCardMainController {
 
       case "SELECT_MEASURE_CLASS_MSG": {
         this.state.outputMeasure.selector.handleDispatch(msg.msg);
-        const measure = getSpec(
-          this.state.outputMeasure.selector.state.selected.measureId,
-        );
-        this.state.outputMeasure.toggle = new UnitToggleController(
-          {
-            measureId: measure.id,
-            selectedUnit: measure.units[0],
-            possibleUnits: measure.units,
-          },
-          {
-            myDispatch: (msg: UnitToggleMsg) =>
-              this.context.myDispatch({
-                type: "OUTPUT_MEASURE_TOGGLE_MSG",
-                msg,
-              }),
-          },
-        );
 
         if (this.state.dataRequest.status == "loaded") {
           const nextReportCardModel = new PlotListController(
@@ -325,32 +286,7 @@ export class ReportCardMainController {
               snapshots: this.state.dataRequest.response.snapshots,
               outputMeasure: {
                 id: this.state.outputMeasure.selector.state.selected.measureId,
-                unit: this.state.outputMeasure.toggle.state.selectedUnit,
-              },
-              measureStats: this.state.measureStats,
-              mySnapshot: this.state.mySnapshot,
-            },
-            {
-              locale: this.context.locale,
-              myDispatch: (msg: PlotListMsg) =>
-                this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-            },
-          );
-          this.state.dataRequest.response.reportCardModel = nextReportCardModel;
-        }
-        break;
-      }
-
-      case "OUTPUT_MEASURE_TOGGLE_MSG": {
-        this.state.outputMeasure.toggle.handleDispatch(msg.msg);
-
-        if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = new PlotListController(
-            {
-              snapshots: this.state.dataRequest.response.snapshots,
-              outputMeasure: {
-                id: this.state.outputMeasure.selector.state.selected.measureId,
-                unit: this.state.outputMeasure.toggle.state.selectedUnit,
+                unit: this.getOutputMeasureUnit(),
               },
               measureStats: this.state.measureStats,
               mySnapshot: this.state.mySnapshot,
@@ -402,7 +338,6 @@ export class ReportCardMainView extends DCGView.View<{
             <SelectMeasureClassView
               controller={() => state().outputMeasure.selector}
             />
-            <UnitToggleView controller={() => state().outputMeasure.toggle} />
           </div>
         </div>
         {SwitchUnion(() => state().dataRequest, "status", {
