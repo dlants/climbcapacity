@@ -130,6 +130,9 @@ yarn typecheck
 yarn workspace @climbcapacity/backend exec tsc --noEmit
 yarn workspace @climbcapacity/frontend exec tsc --noEmit
 yarn workspace @climbcapacity/iso exec tsc --noEmit
+
+# Note: Direct TypeScript compilation on frontend files may show JSX errors
+# Use the build process or full typecheck command for accurate results
 ```
 
 ### Configuration

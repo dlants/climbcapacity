@@ -66,7 +66,7 @@ export class EditQueryController {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const filters: FilterController[] = [];
     for (const measureIdStr in initialFilters) {
@@ -76,6 +76,7 @@ export class EditQueryController {
         new FilterController(
           { measureId, initialFilter },
           {
+            locale: this.context.locale,
             myDispatch: (msg) =>
               this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }),
           },
@@ -135,10 +136,11 @@ export class EditQueryController {
                 measureId: measureId,
                 initialFilter: selectInitialFilter(
                   spec.initialFilter,
-                  this.context.locale,
+                  this.context.locale(),
                 ),
               },
               {
+                locale: this.context.locale,
                 myDispatch: (msg) =>
                   this.context.myDispatch({
                     type: "FILTER_MSG",

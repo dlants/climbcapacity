@@ -14,6 +14,7 @@ import {
   getSpec,
   MeasureId,
 } from "../../iso/measures";
+import { Locale } from "../../iso/locale";
 import {
   MeasureSelectorController,
   MeasureSelectorView,
@@ -78,7 +79,7 @@ export class SnapshotController {
       snapshot,
       measureStats,
     }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
-    public context: { myDispatch: Dispatch<Msg> },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     this.state = {
       snapshot,
@@ -117,6 +118,7 @@ export class SnapshotController {
                     type: "EDIT_MEASURE_OR_CLASS_MSG",
                     msg,
                   }),
+                locale: this.context.locale,
               },
             ),
           };

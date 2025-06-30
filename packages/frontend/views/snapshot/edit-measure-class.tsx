@@ -2,9 +2,18 @@ import * as DCGView from "dcgview";
 import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import { Dispatch } from "../../types";
-import { SelectMeasureClassController, SelectMeasureClassView, Msg as SelectMeasureClassMsg } from "./select-measure-class";
-import { EditMeasureController, EditMeasureView, Msg as EditMeasureMsg } from "./edit-measure";
+import {
+  SelectMeasureClassController,
+  SelectMeasureClassView,
+  Msg as SelectMeasureClassMsg,
+} from "./select-measure-class";
+import {
+  EditMeasureController,
+  EditMeasureView,
+  Msg as EditMeasureMsg,
+} from "./edit-measure";
 import { MeasureStats } from "../../../iso/protocol";
+import { Locale } from "../../../iso/locale";
 
 export type Model = {
   selectMeasurePage: SelectMeasureClassController;
@@ -14,13 +23,13 @@ export type Model = {
 
 export type Msg =
   | {
-    type: "SELECT_MEASURE_CLASS_MSG";
-    msg: SelectMeasureClassMsg;
-  }
+      type: "SELECT_MEASURE_CLASS_MSG";
+      msg: SelectMeasureClassMsg;
+    }
   | {
-    type: "EDIT_MEASURE_MSG";
-    msg: EditMeasureMsg;
-  };
+      type: "EDIT_MEASURE_MSG";
+      msg: EditMeasureMsg;
+    };
 
 export class EditMeasureClassController {
   state: Model;
@@ -30,22 +39,34 @@ export class EditMeasureClassController {
     measureStats: MeasureStats,
     snapshot: HydratedSnapshot,
     measureId: MeasureId | undefined,
-    public myDispatch: Dispatch<Msg>
-  ) {
-    const selectMeasurePage = new SelectMeasureClassController({
-      measureClasses,
-      measureStats,
-      measureId
+    public context: {
+      myDispatch: Dispatch<Msg>;
+      locale: () => Locale;
     },
-      { myDispatch: (msg: SelectMeasureClassMsg) => this.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }) }
+  ) {
+    const selectMeasurePage = new SelectMeasureClassController(
+      {
+        measureClasses,
+        measureStats,
+        measureId,
+      },
+      {
+        myDispatch: (msg: SelectMeasureClassMsg) =>
+          this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }),
+      },
     );
 
-    const editMeasurePage = new EditMeasureController({
-      measureId: selectMeasurePage.state.selected.measureId,
-      measureStats,
-      snapshot
-    },
-      (msg: EditMeasureMsg) => this.myDispatch({ type: "EDIT_MEASURE_MSG", msg })
+    const editMeasurePage = new EditMeasureController(
+      {
+        measureId: selectMeasurePage.state.selected.measureId,
+        measureStats,
+        snapshot,
+      },
+      {
+        myDispatch: (msg: EditMeasureMsg) =>
+          this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg }),
+        locale: this.context.locale,
+      },
     );
 
     this.state = {
@@ -62,16 +83,25 @@ export class EditMeasureClassController {
         break;
 
       case "SELECT_MEASURE_CLASS_MSG": {
-        const previousMeasureId = this.state.selectMeasurePage.state.selected.measureId;
+        const previousMeasureId =
+          this.state.selectMeasurePage.state.selected.measureId;
         this.state.selectMeasurePage.handleDispatch(msg.msg);
 
-        if (this.state.selectMeasurePage.state.selected.measureId !== previousMeasureId) {
-          this.state.editMeasurePage = new EditMeasureController({
-            measureId: this.state.selectMeasurePage.state.selected.measureId,
-            measureStats: this.state.selectMeasurePage.state.measureStats,
-            snapshot: this.state.snapshot
-          },
-            (msg) => this.myDispatch({ type: "EDIT_MEASURE_MSG", msg })
+        if (
+          this.state.selectMeasurePage.state.selected.measureId !==
+          previousMeasureId
+        ) {
+          this.state.editMeasurePage = new EditMeasureController(
+            {
+              measureId: this.state.selectMeasurePage.state.selected.measureId,
+              measureStats: this.state.selectMeasurePage.state.measureStats,
+              snapshot: this.state.snapshot,
+            },
+            {
+              myDispatch: (msg) =>
+                this.context.myDispatch({ type: "EDIT_MEASURE_MSG", msg }),
+              locale: this.context.locale,
+            },
           );
         }
         break;
@@ -91,7 +121,9 @@ export class EditMeasureClassView extends DCGView.View<{
 
     return (
       <div>
-        <SelectMeasureClassView controller={() => stateProp().selectMeasurePage} />
+        <SelectMeasureClassView
+          controller={() => stateProp().selectMeasurePage}
+        />
         <EditMeasureView controller={() => stateProp().editMeasurePage} />
       </div>
     );

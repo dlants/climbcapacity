@@ -53,7 +53,7 @@ export class ReportCardController {
   constructor(
     userId: string,
     measureStats: MeasureStats,
-    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     this.state = {
       userId,

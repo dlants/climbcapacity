@@ -27,7 +27,7 @@ export class ExploreController {
 
   constructor(
     measureStats: MeasureStats,
-    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const initialFilters: InitialFilters = {};
     for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
@@ -37,7 +37,7 @@ export class ExploreController {
       }
       initialFilters[measure.id] = selectInitialFilter(
         measure.initialFilter,
-        context.locale,
+        context.locale(),
       );
     }
 

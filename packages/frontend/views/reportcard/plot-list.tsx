@@ -4,7 +4,6 @@ import * as Plot from "../plot";
 import * as ReportCardFilter from "./filter";
 import { Dispatch } from "../../types";
 
-const { If } = DCGView.Components;
 import {
   MeasureId,
   generateTrainingMeasureId,
@@ -22,17 +21,16 @@ import { assertUnreachable } from "../../util/utils";
 import { filterOutliersX } from "../../util/stats";
 import { MEASURES } from "../../../iso/measures";
 import { MeasureStats } from "../../../iso/protocol";
-import * as UnitToggle from "../unit-toggle";
 import * as Interpolate from "./interpolate";
 import { InterpolationOption } from "../../util/interpolate";
 import { ParamName } from "../../../iso/measures/params";
 import { extractDataPoint } from "../../util/units";
 import { Locale } from "../../../iso/locale";
+import { getPreferredUnitForMeasure } from "../../../iso/measures";
 
 type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
   inputMeasure: MeasureWithUnit;
-  toggle: UnitToggle.UnitToggleController;
   interpolate: Interpolate.InterpolateController;
   plot: Plot.Model;
 };
@@ -72,12 +70,7 @@ export class PlotListView extends DCGView.View<{
         <Interpolate.InterpolateView
           controller={() => plotProp().interpolate}
         />
-        <Plot.Plot initialModel={() => plotProp().plot} />
-        <If predicate={() => plotProp().toggle.state.possibleUnits.length > 1}>
-          {() => (
-            <UnitToggle.UnitToggleView controller={() => plotProp().toggle} />
-          )}
-        </If>
+        <Plot.Plot model={() => plotProp().plot} />
       </div>
     );
   }
@@ -106,11 +99,6 @@ export type Msg =
       msg: import("./filter").Msg;
     }
   | {
-      type: "TOGGLE_MSG";
-      measureId: MeasureId;
-      msg: import("../unit-toggle").Msg;
-    }
-  | {
       type: "INTERPOLATE_MSG";
       measureId: MeasureId;
       msg: import("./interpolate").Msg;
@@ -126,7 +114,7 @@ export class PlotListController {
       snapshots: HydratedSnapshot[];
       outputMeasure: Model["outputMeasure"];
     },
-    public context: { myDispatch: Dispatch<Msg>; locale: Locale },
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const snapshotStats: {
       [measureId: MeasureId]: number;
@@ -226,7 +214,7 @@ export class PlotListController {
           ...castInitialFilter(
             selectInitialFilter(
               outputMeasureSpec.initialFilter,
-              this.context.locale,
+              this.context.locale(),
             ),
             this.state.outputMeasure.unit,
           ),
@@ -242,7 +230,7 @@ export class PlotListController {
           enabled: false,
           ...selectInitialFilter(
             trainingSpec.initialFilter,
-            this.context.locale,
+            this.context.locale(),
           ),
         };
       }
@@ -250,9 +238,17 @@ export class PlotListController {
       const includeStrToWtRatio =
         inputMeasureSpec.units.includes("kg") ||
         inputMeasureSpec.units.includes("lb");
-      const selectedUnit = includeStrToWtRatio
-        ? "strengthtoweightratio"
-        : inputMeasure.unit;
+
+      // Use locale-based unit selection instead of toggle
+      const getUnit = (): UnitType => {
+        if (includeStrToWtRatio) {
+          return "strengthtoweightratio";
+        }
+        return getPreferredUnitForMeasure(
+          inputMeasure.id,
+          this.context.locale(),
+        );
+      };
 
       const filter = new ReportCardFilter.ReportCardFilterController(
         {
@@ -260,27 +256,10 @@ export class PlotListController {
           measureStats: this.state.measureStats,
         },
         {
+          locale: this.context.locale,
           myDispatch: (msg: ReportCardFilter.Msg) =>
             this.context.myDispatch({
               type: "FILTER_MSG",
-              measureId: inputMeasure.id,
-              msg,
-            }),
-        },
-      );
-
-      const toggle = new UnitToggle.UnitToggleController(
-        {
-          measureId: inputMeasure.id,
-          selectedUnit,
-          possibleUnits: includeStrToWtRatio
-            ? [...inputMeasureSpec.units, "strengthtoweightratio"]
-            : inputMeasureSpec.units,
-        },
-        {
-          myDispatch: (msg) =>
-            this.context.myDispatch({
-              type: "TOGGLE_MSG",
               measureId: inputMeasure.id,
               msg,
             }),
@@ -303,7 +282,7 @@ export class PlotListController {
       const plot = this.getPlot({
         xMeasure: {
           ...inputMeasure,
-          unit: selectedUnit,
+          unit: getUnit(),
         },
         interpolationOptions: this.getInterpolationOptions(interpolate),
         filterModel: filter,
@@ -312,7 +291,6 @@ export class PlotListController {
       plots.push({
         inputMeasure: inputMeasure,
         filter,
-        toggle,
         interpolate,
         plot,
       });
@@ -470,6 +448,19 @@ export class PlotListController {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
         filterPlot.filter.handleDispatch(msg.msg);
+
+        // Get the unit using locale-based selection
+        const inputMeasureSpec = getSpec(filterPlot.inputMeasure.id);
+        const includeStrToWtRatio =
+          inputMeasureSpec.units.includes("kg") ||
+          inputMeasureSpec.units.includes("lb");
+        const unit = includeStrToWtRatio
+          ? "strengthtoweightratio"
+          : getPreferredUnitForMeasure(
+              filterPlot.inputMeasure.id,
+              this.context.locale(),
+            );
+
         filterPlot.plot = this.getPlot({
           filterModel: filterPlot.filter,
           interpolationOptions: this.getInterpolationOptions(
@@ -477,28 +468,7 @@ export class PlotListController {
           ),
           xMeasure: {
             ...filterPlot.inputMeasure,
-            unit: filterPlot.toggle.state.selectedUnit,
-          },
-        });
-        break;
-      }
-
-      case "TOGGLE_MSG": {
-        const togglePlot = this.state.plots.find(
-          (p) => p.inputMeasure.id === msg.measureId,
-        );
-        if (!togglePlot) {
-          throw new Error(`Cannot find plot for measure ${msg.measureId}`);
-        }
-        togglePlot.toggle.handleDispatch(msg.msg);
-        togglePlot.plot = this.getPlot({
-          filterModel: togglePlot.filter,
-          interpolationOptions: this.getInterpolationOptions(
-            togglePlot.interpolate,
-          ),
-          xMeasure: {
-            ...togglePlot.inputMeasure,
-            unit: togglePlot.toggle.state.selectedUnit,
+            unit,
           },
         });
         break;
@@ -512,6 +482,19 @@ export class PlotListController {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
         interpolatePlot.interpolate.handleDispatch(msg.msg);
+
+        // Get the unit using locale-based selection
+        const inputMeasureSpec = getSpec(interpolatePlot.inputMeasure.id);
+        const includeStrToWtRatio =
+          inputMeasureSpec.units.includes("kg") ||
+          inputMeasureSpec.units.includes("lb");
+        const unit = includeStrToWtRatio
+          ? "strengthtoweightratio"
+          : getPreferredUnitForMeasure(
+              interpolatePlot.inputMeasure.id,
+              this.context.locale(),
+            );
+
         interpolatePlot.plot = this.getPlot({
           filterModel: interpolatePlot.filter,
           interpolationOptions: this.getInterpolationOptions(
@@ -519,7 +502,7 @@ export class PlotListController {
           ),
           xMeasure: {
             ...interpolatePlot.inputMeasure,
-            unit: interpolatePlot.toggle.state.selectedUnit,
+            unit,
           },
         });
         break;

@@ -1,6 +1,5 @@
 import * as DCGView from "dcgview";
-import { Identifier }
-  from "../../parser/types";
+import { Identifier } from "../../parser/types";
 import { InitialFilter, UnitType } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { MeasureStats } from "../../../iso/protocol";
@@ -10,6 +9,7 @@ import { Dispatch } from "../../types";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
+import { Locale } from "../../../iso/locale";
 
 export class ReportCardFilterView extends DCGView.View<{
   controller: () => ReportCardFilterController;
@@ -20,15 +20,23 @@ export class ReportCardFilterView extends DCGView.View<{
 
     return (
       <div>
-        <For each={() => stateProp().filters} key={(filter: ToggleableFilter) => this.props.controller().getMeasureId(filter.filter)}>
-          {(filterProp: () => ToggleableFilter) => this.renderFilterView(filterProp)}
+        <For
+          each={() => stateProp().filters}
+          key={(filter: ToggleableFilter) =>
+            this.props.controller().getMeasureId(filter.filter)
+          }
+        >
+          {(filterProp: () => ToggleableFilter) =>
+            this.renderFilterView(filterProp)
+          }
         </For>
       </div>
     );
   }
 
   private renderFilterView(filterProp: () => ToggleableFilter) {
-    const measureId = () => this.props.controller().getMeasureId(filterProp().filter);
+    const measureId = () =>
+      this.props.controller().getMeasureId(filterProp().filter);
 
     return (
       <div class={DCGView.const(styles.filterView)}>
@@ -89,7 +97,7 @@ export class ReportCardFilterController {
       initialFilters: InitialFilters;
       measureStats: MeasureStats;
     },
-    public context: { myDispatch: Dispatch<Msg> }
+    public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const filters: ToggleableFilter[] = [];
     for (const measureIdStr in initialParams.initialFilters) {
@@ -99,7 +107,11 @@ export class ReportCardFilterController {
         enabled: initialFilter.enabled,
         filter: new Filter.FilterController(
           { measureId, initialFilter },
-          { myDispatch: (msg: Filter.Msg) => this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }) }
+          {
+            locale: this.context.locale,
+            myDispatch: (msg: Filter.Msg) =>
+              this.context.myDispatch({ type: "FILTER_MSG", measureId, msg }),
+          },
         ),
       });
     }
@@ -152,7 +164,6 @@ export class ReportCardFilterController {
     const view = new ReportCardFilterView({ controller: () => this });
     return view.template();
   }
-
 }
 
 const styles = typestyle.stylesheet({
