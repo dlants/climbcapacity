@@ -26,7 +26,7 @@ import {
   boulderGradeClass,
   sportGradeClass,
 } from "../../../iso/measures/grades";
-import { getSpec, getPreferredUnitForMeasure } from "../../../iso/measures";
+import { getPreferredUnitForMeasure } from "../../../iso/measures";
 import { Locale } from "../../../iso/locale";
 
 export type Model = {
@@ -145,7 +145,8 @@ export class ReportCardMainController {
   }
 
   private getOutputMeasureUnit() {
-    const measureId = this.state.outputMeasure.selector.state.selected.measureId;
+    const measureId =
+      this.state.outputMeasure.selector.state.selected.measureId;
     return getPreferredUnitForMeasure(measureId, this.context.locale());
   }
 

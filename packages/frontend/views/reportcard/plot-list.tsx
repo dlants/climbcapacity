@@ -4,7 +4,6 @@ import * as Plot from "../plot";
 import * as ReportCardFilter from "./filter";
 import { Dispatch } from "../../types";
 
-const { If } = DCGView.Components;
 import {
   MeasureId,
   generateTrainingMeasureId,
@@ -71,7 +70,7 @@ export class PlotListView extends DCGView.View<{
         <Interpolate.InterpolateView
           controller={() => plotProp().interpolate}
         />
-        <Plot.Plot initialModel={() => plotProp().plot} />
+        <Plot.Plot model={() => plotProp().plot} />
       </div>
     );
   }

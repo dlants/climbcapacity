@@ -8,18 +8,14 @@ import * as Heatmap from "./plots/heatmap";
 export type Model = Histogram.Model | Dotplot.Model | Heatmap.Model;
 
 export class Plot extends DCGView.View<{
-  initialModel: Model;
+  model: Model;
 }> {
-  state: Model;
   svgElement: SVGSVGElement | null = null;
-
-  init() {
-    this.state = this.props.initialModel();
-  }
 
   template() {
     return (
-      <div class="plot-container"
+      <div
+        class="plot-container"
         didMount={this.divDidMount.bind(this)}
         willUnmount={this.divWillUnmount.bind(this)}
       ></div>
@@ -28,11 +24,14 @@ export class Plot extends DCGView.View<{
 
   divDidMount(el: HTMLDivElement) {
     // Create SVG element
-    this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    this.svgElement.setAttribute('width', '100%');
-    this.svgElement.setAttribute('height', '100%');
-    this.svgElement.setAttribute('viewBox', '0 0 600 400');
-    this.svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    this.svgElement = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    );
+    this.svgElement.setAttribute("width", "100%");
+    this.svgElement.setAttribute("height", "100%");
+    this.svgElement.setAttribute("viewBox", "0 0 600 400");
+    this.svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
     el.appendChild(this.svgElement);
     this.renderPlot();
@@ -50,26 +49,28 @@ export class Plot extends DCGView.View<{
     // Clear previous content
     svg.selectAll("*").remove();
 
-    switch (this.state.style) {
+    const model = this.props.model();
+    switch (model.style) {
       case "histogram":
-        Histogram.view({ model: this.state, svg });
+        Histogram.view({ model, svg });
         break;
 
       case "dotplot":
-        Dotplot.view({ model: this.state, svg });
+        Dotplot.view({ model, svg });
         break;
 
       case "heatmap":
-        Heatmap.view({ model: this.state, svg });
+        Heatmap.view({ model, svg });
         break;
 
       default:
-        assertUnreachable(this.state);
+        assertUnreachable(model);
     }
   }
 
   didUpdate() {
-    // Re-render the plot when the component updates
-    this.renderPlot();
+    if (this._isMounted) {
+      this.renderPlot();
+    }
   }
 }
