@@ -193,7 +193,12 @@ export class UnitInputView extends DCGView.View<{
               >
                 <For.Simple each={() => ["", "1", "2", "3", "4"]}>
                   {(val: string) => (
-                    <option value={DCGView.const(val)}>{val}</option>
+                    <option
+                      value={DCGView.const(val)}
+                      selected={() => val === stateProp().unitInput}
+                    >
+                      {val}
+                    </option>
                   )}
                 </For.Simple>
               </select>
@@ -242,9 +247,19 @@ export class UnitInputView extends DCGView.View<{
                 )
               }
             >
-              <option value="" />
-              <option value="female">Female</option>
-              <option value="male">Male</option>
+              <option value="" selected={() => stateProp().unitInput === ""} />
+              <option
+                value="female"
+                selected={() => stateProp().unitInput === "female"}
+              >
+                Female
+              </option>
+              <option
+                value="male"
+                selected={() => stateProp().unitInput === "male"}
+              >
+                Male
+              </option>
             </select>
           ),
           ircra: () => (
@@ -268,7 +283,12 @@ export class UnitInputView extends DCGView.View<{
             >
               <For.Simple each={() => VGRADE}>
                 {(grade: VGrade) => (
-                  <option value={() => grade.toString()}>V{grade}</option>
+                  <option
+                    value={() => grade.toString()}
+                    selected={() => grade.toString() === stateProp().unitInput}
+                  >
+                    V{grade}
+                  </option>
                 )}
               </For.Simple>
             </select>
@@ -282,7 +302,12 @@ export class UnitInputView extends DCGView.View<{
             >
               <For.Simple each={() => EWBANK}>
                 {(grade: EwbankGrade) => (
-                  <option value={() => grade.toString()}>{grade}</option>
+                  <option
+                    value={() => grade.toString()}
+                    selected={() => grade.toString() === stateProp().unitInput}
+                  >
+                    {grade}
+                  </option>
                 )}
               </For.Simple>
             </select>
@@ -295,7 +320,14 @@ export class UnitInputView extends DCGView.View<{
               }
             >
               <For.Simple each={() => FONT}>
-                {(grade: Font) => <option value={() => grade}>{grade}</option>}
+                {(grade: Font) => (
+                  <option
+                    value={() => grade}
+                    selected={() => grade === stateProp().unitInput}
+                  >
+                    {grade}
+                  </option>
+                )}
               </For.Simple>
             </select>
           ),
@@ -308,7 +340,12 @@ export class UnitInputView extends DCGView.View<{
             >
               <For.Simple each={() => FRENCH_SPORT}>
                 {(grade: FrenchSport) => (
-                  <option value={() => grade}>{grade}</option>
+                  <option
+                    value={() => grade}
+                    selected={() => grade === stateProp().unitInput}
+                  >
+                    {grade}
+                  </option>
                 )}
               </For.Simple>
             </select>
@@ -322,7 +359,12 @@ export class UnitInputView extends DCGView.View<{
             >
               <For.Simple each={() => YDS}>
                 {(grade: string) => (
-                  <option value={() => grade}>{grade}</option>
+                  <option
+                    value={() => grade}
+                    selected={() => grade === stateProp().unitInput}
+                  >
+                    {grade}
+                  </option>
                 )}
               </For.Simple>
             </select>
