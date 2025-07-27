@@ -66,20 +66,24 @@ export function view({
     .domain(lodash.range(bins2D.length).map((d) => d.toString()))
     .range([HEIGHT - MARGIN.bottom, MARGIN.top]);
 
-  const colorScale = d3
-    .scaleLinear<string>()
-    .domain([0, d3.max(bins2D.flat(), (d) => d.frequency) || 0])
-    .range(["white", "blue"]);
+  const maxFrequency = d3.max(bins2D.flat(), (d) => d.frequency) || 1;
+  const cellHeight = y.bandwidth();
 
   svg
     .selectAll("rect")
     .data(bins2D.flat()) // flatten the 2D array into 1D
     .join("rect")
     .attr("x", (d) => x(d.col.toString()) || 0)
-    .attr("y", (d) => y(d.row.toString()) || 0)
+    .attr("y", (d) => {
+      const cellTop = y(d.row.toString()) || 0;
+      const rectHeight = (d.frequency / maxFrequency) * cellHeight;
+      return cellTop + cellHeight - rectHeight; // Align to bottom of cell
+    })
     .attr("width", x.bandwidth())
-    .attr("height", y.bandwidth())
-    .attr("fill", (d) => colorScale(d.frequency));
+    .attr("height", (d) => (d.frequency / maxFrequency) * cellHeight)
+    .attr("fill", "steelblue")
+    .attr("stroke", "white")
+    .attr("stroke-width", 0.5);
 
   if (model.myData) {
     // Find which bin contains myData
@@ -164,8 +168,8 @@ export function view({
         .style("visibility", "visible")
         .html(
           `Frequency: ${d.frequency}<br/>` +
-          `${model.xLabel}: ${xRange}<br/>` +
-          `${model.yLabel}: ${yRange}`,
+            `${model.xLabel}: ${xRange}<br/>` +
+            `${model.yLabel}: ${yRange}`,
         )
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 10 + "px");
