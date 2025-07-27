@@ -18,6 +18,8 @@ import {
   SelectMeasureClassView,
 } from "../snapshot/select-measure-class";
 import type { Msg as SelectMeasureClassMsg } from "../snapshot/select-measure-class";
+import { FilterController, FilterView } from "../filters/filter";
+import type { Msg as FilterMsg } from "../filters/filter";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -26,13 +28,28 @@ import {
   boulderGradeClass,
   sportGradeClass,
 } from "../../../iso/measures/grades";
-import { getPreferredUnitForMeasure } from "../../../iso/measures";
+import {
+  getPreferredUnitForMeasure,
+  getSpec,
+  MeasureId,
+} from "../../../iso/measures";
 import { Locale } from "../../../iso/locale";
+import {
+  adjustGrade,
+  castInitialFilter,
+  castUnit,
+  selectInitialFilter,
+  UnitValue,
+} from "../../../iso/units";
 
 export type Model = {
   filtersModel: EditQueryController;
   outputMeasure: {
     selector: SelectMeasureClassController;
+    filter: {
+      controller: FilterController;
+      enabled: boolean;
+    };
   };
   measureStats: MeasureStats;
   query: {
@@ -68,6 +85,14 @@ export type Msg =
   | {
       type: "FILTERS_MSG";
       msg: EditQueryMsg;
+    }
+  | {
+      type: "OUTPUT_MEASURE_FILTER_MSG";
+      msg: FilterMsg;
+    }
+  | {
+      type: "OUTPUT_MEASURE_FILTER_TOGGLE";
+      enabled: boolean;
     };
 
 export class ReportCardMainController {
@@ -129,6 +154,7 @@ export class ReportCardMainController {
             this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }),
         },
       ),
+      filter: this.createOutputMeasureFilter(initialMeasureId, mySnapshot),
     };
 
     this.state = {
@@ -148,6 +174,52 @@ export class ReportCardMainController {
     const measureId =
       this.state.outputMeasure.selector.state.selected.measureId;
     return getPreferredUnitForMeasure(measureId, this.context.locale());
+  }
+  private createOutputMeasureFilter(
+    measureId: MeasureId,
+    mySnapshot?: HydratedSnapshot,
+  ): { controller: FilterController; enabled: boolean } {
+    const outputMeasureSpec = getSpec(measureId);
+    const targetUnit = getPreferredUnitForMeasure(
+      measureId,
+      this.context.locale(),
+    );
+
+    let initialFilter;
+    if (mySnapshot && mySnapshot.measures[measureId]) {
+      const snapshotValue = mySnapshot.measures[measureId];
+      initialFilter = {
+        type: "minmax" as const,
+        minValue: adjustGrade(
+          castUnit(snapshotValue as UnitValue, targetUnit),
+          -1,
+        ),
+        maxValue: adjustGrade(
+          castUnit(snapshotValue as UnitValue, targetUnit),
+          2,
+        ),
+      };
+    } else {
+      initialFilter = castInitialFilter(
+        selectInitialFilter(
+          outputMeasureSpec.initialFilter,
+          this.context.locale(),
+        ),
+        targetUnit,
+      );
+    }
+
+    return {
+      enabled: true,
+      controller: new FilterController(
+        { measureId, initialFilter },
+        {
+          locale: this.context.locale,
+          myDispatch: (msg: FilterMsg) =>
+            this.context.myDispatch({ type: "OUTPUT_MEASURE_FILTER_MSG", msg }),
+        },
+      ),
+    };
   }
 
   private getQuery(editQuery: EditQueryController): {
@@ -221,11 +293,12 @@ export class ReportCardMainController {
             const next = new PlotListController(
               {
                 snapshots: msg.request.response,
-                outputMeasure: {
+                outputMeasure: () => ({
                   id: this.state.outputMeasure.selector.state.selected
                     .measureId,
                   unit: this.getOutputMeasureUnit(),
-                },
+                  filter: this.state.outputMeasure.filter,
+                }),
                 measureStats: this.state.measureStats,
                 mySnapshot: this.state.mySnapshot,
               },
@@ -281,24 +354,42 @@ export class ReportCardMainController {
       case "SELECT_MEASURE_CLASS_MSG": {
         this.state.outputMeasure.selector.handleDispatch(msg.msg);
 
+        // Recreate the output measure filter for the new measure
+        const newMeasureId =
+          this.state.outputMeasure.selector.state.selected.measureId;
+        this.state.outputMeasure.filter = this.createOutputMeasureFilter(
+          newMeasureId,
+          this.state.mySnapshot,
+        );
+
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = new PlotListController(
-            {
-              snapshots: this.state.dataRequest.response.snapshots,
-              outputMeasure: {
-                id: this.state.outputMeasure.selector.state.selected.measureId,
-                unit: this.getOutputMeasureUnit(),
-              },
-              measureStats: this.state.measureStats,
-              mySnapshot: this.state.mySnapshot,
-            },
-            {
-              locale: this.context.locale,
-              myDispatch: (msg: PlotListMsg) =>
-                this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-            },
-          );
-          this.state.dataRequest.response.reportCardModel = nextReportCardModel;
+          this.state.dataRequest.response.reportCardModel.handleDispatch({
+            type: "OUTPUT_MEASURE_CHANGED",
+          });
+        }
+        break;
+      }
+
+      case "OUTPUT_MEASURE_FILTER_MSG": {
+        this.state.outputMeasure.filter.controller.handleDispatch(msg.msg);
+
+        // Regenerate all plots when output measure filter changes
+        if (this.state.dataRequest.status == "loaded") {
+          this.state.dataRequest.response.reportCardModel.handleDispatch({
+            type: "OUTPUT_MEASURE_CHANGED",
+          });
+        }
+        break;
+      }
+
+      case "OUTPUT_MEASURE_FILTER_TOGGLE": {
+        this.state.outputMeasure.filter.enabled = msg.enabled;
+
+        // Regenerate all plots when output measure filter is toggled
+        if (this.state.dataRequest.status == "loaded") {
+          this.state.dataRequest.response.reportCardModel.handleDispatch({
+            type: "OUTPUT_MEASURE_CHANGED",
+          });
         }
         break;
       }
@@ -335,10 +426,27 @@ export class ReportCardMainView extends DCGView.View<{
           </If>
 
           <div class={DCGView.const(styles.outputMeasureContainer)}>
-            Output Measure:
-            <SelectMeasureClassView
-              controller={() => state().outputMeasure.selector}
-            />
+            <div class={DCGView.const(styles.outputMeasureSelector)}>
+              Output Measure:
+              <SelectMeasureClassView
+                controller={() => state().outputMeasure.selector}
+              />
+            </div>
+            <div class={DCGView.const(styles.outputMeasureFilter)}>
+              <input
+                type="checkbox"
+                checked={() => state().outputMeasure.filter.enabled}
+                onChange={(e) =>
+                  this.props.controller().context.myDispatch({
+                    type: "OUTPUT_MEASURE_FILTER_TOGGLE",
+                    enabled: (e.target as HTMLInputElement).checked,
+                  })
+                }
+              />
+              <FilterView
+                controller={() => state().outputMeasure.filter.controller}
+              />
+            </div>
           </div>
         </div>
         {SwitchUnion(() => state().dataRequest, "status", {
@@ -394,6 +502,18 @@ const styles = typestyle.stylesheet({
   },
   outputMeasureContainer: {
     ...csstips.content,
+    ...csstips.vertical,
+    gap: "8px",
+  },
+  outputMeasureSelector: {
+    ...csstips.content,
     ...csstips.horizontal,
+    gap: "8px",
+  },
+  outputMeasureFilter: {
+    ...csstips.content,
+    ...csstips.horizontal,
+    gap: "8px",
+    alignItems: "center",
   },
 });

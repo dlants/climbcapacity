@@ -3,20 +3,14 @@ import { HydratedSnapshot } from "../../types";
 import * as Plot from "../plot";
 import * as ReportCardFilter from "./filter";
 import { Dispatch } from "../../types";
+import { FilterController } from "../filters/filter";
 
 import {
   MeasureId,
   generateTrainingMeasureId,
   getSpec,
 } from "../../../iso/measures";
-import {
-  adjustGrade,
-  castInitialFilter,
-  castUnit,
-  selectInitialFilter,
-  UnitType,
-  UnitValue,
-} from "../../../iso/units";
+import { selectInitialFilter, UnitType, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { filterOutliersX } from "../../util/stats";
 import { MEASURES } from "../../../iso/measures";
@@ -85,10 +79,6 @@ export type Model = {
   mySnapshot?: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
   snapshotStats: { [measureId: MeasureId]: number };
-  outputMeasure: {
-    id: MeasureId;
-    unit: UnitType;
-  };
   plots: PlotModel[];
 };
 
@@ -96,23 +86,41 @@ export type Msg =
   | {
       type: "FILTER_MSG";
       measureId: MeasureId;
-      msg: import("./filter").Msg;
+      msg: ReportCardFilter.Msg;
     }
   | {
       type: "INTERPOLATE_MSG";
       measureId: MeasureId;
-      msg: import("./interpolate").Msg;
+      msg: Interpolate.Msg;
+    }
+  | {
+      type: "OUTPUT_MEASURE_CHANGED";
     };
 
 export class PlotListController {
   state: Model;
+  private getOutputMeasure: () => {
+    id: MeasureId;
+    unit: UnitType;
+    filter: {
+      controller: FilterController;
+      enabled: boolean;
+    };
+  };
 
   constructor(
     initialParams: {
       mySnapshot?: HydratedSnapshot;
       measureStats: MeasureStats;
       snapshots: HydratedSnapshot[];
-      outputMeasure: Model["outputMeasure"];
+      outputMeasure: () => {
+        id: MeasureId;
+        unit: UnitType;
+        filter: {
+          controller: FilterController;
+          enabled: boolean;
+        };
+      };
     },
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
@@ -126,12 +134,13 @@ export class PlotListController {
       }
     }
 
+    this.getOutputMeasure = initialParams.outputMeasure;
+
     this.state = {
       mySnapshot: initialParams.mySnapshot,
       measureStats: initialParams.measureStats,
       snapshots: initialParams.snapshots,
       snapshotStats,
-      outputMeasure: initialParams.outputMeasure,
       plots: [],
     };
 
@@ -176,50 +185,12 @@ export class PlotListController {
     }
 
     const plots: PlotModel[] = [];
-    const outputMeasureSpec = getSpec(this.state.outputMeasure.id);
     for (const inputMeasure of inputMeasures) {
       const inputMeasureSpec = getSpec(inputMeasure.id);
       const initialFilters: ReportCardFilter.InitialFilters = {};
-      if (
-        this.state.mySnapshot &&
-        this.state.mySnapshot.measures[this.state.outputMeasure.id] != undefined
-      ) {
-        const targetUnit = this.state.outputMeasure.unit;
 
-        initialFilters[this.state.outputMeasure.id] = {
-          enabled: true,
-          type: "minmax",
-          minValue: adjustGrade(
-            castUnit(
-              this.state.mySnapshot.measures[
-                this.state.outputMeasure.id
-              ] as UnitValue,
-              targetUnit,
-            ),
-            -1,
-          ),
-          maxValue: adjustGrade(
-            castUnit(
-              this.state.mySnapshot.measures[
-                this.state.outputMeasure.id
-              ] as UnitValue,
-              targetUnit,
-            ),
-            2,
-          ),
-        };
-      } else {
-        initialFilters[this.state.outputMeasure.id] = {
-          enabled: true,
-          ...castInitialFilter(
-            selectInitialFilter(
-              outputMeasureSpec.initialFilter,
-              this.context.locale(),
-            ),
-            this.state.outputMeasure.unit,
-          ),
-        };
-      }
+      // Note: Output measure filter is now handled at the top-level,
+      // so we don't add it to individual plot filters
 
       if (inputMeasureSpec.type == "input") {
         const trainingMeasureId = generateTrainingMeasureId(
@@ -340,18 +311,11 @@ export class PlotListController {
     interpolationOptions: InterpolationOption<ParamName>[];
   }): Plot.Model {
     const data: { x: number; y: number }[] = [];
-    const { mySnapshot, snapshots, outputMeasure: yMeasure } = this.state;
-    const yFilter = filterModel.state.filters.find((f) => {
-      switch (f.filter.state.type) {
-        case "minmax":
-          return f.filter.state.controller.state.measureId == yMeasure.id;
-        case "toggle":
-          return f.filter.state.controller.state.measureId == yMeasure.id;
-        default:
-          return false;
-      }
-    });
-    const yUnit = yFilter ? yFilter.filter.getUnit() : yMeasure.unit;
+    const { mySnapshot, snapshots } = this.state;
+    const outputMeasure = this.getOutputMeasure();
+    const yMeasure = { id: outputMeasure.id, unit: outputMeasure.unit };
+    const sharedOutputMeasureFilter = outputMeasure.filter;
+    const yUnit = sharedOutputMeasureFilter.controller.getUnit();
 
     const myData =
       mySnapshot &&
@@ -380,7 +344,8 @@ export class PlotListController {
         continue;
       }
 
-      const shouldKeep = filterModel.state.filters.every((filter) => {
+      // Check input measure filters from the individual plot
+      const inputFiltersPass = filterModel.state.filters.every((filter) => {
         if (!filter.enabled) {
           return true;
         }
@@ -407,6 +372,24 @@ export class PlotListController {
 
         return filter.filter.filterApplies(snapshotValue as UnitValue);
       });
+
+      // Check shared output measure filter
+      const outputFilterPass = (() => {
+        if (!sharedOutputMeasureFilter.enabled) {
+          return true;
+        }
+
+        const snapshotValue = snapshot.measures[yMeasure.id];
+        if (!snapshotValue) {
+          return false;
+        }
+
+        return sharedOutputMeasureFilter.controller.filterApplies(
+          snapshotValue as UnitValue,
+        );
+      })();
+
+      const shouldKeep = inputFiltersPass && outputFilterPass;
 
       if (!shouldKeep) {
         continue;
@@ -440,6 +423,12 @@ export class PlotListController {
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
+      case "OUTPUT_MEASURE_CHANGED": {
+        // Regenerate all plots when output measure changes
+        this.state.plots = this.getPlots();
+        break;
+      }
+
       case "FILTER_MSG": {
         const filterPlot = this.state.plots.find(
           (p) => p.inputMeasure.id === msg.measureId,

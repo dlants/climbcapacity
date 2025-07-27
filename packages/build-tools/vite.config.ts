@@ -1,12 +1,18 @@
 import { defineConfig } from "vite";
 import path from "path";
+import fs from "fs";
 import { constWrapTsx } from "./const-wrap-tsx";
 
 export default defineConfig({
   appType: "spa",
   base: "/",
   root: "../frontend", // Point to frontend directory
-  plugins: [constWrapTsx()],
+  plugins: [
+    {
+      ...constWrapTsx(),
+      enforce: "post", // Run after esbuild JSX transformation
+    },
+  ],
   // Configure JSX transformation for DCGView
   esbuild: {
     jsx: "automatic",
