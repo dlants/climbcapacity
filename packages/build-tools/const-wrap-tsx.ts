@@ -89,6 +89,7 @@ const constWrap = (source: string) => {
   let hasWrapping = false;
 
   traverseFunction(ast, {
+    // Handle transformed jsx()/jsxs() calls (dev mode)
     CallExpression({ node }: { node: CallExpression }) {
       if (!isJsxFunction(node)) {
         return;
@@ -175,7 +176,7 @@ const constWrap = (source: string) => {
 };
 
 export const constWrapTsx = (): Plugin => {
-  return {
+  const plugin = {
     name: "const-wrap-tsx",
     transform(code, id) {
       if (!id.endsWith(".tsx")) {
@@ -194,8 +195,10 @@ export const constWrapTsx = (): Plugin => {
 
         return null; // Let Vite handle normally
       } catch (error) {
+        console.error(`[const-wrap-tsx] Error processing ${id}:`, error);
         this.error(`const-wrap-tsx: ${error.message}`);
       }
     },
   };
+  return plugin;
 };

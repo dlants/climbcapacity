@@ -18,6 +18,7 @@ import {
   SelectMeasureClassView,
 } from "../snapshot/select-measure-class";
 import type { Msg as SelectMeasureClassMsg } from "../snapshot/select-measure-class";
+
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -221,11 +222,11 @@ export class ReportCardMainController {
             const next = new PlotListController(
               {
                 snapshots: msg.request.response,
-                outputMeasure: {
+                outputMeasure: () => ({
                   id: this.state.outputMeasure.selector.state.selected
                     .measureId,
                   unit: this.getOutputMeasureUnit(),
-                },
+                }),
                 measureStats: this.state.measureStats,
                 mySnapshot: this.state.mySnapshot,
               },
@@ -282,23 +283,9 @@ export class ReportCardMainController {
         this.state.outputMeasure.selector.handleDispatch(msg.msg);
 
         if (this.state.dataRequest.status == "loaded") {
-          const nextReportCardModel = new PlotListController(
-            {
-              snapshots: this.state.dataRequest.response.snapshots,
-              outputMeasure: {
-                id: this.state.outputMeasure.selector.state.selected.measureId,
-                unit: this.getOutputMeasureUnit(),
-              },
-              measureStats: this.state.measureStats,
-              mySnapshot: this.state.mySnapshot,
-            },
-            {
-              locale: this.context.locale,
-              myDispatch: (msg: PlotListMsg) =>
-                this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-            },
-          );
-          this.state.dataRequest.response.reportCardModel = nextReportCardModel;
+          this.state.dataRequest.response.reportCardModel.handleDispatch({
+            type: "OUTPUT_MEASURE_CHANGED",
+          });
         }
         break;
       }
@@ -335,10 +322,12 @@ export class ReportCardMainView extends DCGView.View<{
           </If>
 
           <div class={DCGView.const(styles.outputMeasureContainer)}>
-            Output Measure:
-            <SelectMeasureClassView
-              controller={() => state().outputMeasure.selector}
-            />
+            <div class={DCGView.const(styles.outputMeasureSelector)}>
+              Output Measure:
+              <SelectMeasureClassView
+                controller={() => state().outputMeasure.selector}
+              />
+            </div>
           </div>
         </div>
         {SwitchUnion(() => state().dataRequest, "status", {
@@ -394,6 +383,12 @@ const styles = typestyle.stylesheet({
   },
   outputMeasureContainer: {
     ...csstips.content,
+    ...csstips.vertical,
+    gap: "8px",
+  },
+  outputMeasureSelector: {
+    ...csstips.content,
     ...csstips.horizontal,
+    gap: "8px",
   },
 });
