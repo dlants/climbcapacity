@@ -13,6 +13,7 @@
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
     "lucia": "^3.2.2",
+    "meilisearch": "^0.51.0",
     "mongodb": "^6.10.0",
     "oslo": "^1.2.1",
     "resend": "^4.0.1-alpha.0",

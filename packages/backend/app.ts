@@ -1,5 +1,6 @@
 import express from "express";
 import { connect } from "./db/connect.js";
+import { meiliClient } from "./db/meilisearch.js";
 import { readEnv } from "./env.js";
 import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
@@ -66,6 +67,29 @@ async function run() {
 
       res.json(stats);
       return res;
+    }),
+  );
+
+  app.get(
+    "/api/test-meilisearch",
+    apiRoute(async (req, res) => {
+      try {
+        const health = await meiliClient.health();
+        const stats = await meiliClient.getStats();
+        return {
+          status: "success",
+          meilisearch: {
+            health,
+            stats,
+            message: "MeiliSearch connection verified"
+          }
+        };
+      } catch (error) {
+        throw new HandledError({
+          status: 500,
+          message: `MeiliSearch connection failed: ${error}`
+        });
+      }
     }),
   );
 

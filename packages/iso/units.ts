@@ -20,9 +20,15 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
-import { MeasureId } from "./measures/index.js";
+import { MeasureId, getSpec } from "./measures/index.js";
 import { assertUnreachable } from "./utils.js";
 import type { UnitCategory, Locale } from "./locale.js";
+
+/**
+ * Nominal type for facet strings to ensure type safety
+ * Examples: 'sex-at-birth:male', 'height:1.60-1.65', 'has:deadlift-1rm'
+ */
+export type FacetString = string & { readonly __brand: "FacetString" };
 
 /** these are in standard units, used for search (so for example, all grades are in ircra, all distances are in meters);
  *
@@ -489,4 +495,72 @@ export function adjustGrade(unit: UnitValue, adjustment: number): UnitValue {
     default:
       throw new Error(`Unexpected unit for adjustGrade ${unit.unit}`);
   }
+}
+
+/**
+ * Create a bin string based on binning strategy
+ */
+function createBinFromStrategy(
+  value: number,
+  strategy: { type: "bin"; binStart: number; binEnd: number; binStep: number },
+): string {
+  const { binStart, binEnd, binStep } = strategy;
+
+  if (value < binStart) {
+    return `<${binStart}`;
+  }
+  if (value >= binEnd) {
+    return `>${binEnd}`;
+  }
+
+  const binIndex = Math.floor((value - binStart) / binStep);
+  const currentBinStart = binStart + binIndex * binStep;
+  const currentBinEnd = currentBinStart + binStep;
+
+  return `${currentBinStart}-${currentBinEnd}`;
+}
+
+/**
+ * Generate facet strings for MeiliSearch from a set of measures
+ * Uses the format: measureId;unit;(value or bin) for faceted search
+ */
+export function createMeasureFacets(
+  measures: Record<MeasureId, UnitValue>,
+): FacetString[] {
+  const facets: string[] = [];
+
+  // Process each measure and create facets based on its configuration
+  for (const [measureId, unitValue] of Object.entries(measures)) {
+    const measureIdTyped = measureId as MeasureId;
+    const measureSpec = getSpec(measureIdTyped);
+
+    // Generate facets for each configured facet strategy
+    for (const facetConfig of measureSpec.facets) {
+      const convertedValue = castUnit(unitValue, facetConfig.unit);
+
+      if (facetConfig.strategy.type === "category") {
+        // For categorical facets, use the value directly
+        if (
+          facetConfig.unit === "kg" &&
+          typeof convertedValue.value === "number"
+        ) {
+          // Special case: for weight measures marked as category, create availability facet
+          facets.push(`has;${measureId};true`);
+        } else {
+          facets.push(
+            `${measureId};${facetConfig.unit};${convertedValue.value}`,
+          );
+        }
+      } else if (facetConfig.strategy.type === "bin") {
+        // For bin facets, create bins based on the strategy
+        const binValue = createBinFromStrategy(
+          convertedValue.value as number,
+          facetConfig.strategy,
+        );
+        facets.push(`${measureId};${facetConfig.unit};${binValue}`);
+      }
+    }
+  }
+
+  return facets as FacetString[];
 }

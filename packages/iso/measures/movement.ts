@@ -48,6 +48,12 @@ export const weightedClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -115,6 +121,12 @@ export const unilateralWeightedClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -171,6 +183,12 @@ export const maxRepsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["count"],
+  facets: [
+    {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -223,6 +241,12 @@ export const unilateralMaxRepsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["count"],
+  facets: [
+    {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -278,6 +302,12 @@ export const isometricClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
+  facets: [
+    {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -330,6 +360,12 @@ export const unilateralIsometricClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
+  facets: [
+    {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -390,6 +426,12 @@ export const enduranceClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
+  facets: [
+    {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 1000, binStep: 60 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {

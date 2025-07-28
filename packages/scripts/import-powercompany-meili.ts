@@ -1,15 +1,23 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { SnapshotDoc } from "../backend/models/snapshots.js";
-import { encodeMeasureValue, UnitValue } from "../iso/units.js";
-import { VGrade, YDS } from "../iso/grade.js";
-import mongodb from "mongodb";
+import {
+  encodeMeasureValue,
+  UnitValue,
+  createMeasureFacets,
+  FacetString,
+} from "../iso/units.js";
+import { VGrade, YDS, VGRADE } from "../iso/grade.js";
 import { MeasureId, generateId } from "../iso/measures/index.js";
 import * as Fingers from "../iso/measures/fingers.js";
 import * as Movement from "../iso/measures/movement.js";
 import * as Power from "../iso/measures/power.js";
 import * as Grades from "../iso/measures/grades.js";
+import {
+  SnapshotMeiliDoc,
+  SNAPSHOTS_INDEX_CONFIG,
+} from "../backend/db/meilisearch-types.js";
+import { MeiliSearch } from "meilisearch";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
@@ -23,7 +31,7 @@ const table = fileContent
   .map((line) => line.split("\t"))
   .filter((row) => row.length > 1);
 
-const snapshots: Omit<SnapshotDoc, "_id">[] = [];
+const documents: SnapshotMeiliDoc[] = [];
 
 const TSV_COLS = [
   "age",
@@ -62,18 +70,13 @@ const TSV_COLS = [
 
 // starting at row 1 since row 0 is the column headers
 table.slice(1).forEach((row, idx) => {
-  const snapshot: Omit<SnapshotDoc, "_id"> = {
-    userId: `powercompany-row-${idx}`,
-    measures: {},
-    normedMeasures: [],
-    createdAt: new Date(),
-    lastUpdated: new Date(),
-    importSource: "powercompany",
-  };
+  const measures: Record<MeasureId, UnitValue> = {};
+  const normedMeasures: Record<MeasureId, number> = {};
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
-    snapshot.measures[measureId] = value;
-    snapshot.normedMeasures.push(encodeMeasureValue({ id: measureId, value }));
+    measures[measureId] = value;
+    const encoded = encodeMeasureValue({ id: measureId, value });
+    normedMeasures[measureId] = encoded.value;
   }
 
   const ageStr = row[TSV_COLS.findIndex((c) => c == "age")];
@@ -471,22 +474,71 @@ table.slice(1).forEach((row, idx) => {
     );
   }
 
-  snapshots.push(snapshot);
+  const document: SnapshotMeiliDoc = {
+    id: `powercompany-row-${idx}`,
+    userId: `powercompany-row-${idx}`,
+    measures,
+    normedMeasures,
+    createdAt: Date.now(),
+    lastUpdated: Date.now(),
+    importSource: "powercompany",
+    facets: createMeasureFacets(measures),
+  };
+
+  documents.push(document);
 });
 
 async function run() {
-  const client = new mongodb.MongoClient(process.env.MONGODB_URL!);
-  await client.connect();
-  const db = client.db();
-  const snapshotsCollection = db.collection<SnapshotDoc>("snapshots");
-  await snapshotsCollection.deleteMany({ importSource: "powercompany" });
-  await snapshotsCollection.insertMany(snapshots as SnapshotDoc[]);
-  return snapshots.length;
+  const client = new MeiliSearch({
+    host: "http://localhost:7700",
+    apiKey: "development-master-key",
+  });
+
+  // Get or create the snapshots index
+  const index = client.index(SNAPSHOTS_INDEX_CONFIG.indexName);
+
+  try {
+    // Try to get index stats first
+    await index.getStats();
+    console.log("Index already exists");
+  } catch {
+    // Index doesn't exist, create it
+    console.log("Creating snapshots index...");
+    await client.createIndex(SNAPSHOTS_INDEX_CONFIG.indexName, {
+      primaryKey: SNAPSHOTS_INDEX_CONFIG.primaryKey,
+    });
+  }
+
+  // Configure index settings
+  console.log("Configuring index settings...");
+  await index.updateSettings({
+    searchableAttributes: SNAPSHOTS_INDEX_CONFIG.searchableAttributes,
+    filterableAttributes: SNAPSHOTS_INDEX_CONFIG.filterableAttributes,
+    sortableAttributes: SNAPSHOTS_INDEX_CONFIG.sortableAttributes,
+  });
+
+  // Delete existing PowerCompany documents
+  console.log("Deleting existing PowerCompany documents...");
+  try {
+    await index.deleteDocuments({
+      filter: 'importSource = "powercompany"',
+    });
+  } catch (error) {
+    console.log("No existing documents to delete (or error):", error);
+  }
+
+  // Add new documents
+  console.log(`Importing ${documents.length} PowerCompany documents...`);
+  const task = await index.addDocuments(documents);
+
+  console.log(`Task UID: ${task.taskUid} - Import initiated successfully`);
+
+  return documents.length;
 }
 
 run().then(
   (nSnapshots) => {
-    console.log(`Success: ${nSnapshots} snapshots imported`);
+    console.log(`Success: ${nSnapshots} snapshots imported to MeiliSearch`);
     process.exit(0);
   },
   (err) => {

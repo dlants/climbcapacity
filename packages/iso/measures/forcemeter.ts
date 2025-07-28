@@ -55,6 +55,12 @@ export const peakloadClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -110,6 +116,12 @@ export const avgLoadClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -160,6 +172,12 @@ export const rfdClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb/s", "kg/s"],
+  facets: [
+    {
+      unit: "kg/s",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -210,6 +228,12 @@ export const criticalForceClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {

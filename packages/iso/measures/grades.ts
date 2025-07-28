@@ -44,6 +44,24 @@ export const sportGradeClass: MeasureClassSpec = {
   ],
   measureType: "performance",
   units: ["yds", "ircra", "frenchsport", "ewbank"],
+  facets: [
+    {
+      unit: "ircra",
+      strategy: { type: "category" },
+    },
+    {
+      unit: "yds",
+      strategy: { type: "category" },
+    },
+    {
+      unit: "frenchsport",
+      strategy: { type: "category" },
+    },
+    {
+      unit: "ewbank",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -89,6 +107,20 @@ export const boulderGradeClass: MeasureClassSpec = {
   ],
   measureType: "performance",
   units: ["vermin", "ircra", "font"],
+  facets: [
+    {
+      unit: "ircra",
+      strategy: { type: "category" },
+    },
+    {
+      unit: "vermin",
+      strategy: { type: "category" },
+    },
+    {
+      unit: "font",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {

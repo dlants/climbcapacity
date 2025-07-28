@@ -76,9 +76,17 @@ VITE_API_BASE_URL=http://localhost:3000
 ### Database Setup
 
 ```bash
-# Update measure statistics
+# Start both MongoDB and MeiliSearch
+docker-compose up -d
+
+# Update measure statistics (MongoDB)
 yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ```
+
+**Services:**
+
+- **MongoDB**: `http://localhost:27018` (mapped from container port 27017)
+- **MeiliSearch**: `http://localhost:7700` (development environment with master key: `development-master-key`)
 
 ## Testing
 
@@ -508,6 +516,10 @@ Root scripts delegate to workspace commands which execute build tools:
 - `yarn build:frontend` → `yarn workspace @climbcapacity/build-tools build:frontend` → `vite build --config vite.config.ts`
 - `yarn test:e2e` → `yarn workspace @climbcapacity/build-tools test:e2e` → `playwright test --config playwright.config.ts`
 - `yarn lint` → `eslint .` (uses root eslint.config.js, not via build-tools)
+
+### NOTE:
+
+You can assume that the developer is running yarn `dev:frontend` and `dev:backend` commands in the background. These run in watch mode and will automatically pick up any changes you make to the files.
 
 ## Production Deployment
 

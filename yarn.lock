@@ -104,6 +104,7 @@ __metadata:
     express: "npm:^4.21.1"
     express-rate-limit: "npm:^7.4.1"
     lucia: "npm:^3.2.2"
+    meilisearch: "npm:^0.51.0"
     mongodb: "npm:^6.10.0"
     mongodb-memory-server: "npm:^10.1.2"
     nodemon: "npm:^3.1.7"
@@ -4655,6 +4656,13 @@ __metadata:
   version: 0.3.0
   resolution: "media-typer@npm:0.3.0"
   checksum: 10c0/d160f31246907e79fed398470285f21bafb45a62869dc469b1c8877f3f064f5eabc4bcc122f9479b8b605bc5c76187d7871cf84c4ee3ecd3e487da1993279928
+  languageName: node
+  linkType: hard
+
+"meilisearch@npm:^0.51.0":
+  version: 0.51.0
+  resolution: "meilisearch@npm:0.51.0"
+  checksum: 10c0/41a13c2a98af9757c8f512d2a96b03e5869631e799e8c81cfc822f94b3717c021da85799c3cc9bc8b3fa1bb25c4ce752efc660fd5724ab404c30841ec81ebdd4
   languageName: node
   linkType: hard
 

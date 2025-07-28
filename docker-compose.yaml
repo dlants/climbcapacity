@@ -7,5 +7,17 @@ services:
       - mongodb_data:/data/db
     command: mongod --noauth
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.5
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    environment:
+      - MEILI_ENV=development
+      - MEILI_MASTER_KEY=development-master-key
+      - MEILI_NO_ANALYTICS=true
+
 volumes:
   mongodb_data:
+  meilisearch_data:

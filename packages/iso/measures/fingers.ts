@@ -105,6 +105,12 @@ export const maxhangClass: MeasureClassSpec = {
     },
   ],
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -168,6 +174,12 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -228,6 +240,12 @@ export const repeatersClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
+  facets: [
+    {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -289,6 +307,12 @@ export const blockPullClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
+  facets: [
+    {
+      unit: "kg",
+      strategy: { type: "category" },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -341,6 +365,12 @@ export const minEdgeClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["mm"],
+  facets: [
+    {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -387,6 +417,12 @@ export const minEdgePullupsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["mm"],
+  facets: [
+    {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -408,7 +444,10 @@ export const minEdgePullupsClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; repMax: Reps }) => {
+  generateDescription: (params: {
+    basicGripType: ParamValue<"basicGripType">;
+    repMax: Reps;
+  }) => {
     return `Minimum edge size on which you can do ${params.repMax} pull-ups.
 
 ${getGripTypeDescription(params.basicGripType)}
@@ -435,6 +474,12 @@ export const continuousHangClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
+  facets: [
+    {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -456,7 +501,10 @@ export const continuousHangClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize }) => {
+  generateDescription: (params: {
+    basicGripType: ParamValue<"basicGripType">;
+    edgeSize: EdgeSize;
+  }) => {
     return `\
 Maximum hang time on a ${params.edgeSize}mm edge.
 

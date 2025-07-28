@@ -31,6 +31,16 @@ export const powerClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["inch", "m", "cm"],
+  facets: [
+    {
+      unit: "inch",
+      strategy: { type: "bin", binStart: 30, binEnd: 80, binStep: 5 },
+    },
+    {
+      unit: "cm",
+      strategy: { type: "bin", binStart: 75, binEnd: 200, binStep: 10 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -75,6 +85,16 @@ export const unilateralPowerClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["m", "cm", "inch"],
+  facets: [
+    {
+      unit: "inch",
+      strategy: { type: "bin", binStart: 0, binEnd: 80, binStep: 5 },
+    },
+    {
+      unit: "cm",
+      strategy: { type: "bin", binStart: 0, binEnd: 200, binStep: 10 },
+    },
+  ],
   initialFilter: {
     type: "minmax",
     localeRanges: {
