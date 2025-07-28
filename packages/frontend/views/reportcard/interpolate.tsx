@@ -1,33 +1,42 @@
 import * as DCGView from "dcgview";
 import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
-import { generateId, getSpec, MeasureId, parseId, } from "../../../iso/measures";
+import { generateId, getSpec, MeasureId, parseId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
 import { MeasureStats } from "../../../iso/protocol";
-import { ParamName, ParamValue, REPS } from "../../../iso/measures/params";
-
-type InterpolationOptions = Partial<{
-  [paramName in ParamName]: {
-    interpolationMeasures: {
-      sourceParamValue: ParamValue<ParamName>;
-      targetParamValue: ParamValue<ParamName>;
-      sourceMeasureId: MeasureId,
-      count: number
-    }[];
-
-    enabled: boolean
-  }
-}>
+import {
+  ParamName,
+  ParamValue,
+  REPS,
+  EDGE_SIZES,
+} from "../../../iso/measures/params";
 
 export type Model = {
-  measureId: MeasureId;
-  interpolationOptions: InterpolationOptions
+  paramName: ParamName;
+  availableVariants: {
+    paramValue: ParamValue<ParamName>;
+    measureId: MeasureId;
+    count: number;
+  }[];
+  selectedMeasureId: MeasureId;
+  selectedParamValue: ParamValue<ParamName>;
+  enabled: boolean;
 };
 
 export type Msg =
-  | { type: "TOGGLE_INTERPOLATION"; paramName: ParamName; enabled: boolean };
+  | {
+      type: "TOGGLE_INTERPOLATION";
+      paramName: ParamName;
+      enabled: boolean;
+    }
+  | {
+      type: "SELECT_VARIANT";
+      paramName: ParamName;
+      measureId: MeasureId;
+      paramValue: ParamValue<ParamName>;
+    };
 
 const styles = typestyle.stylesheet({
   container: {
@@ -55,71 +64,115 @@ export class InterpolateController {
 
   constructor(
     initialParams: {
-      measureId: MeasureId;
-      measureStats: MeasureStats
+      baseMeasureId: MeasureId;
+      measureStats: MeasureStats;
     },
-    public myDispatch: Dispatch<Msg>
+    public myDispatch: Dispatch<Msg>,
   ) {
-    const { measureId, measureStats } = initialParams;
-    const measureSpec = getSpec(measureId);
+    const { baseMeasureId, measureStats } = initialParams;
+    const measureSpec = getSpec(baseMeasureId);
     const measureClass = measureSpec.spec;
 
-    const interpolationOptions: InterpolationOptions = {}
+    let interpolationOption: Model;
 
     if (measureClass) {
-      const params = parseId(measureId, measureClass);
-      for (const param of measureClass?.params || []) {
-        if (param.name == 'repMax' && measureClass.units.includes('kg')) {
-          const possibleValues = REPS.filter((r) => r != params.repMax);
+      const params = parseId(baseMeasureId, measureClass);
 
-          interpolationOptions['repMax'] = {
-            interpolationMeasures: possibleValues.map((r) => {
-              const sourceMeasureId = generateId(measureClass, { ...params, repMax: r })
-              return {
-                sourceMeasureId,
-                sourceParamValue: r as ParamValue<"repMax">,
-                targetParamValue: params.repMax as ParamValue<'repMax'>,
-                count: measureStats[sourceMeasureId] || 0
-              }
-            }),
-            enabled: false
-          };
-        }
+      // Check if this is a rep max measure - prioritize repMax over edgeSize
+      const hasRepMax = measureClass.params.some((p) => p.name === "repMax");
+      const hasEdgeSize = measureClass.params.some(
+        (p) => p.name === "edgeSize",
+      );
 
-        if (param.name == 'edgeSize' && ['18', '20'].includes(params.edgeSize!) && measureClass.units.includes('kg')) {
-          const possibleValues = (['18', '20'] as const).filter((r) => r != params.edgeSize);
-          interpolationOptions['edgeSize'] = {
-            interpolationMeasures: possibleValues.map((size) => {
-              const sourceMeasureId = generateId(measureClass, { ...params, edgeSize: size })
-              return {
-                sourceMeasureId,
-                sourceParamValue: size as ParamValue<"edgeSize">,
-                targetParamValue: params.edgeSize as ParamValue<'edgeSize'>,
-                count: measureStats[sourceMeasureId] || 0
-              }
-            }),
-            enabled: false
+      if (hasRepMax) {
+        // Get all available rep max variants
+        const availableVariants = REPS.map((repMax) => {
+          const measureId = generateId(measureClass, { ...params, repMax });
+          return {
+            paramValue: repMax as ParamValue<ParamName>,
+            measureId,
+            count: measureStats[measureId] || 0,
           };
-        }
+        });
+
+        // Sort by count descending and select the one with most data
+        availableVariants.sort((a, b) => b.count - a.count);
+        const selected = availableVariants[0];
+
+        interpolationOption = {
+          paramName: "repMax",
+          availableVariants,
+          selectedMeasureId: selected.measureId,
+          selectedParamValue: selected.paramValue,
+          enabled: false,
+        };
+      } else if (hasEdgeSize) {
+        // Get all available edge size variants
+        const availableVariants = EDGE_SIZES.map((edgeSize) => {
+          const measureId = generateId(measureClass, { ...params, edgeSize });
+          return {
+            paramValue: edgeSize as ParamValue<ParamName>,
+            measureId,
+            count: measureStats[measureId] || 0,
+          };
+        });
+
+        // Sort by count descending and select the one with most data
+        availableVariants.sort((a, b) => b.count - a.count);
+        const selected = availableVariants[0];
+
+        interpolationOption = {
+          paramName: "edgeSize",
+          availableVariants,
+          selectedMeasureId: selected.measureId,
+          selectedParamValue: selected.paramValue,
+          enabled: false,
+        };
+      } else {
+        // No interpolatable parameters, create a default option
+        interpolationOption = {
+          paramName: "repMax", // Default, won't be used
+          availableVariants: [],
+          selectedMeasureId: baseMeasureId,
+          selectedParamValue: "" as ParamValue<ParamName>,
+          enabled: false,
+        };
       }
+    } else {
+      // No measure class, create a default option
+      interpolationOption = {
+        paramName: "repMax", // Default, won't be used
+        availableVariants: [],
+        selectedMeasureId: baseMeasureId,
+        selectedParamValue: "" as ParamValue<ParamName>,
+        enabled: false,
+      };
     }
 
-    this.state = {
-      measureId,
-      interpolationOptions
-    };
+    this.state = interpolationOption;
+  }
+
+  getCurrentMeasureId(): MeasureId {
+    return this.state.selectedMeasureId;
   }
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
       case "TOGGLE_INTERPOLATION": {
-        if (this.state.interpolationOptions[msg.paramName]) {
-          this.state.interpolationOptions[msg.paramName]!.enabled = msg.enabled;
+        if (this.state.paramName === msg.paramName) {
+          this.state.enabled = msg.enabled;
+        }
+        break;
+      }
+      case "SELECT_VARIANT": {
+        if (this.state.paramName === msg.paramName) {
+          this.state.selectedMeasureId = msg.measureId;
+          this.state.selectedParamValue = msg.paramValue;
         }
         break;
       }
       default:
-        assertUnreachable(msg.type);
+        assertUnreachable(msg);
     }
   }
 
@@ -137,36 +190,88 @@ export class InterpolateView extends DCGView.View<{
     const { For } = DCGView.Components;
     const stateProp = () => this.props.controller().state;
 
+    // If no available variants, don't render anything
+    if (stateProp().availableVariants.length === 0) {
+      return <div></div>;
+    }
+
+    const paramDisplayName =
+      stateProp().paramName === "repMax" ? "Rep Max" : "Edge Size";
+    const unitSuffix = stateProp().paramName === "edgeSize" ? "mm" : "RM";
+
     return (
       <div>
         <div class={DCGView.const(styles.container)}>
-          <For each={() => Object.entries(stateProp().interpolationOptions)} key={(item) => item[0]}>
-            {(entryProp) => {
-              const [paramName, options] = entryProp();
+          {/* Parameter Selection */}
+          <div class={DCGView.const(styles.row)}>
+            <label class={DCGView.const(styles.label)}>
+              <span class={DCGView.const(styles.text)}>
+                {paramDisplayName}:
+              </span>
+              <select
+                value={() => stateProp().selectedParamValue}
+                onChange={(e) => {
+                  const selectedValue = (e.target as HTMLSelectElement).value;
+                  const selectedVariant = stateProp().availableVariants.find(
+                    (v) => v.paramValue === selectedValue,
+                  );
+                  if (selectedVariant) {
+                    this.props.controller().myDispatch({
+                      type: "SELECT_VARIANT",
+                      paramName: stateProp().paramName,
+                      measureId: selectedVariant.measureId,
+                      paramValue: selectedVariant.paramValue,
+                    });
+                  }
+                }}
+                style={DCGView.const({ marginLeft: "8px" })}
+              >
+                <For
+                  each={() => stateProp().availableVariants}
+                  key={(variant) => variant.paramValue}
+                >
+                  {(variantProp) => {
+                    const variant = variantProp();
+                    return (
+                      <option value={() => variant.paramValue}>
+                        {() => variant.paramValue}
+                        {unitSuffix} ({() => variant.count} entries)
+                      </option>
+                    );
+                  }}
+                </For>
+              </select>
+            </label>
+          </div>
 
-              return (
-                <div class={DCGView.const(styles.row)}>
-                  <label class={DCGView.const(styles.label)}>
-                    <input
-                      type="checkbox"
-                      checked={() => options.enabled}
-                      onChange={(e) =>
-                        this.props.controller().myDispatch({
-                          type: "TOGGLE_INTERPOLATION",
-                          paramName: paramName as ParamName,
-                          enabled: (e.target as HTMLInputElement).checked,
-                        })
-                      }
-                    />
+          {/* Interpolation Option */}
+          <div class={DCGView.const(styles.row)}>
+            <label class={DCGView.const(styles.label)}>
+              <input
+                type="checkbox"
+                checked={() => stateProp().enabled}
+                onChange={(e) =>
+                  this.props.controller().myDispatch({
+                    type: "TOGGLE_INTERPOLATION",
+                    paramName: stateProp().paramName,
+                    enabled: (e.target as HTMLInputElement).checked,
+                  })
+                }
+              />
 
-                    <span class={DCGView.const(styles.text)}>
-                      Interpolate {paramName} {() => options.interpolationMeasures.map((m) => `${m.sourceParamValue} (${m.count})`).join(", ")}
-                    </span>
-                  </label>
-                </div>
-              );
-            }}
-          </For>
+              <span class={DCGView.const(styles.text)}>
+                Interpolate {() => stateProp().paramName}{" "}
+                {() =>
+                  stateProp()
+                    .availableVariants.filter(
+                      (v) => v.paramValue !== stateProp().selectedParamValue,
+                    )
+                    .map((v) => `${v.paramValue} (${v.count})`)
+                    .join(", ")
+                }
+              </span>
+            </label>
+          </div>
         </div>
       </div>
     );

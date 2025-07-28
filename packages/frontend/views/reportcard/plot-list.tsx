@@ -1,14 +1,16 @@
 import * as DCGView from "dcgview";
 import { HydratedSnapshot } from "../../types";
 import * as Plot from "../plot";
+import * as Dotplot from "../plots/dotplot";
+import * as Heatmap from "../plots/heatmap";
 import * as ReportCardFilter from "./filter";
 import { Dispatch } from "../../types";
-import { FilterController } from "../filters/filter";
 
 import {
   MeasureId,
   generateTrainingMeasureId,
   getSpec,
+  parseId,
 } from "../../../iso/measures";
 import { selectInitialFilter, UnitType, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
@@ -24,7 +26,7 @@ import { getPreferredUnitForMeasure } from "../../../iso/measures";
 
 type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
-  inputMeasure: MeasureWithUnit;
+  baseMeasureId: MeasureId; // The base measure ID without rep max parameter
   interpolate: Interpolate.InterpolateController;
   plot: Plot.PlotController;
 };
@@ -40,7 +42,7 @@ export class PlotListView extends DCGView.View<{
       <div>
         <For
           each={() => stateProp().plots}
-          key={(plot: PlotModel) => plot.inputMeasure.id}
+          key={(plot: PlotModel) => plot.baseMeasureId}
         >
           {(plotProp: () => PlotModel) => this.renderPlotWithControls(plotProp)}
         </For>
@@ -57,7 +59,7 @@ export class PlotListView extends DCGView.View<{
           "margin-top": "10px",
         })}
       >
-        <h1>{() => plotProp().inputMeasure.id}</h1>
+        <h1>{() => plotProp().interpolate.getCurrentMeasureId()}</h1>
         <ReportCardFilter.ReportCardFilterView
           controller={() => plotProp().filter}
         />
@@ -69,10 +71,6 @@ export class PlotListView extends DCGView.View<{
     );
   }
 }
-type MeasureWithUnit = {
-  id: MeasureId;
-  unit: UnitType;
-};
 
 export type Model = {
   measureStats: MeasureStats;
@@ -144,46 +142,94 @@ export class PlotListController {
     this.state.plots = this.getPlots();
   }
 
+  private getBaseMeasureId(measureId: MeasureId): MeasureId {
+    const spec = getSpec(measureId);
+    if (spec.type === "input" && spec.spec) {
+      const params = parseId(measureId, spec.spec);
+      const hasRepMax = spec.spec.params.some((p) => p.name === "repMax");
+      const hasEdgeSize = spec.spec.params.some((p) => p.name === "edgeSize");
+
+      if (hasRepMax || hasEdgeSize) {
+        // For parameterized measures, use a simplified base key instead of generating an invalid measure ID
+        const baseParams = { ...params };
+        if (hasRepMax) {
+          delete (baseParams as any).repMax;
+        }
+        if (hasEdgeSize) {
+          delete (baseParams as any).edgeSize;
+        }
+
+        // Create a simple string key based on the remaining parameters
+        const baseKey = Object.entries(baseParams)
+          .filter(([key, value]) => value !== undefined)
+          .map(([key, value]) => `${key}:${value}`)
+          .join("-");
+
+        return `${spec.spec.className}-base-${baseKey}` as MeasureId;
+      }
+    }
+    return measureId;
+  }
+
   private getPlots(): PlotModel[] {
-    const inputMeasures: MeasureWithUnit[] = [];
+    // Group measures by their base measure ID (without rep max parameter)
+    const baseMeasureMap = new Map<
+      MeasureId,
+      {
+        baseMeasureId: MeasureId;
+        totalCount: number;
+      }
+    >();
 
     if (this.state.mySnapshot) {
       for (const id in this.state.mySnapshot.measures) {
         const measureId = id as MeasureId;
         const spec = getSpec(measureId);
         if (spec.type == "input") {
-          inputMeasures.push({
-            id: measureId,
-            unit: this.state.mySnapshot.measures[measureId].unit,
+          const baseMeasureId = this.getBaseMeasureId(measureId);
+          const existing = baseMeasureMap.get(baseMeasureId);
+          baseMeasureMap.set(baseMeasureId, {
+            baseMeasureId,
+            totalCount: (existing?.totalCount || 0) + 1,
           });
         }
       }
     } else {
-      const snapshotStats: { [measureId: MeasureId]: number } = {};
-      for (const snapshot of this.state.snapshots) {
-        for (const measureId in snapshot.measures) {
-          snapshotStats[measureId as MeasureId] =
-            (snapshotStats[measureId as MeasureId] || 0) + 1;
+      for (const { id } of MEASURES.filter(
+        (s) => s.type == "input" && this.state.snapshotStats[s.id] > 0,
+      )) {
+        const baseMeasureId = this.getBaseMeasureId(id);
+        const existing = baseMeasureMap.get(baseMeasureId);
+        const count = this.state.snapshotStats[id] || 0;
+        baseMeasureMap.set(baseMeasureId, {
+          baseMeasureId,
+          totalCount: (existing?.totalCount || 0) + count,
+        });
+      }
+    }
+
+    // Sort by total count
+    const sortedBaseMeasures = Array.from(baseMeasureMap.values()).sort(
+      (a, b) => b.totalCount - a.totalCount,
+    );
+
+    const plots: PlotModel[] = [];
+    for (const { baseMeasureId } of sortedBaseMeasures) {
+      // Find a representative measure to get the spec (we'll use any measure with this base)
+      let representativeMeasureId: MeasureId = baseMeasureId;
+
+      // Try to find an actual measure ID that matches this base
+      for (const measure of MEASURES) {
+        if (
+          measure.type === "input" &&
+          this.getBaseMeasureId(measure.id) === baseMeasureId
+        ) {
+          representativeMeasureId = measure.id;
+          break;
         }
       }
 
-      for (const { id, units } of MEASURES.filter(
-        (s) => s.type == "input" && this.state.snapshotStats[s.id] > 0,
-      )) {
-        inputMeasures.push({
-          id,
-          unit: units[0],
-        });
-      }
-
-      inputMeasures.sort(
-        (a, b) => (snapshotStats[b.id] || 0) - (snapshotStats[a.id] || 0),
-      );
-    }
-
-    const plots: PlotModel[] = [];
-    for (const inputMeasure of inputMeasures) {
-      const inputMeasureSpec = getSpec(inputMeasure.id);
+      const inputMeasureSpec = getSpec(representativeMeasureId);
       const initialFilters: ReportCardFilter.InitialFilters = {};
 
       // Note: Output measure filter is now handled at the top-level,
@@ -191,7 +237,7 @@ export class PlotListController {
 
       if (inputMeasureSpec.type == "input") {
         const trainingMeasureId = generateTrainingMeasureId(
-          inputMeasureSpec.id,
+          representativeMeasureId,
         );
         const trainingSpec = getSpec(trainingMeasureId);
         initialFilters[trainingMeasureId] = {
@@ -203,21 +249,6 @@ export class PlotListController {
         };
       }
 
-      const includeStrToWtRatio =
-        inputMeasureSpec.units.includes("kg") ||
-        inputMeasureSpec.units.includes("lb");
-
-      // Use locale-based unit selection instead of toggle
-      const getUnit = (): UnitType => {
-        if (includeStrToWtRatio) {
-          return "strengthtoweightratio";
-        }
-        return getPreferredUnitForMeasure(
-          inputMeasure.id,
-          this.context.locale(),
-        );
-      };
-
       const filter = new ReportCardFilter.ReportCardFilterController(
         {
           initialFilters: initialFilters,
@@ -228,7 +259,7 @@ export class PlotListController {
           myDispatch: (msg: ReportCardFilter.Msg) =>
             this.context.myDispatch({
               type: "FILTER_MSG",
-              measureId: inputMeasure.id,
+              measureId: baseMeasureId,
               msg,
             }),
         },
@@ -236,23 +267,20 @@ export class PlotListController {
 
       const interpolate = new Interpolate.InterpolateController(
         {
-          measureId: inputMeasure.id,
+          baseMeasureId: representativeMeasureId,
           measureStats: this.state.measureStats,
         },
         (msg) =>
           this.context.myDispatch({
             type: "INTERPOLATE_MSG",
-            measureId: inputMeasure.id,
+            measureId: baseMeasureId,
             msg,
           }),
       );
 
       const plotModel = this.getPlot({
-        xMeasure: {
-          ...inputMeasure,
-          unit: getUnit(),
-        },
-        interpolationOptions: this.getInterpolationOptions(interpolate),
+        baseMeasureId,
+        interpolate,
         filterModel: filter,
       });
 
@@ -260,13 +288,13 @@ export class PlotListController {
         myDispatch: (msg: Plot.PlotMsg) =>
           this.context.myDispatch({
             type: "PLOT_MSG",
-            measureId: inputMeasure.id,
+            measureId: baseMeasureId,
             msg,
           }),
       });
 
       plots.push({
-        inputMeasure: inputMeasure,
+        baseMeasureId,
         filter,
         interpolate,
         plot,
@@ -279,27 +307,26 @@ export class PlotListController {
   private getInterpolationOptions(
     interpolate: Interpolate.InterpolateController,
   ): InterpolationOption<ParamName>[] {
-    const measureId = interpolate.state.measureId;
-    const measureClassSpec = getSpec(measureId).spec;
+    const currentMeasureId = interpolate.getCurrentMeasureId();
+    const measureClassSpec = getSpec(currentMeasureId).spec;
     const output: InterpolationOption<ParamName>[] = [];
     if (!measureClassSpec) {
       return output;
     }
 
-    for (const [paramName, option] of Object.entries(
-      interpolate.state.interpolationOptions,
-    )) {
-      if (!option.enabled) {
-        continue;
-      }
+    const option = interpolate.state;
+    if (!option.enabled) {
+      return output;
+    }
 
-      for (const interpolationMeasure of option.interpolationMeasures) {
+    for (const variant of option.availableVariants) {
+      if (variant.paramValue !== option.selectedParamValue) {
         output.push({
-          param: paramName as ParamName,
-          sourceMeasureId: interpolationMeasure.sourceMeasureId,
-          targetMeasureId: interpolate.state.measureId,
-          measureParamValue: interpolationMeasure.sourceParamValue,
-          targetParamValue: interpolationMeasure.targetParamValue,
+          param: option.paramName,
+          sourceMeasureId: variant.measureId,
+          targetMeasureId: currentMeasureId,
+          measureParamValue: variant.paramValue,
+          targetParamValue: option.selectedParamValue,
         });
       }
     }
@@ -308,19 +335,35 @@ export class PlotListController {
   }
 
   private getPlot({
-    xMeasure,
+    baseMeasureId,
+    interpolate,
     filterModel,
-    interpolationOptions,
   }: {
-    xMeasure: MeasureWithUnit;
+    baseMeasureId: MeasureId;
+    interpolate: Interpolate.InterpolateController;
     filterModel: ReportCardFilter.ReportCardFilterController;
-    interpolationOptions: InterpolationOption<ParamName>[];
-  }): Plot.Model {
+  }): Dotplot.Model | Heatmap.Model {
     const data: { x: number; y: number }[] = [];
     const { mySnapshot, snapshots } = this.state;
     const outputMeasure = this.getOutputMeasure();
     const yMeasure = { id: outputMeasure.id, unit: outputMeasure.unit };
     const yUnit = outputMeasure.unit;
+
+    // Get current measure and interpolation options from the interpolate controller
+    const currentMeasureId = interpolate.getCurrentMeasureId();
+    const currentMeasureSpec = getSpec(currentMeasureId);
+    const interpolationOptions = this.getInterpolationOptions(interpolate);
+
+    // Determine the unit to use for the x-axis
+    const includeStrToWtRatio =
+      currentMeasureSpec.units.includes("kg") ||
+      currentMeasureSpec.units.includes("lb");
+
+    const xUnit: UnitType = includeStrToWtRatio
+      ? "strengthtoweightratio"
+      : getPreferredUnitForMeasure(currentMeasureId, this.context.locale());
+
+    const xMeasure = { id: currentMeasureId, unit: xUnit };
 
     const myData =
       mySnapshot &&
@@ -392,8 +435,8 @@ export class PlotListController {
         style: "dotplot",
         data,
         myData,
-        xLabel: xMeasure.id,
-        xUnit: xMeasure.unit,
+        xLabel: currentMeasureId,
+        xUnit: xUnit,
         yLabel: yMeasure.id,
         yUnit: yUnit,
       };
@@ -402,8 +445,8 @@ export class PlotListController {
         style: "heatmap",
         data: filterOutliersX(data),
         myData,
-        xLabel: xMeasure.id,
-        xUnit: xMeasure.unit,
+        xLabel: currentMeasureId,
+        xUnit: xUnit,
         yLabel: yMeasure.id,
         yUnit: yUnit,
       };
@@ -420,41 +463,24 @@ export class PlotListController {
 
       case "FILTER_MSG": {
         const filterPlot = this.state.plots.find(
-          (p) => p.inputMeasure.id === msg.measureId,
+          (p) => p.baseMeasureId === msg.measureId,
         );
         if (!filterPlot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
         filterPlot.filter.handleDispatch(msg.msg);
 
-        // Get the unit using locale-based selection
-        const inputMeasureSpec = getSpec(filterPlot.inputMeasure.id);
-        const includeStrToWtRatio =
-          inputMeasureSpec.units.includes("kg") ||
-          inputMeasureSpec.units.includes("lb");
-        const unit = includeStrToWtRatio
-          ? "strengthtoweightratio"
-          : getPreferredUnitForMeasure(
-              filterPlot.inputMeasure.id,
-              this.context.locale(),
-            );
-
         const plotModel = this.getPlot({
+          baseMeasureId: filterPlot.baseMeasureId,
+          interpolate: filterPlot.interpolate,
           filterModel: filterPlot.filter,
-          interpolationOptions: this.getInterpolationOptions(
-            filterPlot.interpolate,
-          ),
-          xMeasure: {
-            ...filterPlot.inputMeasure,
-            unit,
-          },
         });
 
         filterPlot.plot = new Plot.PlotController(plotModel, {
           myDispatch: (msg: Plot.PlotMsg) =>
             this.context.myDispatch({
               type: "PLOT_MSG",
-              measureId: filterPlot.inputMeasure.id,
+              measureId: filterPlot.baseMeasureId,
               msg,
             }),
         });
@@ -463,41 +489,24 @@ export class PlotListController {
 
       case "INTERPOLATE_MSG": {
         const interpolatePlot = this.state.plots.find(
-          (p) => p.inputMeasure.id === msg.measureId,
+          (p) => p.baseMeasureId === msg.measureId,
         );
         if (!interpolatePlot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);
         }
         interpolatePlot.interpolate.handleDispatch(msg.msg);
 
-        // Get the unit using locale-based selection
-        const inputMeasureSpec = getSpec(interpolatePlot.inputMeasure.id);
-        const includeStrToWtRatio =
-          inputMeasureSpec.units.includes("kg") ||
-          inputMeasureSpec.units.includes("lb");
-        const unit = includeStrToWtRatio
-          ? "strengthtoweightratio"
-          : getPreferredUnitForMeasure(
-              interpolatePlot.inputMeasure.id,
-              this.context.locale(),
-            );
-
         const plotModel = this.getPlot({
+          baseMeasureId: interpolatePlot.baseMeasureId,
+          interpolate: interpolatePlot.interpolate,
           filterModel: interpolatePlot.filter,
-          interpolationOptions: this.getInterpolationOptions(
-            interpolatePlot.interpolate,
-          ),
-          xMeasure: {
-            ...interpolatePlot.inputMeasure,
-            unit,
-          },
         });
 
         interpolatePlot.plot = new Plot.PlotController(plotModel, {
           myDispatch: (msg: Plot.PlotMsg) =>
             this.context.myDispatch({
               type: "PLOT_MSG",
-              measureId: interpolatePlot.inputMeasure.id,
+              measureId: interpolatePlot.baseMeasureId,
               msg,
             }),
         });
@@ -506,7 +515,7 @@ export class PlotListController {
 
       case "PLOT_MSG": {
         const plot = this.state.plots.find(
-          (p) => p.inputMeasure.id === msg.measureId,
+          (p) => p.baseMeasureId === msg.measureId,
         );
         if (!plot) {
           throw new Error(`Cannot find plot for measure ${msg.measureId}`);

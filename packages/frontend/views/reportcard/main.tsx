@@ -27,11 +27,7 @@ import {
   boulderGradeClass,
   sportGradeClass,
 } from "../../../iso/measures/grades";
-import {
-  getPreferredUnitForMeasure,
-  getSpec,
-  MeasureId,
-} from "../../../iso/measures";
+import { getPreferredUnitForMeasure } from "../../../iso/measures";
 import { Locale } from "../../../iso/locale";
 
 export type Model = {
