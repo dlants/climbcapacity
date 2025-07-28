@@ -40,74 +40,74 @@ The relevant files and entities are:
 
 ## Implementation
 
-- [ ] Create PlotController to replace PlotModel in plot-list.tsx
-  - [ ] Create new `PlotController` class in `packages/frontend/views/plot.tsx`
-  - [ ] PlotController.state contains current PlotModel info (filter, inputMeasure, interpolate, plot)
-  - [ ] Check for type errors and iterate until they pass
+- [x] Create PlotController to replace PlotModel in plot-list.tsx
+  - [x] Create new `PlotController` class in `packages/frontend/views/plot.tsx`
+  - [x] PlotController.state contains current PlotModel info (filter, inputMeasure, interpolate, plot)
+  - [x] Check for type errors and iterate until they pass
 
-- [ ] Replace Heatmap model with heatmap controller
-  - [ ] Create new `HeatmapController` class alongside existing heatmap model
-  - [ ] HeatmapController.state contains current heatmap Model definition
-  - [ ] Add interaction sub-state as disjoint union: 'no-clicks' | 'first-row-selected' | 'second-row-selected'
-  - [ ] Include interaction data: hoveredRow, selectedStartRow, selectedEndRow
-  - [ ] Add methods: handleRowHover, handleRowClick, handleReturnToHeatmap
-  - [ ] add a Msg type, and use a dispatch / handleDispatch pattern like the other controllers
-  - [ ] PlotListController should propagate dispatches down to PlotController, which in turn should propagate down to HeatmapController
-  - [ ] Extend state with interaction sub-state: 'no-clicks' | 'first-row-selected' | 'second-row-selected'
-  - [ ] Check for type errors and iterate until they pass
+- [x] Replace Heatmap model with heatmap controller
+  - [x] Create new `HeatmapController` class alongside existing heatmap model
+  - [x] HeatmapController.state contains current heatmap Model definition
+  - [x] Add interaction sub-state as disjoint union: 'no-clicks' | 'first-row-selected' | 'second-row-selected'
+  - [x] Include interaction data: hoveredRow, selectedStartRow, selectedEndRow
+  - [x] Add methods: handleRowHover, handleRowClick, handleReturnToHeatmap
+  - [x] add a Msg type, and use a dispatch / handleDispatch pattern like the other controllers
+  - [x] PlotListController should propagate dispatches down to PlotController, which in turn should propagate down to HeatmapController
+  - [x] Extend state with interaction sub-state: 'no-clicks' | 'first-row-selected' | 'second-row-selected'
+  - [x] Check for type errors and iterate until they pass
 
-- [ ] Update PlotController to dynamically decide what to render
-  - [ ] PlotController contains a HeatmapController instance when the plot type is 'heatmap'
-  - [ ] When HeatmapController interaction state is 'second-row-selected': derive and render histogram instead
-  - [ ] Otherwise: render heatmap with appropriate interaction callbacks and visual state
-  - [ ] PlotController.render() returns appropriate model based on HeatmapController state
-  - [ ] Check for type errors and iterate until they pass
+- [x] Update PlotController to dynamically decide what to render
+  - [x] PlotController contains a HeatmapController instance when the plot type is 'heatmap'
+  - [x] When HeatmapController interaction state is 'second-row-selected': derive and render histogram instead
+  - [x] Otherwise: render heatmap with appropriate interaction callbacks and visual state
+  - [x] PlotController.render() returns appropriate model based on HeatmapController state
+  - [x] Check for type errors and iterate until they pass
 
-- [ ] Update plot-list.tsx to use PlotController instead of PlotModel
-  - [ ] Replace `PlotModel` type with `PlotController` in `packages/frontend/views/reportcard/plot-list.tsx`
-  - [ ] Update plots array to contain PlotController instances instead of PlotModel objects
-  - [ ] Modify getPlots() method to create PlotController instances
-  - [ ] Update rendering logic to use PlotController.render() method
-  - [ ] Check for type errors and iterate until they pass
+- [x] Update plot-list.tsx to use PlotController instead of PlotModel
+  - [x] Replace `PlotModel` type with `PlotController` in `packages/frontend/views/reportcard/plot-list.tsx`
+  - [x] Update plots array to contain PlotController instances instead of PlotModel objects
+  - [x] Modify getPlots() method to create PlotController instances
+  - [x] Update rendering logic to use PlotController.render() method
+  - [x] Check for type errors and iterate until they pass
 
-- [ ] Extend existing heatmap to support interaction callbacks
-  - [ ] the view should accept a dispatch method
-  - [ ] Add direct SVG event listeners for full-canvas mouse interactions
-  - [ ] Use `svg.on("mousemove", handler)` and `svg.on("click", handler)` for entire SVG area
-  - [ ] Implement mouse coordinate to row index mapping using `d3.pointer(event, this)` and scale inversion
-  - [ ] Only add SVG event listeners if dispatch method is provided
-  - [ ] Keep existing rectangle mouseover/mouseout events for tooltips (no conflicts)
-  - [ ] Iterate until unit tests pass
+- [x] Extend existing heatmap to support interaction callbacks
+  - [x] the view should accept a dispatch method
+  - [x] Add direct SVG event listeners for full-canvas mouse interactions
+  - [x] Use `svg.on("mousemove", handler)` and `svg.on("click", handler)` for entire SVG area
+  - [x] Implement mouse coordinate to row index mapping using `d3.pointer(event, this)` and scale inversion
+  - [x] Only add SVG event listeners if dispatch method is provided
+  - [x] Keep existing rectangle mouseover/mouseout events for tooltips (no conflicts)
+  - [x] Iterate until unit tests pass
 
-- [ ] Add visual feedback system for row interactions in heatmap
-  - [ ] Implement row dimming logic in heatmap view: show full opacity for relevant rows, 30% for others
-  - [ ] Add no-clicks hover state: dim all rows except hovered row
-  - [ ] Add first-row-selected preview state: dim all rows except range between start and current hover
+- [x] Add visual feedback system for row interactions in heatmap
+  - [x] Implement row dimming logic in heatmap view: show full opacity for relevant rows, 30% for others
+  - [x] Add no-clicks hover state: dim all rows except hovered row
+  - [x] Add first-row-selected preview state: dim all rows except range between start and current hover
 
-- [ ] Implement data aggregation in PlotController
-  - [ ] Add method to aggregate 2D heatmap bins into 1D histogram data
-  - [ ] Sum frequencies across selected y-bins for each x-bin based on selectedStartRow/selectedEndRow
-  - [ ] Generate histogram model from aggregated data when interaction state is 'second-row-selected'
-  - [ ] Preserve user data point if it falls within selected range
+- [x] Implement data aggregation in PlotController
+  - [x] Add method to aggregate 2D heatmap bins into 1D histogram data
+  - [x] Sum frequencies across selected y-bins for each x-bin based on selectedStartRow/selectedEndRow
+  - [x] Generate histogram model from aggregated data when interaction state is 'second-row-selected'
+  - [x] Preserve user data point if it falls within selected range
 
-- [ ] Implement mode switching logic in PlotController
-  - [ ] PlotController.render() method checks HeatmapController.state.interaction
-  - [ ] When interaction is 'no-clicks' or 'first-row-selected': return heatmap model with callbacks
-  - [ ] When interaction is 'second-row-selected': return derived histogram model
-  - [ ] Pass handleReturnToHeatmap callback to histogram model for click-anywhere-to-return
-  - [ ] Maintain consistent x-axis scaling between heatmap and histogram models
+- [x] Implement mode switching logic in PlotController
+  - [x] PlotController.render() method checks HeatmapController.state.interaction
+  - [x] When interaction is 'no-clicks' or 'first-row-selected': return heatmap model with callbacks
+  - [x] When interaction is 'second-row-selected': return derived histogram model
+  - [x] Pass handleReturnToHeatmap callback to histogram model for click-anywhere-to-return
+  - [x] Maintain consistent x-axis scaling between heatmap and histogram models
 
-- [ ] Integrate histogram with return-to-heatmap functionality
-  - [ ] Add optional onReturnToHeatmap callback to existing histogram model
-  - [ ] Add click-anywhere-to-return functionality in histogram view
-  - [ ] Maintain existing histogram hover tooltips for bar details
-  - [ ] Ensure backward compatibility - callback is optional
+- [x] Integrate histogram with return-to-heatmap functionality
+  - [x] Add optional onReturnToHeatmap callback to existing histogram model
+  - [x] Add click-anywhere-to-return functionality in histogram view
+  - [x] Maintain existing histogram hover tooltips for bar details
+  - [x] Ensure backward compatibility - callback is optional
 
-- [ ] Integrate PlotController with existing plot system
-  - [ ] Update `PlotListController.getPlot()` in `packages/frontend/views/reportcard/plot-list.tsx`
-  - [ ] Replace PlotModel creation with PlotController creation
-  - [ ] PlotController integrates with existing DCGView dispatch pattern in plot-list.tsx
-  - [ ] Update message handling to work with PlotController instead of PlotModel
+- [x] Integrate PlotController with existing plot system
+  - [x] Update `PlotListController.getPlot()` in `packages/frontend/views/reportcard/plot-list.tsx`
+  - [x] Replace PlotModel creation with PlotController creation
+  - [x] PlotController integrates with existing DCGView dispatch pattern in plot-list.tsx
+  - [x] Update message handling to work with PlotController instead of PlotModel
 
 ## Technical Considerations
 

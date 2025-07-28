@@ -9,15 +9,18 @@ export type Model = {
   xLabel: string;
   xUnit?: UnitType;
   myData?: number;
+  yLabel?: string;
 };
 
 export function view({
   model,
   svg,
+  onReturnToHeatmap,
 }: {
   model: Model;
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-}) {
+  onReturnToHeatmap?: () => void | undefined;
+}): { cleanup: () => void } {
   const thresholds = generateBinThresholds(model.data, model.xUnit);
   const binGenerator = d3
     .bin<number, number>()
@@ -37,15 +40,52 @@ export function view({
     .domain([0, d3.max(bins, (d) => d.length) || 0]) // handle possible undefined
     .range([HEIGHT - MARGIN.bottom, MARGIN.top]);
 
+  // Add back button in top right if this is a heatmap closeup
+  if (onReturnToHeatmap) {
+    const backButtonG = svg
+      .append("g")
+      .attr("class", "back-button")
+      .style("cursor", "pointer")
+      .on("click", (event) => {
+        event.stopPropagation();
+        onReturnToHeatmap();
+      });
+
+    // Back button background
+    backButtonG
+      .append("rect")
+      .attr("x", WIDTH - 70)
+      .attr("y", 10)
+      .attr("width", 60)
+      .attr("height", 25)
+      .attr("fill", "white")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 1)
+      .attr("rx", 3);
+
+    // Back button text
+    backButtonG
+      .append("text")
+      .attr("x", WIDTH - 40)
+      .attr("y", 27)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "steelblue")
+      .text("← Back");
+  }
+
   svg
-    .selectAll("rect")
+    .selectAll("rect.bar")
     .data(bins)
     .join("rect")
+    .attr("class", "bar")
     .attr("x", (_, i) => x(i.toString()) || 0) // handle possible undefined
     .attr("y", (d) => y(d.length))
     .attr("width", x.bandwidth())
     .attr("height", (d) => y(0) - y(d.length))
-    .attr("fill", "blue");
+    .attr("fill", "steelblue")
+    .attr("stroke", "white")
+    .attr("stroke-width", 0.5);
 
   if (model.myData) {
     // Find which bin contains myData
@@ -56,6 +96,7 @@ export function view({
     if (myBinIndex !== -1) {
       svg
         .append("rect")
+        .attr("class", "my-data-outline")
         .attr("x", x(myBinIndex.toString()) || 0)
         .attr("y", y(bins[myBinIndex].length))
         .attr("width", x.bandwidth())
@@ -86,6 +127,17 @@ export function view({
   svg.append("g").call(xAxis);
   svg.append("g").call(yAxis);
 
+  // Add click-anywhere-to-return functionality if callback is provided (but not on bars or back button)
+  if (onReturnToHeatmap) {
+    svg.on("click", (event) => {
+      // Only trigger return if clicking on the SVG background (not on bars or back button)
+      const target = event.target as Element;
+      if (target === svg.node()) {
+        onReturnToHeatmap();
+      }
+    });
+  }
+
   svg
     .append("text")
     .attr("x", WIDTH / 2)
@@ -99,7 +151,7 @@ export function view({
     .attr("x", -HEIGHT / 2)
     .attr("y", 15)
     .attr("text-anchor", "middle")
-    .text("Frequency");
+    .text(model.yLabel || "Frequency");
 
   const tooltip = d3
     .select("body")
@@ -113,7 +165,7 @@ export function view({
     .style("border-radius", "5px");
 
   svg
-    .selectAll("rect")
+    .selectAll("rect.bar")
     .on("mouseover", (event, data) => {
       const d = data as Bin | undefined;
       if (!d) {
@@ -123,11 +175,19 @@ export function view({
 
       tooltip
         .style("visibility", "visible")
-        .html(`Count: ${d.length}<br/>` + `${model.xLabel}: ${range}`)
+        .html(`Frequency: ${d.length}<br/>` + `${model.xLabel}: ${range}`)
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 10 + "px");
     })
     .on("mouseout", () => {
       tooltip.style("visibility", "hidden");
     });
+
+  // Return cleanup function
+  return {
+    cleanup: () => {
+      svg.selectAll("*").remove();
+      tooltip.remove();
+    },
+  };
 }

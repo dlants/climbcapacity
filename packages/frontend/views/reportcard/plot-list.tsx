@@ -26,7 +26,7 @@ type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
   inputMeasure: MeasureWithUnit;
   interpolate: Interpolate.InterpolateController;
-  plot: Plot.Model;
+  plot: Plot.PlotController;
 };
 
 export class PlotListView extends DCGView.View<{
@@ -64,7 +64,7 @@ export class PlotListView extends DCGView.View<{
         <Interpolate.InterpolateView
           controller={() => plotProp().interpolate}
         />
-        <Plot.Plot model={() => plotProp().plot} />
+        <Plot.Plot controller={() => plotProp().plot} />
       </div>
     );
   }
@@ -94,6 +94,11 @@ export type Msg =
       msg: Interpolate.Msg;
     }
   | {
+      type: "PLOT_MSG";
+      measureId: MeasureId;
+      msg: Plot.PlotMsg;
+    }
+  | {
       type: "OUTPUT_MEASURE_CHANGED";
     };
 
@@ -102,10 +107,6 @@ export class PlotListController {
   private getOutputMeasure: () => {
     id: MeasureId;
     unit: UnitType;
-    filter: {
-      controller: FilterController;
-      enabled: boolean;
-    };
   };
 
   constructor(
@@ -116,10 +117,6 @@ export class PlotListController {
       outputMeasure: () => {
         id: MeasureId;
         unit: UnitType;
-        filter: {
-          controller: FilterController;
-          enabled: boolean;
-        };
       };
     },
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
@@ -250,13 +247,22 @@ export class PlotListController {
           }),
       );
 
-      const plot = this.getPlot({
+      const plotModel = this.getPlot({
         xMeasure: {
           ...inputMeasure,
           unit: getUnit(),
         },
         interpolationOptions: this.getInterpolationOptions(interpolate),
         filterModel: filter,
+      });
+
+      const plot = new Plot.PlotController(plotModel, {
+        myDispatch: (msg: Plot.PlotMsg) =>
+          this.context.myDispatch({
+            type: "PLOT_MSG",
+            measureId: inputMeasure.id,
+            msg,
+          }),
       });
 
       plots.push({
@@ -314,8 +320,7 @@ export class PlotListController {
     const { mySnapshot, snapshots } = this.state;
     const outputMeasure = this.getOutputMeasure();
     const yMeasure = { id: outputMeasure.id, unit: outputMeasure.unit };
-    const sharedOutputMeasureFilter = outputMeasure.filter;
-    const yUnit = sharedOutputMeasureFilter.controller.getUnit();
+    const yUnit = outputMeasure.unit;
 
     const myData =
       mySnapshot &&
@@ -373,23 +378,7 @@ export class PlotListController {
         return filter.filter.filterApplies(snapshotValue as UnitValue);
       });
 
-      // Check shared output measure filter
-      const outputFilterPass = (() => {
-        if (!sharedOutputMeasureFilter.enabled) {
-          return true;
-        }
-
-        const snapshotValue = snapshot.measures[yMeasure.id];
-        if (!snapshotValue) {
-          return false;
-        }
-
-        return sharedOutputMeasureFilter.controller.filterApplies(
-          snapshotValue as UnitValue,
-        );
-      })();
-
-      const shouldKeep = inputFiltersPass && outputFilterPass;
+      const shouldKeep = inputFiltersPass;
 
       if (!shouldKeep) {
         continue;
@@ -450,7 +439,7 @@ export class PlotListController {
               this.context.locale(),
             );
 
-        filterPlot.plot = this.getPlot({
+        const plotModel = this.getPlot({
           filterModel: filterPlot.filter,
           interpolationOptions: this.getInterpolationOptions(
             filterPlot.interpolate,
@@ -459,6 +448,15 @@ export class PlotListController {
             ...filterPlot.inputMeasure,
             unit,
           },
+        });
+
+        filterPlot.plot = new Plot.PlotController(plotModel, {
+          myDispatch: (msg: Plot.PlotMsg) =>
+            this.context.myDispatch({
+              type: "PLOT_MSG",
+              measureId: filterPlot.inputMeasure.id,
+              msg,
+            }),
         });
         break;
       }
@@ -484,7 +482,7 @@ export class PlotListController {
               this.context.locale(),
             );
 
-        interpolatePlot.plot = this.getPlot({
+        const plotModel = this.getPlot({
           filterModel: interpolatePlot.filter,
           interpolationOptions: this.getInterpolationOptions(
             interpolatePlot.interpolate,
@@ -494,6 +492,26 @@ export class PlotListController {
             unit,
           },
         });
+
+        interpolatePlot.plot = new Plot.PlotController(plotModel, {
+          myDispatch: (msg: Plot.PlotMsg) =>
+            this.context.myDispatch({
+              type: "PLOT_MSG",
+              measureId: interpolatePlot.inputMeasure.id,
+              msg,
+            }),
+        });
+        break;
+      }
+
+      case "PLOT_MSG": {
+        const plot = this.state.plots.find(
+          (p) => p.inputMeasure.id === msg.measureId,
+        );
+        if (!plot) {
+          throw new Error(`Cannot find plot for measure ${msg.measureId}`);
+        }
+        plot.plot.handleDispatch(msg.msg);
         break;
       }
 

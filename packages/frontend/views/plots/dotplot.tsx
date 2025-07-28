@@ -67,13 +67,17 @@ export function view({
 }: {
   model: Model;
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-}) {
+}): { cleanup: () => void } {
   const allData = [...model.data];
   if (model.myData) {
     allData.push(model.myData);
   }
   if (allData.length == 0) {
-    return;
+    return {
+      cleanup: () => {
+        svg.selectAll("*").remove();
+      },
+    };
   }
 
   const x = d3
@@ -157,6 +161,13 @@ export function view({
     .attr("y", 15)
     .attr("text-anchor", "middle")
     .text(model.yLabel + (model.yUnit ? ` (${model.yUnit})` : ""));
+
+  // Return cleanup function
+  return {
+    cleanup: () => {
+      svg.selectAll("*").remove();
+    },
+  };
 }
 
 const fmt = new Intl.NumberFormat("en", {

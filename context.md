@@ -4,8 +4,6 @@
 
 ClimbCapacity is a climbing performance tracking web application that allows users to record, analyze, and compare their climbing metrics. Built with TypeScript, Express.js, DCGView, and MongoDB.
 
-**Current Status**: The project has been successfully refactored from React to DCGView. The refactor is largely complete with all major components converted to DCGView patterns, including proper controller/view separation and DCGView's reactive data binding system.
-
 ## Architecture
 
 - **Yarn Workspaces Monorepo**: Centralized dependency management with scoped packages
@@ -283,6 +281,24 @@ packages/iso/
 
 ## Development Patterns
 
+### Code Style Guidelines
+
+**Use `undefined` over `null`**: The codebase consistently uses `undefined` instead of `null` for optional/missing values. This aligns with TypeScript's optional property syntax and provides better type safety.
+
+```typescript
+// Preferred
+let value: string | undefined;
+function getValue(): string | undefined {
+  return undefined;
+}
+
+// Avoid
+let value: string | null;
+function getValue(): string | null {
+  return null;
+}
+```
+
 ### Adding New API Endpoints
 
 1. Define request/response types in `iso/protocol.ts`
@@ -492,6 +508,7 @@ Root scripts delegate to workspace commands which execute build tools:
 - `yarn build:frontend` → `yarn workspace @climbcapacity/build-tools build:frontend` → `vite build --config vite.config.ts`
 - `yarn test:e2e` → `yarn workspace @climbcapacity/build-tools test:e2e` → `playwright test --config playwright.config.ts`
 - `yarn lint` → `eslint .` (uses root eslint.config.js, not via build-tools)
+
 ## Production Deployment
 
 ### Docker Production Setup
