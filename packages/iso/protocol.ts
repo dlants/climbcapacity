@@ -1,8 +1,8 @@
 import { MeasureId } from "./measures/index.js";
-import type { UnitValue } from "./units.js";
+import type { FacetString, UnitValue } from "./units.js";
 
 export type Snapshot = {
-  _id: ProtocolObjectId;
+  id: string;
   userId: string;
 
   /** these are as the user entered them
@@ -13,6 +13,7 @@ export type Snapshot = {
 
   createdAt: ProtocolDate;
   lastUpdated: ProtocolDate;
+  importSource?: Dataset;
 };
 
 export type SnapshotId = string & { __brand: "SnapshotId" };
@@ -64,6 +65,19 @@ export type SnapshotQuery = {
     [dataset in Dataset]: boolean;
   };
   measures: { [measureId: MeasureId]: MeasureFilter };
+};
+
+export type MeiliFilterQuery = {
+  datasets: {
+    [dataset in Dataset]: boolean;
+  };
+  /**
+   * Array of filter groups. Top-level arrays are ANDed together, inner arrays are ORed.
+   * Each filter string is in format: 'category;value' or 'category;unit;value'
+   * Example: [['gender;male'], ['height;cm;150-155', 'height;cm;155-160']]
+   * Means: gender=male AND (height=150-155 OR height=155-160)
+   */
+  filters: FacetString[][];
 };
 
 export type AuthStatus =

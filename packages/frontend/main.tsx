@@ -372,7 +372,7 @@ export class MainAppController {
         }
 
         if (msg.msg.type == "SELECT_SNAPSHOT") {
-          const snapshotId = msg.msg.snapshot.snapshot._id as SnapshotId;
+          const snapshotId = msg.msg.snapshot.snapshot.id as SnapshotId;
           (async () => {
             this.myDispatch({
               type: "NAVIGATE",

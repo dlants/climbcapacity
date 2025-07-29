@@ -124,7 +124,7 @@ export class SnapshotController {
           };
         } else if (msg.msg.type == "DELETE_MEASURE") {
           const requestParams: SnapshotUpdateRequest = {
-            snapshotId: this.state.snapshot._id as SnapshotId,
+            snapshotId: this.state.snapshot.id as SnapshotId,
             deletes: {
               [msg.msg.measureId]: true,
             },
@@ -249,7 +249,7 @@ export class SnapshotController {
         }
 
         const requestParams: SnapshotUpdateRequest = {
-          snapshotId: this.state.snapshot._id as SnapshotId,
+          snapshotId: this.state.snapshot.id as SnapshotId,
           updates: {
             [canSubmit.measureId]: canSubmit.value,
           },

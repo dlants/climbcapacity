@@ -1,0 +1,6 @@
+{
+  "commandAllowlist": [
+    "^(cd [^;&|()<>]+ && )?npx tsc --noEmit$",
+    "^(cd [^;&|()<>]+ && )?npx vitest run( [^;&|()<>]*)?$"
+  ]
+}

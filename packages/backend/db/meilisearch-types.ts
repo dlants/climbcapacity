@@ -45,8 +45,7 @@ export const SNAPSHOTS_INDEX_CONFIG = {
     "importSource",
     "createdAt",
     "lastUpdated",
-    "facets", // Single facet array enables all faceted search functionality
+    "facets",
   ],
   sortableAttributes: ["createdAt", "lastUpdated"],
 } as const;
-

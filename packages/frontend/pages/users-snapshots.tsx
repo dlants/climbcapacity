@@ -130,7 +130,7 @@ export class UsersSnapshotsController {
           );
         }
         const snapshot = this.state.snapshotRequest.response.find(
-          (s) => s.snapshot._id == msg.snapshotId,
+          (s) => s.snapshot.id == msg.snapshotId,
         );
         if (!snapshot) {
           throw new Error(
@@ -175,7 +175,7 @@ export class UsersSnapshotsController {
           );
         }
         const responseSnapshot = this.state.snapshotRequest.response.find(
-          (s) => s.snapshot._id == msg.snapshotId,
+          (s) => s.snapshot.id == msg.snapshotId,
         );
         if (!responseSnapshot) {
           throw new Error(
@@ -248,7 +248,7 @@ class SnapshotListView extends DCGView.View<{
         <div class="loaded">
           <For
             each={() => loadedProp().response}
-            key={(item: SnapshotListItem) => item.snapshot._id}
+            key={(item: SnapshotListItem) => item.snapshot.id}
           >
             {(getItem: () => SnapshotListItem) => (
               <SnapshotItemView
@@ -316,7 +316,7 @@ class DeleteButton extends DCGView.View<{
         onClick={() =>
           this.props.controller().myDispatch({
             type: "DELETE_SNAPSHOT",
-            snapshotId: this.props.item().snapshot._id,
+            snapshotId: this.props.item().snapshot.id,
           })
         }
       >

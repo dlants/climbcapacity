@@ -1,22 +1,22 @@
 import express from "express";
 import { connect } from "./db/connect.js";
 import { meiliClient } from "./db/meilisearch.js";
+import { SNAPSHOTS_INDEX_CONFIG } from "./db/meilisearch-types.js";
 import { readEnv } from "./env.js";
 import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
-import { MeasureStatsDoc, SnapshotsModel } from "./models/snapshots.js";
+import { SnapshotsMeiliSearch } from "./models/snapshots-meilisearch.js";
 import { Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
 import {
-  SnapshotQuery,
+  MeiliFilterQuery,
   MeasureStats,
   SnapshotId,
   SnapshotUpdateRequest,
   DATASETS,
   Dataset,
 } from "../iso/protocol.js";
-import mongodb from "mongodb";
 import { asyncRoute, HandledError } from "./utils.js";
 import { UnitValue } from "../iso/units.js";
 import { MeasureId } from "../iso/measures/index.js";
@@ -48,13 +48,16 @@ async function run() {
   app.use(express.static(path.join(__dirname, "../../../frontend/dist")));
 
   const auth = new Auth({ app, client, env });
-  const snapshotModel = new SnapshotsModel({ client });
+  const snapshotsMeili = new SnapshotsMeiliSearch(
+    meiliClient,
+    SNAPSHOTS_INDEX_CONFIG.indexName,
+  );
 
   app.get(
     "/api/measure-stats",
     asyncRoute(async (req, res) => {
-      const statsDoc: MeasureStatsDoc = await snapshotModel.getMeasureStats();
-      const stats: MeasureStats = statsDoc.stats;
+      // TODO: Implement measure stats in MeiliSearch model
+      const stats: MeasureStats = {};
 
       const etag = `"${Buffer.from(JSON.stringify(stats)).toString("base64")}"`;
       if (req.header("If-None-Match") === etag) {
@@ -70,26 +73,216 @@ async function run() {
     }),
   );
 
-  app.get(
-    "/api/test-meilisearch",
+  app.post(
+    "/api/meili/snapshots/query",
+    apiRoute(async (req) => {
+      const query: MeiliFilterQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.equal(
+        typeof query.datasets,
+        "object",
+        "query must contain datasets object",
+      );
+      assert.ok(
+        Array.isArray(query.filters),
+        "query must contain filters array",
+      );
+
+      // Validate datasets
+      for (const dataset in query.datasets) {
+        assert.ok(
+          DATASETS.includes(dataset),
+          `dataset ${dataset} is not valid`,
+        );
+
+        const enabled = query.datasets[dataset as Dataset];
+        assert.equal(
+          typeof enabled,
+          "boolean",
+          `dataset ${dataset} must be enabled or disabled with boolean`,
+        );
+      }
+
+      // Validate filters structure
+      for (const filterGroup of query.filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+
+          // Basic validation that filter contains semicolons for proper format
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
+      const result = await snapshotsMeili.querySnapshotsWithFilters(query);
+      return {
+        snapshots: result.snapshots,
+        facetDistribution: result.facetDistribution,
+        totalHits: result.totalHits,
+      };
+    }),
+  );
+
+  app.post(
+    "/api/meili/snapshot",
     apiRoute(async (req, res) => {
-      try {
-        const health = await meiliClient.health();
-        const stats = await meiliClient.getStats();
-        return {
-          status: "success",
-          meilisearch: {
-            health,
-            stats,
-            message: "MeiliSearch connection verified"
-          }
-        };
-      } catch (error) {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshotId: SnapshotId = req.body.snapshotId;
+      assert.equal(
+        typeof snapshotId,
+        "string",
+        "Must provide snapshotId in body",
+      );
+      const snapshot: Snapshot | undefined =
+        await snapshotsMeili.getSnapshot(snapshotId);
+
+      if (!snapshot) {
         throw new HandledError({
-          status: 500,
-          message: `MeiliSearch connection failed: ${error}`
+          status: 404,
+          message: `Snapshot not found`,
         });
       }
+
+      if (snapshot.userId != user.id) {
+        throw new HandledError({
+          status: 403,
+          message: `You can only look at your own snapshots`,
+        });
+      }
+      return snapshot;
+    }),
+  );
+
+  app.post(
+    "/api/meili/my-snapshots",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshots: Snapshot[] = await snapshotsMeili.getUsersSnapshots(
+        user.id,
+      );
+      return snapshots;
+    }),
+  );
+
+  app.post(
+    "/api/meili/snapshots/new",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      await snapshotsMeili.newSnapshot(user);
+      return "OK";
+    }),
+  );
+
+  app.post(
+    "/api/meili/snapshots/update",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const body = req.body as SnapshotUpdateRequest;
+
+      assert.equal(
+        typeof body.snapshotId,
+        "string",
+        "Must provide snapshotId of type string",
+      );
+
+      if (body.updates) {
+        assert.equal(
+          typeof body.updates,
+          "object",
+          "updates must be an object",
+        );
+      }
+
+      if (body.deletes) {
+        assert.equal(
+          typeof body.deletes,
+          "object",
+          "deletes must be an object",
+        );
+      }
+
+      assert.ok(
+        body.updates || body.deletes,
+        "must provide either updates or deletes object",
+      );
+
+      for (const measureId in body.updates || {}) {
+        assert.ok(
+          MEASURES.findIndex((m) => m.id == measureId) > -1,
+          `updates has invalid key ${measureId}`,
+        );
+
+        const update = body.updates![measureId as MeasureId];
+        const value: UnitValue = update;
+        assert.equal(
+          typeof value,
+          "object",
+          "Must provide valid measure value",
+        );
+      }
+
+      for (const measureId in body.deletes || {}) {
+        assert.ok(
+          MEASURES.findIndex((m) => m.id == measureId) > -1,
+          `deletes has invalid key ${measureId}`,
+        );
+
+        const value = body.deletes![measureId as MeasureId];
+        assert.equal(value, true, "all deletes keys must be 'true'");
+      }
+
+      const updated = await snapshotsMeili.updateMeasure({
+        userId: user.id,
+        requestParams: {
+          snapshotId: body.snapshotId,
+          updates: body.updates,
+          deletes: body.deletes,
+        },
+      });
+
+      if (updated) {
+        return "OK";
+      } else {
+        throw new HandledError({
+          status: 400,
+          message: "Unable to update snapshot.",
+        });
+      }
+    }),
+  );
+
+  app.delete(
+    "/api/meili/snapshot",
+    apiRoute(async (req, res) => {
+      const user = await auth.assertLoggedIn(req, res);
+      const snapshotId: SnapshotId = req.body.snapshotId;
+      assert.equal(
+        typeof snapshotId,
+        "string",
+        "Must provide snapshotId in body",
+      );
+      const result = await snapshotsMeili.deleteSnapshot({
+        userId: user.id,
+        snapshotId: snapshotId,
+      });
+
+      if (result == 0) {
+        throw new HandledError({
+          status: 404,
+          message: `Unable to delete snapshot`,
+        });
+      }
+
+      return "OK";
     }),
   );
 
@@ -103,9 +296,8 @@ async function run() {
         "string",
         "Must provide snapshotId in body",
       );
-      const snapshot: Snapshot | undefined = await snapshotModel.getSnapshot(
-        new mongodb.ObjectId(snapshotId),
-      );
+      const snapshot: Snapshot | undefined =
+        await snapshotsMeili.getSnapshot(snapshotId);
 
       if (!snapshot) {
         throw new HandledError({
@@ -134,9 +326,9 @@ async function run() {
         "string",
         "Must provide snapshotId in body",
       );
-      const result = await snapshotModel.deleteSnapshot({
+      const result = await snapshotsMeili.deleteSnapshot({
         userId: user.id,
-        snapshotId: new mongodb.ObjectId(snapshotId),
+        snapshotId: snapshotId,
       });
 
       if (result == 0) {
@@ -156,7 +348,7 @@ async function run() {
     "/api/my-snapshots",
     apiRoute(async (req, res) => {
       const user = await auth.assertLoggedIn(req, res);
-      const snapshots: Snapshot[] = await snapshotModel.getUsersSnapshots(
+      const snapshots: Snapshot[] = await snapshotsMeili.getUsersSnapshots(
         user.id,
       );
       return snapshots;
@@ -170,78 +362,8 @@ async function run() {
     apiRoute(async (req, res) => {
       const user = await auth.assertLoggedIn(req, res);
       const snapshot: Snapshot | undefined =
-        await snapshotModel.getLatestSnapshot(user.id);
+        await snapshotsMeili.getLatestSnapshot(user.id);
       return { snapshot };
-    }),
-  );
-
-  app.post(
-    "/api/snapshots/query",
-    apiRoute(async (req) => {
-      const query: SnapshotQuery = req.body.query;
-
-      assert.equal(typeof query, "object", "query must be an object");
-      assert.equal(
-        typeof query.datasets,
-        "object",
-        "query must contain datasets object",
-      );
-      assert.equal(
-        typeof query.measures,
-        "object",
-        "query must contain measures object",
-      );
-
-      for (const measureId in query.measures) {
-        assert.ok(
-          MEASURES.findIndex((m) => m.id == measureId) > -1,
-          `Measure has invalid id ${measureId}`,
-        );
-
-        const val = query.measures[measureId as MeasureId];
-        assert.equal(
-          typeof val,
-          "object",
-          `query measure ${measureId} must be an object.`,
-        );
-
-        for (const valKey in val) {
-          assert.ok(
-            ["min", "max"].indexOf(valKey) > -1,
-            `query ${measureId} can only define min and max but it defined ${valKey}`,
-          );
-
-          const filterVal = val[valKey as "min" | "max"];
-          if (filterVal) {
-            assert.equal(
-              typeof filterVal,
-              "object",
-              `query ${measureId}:${valKey} must be a UnitValue`,
-            );
-          }
-        }
-      }
-
-      for (const dataset in query.datasets) {
-        assert.ok(
-          DATASETS.includes(dataset),
-          `dataset ${dataset} is not valid`,
-        );
-
-        const enabled = query.datasets[dataset as Dataset];
-        assert.equal(
-          typeof enabled,
-          "boolean",
-          `dataset ${dataset} must be enabled or disabled with boolean`,
-        );
-      }
-
-      assert.ok(
-        Object.keys(query.measures).length,
-        "Must provide non-empty measures query",
-      );
-
-      return await snapshotModel.querySnapshots(query);
     }),
   );
 
@@ -249,7 +371,7 @@ async function run() {
     "/api/snapshots/new",
     apiRoute(async (req, res) => {
       const user = await auth.assertLoggedIn(req, res);
-      await snapshotModel.newSnapshot(user);
+      await snapshotsMeili.newSnapshot(user);
       return "OK";
     }),
   );
@@ -312,7 +434,7 @@ async function run() {
         assert.equal(value, true, "all deletes keys must be 'true'");
       }
 
-      const updated = await snapshotModel.updateMeasure({
+      const updated = await snapshotsMeili.updateMeasure({
         userId: user.id,
         requestParams: {
           snapshotId: body.snapshotId,

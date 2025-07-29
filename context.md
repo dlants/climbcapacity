@@ -93,13 +93,8 @@ yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ### Backend Tests
 
 ```bash
-yarn workspace @climbcapacity/backend test              # Run all tests
-yarn workspace @climbcapacity/backend test:watch        # Watch mode (if available)
+cd projects/backend && npx vitest run
 ```
-
-- Uses Vitest with MongoDB Memory Server
-- Tests located in `packages/backend/__tests__/`
-- **Note**: Backend tests run in watch mode by default. Use `Ctrl+C` to exit or add `--run` flag for single execution
 
 ### Frontend E2E Tests
 
