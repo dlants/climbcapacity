@@ -60,13 +60,6 @@ export type FilterQuery = {
   };
 };
 
-export type SnapshotQuery = {
-  datasets: {
-    [dataset in Dataset]: boolean;
-  };
-  measures: { [measureId: MeasureId]: MeasureFilter };
-};
-
 export type MeiliFilterQuery = {
   datasets: {
     [dataset in Dataset]: boolean;
@@ -96,6 +89,11 @@ export type SnapshotUpdateRequest = {
 
 export type MeasureStats = {
   [measureId: MeasureId]: number;
+};
+export type SnapshotQueryResult = {
+  snapshots: Snapshot[];
+  facetDistribution: Record<string, Record<string, number>>;
+  totalHits: number;
 };
 
 export const DATASETS = ["climbharder", "powercompany"];

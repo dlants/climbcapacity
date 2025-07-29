@@ -47,7 +47,7 @@ export class SnapshotPageController {
   }
 
   private async loadSnapshot() {
-    const response = await fetch("/api/snapshot", {
+    const response = await fetch("/api/meili/snapshot", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

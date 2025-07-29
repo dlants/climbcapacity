@@ -143,7 +143,7 @@ export class SnapshotController {
           }
 
           (async () => {
-            const response = await fetch("/api/snapshots/update", {
+            const response = await fetch("/api/meili/snapshots/update", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -266,7 +266,7 @@ export class SnapshotController {
         };
 
         (async () => {
-          const response = await fetch("/api/snapshots/update", {
+          const response = await fetch("/api/meili/snapshots/update", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

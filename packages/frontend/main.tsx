@@ -5,8 +5,7 @@ import {
   UsersSnapshotsView,
 } from "./pages/users-snapshots";
 import { SnapshotPageController, SnapshotPageView } from "./pages/snapshot";
-import { ExploreController, ExploreView } from "./pages/explore";
-import { ReportCardController, ReportCardView } from "./pages/report-card";
+import { DataController, DataView } from "./pages/data";
 import {
   assertUnreachable,
   ExtractFromDisjointUnion,
@@ -77,12 +76,8 @@ export type Model = {
         snapshotPage: SnapshotPageController;
       }
     | {
-        route: "/explore";
-        explorePage: ExploreController;
-      }
-    | {
-        route: "/report-card";
-        reportCardPage: ReportCardController;
+        route: "/data";
+        dataPage: DataController;
       }
     | {
         route: "/";
@@ -92,8 +87,7 @@ export type Model = {
 import { Msg as SendLinkMsg } from "./pages/send-link";
 import { Msg as UsersSnapshotsMsg } from "./pages/users-snapshots";
 import { Msg as SnapshotPageMsg } from "./pages/snapshot";
-import { Msg as ExploreMsg } from "./pages/explore";
-import { Msg as ReportCardMsg } from "./pages/report-card";
+import { Msg as DataMsg } from "./pages/data";
 import {
   Msg as LocaleSelectorMsg,
   LocaleSelectorController,
@@ -118,12 +112,8 @@ type Msg =
       msg: SnapshotPageMsg;
     }
   | {
-      type: "EXPLORE_MSG";
-      msg: ExploreMsg;
-    }
-  | {
-      type: "REPORT_CARD_MSG";
-      msg: ReportCardMsg;
+      type: "DATA_MSG";
+      msg: DataMsg;
     }
   | {
       type: "LOCALE_MSG";
@@ -227,30 +217,21 @@ export class MainAppController {
         break;
       }
 
-      case "/report-card": {
+      case "/data": {
+        let userId: string | undefined = undefined;
         if (user) {
-          const reportCardPage = new ReportCardController(
-            user.id,
-            this.state.measureStats,
-            {
-              locale: this.locale,
-              myDispatch: (msg: ReportCardMsg) =>
-                this.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-            },
-          );
-          this.state.page = {
-            route: "/report-card",
-            reportCardPage,
-          };
-        } else {
-          const sendLinkPage = new SendLinkController((msg: SendLinkMsg) =>
-            this.myDispatch({ type: "SEND_LINK_MSG", msg }),
-          );
-          this.state.page = {
-            route: "/send-link",
-            sendLinkPage,
-          };
+          userId = user.id;
         }
+
+        const dataPage = new DataController(userId, this.state.measureStats, {
+          locale: this.locale,
+          myDispatch: (msg: DataMsg) =>
+            this.myDispatch({ type: "DATA_MSG", msg }),
+        });
+        this.state.page = {
+          route: "/data",
+          dataPage,
+        };
         break;
       }
 
@@ -281,19 +262,6 @@ export class MainAppController {
         break;
       }
 
-      case "/explore": {
-        const explorePage = new ExploreController(this.state.measureStats, {
-          myDispatch: (msg: ExploreMsg) =>
-            this.myDispatch({ type: "EXPLORE_MSG", msg }),
-          locale: this.locale,
-        });
-        this.state.page = {
-          route: "/explore",
-          explorePage,
-        };
-        break;
-      }
-
       default:
         assertUnreachable(msg.target);
     }
@@ -315,8 +283,8 @@ export class MainAppController {
       case "/snapshots":
         navMsg = { type: "NAVIGATE", target: { route: "/snapshots" } };
         break;
-      case "/report-card":
-        navMsg = { type: "NAVIGATE", target: { route: "/report-card" } };
+      case "/data":
+        navMsg = { type: "NAVIGATE", target: { route: "/data" } };
         break;
       case "/snapshot":
         navMsg = {
@@ -326,9 +294,6 @@ export class MainAppController {
             snapshotId: this.state.page.snapshotPage.state.snapshotId,
           },
         };
-        break;
-      case "/explore":
-        navMsg = { type: "NAVIGATE", target: { route: "/explore" } };
         break;
       default:
         assertUnreachable(this.state.page);
@@ -410,8 +375,8 @@ export class MainAppController {
         ).snapshotPage.handleDispatch(msg.msg);
         break;
 
-      case "EXPLORE_MSG":
-        if (this.state.page.route != "/explore") {
+      case "DATA_MSG":
+        if (this.state.page.route != "/data") {
           console.warn(
             `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
           );
@@ -421,25 +386,9 @@ export class MainAppController {
           this.state.page as ExtractFromDisjointUnion<
             Model["page"],
             "route",
-            "/explore"
+            "/data"
           >
-        ).explorePage.handleDispatch(msg.msg);
-        break;
-
-      case "REPORT_CARD_MSG":
-        if (this.state.page.route != "/report-card") {
-          console.warn(
-            `Got unexpected ${msg.type} msg when model is in ${this.state.page.route} state. Ignoring.`,
-          );
-          return;
-        }
-        (
-          this.state.page as ExtractFromDisjointUnion<
-            Model["page"],
-            "route",
-            "/report-card"
-          >
-        ).reportCardPage.handleDispatch(msg.msg);
+        ).dataPage.handleDispatch(msg.msg);
         break;
 
       case "LOCALE_MSG": {
@@ -471,14 +420,11 @@ export class MainAppController {
       case "/snapshots":
         newUrl = "/snapshots";
         break;
-      case "/report-card":
-        newUrl = "/report-card";
+      case "/data":
+        newUrl = "/data";
         break;
       case "/snapshot":
         newUrl = `/snapshot/${this.state.page.snapshotPage.state.snapshotId}`;
-        break;
-      case "/explore":
-        newUrl = "/explore";
         break;
       case "/":
         newUrl = "/";
@@ -537,16 +483,12 @@ export class MainAppView extends DCGView.View<{
         <UsersSnapshotsView controller={() => pageProp().userSnapshotsPage} />
       ),
 
-      "/report-card": (pageProp) => (
-        <ReportCardView controller={() => pageProp().reportCardPage} />
+      "/data": (pageProp) => (
+        <DataView controller={() => pageProp().dataPage} />
       ),
 
       "/snapshot": (pageProp) => (
         <SnapshotPageView controller={() => pageProp().snapshotPage} />
-      ),
-
-      "/explore": (pageProp) => (
-        <ExploreView controller={() => pageProp().explorePage} />
       ),
 
       "/": () => <div>TODO: add homepage content</div>,

@@ -1,10 +1,14 @@
 import DCGView from "dcgview";
-import type { HydratedSnapshot, Snapshot } from "../../types";
+import type { Frontend, HydratedSnapshot } from "../../types";
 import { Dispatch } from "../../types";
 import { assertUnreachable, RequestStatus } from "../../util/utils";
 
 const { SwitchUnion, If } = DCGView.Components;
-import { SnapshotQuery, MeasureStats } from "../../../iso/protocol";
+import {
+  MeiliFilterQuery,
+  MeasureStats,
+  SnapshotQueryResult,
+} from "../../../iso/protocol";
 import { EditQueryController, EditQueryView } from "../../views/edit-query";
 import type { Msg as EditQueryMsg } from "../../views/edit-query";
 import {
@@ -37,7 +41,7 @@ export type Model = {
   };
   measureStats: MeasureStats;
   query: {
-    body: SnapshotQuery;
+    body: MeiliFilterQuery;
     hash: string;
   };
   mySnapshot?: HydratedSnapshot;
@@ -152,27 +156,47 @@ export class ReportCardMainController {
   }
 
   private getQuery(editQuery: EditQueryController): {
-    body: SnapshotQuery;
+    body: MeiliFilterQuery;
     hash: string;
   } {
-    const query: SnapshotQuery = {
-      datasets: {},
-      measures: {},
+    const query: MeiliFilterQuery = {
+      datasets: {
+        climbharder: false,
+        powercompany: false,
+      },
+      filters: [],
     };
     const queryHashParts: string[] = [];
 
-    editQuery.state.filters.forEach((filter) => {
-      const measureId = editQuery.getFilterMeasureId(filter);
-      query.measures[measureId] = editQuery.getFilterQuery(filter);
-      queryHashParts.push(
-        measureId + ":" + JSON.stringify(query.measures[measureId]),
-      );
-    });
-
+    // Copy dataset selections
     for (const dataset in editQuery.state.datasets) {
       query.datasets[dataset] = editQuery.state.datasets[dataset];
       queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
     }
+
+    // Convert filters to MeiliFilterQuery format
+    editQuery.state.filters.forEach((filter) => {
+      const measureId = editQuery.getFilterMeasureId(filter);
+      const filterQuery = editQuery.getFilterQuery(filter);
+
+      // For now, create a simple filter array - this may need adjustment based on actual filter structure
+      const filterStrings: string[] = [];
+      if (filterQuery.min !== undefined || filterQuery.max !== undefined) {
+        filterStrings.push(
+          `${measureId}:${filterQuery.min || 0}-${filterQuery.max || 999999}`,
+        );
+      } else {
+        filterStrings.push(`${measureId}:exists`);
+      }
+
+      if (filterStrings.length > 0) {
+        query.filters.push(
+          filterStrings as import("../../../iso/units").FacetString[],
+        );
+      }
+
+      queryHashParts.push(measureId + ":" + JSON.stringify(filterQuery));
+    });
 
     return {
       body: query,
@@ -182,7 +206,7 @@ export class ReportCardMainController {
 
   private async fetchData() {
     const query = this.state.query.body;
-    const response = await fetch("/api/snapshots/query", {
+    const response = await fetch("/api/meili/snapshots/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -192,12 +216,12 @@ export class ReportCardMainController {
       }),
     });
     if (response.ok) {
-      const snapshots = (await response.json()) as Snapshot[];
+      const result = (await response.json()) as Frontend<SnapshotQueryResult>;
       this.context.myDispatch({
         type: "SNAPSHOT_RESPONSE",
         request: {
           status: "loaded",
-          response: snapshots.map(hydrateSnapshot),
+          response: result.snapshots.map(hydrateSnapshot),
           queryHash: this.state.query.hash,
         },
       });

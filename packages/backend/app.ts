@@ -6,7 +6,7 @@ import { readEnv } from "./env.js";
 import { Auth } from "./auth/lucia.js";
 import dotenv from "dotenv";
 import { SnapshotsMeiliSearch } from "./models/snapshots-meilisearch.js";
-import { Snapshot } from "./types.js";
+import { Backend, Snapshot } from "./types.js";
 import assert from "assert";
 import { MEASURES } from "../iso/measures/index.js";
 import {
@@ -14,6 +14,7 @@ import {
   MeasureStats,
   SnapshotId,
   SnapshotUpdateRequest,
+  SnapshotQueryResult,
   DATASETS,
   Dataset,
 } from "../iso/protocol.js";
@@ -75,7 +76,7 @@ async function run() {
 
   app.post(
     "/api/meili/snapshots/query",
-    apiRoute(async (req) => {
+    apiRoute<Backend<SnapshotQueryResult>>(async (req) => {
       const query: MeiliFilterQuery = req.body.query;
 
       // Validate query structure

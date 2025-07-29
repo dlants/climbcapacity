@@ -7,12 +7,13 @@ import {
   MeiliFilterQuery,
   Dataset,
   SnapshotUpdateRequest,
+  SnapshotQueryResult,
 } from "../../iso/protocol.js";
 import { User } from "lucia";
 import { MeasureId } from "../../iso/measures/index.js";
 import { encodeMeasureValue, createMeasureFacets } from "../../iso/units.js";
 import { HandledError } from "../utils.js";
-import { Snapshot } from "../types.js";
+import { Backend, Snapshot } from "../types.js";
 import { randomUUID } from "crypto";
 
 /**
@@ -210,11 +211,9 @@ export class SnapshotsMeiliSearch {
    * Query snapshots using new filter format with faceted search support
    * Implements single-query pattern for complete facet landscape
    */
-  async querySnapshotsWithFilters(query: MeiliFilterQuery): Promise<{
-    snapshots: Snapshot[];
-    facetDistribution: Record<string, Record<string, number>>;
-    totalHits: number;
-  }> {
+  async querySnapshotsWithFilters(
+    query: MeiliFilterQuery,
+  ): Promise<Backend<SnapshotQueryResult>> {
     // Build filters from query
     const filters: string[] = [];
 

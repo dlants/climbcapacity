@@ -24,7 +24,7 @@ export class Nav extends DCGView.View<{
         <nav class={DCGView.const(styles.nav)}>
           <div class={DCGView.const(styles.links)}>
             <a href="/">Home</a> <a href="/snapshots">Snapshots</a>{" "}
-            <a href="/report-card">Report Card</a> <a href="/explore">Explore</a>{" "}
+            <a href="/data">Data</a>{" "}
             <a href="/api/logout">Logout</a>
           </div>
           <LocaleSelectorView controller={this.props.localeSelectorController} />
@@ -34,7 +34,7 @@ export class Nav extends DCGView.View<{
       return (
         <nav class={DCGView.const(styles.nav)}>
           <div class={DCGView.const(styles.links)}>
-            <a href="/">Home</a> <a href="/explore">Explore</a>{" "}
+            <a href="/">Home</a> <a href="/data">Data</a>{" "}
             <a href="/send-link">Login</a>
           </div>
           <LocaleSelectorView controller={this.props.localeSelectorController} />

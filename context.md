@@ -199,8 +199,8 @@ yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ### Core Endpoints
 
 - **Authentication**: `/api/auth`, `/api/send-login-link`, `/api/login`, `/api/logout`
-- **Snapshots**: `/api/my-snapshots`, `/api/snapshot`, `/api/snapshots/new`, `/api/snapshots/update`
-- **Queries**: `/api/snapshots/query`, `/api/measure-stats`
+- **Snapshots**: `/api/my-snapshots`, `/api/meili/snapshot`, `/api/meili/snapshots/new`, `/api/meili/snapshots/update`
+- **Queries**: `/api/meili/snapshots/query`, `/api/measure-stats`
 
 ### Route Patterns
 

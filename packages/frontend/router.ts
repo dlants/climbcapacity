@@ -12,15 +12,11 @@ export type NavigateMsg = {
     route: "/snapshots";
   }
   | {
-    route: "/report-card";
+    route: "/data";
   }
   | {
     route: "/snapshot";
     snapshotId: SnapshotId;
-  }
-  | {
-    route: "/explore";
-    mySnapshot?: Snapshot;
   }
   | {
     route: "/";
@@ -106,11 +102,21 @@ export function parseRoute(pathname: string): NavigateMsg | undefined {
     };
   }
 
-  if (pathname == "/report-card") {
+  // Redirect old routes to the new unified data page
+  if (pathname == "/report-card" || pathname == "/explore") {
     return {
       type: "NAVIGATE",
       target: {
-        route: "/report-card",
+        route: "/data",
+      },
+    };
+  }
+
+  if (pathname == "/data") {
+    return {
+      type: "NAVIGATE",
+      target: {
+        route: "/data",
       },
     };
   }
@@ -129,23 +135,5 @@ export function parseRoute(pathname: string): NavigateMsg | undefined {
         },
       };
     }
-  }
-
-  if (pathname == "/explore") {
-    return {
-      type: "NAVIGATE",
-      target: {
-        route: "/explore",
-      },
-    };
-  }
-
-  if (pathname == "/send-link") {
-    return {
-      type: "NAVIGATE",
-      target: {
-        route: "/send-link",
-      },
-    };
   }
 }

@@ -4,11 +4,16 @@ import {
   MeasureSelectionBox,
   Msg as MeasureSelectionMsg,
 } from "./measure-selection-box";
-import { InitialFilter, selectInitialFilter, UnitType } from "../../iso/units";
+import {
+  InitialFilter,
+  selectInitialFilter,
+  UnitType,
+  FacetString,
+} from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../../iso/measures";
 import {
-  SnapshotQuery,
+  MeiliFilterQuery,
   MeasureStats,
   Dataset,
   DATASETS,
@@ -278,26 +283,45 @@ export function generateFiltersMap(
 }
 
 export function getQuery(editQuery: EditQueryController): {
-  body: SnapshotQuery;
+  body: MeiliFilterQuery;
   hash: string;
 } {
-  const query: SnapshotQuery = {
-    datasets: {},
-    measures: {},
+  const query: MeiliFilterQuery = {
+    datasets: {
+      climbharder: false,
+      powercompany: false,
+    },
+    filters: [],
   };
   const queryHashParts: string[] = [];
-  editQuery.state.filters.forEach((filter) => {
-    const measureId = editQuery.getFilterMeasureId(filter);
-    query.measures[measureId] = editQuery.getFilterQuery(filter);
-    queryHashParts.push(
-      measureId + ":" + JSON.stringify(query.measures[measureId]),
-    );
-  });
 
+  // Copy dataset selections
   for (const dataset in editQuery.state.datasets) {
     query.datasets[dataset] = editQuery.state.datasets[dataset];
     queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
   }
+
+  // Convert filters to MeiliFilterQuery format
+  editQuery.state.filters.forEach((filter) => {
+    const measureId = editQuery.getFilterMeasureId(filter);
+    const filterQuery = editQuery.getFilterQuery(filter);
+
+    // For now, create a simple filter array - this may need adjustment based on actual filter structure
+    const filterStrings: string[] = [];
+    if (filterQuery.min !== undefined || filterQuery.max !== undefined) {
+      filterStrings.push(
+        `${measureId}:${filterQuery.min || 0}-${filterQuery.max || 999999}`,
+      );
+    } else {
+      filterStrings.push(`${measureId}:exists`);
+    }
+
+    if (filterStrings.length > 0) {
+      query.filters.push(filterStrings as FacetString[]);
+    }
+
+    queryHashParts.push(measureId + ":" + JSON.stringify(filterQuery));
+  });
 
   return {
     body: query,

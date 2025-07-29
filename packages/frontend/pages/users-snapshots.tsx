@@ -92,7 +92,7 @@ export class UsersSnapshotsController {
         this.state.newSnapshotRequest = { status: "loading" };
 
         (async (): Promise<void> => {
-          const response = await fetch("/api/snapshots/new", {
+          const response = await fetch("/api/meili/snapshots/new", {
             method: "POST",
           });
           if (response.ok) {
@@ -140,7 +140,7 @@ export class UsersSnapshotsController {
         snapshot.deleteRequest = { status: "loading" };
 
         (async (): Promise<void> => {
-          const response = await fetch(`/api/snapshot`, {
+          const response = await fetch(`/api/meili/snapshot`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",

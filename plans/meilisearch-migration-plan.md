@@ -125,7 +125,7 @@ This migration involves moving ClimbCapacity entirely from MongoDB to MeiliSearc
   - `getFacetDistribution()` - single query for complete facet landscape
   - `getAlternativeFilterCounts()` - "what-if" queries for filter exploration
   - `getSampleSnapshots()` - random sampling for visualization
-- [ ] Update `/api/snapshots/query` to support faceted search with remove-to-explore pattern
+- [ ] Update `/api/meili/snapshots/query` to support faceted search with remove-to-explore pattern
 - [ ] Implement efficient filter building from facet selections
 - [ ] Add support for range filters via multiple bin selection
 - [ ] Maintain existing API response formats
@@ -143,7 +143,7 @@ This migration involves moving ClimbCapacity entirely from MongoDB to MeiliSearc
 **Tasks**:
 
 - [ ] Update `/api/my-snapshots` to use MeiliSearch
-- [ ] Update `/api/snapshot` (single snapshot fetch) to use MeiliSearch
+- [ ] Update `/api/meili/snapshot` (single snapshot fetch) to use MeiliSearch
 - [ ] Update `/api/measure-stats` to use MeiliSearch aggregations
 - [ ] Implement snapshot CRUD operations (create, update, delete) in MeiliSearch
 - [ ] Add MeiliSearch document ID mapping for existing functionality
@@ -172,4 +172,3 @@ This migration involves moving ClimbCapacity entirely from MongoDB to MeiliSearc
 - Remaining API routes (users, sessions, magic links)
 - MongoDB removal
 - Production deployment considerations
-
