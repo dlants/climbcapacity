@@ -2,7 +2,7 @@ import * as DCGView from "dcgview";
 import { Identifier } from "../../parser/types";
 import { InitialFilter, UnitType } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
-import { MeasureStats } from "../../../iso/protocol";
+import { FacetDistribution } from "../../../iso/protocol";
 import * as Filter from "../filters/filter";
 import { MeasureId } from "../../../iso/measures";
 import { Dispatch } from "../../types";
@@ -77,7 +77,7 @@ export type FilterMapping = {
 };
 
 export type Model = {
-  measureStats: MeasureStats;
+  facetDistribution: FacetDistribution;
   filters: ToggleableFilter[];
 };
 
@@ -95,7 +95,7 @@ export class ReportCardFilterController {
   constructor(
     initialParams: {
       initialFilters: InitialFilters;
-      measureStats: MeasureStats;
+      facetDistribution: FacetDistribution;
     },
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
@@ -115,7 +115,10 @@ export class ReportCardFilterController {
         ),
       });
     }
-    this.state = { measureStats: initialParams.measureStats, filters };
+    this.state = {
+      facetDistribution: initialParams.facetDistribution,
+      filters,
+    };
   }
 
   getMeasureId(filter: Filter.FilterController): MeasureId {

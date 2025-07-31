@@ -11,6 +11,7 @@ import {
 } from "../units.js";
 import { Locale, getDefaultUnitsForLocale } from "../locale.js";
 import { ParamName, ParamValue, PARAMS } from "./params.js";
+import { MeasureClassName } from "../protocol.js";
 
 export type MeasureId = string & { __brand: "measureId" };
 export type MeasureType = "performance" | "anthro" | "input" | "training";
@@ -39,8 +40,12 @@ export type FacetConfig = {
   strategy: FacetStrategy;
 };
 
+export type LocaleFacetConfig = {
+  [K in Locale]: FacetConfig;
+};
+
 export type MeasureClassSpec = {
-  className: string;
+  className: MeasureClassName;
   /**
    * Map from propName to possible values
    */
@@ -49,7 +54,7 @@ export type MeasureClassSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
-  facets: FacetConfig[];
+  facets: LocaleFacetConfig;
   initialFilter: LocaleBasedInitialFilter;
   generateDescription(
     params: Partial<{ [K in ParamName]: ParamValue<K> }>,
@@ -114,7 +119,7 @@ export type MeasureSpec = {
   /** units[0] is the default
    */
   units: UnitType[];
-  facets: FacetConfig[];
+  facets: LocaleFacetConfig;
   initialFilter: LocaleBasedInitialFilter;
 };
 
@@ -194,16 +199,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     name: "height",
     description: "Your height",
     units: ["inch", "m", "cm"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "inch",
         strategy: { type: "bin", binStart: 60, binEnd: 76, binStep: 2 },
       },
-      {
+      UK: {
+        unit: "inch",
+        strategy: { type: "bin", binStart: 60, binEnd: 76, binStep: 2 },
+      },
+      Europe: {
         unit: "cm",
         strategy: { type: "bin", binStart: 150, binEnd: 195, binStep: 5 },
       },
-    ],
+      Australia: {
+        unit: "cm",
+        strategy: { type: "bin", binStart: 150, binEnd: 195, binStep: 5 },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -232,16 +245,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     name: "Arm span",
     description: "Your arm span, fingertip to fingertip",
     units: ["inch", "m", "cm"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "inch",
         strategy: { type: "bin", binStart: 60, binEnd: 76, binStep: 2 },
       },
-      {
+      UK: {
+        unit: "inch",
+        strategy: { type: "bin", binStart: 60, binEnd: 76, binStep: 2 },
+      },
+      Europe: {
         unit: "cm",
         strategy: { type: "bin", binStart: 150, binEnd: 195, binStep: 5 },
       },
-    ],
+      Australia: {
+        unit: "cm",
+        strategy: { type: "bin", binStart: 150, binEnd: 195, binStep: 5 },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -271,16 +292,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     description:
       "With at least one foot on the floor, measure how high you can reach. You can stand on the tip of your toe",
     units: ["inch", "m", "cm"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "inch",
         strategy: { type: "bin", binStart: 87, binEnd: 110, binStep: 3 },
       },
-      {
+      UK: {
+        unit: "inch",
+        strategy: { type: "bin", binStart: 87, binEnd: 110, binStep: 3 },
+      },
+      Europe: {
         unit: "cm",
         strategy: { type: "bin", binStart: 220, binEnd: 280, binStep: 10 },
       },
-    ],
+      Australia: {
+        unit: "cm",
+        strategy: { type: "bin", binStart: 220, binEnd: 280, binStep: 10 },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -309,16 +338,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     name: "weight",
     description: "Your weight",
     units: ["lb", "kg"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "lb",
         strategy: { type: "bin", binStart: 100, binEnd: 300, binStep: 5 },
       },
-      {
+      UK: {
+        unit: "lb",
+        strategy: { type: "bin", binStart: 100, binEnd: 300, binStep: 5 },
+      },
+      Europe: {
         unit: "kg",
         strategy: { type: "bin", binStart: 40, binEnd: 135, binStep: 2.5 },
       },
-    ],
+      Australia: {
+        unit: "kg",
+        strategy: { type: "bin", binStart: 40, binEnd: 135, binStep: 2.5 },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -347,12 +384,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     type: "anthro",
     description: "Your age in years",
     units: ["year"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "year",
         strategy: { type: "bin", binStart: 18, binEnd: 65, binStep: 5 },
       },
-    ],
+      UK: {
+        unit: "year",
+        strategy: { type: "bin", binStart: 18, binEnd: 65, binStep: 5 },
+      },
+      Europe: {
+        unit: "year",
+        strategy: { type: "bin", binStart: 18, binEnd: 65, binStep: 5 },
+      },
+      Australia: {
+        unit: "year",
+        strategy: { type: "bin", binStart: 18, binEnd: 65, binStep: 5 },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -381,12 +430,24 @@ const ANTHRO_MEASURES: MeasureSpec[] = [
     type: "anthro",
     description: "The sex that was assigned to you at birth",
     units: ["sex-at-birth"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "sex-at-birth",
         strategy: { type: "category" },
       },
-    ],
+      UK: {
+        unit: "sex-at-birth",
+        strategy: { type: "category" },
+      },
+      Europe: {
+        unit: "sex-at-birth",
+        strategy: { type: "category" },
+      },
+      Australia: {
+        unit: "sex-at-birth",
+        strategy: { type: "category" },
+      },
+    },
     initialFilter: {
       type: "toggle",
       localeValues: {
@@ -409,12 +470,24 @@ MEASURES.push({
 
 For example, if you climbed for a year, then took a year off, then climbed for another half a year, you'd report 1.5`,
   units: ["year", "month"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "year",
       strategy: { type: "bin", binStart: 0, binEnd: 20, binStep: 1 },
     },
-  ],
+    UK: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 20, binStep: 1 },
+    },
+    Europe: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 20, binStep: 1 },
+    },
+    Australia: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 20, binStep: 1 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -446,12 +519,24 @@ MEASURES.push({
 
 For example, if you trained for 6 months, then took a year off, then trained for another 6 months, you'd report 1 year.`,
   units: ["year", "month"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "year",
       strategy: { type: "bin", binStart: 0, binEnd: 15, binStep: 1 },
     },
-  ],
+    UK: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 15, binStep: 1 },
+    },
+    Europe: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 15, binStep: 1 },
+    },
+    Australia: {
+      unit: "year",
+      strategy: { type: "bin", binStart: 0, binEnd: 15, binStep: 1 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -491,12 +576,24 @@ export function generateTrainingMeasure(spec: MeasureSpec): MeasureSpec {
 3 - trained it regularly
 4 - highly trained in it`,
     units: ["training"],
-    facets: [
-      {
+    facets: {
+      US: {
         unit: "training",
         strategy: { type: "category" },
       },
-    ],
+      UK: {
+        unit: "training",
+        strategy: { type: "category" },
+      },
+      Europe: {
+        unit: "training",
+        strategy: { type: "category" },
+      },
+      Australia: {
+        unit: "training",
+        strategy: { type: "category" },
+      },
+    },
     initialFilter: {
       type: "minmax",
       localeRanges: {
@@ -574,6 +671,16 @@ export function getPreferredUnitForMeasure(
 
   // Fallback to the first unit if no preferred unit is found
   return measureSpec.units[0];
+}
+/**
+ * Gets the facet configuration for a measure in a specific locale
+ */
+export function getFacetConfigForLocale(
+  measureId: MeasureId,
+  locale: Locale,
+): FacetConfig {
+  const measureSpec = getSpec(measureId);
+  return measureSpec.facets[locale];
 }
 
 const MEASURE_MAP: {

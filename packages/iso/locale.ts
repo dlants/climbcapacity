@@ -1,4 +1,4 @@
-import { UnitType } from "./units.js";
+// No imports needed
 
 export type Locale = "US" | "UK" | "Europe" | "Australia";
 
@@ -62,30 +62,54 @@ export function getDefaultUnitsForLocale(locale: Locale): UnitPreferences {
 export function detectBrowserLocale(): Locale {
   // Get the browser's language preference
   const language = navigator.language || navigator.languages?.[0] || "en-US";
-  
+
   // Extract the country code (after the hyphen, if present)
   const countryCode = language.split("-")[1]?.toUpperCase();
   const languageCode = language.split("-")[0]?.toLowerCase();
-  
+
   // Map common country/language codes to our locales
   if (countryCode === "GB" || languageCode === "en-gb") {
     return "UK";
   }
-  
+
   if (countryCode === "AU") {
     return "Australia";
   }
-  
+
   // European countries that commonly use French sport grades and metric
   const europeanCountries = [
-    "FR", "DE", "IT", "ES", "AT", "CH", "BE", "NL", "SE", "NO", "DK", "FI",
-    "PL", "CZ", "SK", "HU", "SI", "HR", "PT", "GR", "BG", "RO", "LT", "LV", "EE"
+    "FR",
+    "DE",
+    "IT",
+    "ES",
+    "AT",
+    "CH",
+    "BE",
+    "NL",
+    "SE",
+    "NO",
+    "DK",
+    "FI",
+    "PL",
+    "CZ",
+    "SK",
+    "HU",
+    "SI",
+    "HR",
+    "PT",
+    "GR",
+    "BG",
+    "RO",
+    "LT",
+    "LV",
+    "EE",
   ];
-  
+
   if (countryCode && europeanCountries.includes(countryCode)) {
     return "Europe";
   }
-  
+
   // Default to US for unknown locales and North American countries
   return "US";
 }
+

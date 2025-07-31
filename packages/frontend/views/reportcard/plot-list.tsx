@@ -16,13 +16,13 @@ import { selectInitialFilter, UnitType, UnitValue } from "../../../iso/units";
 import { assertUnreachable } from "../../util/utils";
 import { filterOutliersX } from "../../util/stats";
 import { MEASURES } from "../../../iso/measures";
-import { MeasureStats } from "../../../iso/protocol";
 import * as Interpolate from "./interpolate";
 import { InterpolationOption } from "../../util/interpolate";
 import { ParamName } from "../../../iso/measures/params";
 import { extractDataPoint } from "../../util/units";
 import { Locale } from "../../../iso/locale";
 import { getPreferredUnitForMeasure } from "../../../iso/measures";
+import { FacetDistribution } from "../../../iso/protocol";
 
 type PlotModel = {
   filter: ReportCardFilter.ReportCardFilterController;
@@ -73,7 +73,7 @@ export class PlotListView extends DCGView.View<{
 }
 
 export type Model = {
-  measureStats: MeasureStats;
+  facetDistribution: FacetDistribution;
   mySnapshot?: HydratedSnapshot;
   snapshots: HydratedSnapshot[];
   snapshotStats: { [measureId: MeasureId]: number };
@@ -110,7 +110,7 @@ export class PlotListController {
   constructor(
     initialParams: {
       mySnapshot?: HydratedSnapshot;
-      measureStats: MeasureStats;
+      facetDistribution: FacetDistribution;
       snapshots: HydratedSnapshot[];
       outputMeasure: () => {
         id: MeasureId;
@@ -133,7 +133,7 @@ export class PlotListController {
 
     this.state = {
       mySnapshot: initialParams.mySnapshot,
-      measureStats: initialParams.measureStats,
+      facetDistribution: initialParams.facetDistribution,
       snapshots: initialParams.snapshots,
       snapshotStats,
       plots: [],
@@ -153,15 +153,17 @@ export class PlotListController {
         // For parameterized measures, use a simplified base key instead of generating an invalid measure ID
         const baseParams = { ...params };
         if (hasRepMax) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (baseParams as any).repMax;
         }
         if (hasEdgeSize) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (baseParams as any).edgeSize;
         }
 
         // Create a simple string key based on the remaining parameters
         const baseKey = Object.entries(baseParams)
-          .filter(([key, value]) => value !== undefined)
+          .filter(([_key, value]) => value !== undefined)
           .map(([key, value]) => `${key}:${value}`)
           .join("-");
 
@@ -252,7 +254,7 @@ export class PlotListController {
       const filter = new ReportCardFilter.ReportCardFilterController(
         {
           initialFilters: initialFilters,
-          measureStats: this.state.measureStats,
+          facetDistribution: this.state.facetDistribution,
         },
         {
           locale: this.context.locale,
@@ -268,7 +270,7 @@ export class PlotListController {
       const interpolate = new Interpolate.InterpolateController(
         {
           baseMeasureId: representativeMeasureId,
-          measureStats: this.state.measureStats,
+          facetDistribution: this.state.facetDistribution,
         },
         (msg) =>
           this.context.myDispatch({
@@ -279,7 +281,6 @@ export class PlotListController {
       );
 
       const plotModel = this.getPlot({
-        baseMeasureId,
         interpolate,
         filterModel: filter,
       });
@@ -335,11 +336,9 @@ export class PlotListController {
   }
 
   private getPlot({
-    baseMeasureId,
     interpolate,
     filterModel,
   }: {
-    baseMeasureId: MeasureId;
     interpolate: Interpolate.InterpolateController;
     filterModel: ReportCardFilter.ReportCardFilterController;
   }): Dotplot.Model | Heatmap.Model {
@@ -471,7 +470,6 @@ export class PlotListController {
         filterPlot.filter.handleDispatch(msg.msg);
 
         const plotModel = this.getPlot({
-          baseMeasureId: filterPlot.baseMeasureId,
           interpolate: filterPlot.interpolate,
           filterModel: filterPlot.filter,
         });
@@ -497,7 +495,6 @@ export class PlotListController {
         interpolatePlot.interpolate.handleDispatch(msg.msg);
 
         const plotModel = this.getPlot({
-          baseMeasureId: interpolatePlot.baseMeasureId,
           interpolate: interpolatePlot.interpolate,
           filterModel: interpolatePlot.filter,
         });

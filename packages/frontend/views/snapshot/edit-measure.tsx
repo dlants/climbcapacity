@@ -8,14 +8,14 @@ import { UnitValue } from "../../../iso/units";
 import { HydratedSnapshot } from "../../types";
 import { UnitInputController, UnitInputView } from "../unit-input";
 import { Dispatch } from "../../types";
-import { MeasureStats } from "../../../iso/protocol";
+import type { FacetDistribution } from "../../../iso/protocol";
 import { Locale } from "../../../iso/locale";
 
 const { If } = DCGView.Components;
 
 export type Model = {
   unitInputController: UnitInputController;
-  measureStats: MeasureStats;
+  facetDistribution: FacetDistribution;
   trainingMeasure?: {
     measureId: MeasureId;
     unitInputController: UnitInputController;
@@ -50,11 +50,11 @@ export class EditMeasureController {
   constructor(
     {
       measureId,
-      measureStats,
+      facetDistribution,
       snapshot,
     }: {
       measureId: MeasureId;
-      measureStats: MeasureStats;
+      facetDistribution: FacetDistribution;
       snapshot: HydratedSnapshot;
     },
     public context: {
@@ -93,14 +93,14 @@ export class EditMeasureController {
 
     this.state = {
       unitInputController: unitInputController,
-      measureStats,
+      facetDistribution,
       trainingMeasure,
       canSubmit: this.canSubmit({ unitInputController, trainingMeasure }),
     };
   }
 
   public canSubmit(
-    model: Omit<Model, "canSubmit" | "measureStats">,
+    model: Omit<Model, "canSubmit" | "facetDistribution">,
   ): Model["canSubmit"] {
     let value;
     if (model.unitInputController.state.parseResult.status == "success") {

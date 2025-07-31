@@ -2,15 +2,12 @@ import DCGView from "dcgview";
 import type { Frontend, HydratedSnapshot } from "../../types";
 import { Dispatch } from "../../types";
 import { assertUnreachable, RequestStatus } from "../../util/utils";
-
-const { SwitchUnion, If } = DCGView.Components;
+import { MeiliFilterQuery, SnapshotQueryResult } from "../../../iso/protocol";
 import {
-  MeiliFilterQuery,
-  MeasureStats,
-  SnapshotQueryResult,
-} from "../../../iso/protocol";
-import { EditQueryController, EditQueryView } from "../../views/edit-query";
-import type { Msg as EditQueryMsg } from "../../views/edit-query";
+  FilterSelectorController,
+  FilterSelectorView,
+} from "../filter-selector";
+import type { Msg as FilterSelectorMsg } from "../filter-selector";
 import {
   PlotListController,
   PlotListView,
@@ -22,7 +19,6 @@ import {
   SelectMeasureClassView,
 } from "../snapshot/select-measure-class";
 import type { Msg as SelectMeasureClassMsg } from "../snapshot/select-measure-class";
-
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
@@ -33,13 +29,15 @@ import {
 } from "../../../iso/measures/grades";
 import { getPreferredUnitForMeasure } from "../../../iso/measures";
 import { Locale } from "../../../iso/locale";
+import { FacetString } from "../../../iso/units";
+
+const { SwitchUnion, If } = DCGView.Components;
 
 export type Model = {
-  filtersModel: EditQueryController;
+  filtersModel: FilterSelectorController;
   outputMeasure: {
     selector: SelectMeasureClassController;
   };
-  measureStats: MeasureStats;
   query: {
     body: MeiliFilterQuery;
     hash: string;
@@ -72,7 +70,7 @@ export type Msg =
     }
   | {
       type: "FILTERS_MSG";
-      msg: EditQueryMsg;
+      msg: FilterSelectorMsg;
     };
 
 export class ReportCardMainController {
@@ -80,24 +78,21 @@ export class ReportCardMainController {
 
   constructor(
     {
-      initialFilters,
-      measureStats,
+      initialFacetDistribution,
       mySnapshot,
     }: {
-      initialFilters: import("../../views/edit-query").InitialFilters;
-      measureStats: MeasureStats;
+      initialFacetDistribution?: Record<FacetString, number>;
       mySnapshot?: HydratedSnapshot;
     },
     public context: { locale: () => Locale; myDispatch: Dispatch<Msg> },
   ) {
-    const filtersModel = new EditQueryController(
+    const filtersModel = new FilterSelectorController(
       {
-        initialFilters,
-        measureStats,
+        initialFacetDistribution,
       },
       {
         locale: this.context.locale,
-        myDispatch: (msg: EditQueryMsg) =>
+        myDispatch: (msg: FilterSelectorMsg) =>
           this.context.myDispatch({ type: "FILTERS_MSG", msg }),
       },
     );
@@ -126,19 +121,19 @@ export class ReportCardMainController {
       selector: new SelectMeasureClassController(
         {
           measureClasses: [boulderGradeClass, sportGradeClass],
-          measureStats,
           measureId: initialMeasureId,
+          facetDistribution: filtersModel.state.facetDistribution,
         },
         {
           myDispatch: (msg: SelectMeasureClassMsg) =>
             this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }),
+          locale: this.context.locale,
         },
       ),
     };
 
     this.state = {
       filtersModel,
-      measureStats,
       outputMeasure,
       mySnapshot,
       query,
@@ -150,58 +145,29 @@ export class ReportCardMainController {
   }
 
   private getOutputMeasureUnit() {
-    const measureId =
-      this.state.outputMeasure.selector.state.selected.measureId;
+    const measureId = this.state.outputMeasure.selector.state.selectedMeasureId;
     return getPreferredUnitForMeasure(measureId, this.context.locale());
   }
 
-  private getQuery(editQuery: EditQueryController): {
+  private getQuery(filterSelector: FilterSelectorController): {
     body: MeiliFilterQuery;
     hash: string;
   } {
-    const query: MeiliFilterQuery = {
-      datasets: {
-        climbharder: false,
-        powercompany: false,
-      },
-      filters: [],
-    };
-    const queryHashParts: string[] = [];
+    const body = filterSelector.generateMeiliQuery();
+    const hash = this.hashQuery(body);
+    return { body, hash };
+  }
 
-    // Copy dataset selections
-    for (const dataset in editQuery.state.datasets) {
-      query.datasets[dataset] = editQuery.state.datasets[dataset];
-      queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
-    }
-
-    // Convert filters to MeiliFilterQuery format
-    editQuery.state.filters.forEach((filter) => {
-      const measureId = editQuery.getFilterMeasureId(filter);
-      const filterQuery = editQuery.getFilterQuery(filter);
-
-      // For now, create a simple filter array - this may need adjustment based on actual filter structure
-      const filterStrings: string[] = [];
-      if (filterQuery.min !== undefined || filterQuery.max !== undefined) {
-        filterStrings.push(
-          `${measureId}:${filterQuery.min || 0}-${filterQuery.max || 999999}`,
-        );
-      } else {
-        filterStrings.push(`${measureId}:exists`);
-      }
-
-      if (filterStrings.length > 0) {
-        query.filters.push(
-          filterStrings as import("../../../iso/units").FacetString[],
-        );
-      }
-
-      queryHashParts.push(measureId + ":" + JSON.stringify(filterQuery));
+  private hashQuery(query: MeiliFilterQuery): string {
+    // Create a deterministic hash of the query
+    return JSON.stringify({
+      datasets: query.datasets,
+      filters: query.filters
+        .map(
+          (filterGroup) => [...filterGroup].sort(), // Sort each filter group for consistency
+        )
+        .sort(), // Sort filter groups for consistency
     });
-
-    return {
-      body: query,
-      hash: queryHashParts.join(","),
-    };
   }
 
   private async fetchData() {
@@ -247,11 +213,9 @@ export class ReportCardMainController {
               {
                 snapshots: msg.request.response,
                 outputMeasure: () => ({
-                  id: this.state.outputMeasure.selector.state.selected
-                    .measureId,
+                  id: this.state.outputMeasure.selector.state.selectedMeasureId,
                   unit: this.getOutputMeasureUnit(),
                 }),
-                measureStats: this.state.measureStats,
                 mySnapshot: this.state.mySnapshot,
               },
               {
@@ -297,8 +261,20 @@ export class ReportCardMainController {
         const oldQueryHash = this.state.query.hash;
         this.state.filtersModel.handleDispatch(msg.msg);
         this.state.query = this.getQuery(this.state.filtersModel);
-        if (this.state.query.hash != oldQueryHash) {
-          this.state.dataRequest = { status: "not-sent" };
+
+        // Update the output measure selector with new facet distribution
+        this.state.outputMeasure.selector.handleDispatch({
+          type: "UPDATE_FACET_DISTRIBUTION",
+          facetDistribution: this.state.filtersModel.state.facetDistribution,
+        });
+
+        if (this.state.query.hash !== oldQueryHash) {
+          this.state.dataRequest = {
+            status: "loading",
+            queryHash: this.state.query.hash,
+          };
+          // Automatically trigger re-query when filters change
+          this.fetchData().catch(console.error);
         }
         break;
       }
@@ -329,7 +305,7 @@ export class ReportCardMainView extends DCGView.View<{
     return (
       <div class={DCGView.const(styles.reportCardRoot)}>
         <div class={DCGView.const(styles.filter)}>
-          <EditQueryView controller={() => state().filtersModel} />
+          <FilterSelectorView controller={() => state().filtersModel} />
 
           <If predicate={() => state().dataRequest.status === "loaded"}>
             {() => (
@@ -391,7 +367,7 @@ export class ReportCardMainView extends DCGView.View<{
 
 const styles = typestyle.stylesheet({
   reportCardRoot: {
-    ...csstips.vertical,
+    ...csstips.horizontal,
     position: "absolute",
     top: 0,
     left: 0,
@@ -400,6 +376,13 @@ const styles = typestyle.stylesheet({
   },
   filter: {
     ...csstips.content,
+    ...csstips.vertical,
+    gap: "16px",
+    padding: "16px",
+    borderRight: "1px solid #e0e0e0",
+    backgroundColor: "#fafafa",
+    minWidth: "300px",
+    maxWidth: "300px",
   },
   graphs: {
     ...csstips.flex,
@@ -414,5 +397,6 @@ const styles = typestyle.stylesheet({
     ...csstips.content,
     ...csstips.horizontal,
     gap: "8px",
+    alignItems: "center",
   },
 });

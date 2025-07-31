@@ -12,12 +12,7 @@ import {
 } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
 import { MEASURES } from "../../iso/measures";
-import {
-  MeiliFilterQuery,
-  MeasureStats,
-  Dataset,
-  DATASETS,
-} from "../../iso/protocol";
+import { MeiliFilterQuery, Dataset, DATASETS } from "../../iso/protocol";
 import {
   FilterController,
   FilterView,
@@ -27,6 +22,13 @@ import { MeasureId } from "../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import { Locale } from "../../iso/locale";
+import {
+  createRangeFacetStrings,
+  createCategoryFacetString,
+  convertToStandardUnit,
+  castUnit,
+} from "../../iso/units";
+import { getFacetConfigForLocale } from "../../iso/measures";
 
 export type FilterMapping = {
   [measureId: MeasureId]: {
@@ -36,7 +38,6 @@ export type FilterMapping = {
 };
 
 export type Model = {
-  measureStats: MeasureStats;
   filters: FilterController[];
   datasets: {
     [dataset in Dataset]: boolean;
@@ -66,10 +67,8 @@ export class EditQueryController {
   constructor(
     {
       initialFilters,
-      measureStats,
     }: {
       initialFilters: InitialFilters;
-      measureStats: MeasureStats;
     },
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
@@ -90,7 +89,6 @@ export class EditQueryController {
     }
 
     this.state = {
-      measureStats,
       datasets: {
         powercompany: true,
         climbharder: true,
@@ -301,23 +299,52 @@ export function getQuery(editQuery: EditQueryController): {
     queryHashParts.push(`dataset:${editQuery.state.datasets[dataset]}`);
   }
 
-  // Convert filters to MeiliFilterQuery format
+  // Convert filters to MeiliFilterQuery format using proper facet strings
   editQuery.state.filters.forEach((filter) => {
     const measureId = editQuery.getFilterMeasureId(filter);
     const filterQuery = editQuery.getFilterQuery(filter);
+    const locale = editQuery.context.locale();
 
-    // For now, create a simple filter array - this may need adjustment based on actual filter structure
-    const filterStrings: string[] = [];
-    if (filterQuery.min !== undefined || filterQuery.max !== undefined) {
-      filterStrings.push(
-        `${measureId}:${filterQuery.min || 0}-${filterQuery.max || 999999}`,
-      );
-    } else {
-      filterStrings.push(`${measureId}:exists`);
+    // Get the facet configuration for this measure in the current locale
+    const facetConfig = getFacetConfigForLocale(measureId, locale);
+
+    const filterStrings: FacetString[] = [];
+
+    if (filterQuery.min !== undefined && filterQuery.max !== undefined) {
+      // Check if this is a categorical filter (min == max for toggle filters)
+      const minStandardValue = convertToStandardUnit(filterQuery.min);
+      const maxStandardValue = convertToStandardUnit(filterQuery.max);
+
+      if (
+        minStandardValue === maxStandardValue &&
+        facetConfig.strategy.type === "category"
+      ) {
+        // This is a categorical query (like sex-at-birth toggle)
+        const facetValue = castUnit(filterQuery.min, facetConfig.unit);
+        const categoryFacet = createCategoryFacetString(
+          measureId,
+          facetConfig.unit,
+          facetValue.value as string | number,
+        );
+        filterStrings.push(categoryFacet);
+      } else if (facetConfig.strategy.type === "bin") {
+        // This is a range query - convert to facet unit and generate bins
+        const minFacetValue = castUnit(filterQuery.min, facetConfig.unit);
+        const maxFacetValue = castUnit(filterQuery.max, facetConfig.unit);
+
+        const rangeFacets = createRangeFacetStrings(
+          measureId,
+          facetConfig.unit,
+          minFacetValue.value as number,
+          maxFacetValue.value as number,
+          facetConfig.strategy,
+        );
+        filterStrings.push(...rangeFacets);
+      }
     }
 
     if (filterStrings.length > 0) {
-      query.filters.push(filterStrings as FacetString[]);
+      query.filters.push(filterStrings);
     }
 
     queryHashParts.push(measureId + ":" + JSON.stringify(filterQuery));

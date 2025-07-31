@@ -3,17 +3,14 @@ import { Dispatch } from "../types";
 import { MEASURES } from "../../iso/measures";
 import { assertUnreachable, filterMeasures } from "../util/utils";
 import { MeasureId, MeasureSpec } from "../../iso/measures/index";
-import { MeasureStats } from "../../iso/protocol";
 
 export type Model =
   | {
-      measureStats: MeasureStats;
       state: "typing";
       query: string;
       measures: MeasureSpec[];
     }
   | {
-      measureStats: MeasureStats;
       state: "selected";
       measureId: MeasureId;
     };
@@ -29,14 +26,12 @@ export type Msg =
     };
 
 export class MeasureSelectionBox extends DCGView.View<{
-  measureStats: () => MeasureStats;
   myDispatch: Dispatch<Msg>;
 }> {
   state: Model;
 
   init() {
     this.state = {
-      measureStats: this.props.measureStats(),
       state: "typing",
       query: "",
       measures: [],
@@ -47,7 +42,6 @@ export class MeasureSelectionBox extends DCGView.View<{
     switch (msg.type) {
       case "TYPE_QUERY":
         this.state = {
-          measureStats: this.state.measureStats,
           state: "typing",
           query: msg.query,
           measures: filterMeasures(MEASURES, msg.query),
@@ -56,7 +50,6 @@ export class MeasureSelectionBox extends DCGView.View<{
 
       case "SELECT_MEASURE":
         this.state = {
-          measureStats: this.state.measureStats,
           state: "selected",
           measureId: msg.measureId,
         };
@@ -98,9 +91,7 @@ export class MeasureSelectionBox extends DCGView.View<{
                     })
                   }
                 >
-                  {() => getMeasure().id}(
-                  {() => getState().measureStats[getMeasure().id] || 0}{" "}
-                  snapshots)
+                  {() => getMeasure().id}
                 </li>
               )}
             </For>

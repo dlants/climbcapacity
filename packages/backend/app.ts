@@ -8,19 +8,26 @@ import dotenv from "dotenv";
 import { SnapshotsMeiliSearch } from "./models/snapshots-meilisearch.js";
 import { Backend, Snapshot } from "./types.js";
 import assert from "assert";
-import { MEASURES } from "../iso/measures/index.js";
+import { MeasureId, MEASURES } from "../iso/measures/index.js";
 import {
   MeiliFilterQuery,
-  MeasureStats,
-  SnapshotId,
   SnapshotUpdateRequest,
   SnapshotQueryResult,
   DATASETS,
   Dataset,
+  SnapshotId,
+  SnapshotQuery,
+  AnthroFacetsQuery,
+  OutputMeasureFacetsQuery,
+  InputMeasureClassFacetsQuery,
+  InputMeasureFacetsForClassQuery,
+  AnthroFacetsResult,
+  OutputMeasureFacetsResult,
+  InputMeasureClassFacetsResult,
+  InputMeasureFacetsResult,
 } from "../iso/protocol.js";
-import { asyncRoute, HandledError } from "./utils.js";
+import { HandledError } from "./utils.js";
 import { UnitValue } from "../iso/units.js";
-import { MeasureId } from "../iso/measures/index.js";
 import { fileURLToPath } from "url";
 import { apiRoute } from "./utils.js";
 import path from "path";
@@ -52,26 +59,6 @@ async function run() {
   const snapshotsMeili = new SnapshotsMeiliSearch(
     meiliClient,
     SNAPSHOTS_INDEX_CONFIG.indexName,
-  );
-
-  app.get(
-    "/api/measure-stats",
-    asyncRoute(async (req, res) => {
-      // TODO: Implement measure stats in MeiliSearch model
-      const stats: MeasureStats = {};
-
-      const etag = `"${Buffer.from(JSON.stringify(stats)).toString("base64")}"`;
-      if (req.header("If-None-Match") === etag) {
-        res.status(304).send();
-        return res;
-      }
-
-      res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
-      res.setHeader("ETag", etag);
-
-      res.json(stats);
-      return res;
-    }),
   );
 
   app.post(
@@ -127,9 +114,220 @@ async function run() {
       const result = await snapshotsMeili.querySnapshotsWithFilters(query);
       return {
         snapshots: result.snapshots,
-        facetDistribution: result.facetDistribution,
         totalHits: result.totalHits,
       };
+    }),
+  );
+
+  // New faceted search API routes based on UI design plan
+  app.post(
+    "/api/snapshots/query",
+    apiRoute<Backend<SnapshotQueryResult>>(async (req) => {
+      const query: SnapshotQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.ok(
+        Array.isArray(query.anthro_filters),
+        "query must contain anthro_filters array",
+      );
+
+      // Validate anthro filters structure
+      for (const filterGroup of query.anthro_filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each anthro filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
+      // Validate optional measure IDs
+      if (query.output_measure_id) {
+        assert.equal(
+          typeof query.output_measure_id,
+          "string",
+          "output_measure_id must be a string",
+        );
+      }
+
+      if (query.input_measure_id) {
+        assert.equal(
+          typeof query.input_measure_id,
+          "string",
+          "input_measure_id must be a string",
+        );
+      }
+
+      const result = await snapshotsMeili.querySnapshots(query);
+      return result;
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/facets/anthro",
+    apiRoute<Backend<AnthroFacetsResult>>(async (req) => {
+      const query: AnthroFacetsQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+
+      // Validate optional measure IDs
+      if (query.output_measure_id) {
+        assert.equal(
+          typeof query.output_measure_id,
+          "string",
+          "output_measure_id must be a string",
+        );
+      }
+
+      if (query.input_measure_id) {
+        assert.equal(
+          typeof query.input_measure_id,
+          "string",
+          "input_measure_id must be a string",
+        );
+      }
+
+      const result = await snapshotsMeili.getAnthroFacets(query);
+      return result;
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/facets/output_measure",
+    apiRoute<Backend<OutputMeasureFacetsResult>>(async (req) => {
+      const query: OutputMeasureFacetsQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.ok(
+        Array.isArray(query.anthro_filters),
+        "query must contain anthro_filters array",
+      );
+
+      // Validate anthro filters structure
+      for (const filterGroup of query.anthro_filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each anthro filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
+      // Validate optional input measure ID
+      if (query.input_measure_id) {
+        assert.equal(
+          typeof query.input_measure_id,
+          "string",
+          "input_measure_id must be a string",
+        );
+      }
+
+      const result = await snapshotsMeili.getOutputMeasureFacets(query);
+      return result;
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/facets/input_measure_classes",
+    apiRoute<Backend<InputMeasureClassFacetsResult>>(async (req) => {
+      const query: InputMeasureClassFacetsQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.ok(
+        Array.isArray(query.anthro_filters),
+        "query must contain anthro_filters array",
+      );
+
+      // Validate anthro filters structure
+      for (const filterGroup of query.anthro_filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each anthro filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
+      // Validate optional output measure ID
+      if (query.output_measure_id) {
+        assert.equal(
+          typeof query.output_measure_id,
+          "string",
+          "output_measure_id must be a string",
+        );
+      }
+
+      const result = await snapshotsMeili.getInputMeasureClassFacets(query);
+      return result;
+    }),
+  );
+
+  app.post(
+    "/api/snapshots/facets/input_measure_for_class",
+    apiRoute<Backend<InputMeasureFacetsResult>>(async (req) => {
+      const query: InputMeasureFacetsForClassQuery = req.body.query;
+
+      // Validate query structure
+      assert.equal(typeof query, "object", "query must be an object");
+      assert.ok(
+        Array.isArray(query.anthro_filters),
+        "query must contain anthro_filters array",
+      );
+      assert.equal(
+        typeof query.input_measure_class,
+        "string",
+        "input_measure_class must be a string",
+      );
+
+      // Validate anthro filters structure
+      for (const filterGroup of query.anthro_filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each anthro filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
+      // Validate optional output measure ID
+      if (query.output_measure_id) {
+        assert.equal(
+          typeof query.output_measure_id,
+          "string",
+          "output_measure_id must be a string",
+        );
+      }
+
+      const result = await snapshotsMeili.getInputMeasureFacetsForClass(query);
+      return result;
     }),
   );
 

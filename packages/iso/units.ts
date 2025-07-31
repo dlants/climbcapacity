@@ -20,9 +20,10 @@ import {
   ircraToYDS,
   ircraToEwbank,
 } from "./grade.js";
-import { MeasureId, getSpec } from "./measures/index.js";
+import { MeasureId, getSpec, FacetStrategy } from "./measures/index.js";
 import { assertUnreachable } from "./utils.js";
-import type { UnitCategory, Locale } from "./locale.js";
+import { type UnitCategory, type Locale, LOCALE_CONFIGS } from "./locale.js";
+import { MeasureClassName } from "./protocol.js";
 
 /**
  * Nominal type for facet strings to ensure type safety
@@ -519,48 +520,180 @@ function createBinFromStrategy(
 
   return `${currentBinStart}-${currentBinEnd}`;
 }
+/**
+ * Generate all bin strings that fall within a given range
+ */
+export function createBinsForRange(
+  minValue: number,
+  maxValue: number,
+  strategy: { type: "bin"; binStart: number; binEnd: number; binStep: number },
+): string[] {
+  const { binStart, binEnd, binStep } = strategy;
+  const bins: string[] = [];
+
+  // Handle values below binStart
+  if (minValue < binStart) {
+    bins.push(`<${binStart}`);
+  }
+
+  // Handle values above binEnd
+  if (maxValue >= binEnd) {
+    bins.push(`>${binEnd}`);
+  }
+
+  // Generate intermediate bins
+  const startBinIndex = Math.max(
+    0,
+    Math.floor((minValue - binStart) / binStep),
+  );
+  const endBinIndex = Math.floor(
+    (Math.min(maxValue, binEnd - 0.001) - binStart) / binStep,
+  );
+
+  for (let i = startBinIndex; i <= endBinIndex; i++) {
+    const currentBinStart = binStart + i * binStep;
+    const currentBinEnd = currentBinStart + binStep;
+
+    // Only include bins that actually overlap with our range
+    if (currentBinEnd > minValue && currentBinStart <= maxValue) {
+      bins.push(`${currentBinStart}-${currentBinEnd}`);
+    }
+  }
+
+  return bins;
+}
 
 /**
- * Generate facet strings for MeiliSearch from a set of measures
+ * Generate facet strings for a range query on a specific measure
+ */
+export function createRangeFacetStrings(
+  measureId: MeasureId,
+  unit: UnitType,
+  minValue: number,
+  maxValue: number,
+  strategy: FacetStrategy,
+): FacetString[] {
+  if (strategy.type === "category") {
+    throw new Error("Cannot create range facets for categorical strategy");
+  }
+
+  const bins = createBinsForRange(minValue, maxValue, strategy);
+  return bins.map((bin) => `${measureId};${unit};${bin}` as FacetString);
+}
+
+/**
+ * Generate facet string for a categorical value
+ */
+export function createCategoryFacetString(
+  measureId: MeasureId,
+  unit: UnitType,
+  value: string | number,
+): FacetString {
+  return `${measureId};${unit};${value}` as FacetString;
+}
+
+/**
+ * Helper function to create a facet string for a specific measure, locale, and unit value
+ */
+function createFacetForMeasure(
+  measureId: MeasureId,
+  measureSpec: ReturnType<typeof getSpec>,
+  unitValue: UnitValue,
+  locale: Locale,
+): FacetString {
+  const facetConfig = measureSpec.facets[locale];
+  const convertedValue = castUnit(unitValue, facetConfig.unit);
+
+  if (facetConfig.strategy.type === "category") {
+    return `${measureId};${facetConfig.unit};${convertedValue.value}` as FacetString;
+  } else if (facetConfig.strategy.type === "bin") {
+    const binValue = createBinFromStrategy(
+      convertedValue.value as number,
+      facetConfig.strategy,
+    );
+    return `${measureId};${facetConfig.unit};${binValue}` as FacetString;
+  } else {
+    throw new Error(`Unexpected facet strategy type`);
+  }
+}
+
+/**
+ * Generate facet strings for MeiliSearch from a set of measures for a specific locale
  * Uses the format: measureId;unit;(value or bin) for faceted search
  */
 export function createMeasureFacets(
   measures: Record<MeasureId, UnitValue>,
+  locale: Locale,
 ): FacetString[] {
   const facets: string[] = [];
 
-  // Process each measure and create facets based on its configuration
+  // Process each measure and create facets based on its locale-specific configuration
   for (const [measureId, unitValue] of Object.entries(measures)) {
     const measureIdTyped = measureId as MeasureId;
     const measureSpec = getSpec(measureIdTyped);
 
-    // Generate facets for each configured facet strategy
-    for (const facetConfig of measureSpec.facets) {
-      const convertedValue = castUnit(unitValue, facetConfig.unit);
+    const facet = createFacetForMeasure(
+      measureIdTyped,
+      measureSpec,
+      unitValue,
+      locale,
+    );
+    facets.push(facet);
+  }
 
-      if (facetConfig.strategy.type === "category") {
-        // For categorical facets, use the value directly
-        if (
-          facetConfig.unit === "kg" &&
-          typeof convertedValue.value === "number"
-        ) {
-          // Special case: for weight measures marked as category, create availability facet
-          facets.push(`has;${measureId};true`);
-        } else {
-          facets.push(
-            `${measureId};${facetConfig.unit};${convertedValue.value}`,
-          );
-        }
-      } else if (facetConfig.strategy.type === "bin") {
-        // For bin facets, create bins based on the strategy
-        const binValue = createBinFromStrategy(
-          convertedValue.value as number,
-          facetConfig.strategy,
+  return facets as FacetString[];
+}
+
+/**
+ * Generate the new faceted structure for UI design plan
+ */
+export function createFacetsForMeasures(
+  measures: Record<MeasureId, UnitValue>,
+): {
+  anthro_facets: FacetString[];
+  output_measure_ids: MeasureId[];
+  input_measure_classes: (MeasureClassName | MeasureId)[];
+  input_measure_ids: MeasureId[];
+} {
+  const anthro_facets = new Set<FacetString>();
+  const output_measure_ids = new Set<MeasureId>();
+  const input_measure_classes = new Set<MeasureClassName | MeasureId>();
+  const input_measure_ids = new Set<MeasureId>();
+
+  for (const [measureId, unitValue] of Object.entries(measures)) {
+    const measureIdTyped = measureId as MeasureId;
+    const measureSpec = getSpec(measureIdTyped);
+
+    if (measureSpec.type === "anthro") {
+      for (const locale in LOCALE_CONFIGS) {
+        const facet = createFacetForMeasure(
+          measureIdTyped,
+          measureSpec,
+          unitValue,
+          locale as Locale,
         );
-        facets.push(`${measureId};${facetConfig.unit};${binValue}`);
+        anthro_facets.add(facet);
+      }
+    } else if (measureSpec.type === "performance") {
+      // Output measures - just store the measure ID
+      output_measure_ids.add(measureIdTyped);
+    } else if (measureSpec.type === "input") {
+      // Input measures - store both measure ID and class
+      input_measure_ids.add(measureIdTyped);
+
+      // Add measure class if it exists, otherwise add the measure ID itself
+      if (measureSpec.spec?.className) {
+        input_measure_classes.add(measureSpec.spec.className);
+      } else {
+        input_measure_classes.add(measureIdTyped);
       }
     }
   }
 
-  return facets as FacetString[];
+  return {
+    anthro_facets: Array.from(anthro_facets),
+    output_measure_ids: Array.from(output_measure_ids),
+    input_measure_classes: Array.from(input_measure_classes),
+    input_measure_ids: Array.from(input_measure_ids),
+  };
 }

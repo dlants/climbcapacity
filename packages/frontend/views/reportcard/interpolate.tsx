@@ -5,7 +5,7 @@ import { generateId, getSpec, MeasureId, parseId } from "../../../iso/measures";
 import * as typestyle from "typestyle";
 import * as csstips from "csstips";
 import * as csx from "csx";
-import { MeasureStats } from "../../../iso/protocol";
+import { FacetDistribution } from "../../../iso/protocol";
 import {
   ParamName,
   ParamValue,
@@ -59,17 +59,35 @@ const styles = typestyle.stylesheet({
   },
 });
 
+/**
+ * Extract the count for a specific measure from facet distribution
+ * Sums up all facet counts that belong to the given measure
+ */
+function getMeasureCountFromFacets(
+  measureId: MeasureId,
+  facetDistribution: FacetDistribution,
+): number {
+  let count = 0;
+  for (const [facetString, facetCount] of Object.entries(facetDistribution)) {
+    // Facet strings are in format: measureId;unit;value
+    if (facetString.startsWith(`${measureId};`)) {
+      count += facetCount;
+    }
+  }
+  return count;
+}
+
 export class InterpolateController {
   state: Model;
 
   constructor(
     initialParams: {
       baseMeasureId: MeasureId;
-      measureStats: MeasureStats;
+      facetDistribution: FacetDistribution;
     },
     public myDispatch: Dispatch<Msg>,
   ) {
-    const { baseMeasureId, measureStats } = initialParams;
+    const { baseMeasureId, facetDistribution } = initialParams;
     const measureSpec = getSpec(baseMeasureId);
     const measureClass = measureSpec.spec;
 
@@ -91,7 +109,7 @@ export class InterpolateController {
           return {
             paramValue: repMax as ParamValue<ParamName>,
             measureId,
-            count: measureStats[measureId] || 0,
+            count: getMeasureCountFromFacets(measureId, facetDistribution),
           };
         });
 
@@ -113,7 +131,7 @@ export class InterpolateController {
           return {
             paramValue: edgeSize as ParamValue<ParamName>,
             measureId,
-            count: measureStats[measureId] || 0,
+            count: getMeasureCountFromFacets(measureId, facetDistribution),
           };
         });
 

@@ -8,10 +8,22 @@ import {
   Dataset,
   SnapshotUpdateRequest,
   SnapshotQueryResult,
+  SnapshotQuery,
+  AnthroFacetsQuery,
+  AnthroFacetsResult,
+  OutputMeasureFacetsQuery,
+  OutputMeasureFacetsResult,
+  InputMeasureClassFacetsQuery,
+  InputMeasureClassFacetsResult,
+  InputMeasureFacetsForClassQuery,
+  InputMeasureFacetsResult,
 } from "../../iso/protocol.js";
 import { User } from "lucia";
 import { MeasureId } from "../../iso/measures/index.js";
-import { encodeMeasureValue, createMeasureFacets } from "../../iso/units.js";
+import {
+  encodeMeasureValue,
+  createFacetsForMeasures,
+} from "../../iso/units.js";
 import { HandledError } from "../utils.js";
 import { Backend, Snapshot } from "../types.js";
 import { randomUUID } from "crypto";
@@ -100,7 +112,10 @@ export class SnapshotsMeiliSearch {
       userId: user.id,
       measures: {},
       normedMeasures: {},
-      facets: [],
+      anthro_facets: [],
+      output_measure_ids: [],
+      input_measure_classes: [],
+      input_measure_ids: [],
       createdAt: now,
       lastUpdated: now,
       ...(importSource && { importSource }),
@@ -157,15 +172,14 @@ export class SnapshotsMeiliSearch {
         delete updatedNormedMeasures[measureId];
       }
 
-      // Regenerate facets based on updated measures
-      const updatedFacets = createMeasureFacets(updatedMeasures);
+      const facets = createFacetsForMeasures(updatedMeasures);
 
       // Update the document
       const updatedDoc: SnapshotMeiliDoc = {
         ...existingDoc,
         measures: updatedMeasures,
         normedMeasures: updatedNormedMeasures,
-        facets: updatedFacets,
+        ...facets,
         lastUpdated: Date.now(),
       };
 
@@ -233,11 +247,9 @@ export class SnapshotsMeiliSearch {
     for (const filterGroup of query.filters) {
       if (filterGroup.length === 0) continue;
 
-      // Convert each filter in the group to facet format
+      // Convert each filter in the group to anthro_facets format
       const groupFilters = filterGroup.map((filterStr) => {
-        // Convert 'category;value' or 'category;unit;value' to 'category_value' facet format
-        const facetString = filterStr.replace(/;/g, "_");
-        return `facets = "${facetString}"`;
+        return `anthro_facets = "${filterStr}"`;
       });
 
       // OR the filters within this group, then wrap in parentheses
@@ -254,7 +266,6 @@ export class SnapshotsMeiliSearch {
     const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
       filter,
       limit: 1000, // Reasonable limit for query results
-      facets: ["facets"], // Get facet distribution for the facets field
     });
 
     // Convert results to snapshots
@@ -264,7 +275,6 @@ export class SnapshotsMeiliSearch {
 
     return {
       snapshots,
-      facetDistribution: searchResult.facetDistribution || {},
       totalHits: searchResult.estimatedTotalHits || searchResult.hits.length,
     };
   }
@@ -277,6 +287,243 @@ export class SnapshotsMeiliSearch {
       ...doc,
       createdAt: new Date(doc.createdAt),
       lastUpdated: new Date(doc.lastUpdated),
+    };
+  }
+
+  /**
+   * Query snapshots using new faceted search format
+   */
+  async querySnapshots(
+    query: SnapshotQuery,
+  ): Promise<Backend<SnapshotQueryResult>> {
+    const filters: string[] = [];
+
+    // Add anthro filters
+    for (const filterGroup of query.anthro_filters) {
+      if (filterGroup.length === 0) continue;
+
+      const groupFilters = filterGroup.map(
+        (filterStr) => `anthro_facets = "${filterStr}"`,
+      );
+      if (groupFilters.length > 0) {
+        const groupFilter = groupFilters.join(" OR ");
+        filters.push(`(${groupFilter})`);
+      }
+    }
+
+    // Add output measure filter
+    if (query.output_measure_id) {
+      filters.push(`output_measure_ids = "${query.output_measure_id}"`);
+    }
+
+    // Add input measure filter
+    if (query.input_measure_id) {
+      filters.push(`input_measure_ids = "${query.input_measure_id}"`);
+    }
+
+    const filter = filters.length > 0 ? filters.join(" AND ") : undefined;
+
+    const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
+      filter,
+      limit: 1000,
+    });
+
+    const snapshots = searchResult.hits.map((doc) =>
+      this.convertMeiliDocToSnapshot(doc),
+    );
+
+    return {
+      snapshots,
+      totalHits: searchResult.estimatedTotalHits || searchResult.hits.length,
+    };
+  }
+
+  /**
+   * Get anthro facets for the faceted search UI
+   */
+  async getAnthroFacets(
+    query: AnthroFacetsQuery,
+  ): Promise<Backend<AnthroFacetsResult>> {
+    const filters: string[] = [];
+
+    // Add output measure filter
+    if (query.output_measure_id) {
+      filters.push(`output_measure_ids = "${query.output_measure_id}"`);
+    }
+
+    // Add input measure filter
+    if (query.input_measure_id) {
+      filters.push(`input_measure_ids = "${query.input_measure_id}"`);
+    }
+
+    const filter = filters.length > 0 ? filters.join(" AND ") : undefined;
+
+    const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
+      filter,
+      limit: 0, // We only want facets, not results
+      facets: ["anthro_facets"],
+    });
+
+    if (
+      !(
+        searchResult.facetDistribution &&
+        searchResult.facetDistribution["anthro_facets"]
+      )
+    ) {
+      throw new Error("No facet distribution found");
+    }
+
+    return {
+      anthroDistribution: searchResult.facetDistribution["anthro_facets"],
+    };
+  }
+
+  /**
+   * Get output measure facets
+   */
+  async getOutputMeasureFacets(
+    query: OutputMeasureFacetsQuery,
+  ): Promise<Backend<OutputMeasureFacetsResult>> {
+    const filters: string[] = [];
+
+    // Add anthro filters
+    for (const filterGroup of query.anthro_filters) {
+      if (filterGroup.length === 0) continue;
+
+      const groupFilters = filterGroup.map(
+        (filterStr) => `anthro_facets = "${filterStr}"`,
+      );
+      if (groupFilters.length > 0) {
+        const groupFilter = groupFilters.join(" OR ");
+        filters.push(`(${groupFilter})`);
+      }
+    }
+
+    // Add input measure filter
+    if (query.input_measure_id) {
+      filters.push(`input_measure_ids = "${query.input_measure_id}"`);
+    }
+
+    const filter = filters.length > 0 ? filters.join(" AND ") : undefined;
+
+    const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
+      filter,
+      limit: 0, // We only want facets, not results
+      facets: ["output_measure_ids"],
+    });
+
+    if (
+      !(
+        searchResult.facetDistribution &&
+        searchResult.facetDistribution["output_measure_ids"]
+      )
+    ) {
+      throw new Error("No facet distribution found");
+    }
+
+    return {
+      outputMeasureDistribution:
+        searchResult.facetDistribution["output_measure_ids"],
+    };
+  }
+
+  /**
+   * Get input measure class facets
+   */
+  async getInputMeasureClassFacets(
+    query: InputMeasureClassFacetsQuery,
+  ): Promise<Backend<InputMeasureClassFacetsResult>> {
+    const filters: string[] = [];
+
+    // Add anthro filters
+    for (const filterGroup of query.anthro_filters) {
+      if (filterGroup.length === 0) continue;
+
+      const groupFilters = filterGroup.map(
+        (filterStr) => `anthro_facets = "${filterStr}"`,
+      );
+      if (groupFilters.length > 0) {
+        const groupFilter = groupFilters.join(" OR ");
+        filters.push(`(${groupFilter})`);
+      }
+    }
+
+    // Add output measure filter
+    if (query.output_measure_id) {
+      filters.push(`output_measure_ids = "${query.output_measure_id}"`);
+    }
+
+    const filter = filters.length > 0 ? filters.join(" AND ") : undefined;
+
+    const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
+      filter,
+      limit: 0, // We only want facets, not results
+      facets: ["input_measure_classes"],
+    });
+    if (
+      !(
+        searchResult.facetDistribution &&
+        searchResult.facetDistribution["input_measure_classes"]
+      )
+    ) {
+      throw new Error("No facet distribution found");
+    }
+
+    return {
+      measureClassDistribution:
+        searchResult.facetDistribution["input_measure_classes"],
+    };
+  }
+
+  /**
+   * Get input measure facets for a specific class
+   */
+  async getInputMeasureFacetsForClass(
+    query: InputMeasureFacetsForClassQuery,
+  ): Promise<Backend<InputMeasureFacetsResult>> {
+    const filters: string[] = [];
+
+    // Add anthro filters
+    for (const filterGroup of query.anthro_filters) {
+      if (filterGroup.length === 0) continue;
+
+      const groupFilters = filterGroup.map(
+        (filterStr) => `anthro_facets = "${filterStr}"`,
+      );
+      if (groupFilters.length > 0) {
+        const groupFilter = groupFilters.join(" OR ");
+        filters.push(`(${groupFilter})`);
+      }
+    }
+
+    // Add measure class filter
+    filters.push(`input_measure_classes = "${query.input_measure_class}"`);
+
+    // Add output measure filter
+    if (query.output_measure_id) {
+      filters.push(`output_measure_ids = "${query.output_measure_id}"`);
+    }
+
+    const filter = filters.length > 0 ? filters.join(" AND ") : undefined;
+
+    const searchResult = await this.index.search<SnapshotMeiliDoc>("", {
+      filter,
+      limit: 0, // We only want facets, not results
+      facets: ["input_measure_ids"],
+    });
+
+    if (
+      !(
+        searchResult.facetDistribution &&
+        searchResult.facetDistribution["input_measure_ids"]
+      )
+    ) {
+      throw new Error("No facet distribution found");
+    }
+
+    return {
+      inputMeasureDistribution:
+        searchResult.facetDistribution["input_measure_ids"],
     };
   }
 }

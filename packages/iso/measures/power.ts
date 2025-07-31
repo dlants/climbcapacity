@@ -31,16 +31,24 @@ export const powerClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["inch", "m", "cm"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "inch",
-      strategy: { type: "bin", binStart: 30, binEnd: 80, binStep: 5 },
+      strategy: { type: "bin", binStart: 20, binEnd: 100, binStep: 2 },
     },
-    {
+    UK: {
+      unit: "inch",
+      strategy: { type: "bin", binStart: 20, binEnd: 100, binStep: 2 },
+    },
+    Europe: {
       unit: "cm",
-      strategy: { type: "bin", binStart: 75, binEnd: 200, binStep: 10 },
+      strategy: { type: "bin", binStart: 50, binEnd: 250, binStep: 5 },
     },
-  ],
+    Australia: {
+      unit: "cm",
+      strategy: { type: "bin", binStart: 50, binEnd: 250, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -85,16 +93,24 @@ export const unilateralPowerClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["m", "cm", "inch"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "inch",
-      strategy: { type: "bin", binStart: 0, binEnd: 80, binStep: 5 },
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 2 },
     },
-    {
+    UK: {
+      unit: "inch",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 2 },
+    },
+    Europe: {
       unit: "cm",
-      strategy: { type: "bin", binStart: 0, binEnd: 200, binStep: 10 },
+      strategy: { type: "bin", binStart: 0, binEnd: 250, binStep: 5 },
     },
-  ],
+    Australia: {
+      unit: "cm",
+      strategy: { type: "bin", binStart: 0, binEnd: 250, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {

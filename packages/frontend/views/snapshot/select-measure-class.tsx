@@ -1,246 +1,302 @@
 import * as DCGView from "dcgview";
-import {
-  generateId,
-  MeasureClassSpec,
-  MeasureId,
-  parseId,
-} from "../../../iso/measures";
+import { generateId, MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { Dispatch } from "../../types";
-import { MeasureStats } from "../../../iso/protocol";
-import { CountTree, measureStatsToCountTree, getFromCountTree } from "./utils";
+import { FacetString } from "../../../iso/units";
+import { getFacetConfigForLocale } from "../../../iso/measures";
+import { Locale } from "../../../iso/locale";
+import * as typestyle from "typestyle";
 
 const { For } = DCGView.Components;
 
-type Selected = {
+type MeasureCombination = {
   measureClass: MeasureClassSpec;
   measureId: MeasureId;
-  params: {
-    [name: string]: string;
-  };
+  params: { [name: string]: string };
+  displayName: string;
 };
 
 export type Model = {
-  measureStats: MeasureStats;
-  measureClasses: {
-    spec: MeasureClassSpec;
-    countTree: CountTree;
-  }[];
-  selected: Selected;
+  measureCombinations: MeasureCombination[];
+  sortedCombinations: (MeasureCombination & { count: number })[];
+  selectedMeasureId: MeasureId;
+  facetDistribution: Record<FacetString, number>;
+  countCache: Map<MeasureId, number>;
 };
 
 export type Msg =
   | {
-    type: "SELECT_MEASURE_CLASS_MSG";
-    measureClass: MeasureClassSpec;
-  }
+      type: "SELECT_MEASURE_ID";
+      measureId: MeasureId;
+    }
   | {
-    type: "UPDATE_PARAM_MSG";
-    param: string;
-    value: string;
-  };
+      type: "UPDATE_FACET_DISTRIBUTION";
+      facetDistribution: Record<FacetString, number>;
+    };
 
 export class SelectMeasureClassController {
   state: Model;
 
   constructor(
     {
-      measureStats,
       measureClasses,
       measureId,
+      facetDistribution = {},
     }: {
       measureClasses: MeasureClassSpec[];
       measureId?: MeasureId;
-      measureStats: MeasureStats;
+      facetDistribution?: Record<FacetString, number>;
     },
-    public context: { myDispatch: Dispatch<Msg> }
+    public context: {
+      myDispatch: Dispatch<Msg>;
+      locale: () => Locale;
+    },
   ) {
-    const hydratedMeasureClasses = measureClasses.map((c) => {
-      const countTree = measureStatsToCountTree(
-        measureStats,
-        (measureId) => parseId(measureId, c),
-        c.params.map((s) => s.name),
-      );
+    const measureCombinations = this.generateAllCombinations(measureClasses);
+    const countCache = this.buildCountCache(
+      measureCombinations,
+      facetDistribution,
+    );
+    const sortedCombinations = this.buildSortedCombinations(
+      measureCombinations,
+      countCache,
+    );
 
-      return {
-        spec: c,
-        countTree,
-      };
-    });
+    // Select initial measure
+    const selectedMeasureId = measureId || sortedCombinations[0]?.measureId;
 
     this.state = {
-      measureStats,
-      measureClasses: hydratedMeasureClasses,
-      selected: this.initSelected({ measureClasses, measureId }),
+      measureCombinations,
+      sortedCombinations,
+      selectedMeasureId,
+      facetDistribution,
+      countCache,
     };
   }
 
-  private initSelected({
-    measureClasses,
-    measureId,
-  }: {
-    measureClasses: MeasureClassSpec[];
-    measureId?: MeasureId;
-  }): Selected {
-    let selectedParams: { [name: string]: string } | undefined;
-    let selectedSpec: MeasureClassSpec | undefined;
-    let selectedMeasureId: MeasureId | undefined;
+  private generateAllCombinations(
+    measureClasses: MeasureClassSpec[],
+  ): MeasureCombination[] {
+    const combinations: MeasureCombination[] = [];
 
-    if (measureId) {
-      selectedMeasureId = measureId;
-      for (const spec of measureClasses) {
-        try {
-          selectedParams = parseId(measureId, spec);
-          selectedSpec = spec;
-        } catch {
-          // do nothing
+    for (const measureClass of measureClasses) {
+      // Generate all possible parameter combinations for this measure class
+      const paramCombinations = this.generateParamCombinations(measureClass);
+
+      for (const params of paramCombinations) {
+        const measureId = generateId(measureClass, params);
+        const displayName = this.generateDisplayName(measureClass, params);
+
+        combinations.push({
+          measureClass,
+          measureId,
+          params,
+          displayName,
+        });
+      }
+    }
+
+    return combinations;
+  }
+
+  private buildCountCache(
+    measureCombinations: MeasureCombination[],
+    facetDistribution: Record<FacetString, number>,
+  ): Map<MeasureId, number> {
+    const cache = new Map<MeasureId, number>();
+
+    for (const combo of measureCombinations) {
+      const count = this.calculateCountForMeasure(
+        combo.measureId,
+        facetDistribution,
+      );
+      cache.set(combo.measureId, count);
+    }
+
+    return cache;
+  }
+
+  private buildSortedCombinations(
+    measureCombinations: MeasureCombination[],
+    countCache: Map<MeasureId, number>,
+  ): (MeasureCombination & { count: number })[] {
+    return measureCombinations
+      .map((combo) => ({
+        ...combo,
+        count: countCache.get(combo.measureId) || 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  private calculateCountForMeasure(
+    measureId: MeasureId,
+    facetDistribution: Record<FacetString, number>,
+  ): number {
+    const facetConfig = getFacetConfigForLocale(
+      measureId,
+      this.context.locale(),
+    );
+
+    let count = 0;
+    if (facetConfig.strategy.type === "category") {
+      // Find the category facet that matches this measure
+      const categoryFacetPrefix = `${measureId};${facetConfig.unit};`;
+      for (const [facetString, facetCount] of Object.entries(
+        facetDistribution,
+      )) {
+        if (facetString.startsWith(categoryFacetPrefix)) {
+          count += facetCount;
+        }
+      }
+    } else {
+      // For range measures, sum all bins
+      const rangeFacetPrefix = `${measureId};${facetConfig.unit};`;
+      for (const [facetString, facetCount] of Object.entries(
+        facetDistribution,
+      )) {
+        if (facetString.startsWith(rangeFacetPrefix)) {
+          count += facetCount;
         }
       }
     }
 
-    if (!(selectedParams && selectedSpec && selectedMeasureId)) {
-      selectedSpec = measureClasses[0];
-      selectedParams = {};
-      for (const param of selectedSpec.params) {
-        selectedParams[param.name] = param.values[0];
-      }
-      selectedMeasureId = generateId(selectedSpec, selectedParams);
+    return count;
+  }
+
+  private generateParamCombinations(
+    measureClass: MeasureClassSpec,
+  ): Array<{ [name: string]: string }> {
+    if (measureClass.params.length === 0) {
+      return [{}];
     }
 
-    return {
-      measureClass: selectedSpec,
-      measureId: selectedMeasureId,
-      params: selectedParams,
+    const combinations: Array<{ [name: string]: string }> = [];
+
+    const generateRecursive = (
+      paramIndex: number,
+      currentParams: { [name: string]: string },
+    ) => {
+      if (paramIndex >= measureClass.params.length) {
+        combinations.push({ ...currentParams });
+        return;
+      }
+
+      const param = measureClass.params[paramIndex];
+      for (const value of param.values) {
+        currentParams[param.name] = value;
+        generateRecursive(paramIndex + 1, currentParams);
+      }
     };
+
+    generateRecursive(0, {});
+    return combinations;
+  }
+
+  private generateDisplayName(
+    measureClass: MeasureClassSpec,
+    params: { [name: string]: string },
+  ): string {
+    let name = measureClass.className as string;
+
+    for (const param of measureClass.params) {
+      const value = params[param.name];
+      name += ` ${value}${param.suffix || ""}`;
+    }
+
+    return name;
   }
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "SELECT_MEASURE_CLASS_MSG": {
-        const selected = this.state.selected;
-        const oldParams = { ...selected.params };
+      case "SELECT_MEASURE_ID":
+        this.state.selectedMeasureId = msg.measureId;
+        break;
 
-        const paramMap: { [key: string]: string } = {};
-        for (const param of msg.measureClass.params) {
-          if (oldParams[param.name]) {
-            paramMap[param.name] = oldParams[param.name];
-          } else {
-            paramMap[param.name] = param.values[0];
+      case "UPDATE_FACET_DISTRIBUTION":
+        this.state.facetDistribution = msg.facetDistribution;
+        this.state.countCache = this.buildCountCache(
+          this.state.measureCombinations,
+          msg.facetDistribution,
+        );
+        this.state.sortedCombinations = this.buildSortedCombinations(
+          this.state.measureCombinations,
+          this.state.countCache,
+        );
+
+        // Auto-select first available measure if current selection has 0 count
+        const currentCount =
+          this.state.countCache.get(this.state.selectedMeasureId) || 0;
+        if (currentCount === 0) {
+          const firstAvailable = this.state.sortedCombinations.find(
+            (combo) => combo.count > 0,
+          );
+          if (firstAvailable) {
+            this.state.selectedMeasureId = firstAvailable.measureId;
           }
         }
-
-        selected.measureClass = msg.measureClass;
-        selected.params = paramMap;
-        selected.measureId = generateId(selected.measureClass, selected.params);
         break;
-      }
-
-      case "UPDATE_PARAM_MSG": {
-        const selectedForParam = this.state.selected;
-        const param = selectedForParam.measureClass.params.find(
-          (p) => p.name === msg.param,
-        );
-        if (!param) {
-          throw new Error(
-            `Invalid param ${msg.param} for measure class ${selectedForParam.measureClass.className}`,
-          );
-        }
-        if (!(param.values as readonly string[]).includes(msg.value)) {
-          throw new Error(
-            `invalid value ${msg.value} for param ${param.name}`,
-          );
-        }
-        selectedForParam.params[msg.param] = msg.value;
-        selectedForParam.measureId = generateId(
-          selectedForParam.measureClass,
-          selectedForParam.params,
-        );
-        break;
-      }
     }
   }
 
-  getCountForMeasureClass(measureClass: MeasureClassSpec) {
-    const m = this.state.measureClasses.find((mc) => mc.spec === measureClass);
-    return m ? getFromCountTree(m.countTree, []) : 0;
-  }
-
-  getCountForParam(paramName: string, paramValue: string) {
-    const measureClass = this.state.measureClasses.find(
-      (mc) => mc.spec === this.state.selected.measureClass,
+  getSelectedMeasure(): MeasureCombination | undefined {
+    return this.state.measureCombinations.find(
+      (combo) => combo.measureId === this.state.selectedMeasureId,
     );
-    if (!measureClass) return 0;
-
-    const paramIndex = this.state.selected.measureClass.params.findIndex(
-      (p) => p.name === paramName,
-    );
-    const paramValues = this.state.selected.measureClass.params
-      .slice(0, paramIndex)
-      .map((p) => this.state.selected.params[p.name]);
-    paramValues.push(paramValue);
-
-    return getFromCountTree(measureClass.countTree, paramValues);
   }
 }
+const styles = typestyle.stylesheet({
+  measureSelect: {
+    padding: "4px 8px",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    fontSize: "14px",
+    minWidth: "200px",
+  },
+  disabledOption: {
+    color: "#999 !important",
+    fontStyle: "italic",
+  },
+});
 
 export class SelectMeasureClassView extends DCGView.View<{
-  controller: SelectMeasureClassController;
+  controller: () => SelectMeasureClassController;
 }> {
   template() {
-    const stateProp = () => this.props.controller().state;
+    const controller = () => this.props.controller();
+    const state = () => controller().state;
 
     return (
       <div>
         <select
+          class={DCGView.const(styles.measureSelect)}
           onChange={(e) => {
-            const measureClass = stateProp().measureClasses.find(
-              (c) => c.spec.className == (e.target as HTMLSelectElement).value,
-            );
-            if (!measureClass) {
-              throw new Error(`Unexpected measure class ${(e.target as HTMLSelectElement).value}`);
-            }
-
-            this.props.controller().context.myDispatch({
-              type: "SELECT_MEASURE_CLASS_MSG",
-              measureClass: measureClass.spec,
+            const selectedMeasureId = (e.target as HTMLSelectElement)
+              .value as MeasureId;
+            controller().context.myDispatch({
+              type: "SELECT_MEASURE_ID",
+              measureId: selectedMeasureId,
             });
           }}
-          value={() => stateProp().selected.measureClass.className}
+          value={() => state().selectedMeasureId}
         >
-          <For each={() => stateProp().measureClasses} key={(mc) => mc.spec.className}>
-            {(getMeasureClass) => (
-              <option
-                value={() => getMeasureClass().spec.className}
-              >
-                {() => getMeasureClass().spec.className} (
-                {() => this.props.controller().getCountForMeasureClass(getMeasureClass().spec)})
-              </option>
-            )}
+          <For
+            each={() => state().sortedCombinations}
+            key={(combo) => combo.measureId}
+          >
+            {(getCombo) => {
+              const combo = getCombo();
+              const isDisabled = combo.count === 0;
+              return (
+                <option
+                  value={() => combo.measureId}
+                  disabled={() => isDisabled}
+                  class={() => (isDisabled ? styles.disabledOption : "")}
+                >
+                  {() => combo.displayName} ({() => combo.count})
+                </option>
+              );
+            }}
           </For>
         </select>
-
-        <For each={() => stateProp().selected.measureClass.params} key={(param) => param.name}>
-          {(getParam) => (
-            <select
-              onChange={(e) =>
-                this.props.controller().context.myDispatch({
-                  type: "UPDATE_PARAM_MSG",
-                  param: getParam().name,
-                  value: (e.target as HTMLSelectElement).value,
-                })
-              }
-              value={() => stateProp().selected.params[getParam().name]}
-            >
-              <For each={() => getParam().values} key={(value) => value}>
-                {(getValue) => (
-                  <option value={() => getValue()}>
-                    {() => getValue()}
-                    {() => getParam().suffix} ({() => this.props.controller().getCountForParam(getParam().name, getValue())})
-                  </option>
-                )}
-              </For>
-            </select>
-          )}
-        </For>
       </div>
     );
   }

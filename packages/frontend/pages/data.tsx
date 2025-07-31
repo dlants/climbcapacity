@@ -6,7 +6,7 @@ import {
   ReportCardMainView,
   Msg as ReportCardMsg,
 } from "../views/reportcard/main";
-import { MeasureStats } from "../../iso/protocol";
+
 import { InitialFilters } from "../views/edit-query";
 import { MEASURES } from "../../iso/measures";
 import { Locale } from "../../iso/locale";
@@ -15,7 +15,6 @@ import { Snapshot } from "../types";
 import { hydrateSnapshot } from "../util/snapshot";
 
 export type Model = {
-  measureStats: MeasureStats;
   reportCardMain: ReportCardMainController;
 };
 
@@ -29,15 +28,10 @@ export class DataController {
 
   constructor(
     userId: string | undefined,
-    measureStats: MeasureStats,
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     const initialFilters: InitialFilters = {};
     for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
-      const count = measureStats[measure.id] || 0;
-      if (count < 100) {
-        continue;
-      }
       initialFilters[measure.id] = selectInitialFilter(
         measure.initialFilter,
         context.locale(),
@@ -48,7 +42,6 @@ export class DataController {
     const reportCardMain = new ReportCardMainController(
       {
         initialFilters,
-        measureStats,
         mySnapshot: undefined,
       },
       {
@@ -59,7 +52,6 @@ export class DataController {
     );
 
     this.state = {
-      measureStats: measureStats,
       reportCardMain,
     };
 

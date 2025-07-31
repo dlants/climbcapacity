@@ -1,4 +1,5 @@
 import { MeasureClassSpec } from "./index.js";
+import { MeasureClassName } from "../protocol.js";
 import {
   ParamValue,
   BOULDER_LOCATION,
@@ -29,7 +30,7 @@ const statDesc: { [key in Stat]: string } = {
 };
 
 export const sportGradeClass: MeasureClassSpec = {
-  className: "grade-sport",
+  className: "grade-sport" as MeasureClassName,
   params: [
     {
       name: "sportLocation",
@@ -44,24 +45,24 @@ export const sportGradeClass: MeasureClassSpec = {
   ],
   measureType: "performance",
   units: ["yds", "ircra", "frenchsport", "ewbank"],
-  facets: [
-    {
-      unit: "ircra",
-      strategy: { type: "category" },
-    },
-    {
+  facets: {
+    US: {
       unit: "yds",
       strategy: { type: "category" },
     },
-    {
+    UK: {
       unit: "frenchsport",
       strategy: { type: "category" },
     },
-    {
+    Europe: {
+      unit: "frenchsport",
+      strategy: { type: "category" },
+    },
+    Australia: {
       unit: "ewbank",
       strategy: { type: "category" },
     },
-  ],
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -92,7 +93,7 @@ export const sportGradeClass: MeasureClassSpec = {
 };
 
 export const boulderGradeClass: MeasureClassSpec = {
-  className: "grade-boulder",
+  className: "grade-boulder" as MeasureClassName,
   params: [
     {
       name: "boulderLocation",
@@ -107,20 +108,24 @@ export const boulderGradeClass: MeasureClassSpec = {
   ],
   measureType: "performance",
   units: ["vermin", "ircra", "font"],
-  facets: [
-    {
-      unit: "ircra",
-      strategy: { type: "category" },
-    },
-    {
+  facets: {
+    US: {
       unit: "vermin",
       strategy: { type: "category" },
     },
-    {
+    UK: {
       unit: "font",
       strategy: { type: "category" },
     },
-  ],
+    Europe: {
+      unit: "font",
+      strategy: { type: "category" },
+    },
+    Australia: {
+      unit: "vermin",
+      strategy: { type: "category" },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {

@@ -1,4 +1,5 @@
 import { MeasureClassSpec, MeasureSpec } from "./index.js";
+import { MeasureClassName } from "../protocol.js";
 import {
   ALL_GRIP_TYPES,
   BASIC_GRIP_TYPES,
@@ -85,7 +86,7 @@ const getTimingDescription = (timing: Timing): string => {
 export const MEASURES: MeasureSpec[] = [];
 
 export const maxhangClass: MeasureClassSpec = {
-  className: "maxhang",
+  className: "maxhang" as MeasureClassName,
   measureType: "input",
   params: [
     {
@@ -105,12 +106,24 @@ export const maxhangClass: MeasureClassSpec = {
     },
   ],
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -149,7 +162,7 @@ Record total weight, so if you weigh 70kg and you added 30kg, record 100kg.`;
 };
 
 export const unilateralMaxhangClass: MeasureClassSpec = {
-  className: "maxhang-unilateral",
+  className: "maxhang-unilateral" as MeasureClassName,
   params: [
     {
       name: "extendedGripType",
@@ -174,12 +187,24 @@ export const unilateralMaxhangClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -220,7 +245,7 @@ Record total weight, so if you weigh 70kg and you removed 20kg, record 50kg.`;
 };
 
 export const repeatersClass: MeasureClassSpec = {
-  className: "repeaters",
+  className: "repeaters" as MeasureClassName,
   params: [
     {
       name: "timing",
@@ -240,12 +265,24 @@ export const repeatersClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "second",
       strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
     },
-  ],
+    UK: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Europe: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Australia: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -282,7 +319,7 @@ Record total test duration, so if you fail 4 seconds into the 5th hang, you woul
 };
 
 export const blockPullClass: MeasureClassSpec = {
-  className: "block-pull",
+  className: "block-pull" as MeasureClassName,
   params: [
     {
       name: "allGripType",
@@ -307,12 +344,24 @@ export const blockPullClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 400, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 25, binEnd: 180, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -350,7 +399,7 @@ Take at least a 5 minute rest between attempts.`;
 };
 
 export const minEdgeClass: MeasureClassSpec = {
-  className: "min-edge",
+  className: "min-edge" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -365,12 +414,24 @@ export const minEdgeClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["mm"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "mm",
       strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
     },
-  ],
+    UK: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+    Europe: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+    Australia: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -402,7 +463,7 @@ Take at least a 5 minute rest between attempts.`;
 };
 
 export const minEdgePullupsClass: MeasureClassSpec = {
-  className: "min-edge-pullups",
+  className: "min-edge-pullups" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -417,12 +478,24 @@ export const minEdgePullupsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["mm"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "mm",
       strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
     },
-  ],
+    UK: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+    Europe: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+    Australia: {
+      unit: "mm",
+      strategy: { type: "bin", binStart: 5, binEnd: 25, binStep: 2 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -459,7 +532,7 @@ Take at least a 5 minute rest between attempts.`;
 };
 
 export const continuousHangClass: MeasureClassSpec = {
-  className: "continuous-hang",
+  className: "continuous-hang" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -474,12 +547,24 @@ export const continuousHangClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "second",
       strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
     },
-  ],
+    UK: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Europe: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Australia: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {

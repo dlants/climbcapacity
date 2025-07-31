@@ -55,12 +55,24 @@ export const peakloadClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -116,12 +128,24 @@ export const avgLoadClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -172,12 +196,24 @@ export const rfdClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb/s", "kg/s"],
-  facets: [
-    {
-      unit: "kg/s",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb/s",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb/s",
+      strategy: { type: "bin", binStart: 50, binEnd: 300, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg/s",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg/s",
+      strategy: { type: "bin", binStart: 20, binEnd: 140, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -228,12 +264,24 @@ export const criticalForceClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 20, binEnd: 150, binStep: 5 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 20, binEnd: 150, binStep: 5 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 10, binEnd: 70, binStep: 2 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 10, binEnd: 70, binStep: 2 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {

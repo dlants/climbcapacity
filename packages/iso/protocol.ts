@@ -73,6 +73,36 @@ export type MeiliFilterQuery = {
   filters: FacetString[][];
 };
 
+// New faceted search query types based on UI design plan
+export type SnapshotQuery = {
+  anthro_filters: FacetString[][];
+  output_measure_id?: MeasureId;
+  input_measure_id?: MeasureId;
+};
+
+export type AnthroFacetsQuery = {
+  output_measure_id?: MeasureId;
+  input_measure_id?: MeasureId;
+};
+
+export type OutputMeasureFacetsQuery = {
+  anthro_filters: FacetString[][];
+  input_measure_id?: MeasureId;
+};
+
+export type InputMeasureClassFacetsQuery = {
+  anthro_filters: FacetString[][];
+  output_measure_id?: MeasureId;
+};
+
+export type MeasureClassName = string & { __brand: "MeasureClassName" };
+
+export type InputMeasureFacetsForClassQuery = {
+  anthro_filters: FacetString[][];
+  input_measure_class: MeasureClassName;
+  output_measure_id?: MeasureId;
+};
+
 export type AuthStatus =
   | { status: "logged out" }
   | { status: "logged in"; user: { id: string } };
@@ -87,13 +117,33 @@ export type SnapshotUpdateRequest = {
   };
 };
 
-export type MeasureStats = {
-  [measureId: MeasureId]: number;
-};
+export type FacetDistribution = Record<FacetString, number>;
+export type MeasureClassDistribution = Record<
+  MeasureClassName | MeasureId,
+  number
+>;
+export type MeasureIdDistribution = Record<MeasureId, number>;
+
 export type SnapshotQueryResult = {
   snapshots: Snapshot[];
-  facetDistribution: Record<string, Record<string, number>>;
   totalHits: number;
+};
+
+// New facet response types
+export type AnthroFacetsResult = {
+  anthroDistribution: FacetDistribution;
+};
+
+export type OutputMeasureFacetsResult = {
+  outputMeasureDistribution: MeasureIdDistribution;
+};
+
+export type InputMeasureClassFacetsResult = {
+  measureClassDistribution: MeasureClassDistribution;
+};
+
+export type InputMeasureFacetsResult = {
+  inputMeasureDistribution: MeasureIdDistribution;
 };
 
 export const DATASETS = ["climbharder", "powercompany"];

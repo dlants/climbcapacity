@@ -12,7 +12,7 @@ import {
   RequestStatus,
 } from "./util/utils";
 import { NavigateMsg, parseRoute, Router } from "./router";
-import { AuthStatus, MeasureStats, SnapshotId } from "../iso/protocol";
+import { AuthStatus, SnapshotId } from "../iso/protocol";
 import { Nav } from "./views/navigation";
 import { Locale, detectBrowserLocale } from "../iso/locale";
 import * as typestyle from "typestyle";
@@ -61,7 +61,6 @@ const styles = typestyle.stylesheet({
 
 export type Model = {
   auth: RequestStatus<AuthStatus>;
-  measureStats: MeasureStats;
   page:
     | {
         route: "/send-link";
@@ -131,7 +130,6 @@ export class MainAppController {
 
   constructor(
     auth: RequestStatus<AuthStatus>,
-    measureStats: MeasureStats,
     public myDispatch: Dispatch<Msg>,
   ) {
     const locale = detectBrowserLocale();
@@ -139,7 +137,6 @@ export class MainAppController {
     if (auth.status == "loaded" && auth.response.status == "logged in") {
       this.state = {
         auth,
-        measureStats,
         page: { route: "/" },
       };
     } else {
@@ -148,7 +145,6 @@ export class MainAppController {
       );
       this.state = {
         auth,
-        measureStats,
         page: {
           route: "/send-link",
           sendLinkPage,
@@ -223,7 +219,7 @@ export class MainAppController {
           userId = user.id;
         }
 
-        const dataPage = new DataController(userId, this.state.measureStats, {
+        const dataPage = new DataController(userId, {
           locale: this.locale,
           myDispatch: (msg: DataMsg) =>
             this.myDispatch({ type: "DATA_MSG", msg }),
@@ -239,7 +235,6 @@ export class MainAppController {
         if (user) {
           const snapshotPage = new SnapshotPageController(
             msg.target.snapshotId,
-            this.state.measureStats,
             {
               locale: this.locale,
               myDispatch: (msg: SnapshotPageMsg) =>
@@ -512,14 +507,6 @@ async function run() {
     auth = { status: "error", error: await response.text() };
   }
 
-  const measureStatsResponse = await fetch("/api/measure-stats");
-  let measureStats: MeasureStats;
-  if (measureStatsResponse.ok) {
-    measureStats = (await measureStatsResponse.json()) as MeasureStats;
-  } else {
-    measureStats = {};
-  }
-
   let mainAppController: MainAppController;
   let mainAppView: MainAppView;
 
@@ -538,7 +525,7 @@ async function run() {
     }
   };
 
-  mainAppController = new MainAppController(auth, measureStats, dispatch);
+  mainAppController = new MainAppController(auth, dispatch);
   mainAppView = DCGView.mountToNode(
     MainAppView,
     document.getElementById("app")!,

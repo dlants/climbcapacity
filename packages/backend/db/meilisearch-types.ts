@@ -1,6 +1,6 @@
 import { MeasureId } from "../../iso/measures/index.js";
-import { UnitValue, NormedMeasure, FacetString } from "../../iso/units.js";
-import { Dataset } from "../../iso/protocol.js";
+import { UnitValue, FacetString } from "../../iso/units.js";
+import { Dataset, MeasureClassName } from "../../iso/protocol.js";
 
 /**
  * MeiliSearch document representing a climbing performance snapshot
@@ -29,8 +29,10 @@ export interface SnapshotMeiliDoc {
   /** Import source for dataset filtering */
   importSource?: Dataset;
 
-  /** Single flattened facet array containing all binned/categorical values for efficient faceted search */
-  facets: FacetString[]; // ['gender_female', 'height_bin_160-165', 'weight_bin_50-55', 'has_measure_deadlift', 'has_measure_pullups']
+  anthro_facets: FacetString[]; // Full facets for anthro measures including bins
+  output_measure_ids: MeasureId[]; // List of output measureIds present in this snapshot
+  input_measure_classes: (MeasureClassName | MeasureId)[]; // Measure classes or standalone measure IDs for input measures
+  input_measure_ids: MeasureId[]; // All input measureIds present in this snapshot
 }
 
 /**
@@ -45,7 +47,10 @@ export const SNAPSHOTS_INDEX_CONFIG = {
     "importSource",
     "createdAt",
     "lastUpdated",
-    "facets",
+    "anthro_facets",
+    "output_measure_ids",
+    "input_measure_classes",
+    "input_measure_ids",
   ],
   sortableAttributes: ["createdAt", "lastUpdated"],
 } as const;

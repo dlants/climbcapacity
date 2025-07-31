@@ -12,8 +12,8 @@ import {
   EditMeasureView,
   Msg as EditMeasureMsg,
 } from "./edit-measure";
-import { MeasureStats } from "../../../iso/protocol";
 import { Locale } from "../../../iso/locale";
+import { FacetDistribution } from "../../../iso/protocol";
 
 export type Model = {
   selectMeasurePage: SelectMeasureClassController;
@@ -36,7 +36,7 @@ export class EditMeasureClassController {
 
   constructor(
     measureClasses: MeasureClassSpec[],
-    measureStats: MeasureStats,
+    facetDistribution: FacetDistribution,
     snapshot: HydratedSnapshot,
     measureId: MeasureId | undefined,
     public context: {
@@ -47,19 +47,20 @@ export class EditMeasureClassController {
     const selectMeasurePage = new SelectMeasureClassController(
       {
         measureClasses,
-        measureStats,
+        facetDistribution,
         measureId,
       },
       {
         myDispatch: (msg: SelectMeasureClassMsg) =>
           this.context.myDispatch({ type: "SELECT_MEASURE_CLASS_MSG", msg }),
+        locale: this.context.locale,
       },
     );
 
     const editMeasurePage = new EditMeasureController(
       {
-        measureId: selectMeasurePage.state.selected.measureId,
-        measureStats,
+        measureId: selectMeasurePage.state.selectedMeasureId,
+        facetDistribution,
         snapshot,
       },
       {
@@ -84,17 +85,18 @@ export class EditMeasureClassController {
 
       case "SELECT_MEASURE_CLASS_MSG": {
         const previousMeasureId =
-          this.state.selectMeasurePage.state.selected.measureId;
+          this.state.selectMeasurePage.state.selectedMeasureId;
         this.state.selectMeasurePage.handleDispatch(msg.msg);
 
         if (
-          this.state.selectMeasurePage.state.selected.measureId !==
+          this.state.selectMeasurePage.state.selectedMeasureId !==
           previousMeasureId
         ) {
           this.state.editMeasurePage = new EditMeasureController(
             {
-              measureId: this.state.selectMeasurePage.state.selected.measureId,
-              measureStats: this.state.selectMeasurePage.state.measureStats,
+              measureId: this.state.selectMeasurePage.state.selectedMeasureId,
+              facetDistribution:
+                this.state.selectMeasurePage.state.facetDistribution,
               snapshot: this.state.snapshot,
             },
             {

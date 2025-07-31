@@ -1,4 +1,5 @@
 import { MeasureClassSpec } from "./index.js";
+import { MeasureClassName } from "../protocol.js";
 import {
   DOMINANT_SIDES,
   ENDURANCE_MOVEMENT,
@@ -10,15 +11,17 @@ import {
   UNILATERAL_MAX_REPS_MOVEMENT,
   UNILATERAL_MOVEMENT,
   UNILATERAL_REPS,
-  WEIGHTED_MOVEMENT
+  WEIGHTED_MOVEMENT,
 } from "./params.js";
 
 export type WeightedMovement = (typeof WEIGHTED_MOVEMENT)[number];
 export type UnilateralMovement = (typeof UNILATERAL_MOVEMENT)[number];
 export type MaxRepsMovement = (typeof MAX_REPS_MOVEMENT)[number];
-export type UnilateralMaxRepsMovement = (typeof UNILATERAL_MAX_REPS_MOVEMENT)[number];
+export type UnilateralMaxRepsMovement =
+  (typeof UNILATERAL_MAX_REPS_MOVEMENT)[number];
 export type IsometricMovement = (typeof ISOMETRIC_MOVEMENT)[number];
-export type UnilateralIsometricMovement = (typeof UNILATERAL_ISOMETRIC_MOVEMENT)[number];
+export type UnilateralIsometricMovement =
+  (typeof UNILATERAL_ISOMETRIC_MOVEMENT)[number];
 export type EnduranceMovement = (typeof ENDURANCE_MOVEMENT)[number];
 
 const weightedMovementDesc: { [key in WeightedMovement]: string } = {
@@ -33,7 +36,7 @@ const weightedMovementDesc: { [key in WeightedMovement]: string } = {
 };
 
 export const weightedClass: MeasureClassSpec = {
-  className: "weighted",
+  className: "weighted" as MeasureClassName,
   params: [
     {
       name: "weightedMovement",
@@ -48,12 +51,24 @@ export const weightedClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 0, binEnd: 500, binStep: 10 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 0, binEnd: 500, binStep: 10 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 0, binEnd: 230, binStep: 5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 0, binEnd: 230, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -101,7 +116,7 @@ const unilateralMovementDesc: { [key in UnilateralMovement]: string } = {
 };
 
 export const unilateralWeightedClass: MeasureClassSpec = {
-  className: "unilateral",
+  className: "unilateral" as MeasureClassName,
   params: [
     {
       name: "unilateralMovement",
@@ -121,12 +136,24 @@ export const unilateralWeightedClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["lb", "kg"],
-  facets: [
-    {
-      unit: "kg",
-      strategy: { type: "category" },
+  facets: {
+    US: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 0, binEnd: 250, binStep: 5 },
     },
-  ],
+    UK: {
+      unit: "lb",
+      strategy: { type: "bin", binStart: 0, binEnd: 250, binStep: 5 },
+    },
+    Europe: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 0, binEnd: 115, binStep: 2.5 },
+    },
+    Australia: {
+      unit: "kg",
+      strategy: { type: "bin", binStart: 0, binEnd: 115, binStep: 2.5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -173,7 +200,7 @@ const maxRepsMovementDesc: { [key in MaxRepsMovement]: string } = {
 };
 
 export const maxRepsClass: MeasureClassSpec = {
-  className: "maxreps",
+  className: "maxreps" as MeasureClassName,
   params: [
     {
       name: "maxRepsMovement",
@@ -183,12 +210,24 @@ export const maxRepsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["count"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "count",
       strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
     },
-  ],
+    UK: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+    Europe: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+    Australia: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -226,7 +265,7 @@ const unilateralMaxRepsMovementDesc: {
 };
 
 export const unilateralMaxRepsClass: MeasureClassSpec = {
-  className: "maxreps-unilateral",
+  className: "maxreps-unilateral" as MeasureClassName,
   params: [
     {
       name: "unilateralMaxRepsMovement",
@@ -241,12 +280,24 @@ export const unilateralMaxRepsClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["count"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "count",
       strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
     },
-  ],
+    UK: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+    Europe: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+    Australia: {
+      unit: "count",
+      strategy: { type: "bin", binStart: 0, binEnd: 100, binStep: 5 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -292,7 +343,7 @@ const isometricMovementDesc: { [key in IsometricMovement]: string } = {
 };
 
 export const isometricClass: MeasureClassSpec = {
-  className: "isometric",
+  className: "isometric" as MeasureClassName,
   params: [
     {
       name: "isometricMovement",
@@ -302,12 +353,24 @@ export const isometricClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "second",
       strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
     },
-  ],
+    UK: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Europe: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Australia: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -345,7 +408,7 @@ const unilateralIsometricMovementDesc: {
 };
 
 export const unilateralIsometricClass: MeasureClassSpec = {
-  className: "isometric-unilateral",
+  className: "isometric-unilateral" as MeasureClassName,
   params: [
     {
       name: "unilateralIsometricMovement",
@@ -360,12 +423,24 @@ export const unilateralIsometricClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "second",
       strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
     },
-  ],
+    UK: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Europe: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+    Australia: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 300, binStep: 30 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
@@ -416,7 +491,7 @@ Alternate the hand you lead with and move at a pace similar to climbing. You may
 };
 
 export const enduranceClass: MeasureClassSpec = {
-  className: "endurance",
+  className: "endurance" as MeasureClassName,
   params: [
     {
       name: "enduranceMovement",
@@ -426,12 +501,24 @@ export const enduranceClass: MeasureClassSpec = {
   ],
   measureType: "input",
   units: ["second"],
-  facets: [
-    {
+  facets: {
+    US: {
       unit: "second",
       strategy: { type: "bin", binStart: 0, binEnd: 1000, binStep: 60 },
     },
-  ],
+    UK: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 1000, binStep: 60 },
+    },
+    Europe: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 1000, binStep: 60 },
+    },
+    Australia: {
+      unit: "second",
+      strategy: { type: "bin", binStart: 0, binEnd: 1000, binStep: 60 },
+    },
+  },
   initialFilter: {
     type: "minmax",
     localeRanges: {
