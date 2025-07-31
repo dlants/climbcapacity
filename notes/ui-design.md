@@ -112,13 +112,13 @@ type InputMeasureFacetsForClassQuery: {
 
 This should return just the facets for the given input measure class, filtered by the anthro measures and the input_measure_id (if defined)
 
-2. we should update the data exploration tab to have a list of graphs. Each graph should now have its own anthro filter, output measure and input measure (capacity measure) selection UI.
+3. we should update the data exploration tab to have a list of graphs. Each graph should now have its own anthro filter, output measure and input measure (capacity measure) selection UI.
 
 The graph should start with empty anthro filters, and no output measure or input measure selected.
 
 There should be a button to add a new graph, which copies the state of the preceding graph.
 
-3. Before we render the facet controls, we should query the anthro facets. This should allow us to display the full set of counts for each filter, as well as full histograms for binned anthro facets (like height, weight). Whenever we update the input or output measure, we should re-query the anthro facets to update those numbers and histograms
+4. Before we render the facet controls, we should query the anthro facets. This should allow us to display the full set of counts for each filter, as well as full histograms for binned anthro facets (like height, weight). Whenever we update the input or output measure, we should re-query the anthro facets to update those numbers and histograms
 
 There should be UI to choose input measure classes. This should query the input measure class endpoint, and let you choose the measure classes. They should come down in a dropdown, be annotated by how many snapshots are in the class, and be sorted in descending order. This endpoint should re-fetch every time we make a change to the anthro facets or the output measure. The UI should just be a simple dropdown.
 

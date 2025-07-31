@@ -593,6 +593,83 @@ export function createCategoryFacetString(
 }
 
 /**
+ * Generate facet string for a bin label
+ */
+export function createBinFacetString(
+  measureId: MeasureId,
+  unit: UnitType,
+  binLabel: string,
+): FacetString {
+  return `${measureId};${unit};${binLabel}` as FacetString;
+}
+
+/**
+ * Generate all possible bins for a measure with their structure
+ */
+export function createAllBinsForMeasure(
+  measureId: MeasureId,
+  locale: Locale,
+): Array<{
+  binLabel: string;
+  min: number;
+  max: number;
+}> {
+  const measureSpec = getSpec(measureId);
+  const facetConfig = measureSpec.facets[locale];
+
+  if (facetConfig.strategy.type !== "bin") {
+    return [];
+  }
+
+  const { binStart, binEnd, binStep } = facetConfig.strategy;
+  const bins: Array<{
+    binLabel: string;
+    min: number;
+    max: number;
+  }> = [];
+
+  // Add below-range bin
+  const belowStartValue = binStart - 1;
+  const belowStartBin = createBinFromStrategy(
+    belowStartValue,
+    facetConfig.strategy,
+  );
+  bins.push({
+    binLabel: belowStartBin,
+    min: binStart - binStep,
+    max: binStart,
+  });
+
+  // Generate all regular bins in the range
+  for (let binValue = binStart; binValue < binEnd; binValue += binStep) {
+    const representativeValue = binValue + binStep / 2;
+    const binLabel = createBinFromStrategy(
+      representativeValue,
+      facetConfig.strategy,
+    );
+    bins.push({
+      binLabel,
+      min: binValue,
+      max: binValue + binStep,
+    });
+  }
+
+  // Add above-range bin
+  const aboveEndValue = binEnd + 1;
+  const aboveEndBin = createBinFromStrategy(
+    aboveEndValue,
+    facetConfig.strategy,
+  );
+  bins.push({
+    binLabel: aboveEndBin,
+    min: binEnd,
+    max: binEnd + binStep,
+  });
+
+  return bins;
+}
+
+/**
  * Helper function to create a facet string for a specific measure, locale, and unit value
  */
 function createFacetForMeasure(
@@ -605,13 +682,17 @@ function createFacetForMeasure(
   const convertedValue = castUnit(unitValue, facetConfig.unit);
 
   if (facetConfig.strategy.type === "category") {
-    return `${measureId};${facetConfig.unit};${convertedValue.value}` as FacetString;
+    return createCategoryFacetString(
+      measureId,
+      facetConfig.unit,
+      convertedValue.value,
+    );
   } else if (facetConfig.strategy.type === "bin") {
     const binValue = createBinFromStrategy(
       convertedValue.value as number,
       facetConfig.strategy,
     );
-    return `${measureId};${facetConfig.unit};${binValue}` as FacetString;
+    return createBinFacetString(measureId, facetConfig.unit, binValue);
   } else {
     throw new Error(`Unexpected facet strategy type`);
   }

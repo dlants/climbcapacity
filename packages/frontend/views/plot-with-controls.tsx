@@ -1,227 +1,154 @@
-/**
-import React from "react";
-import * as MeasureExpressionBox from "./measure-expression-box";
-import * as Plot from "./plot";
-import { HydratedSnapshot } from "../types";
-import { Dispatch } from "../tea";
+import DCGView from "dcgview";
+import { Dispatch } from "../types";
+import { Locale } from "../../iso/locale";
+import { FacetString } from "../../iso/units";
 import { assertUnreachable } from "../util/utils";
-import { EvalPoint, Identifier } from "../parser/types";
-import { FilterMapping } from "./select-filters";
-import { Result } from "../../iso/utils";
-import { convertToTargetUnit } from "../../iso/units";
+import * as typestyle from "typestyle";
+import {
+  AnthroFilterController,
+  AnthroFilterMsg,
+  AnthroFilterView,
+} from "./anthro/filter";
 
-export type Model = {
-  snapshots: HydratedSnapshot[];
-  mySnapshot: HydratedSnapshot | undefined;
-  userId: string | undefined;
-  filterMapping: FilterMapping;
-  xAxis: MeasureExpressionBox.Model;
-  yAxis: MeasureExpressionBox.Model;
-  plot: Result<Plot.Model>;
+// Main PlotWithControls component
+export type PlotWithControlsModel = {
+  anthroFilter: AnthroFilterController;
+  // TODO: Add output measure and input measure controllers
 };
 
-export type Msg =
-  | {
-    type: "X_AXIS_MSG";
-    msg: MeasureExpressionBox.Msg;
-  }
-  | {
-    type: "Y_AXIS_MSG";
-    msg: MeasureExpressionBox.Msg;
-  };
+export type PlotWithControlsMsg = {
+  type: "ANTHRO_FILTER_MSG";
+  msg: AnthroFilterMsg;
+};
+// TODO: Add output measure and input measure message types
 
-export class PlotWithControls {
-  state: Model;
+export class PlotWithControlsController {
+  state: PlotWithControlsModel;
 
   constructor(
-    initialParams: {
-      filterMapping: FilterMapping;
-      userId: string | undefined;
-      snapshots: HydratedSnapshot[];
-      mySnapshot: HydratedSnapshot | undefined;
+    public context: {
+      myDispatch: Dispatch<PlotWithControlsMsg>;
+      locale: () => Locale;
     },
-    private context: { myDispatch: Dispatch<Msg> }
   ) {
-    const ids = Object.keys(initialParams.filterMapping).sort();
+    const anthroFilter = new AnthroFilterController({
+      locale: this.context.locale,
+      myDispatch: (msg: AnthroFilterMsg) =>
+        this.context.myDispatch({ type: "ANTHRO_FILTER_MSG", msg }),
+    });
+
     this.state = {
-      filterMapping: initialParams.filterMapping,
-      snapshots: initialParams.snapshots,
-      mySnapshot: initialParams.mySnapshot,
-      userId: initialParams.userId,
-      xAxis: MeasureExpressionBox.initModel(ids[0] || ""),
-      yAxis: MeasureExpressionBox.initModel(ids[1] || ""),
-      plot: { status: "fail", error: "Please enter an expression to proceed" },
+      anthroFilter,
     };
-
-    this.state.plot = this.updatePlot();
   }
 
-  update(msg: Msg) {
+  handleDispatch(msg: PlotWithControlsMsg) {
     switch (msg.type) {
-      case "X_AXIS_MSG":
-        this.state.xAxis = MeasureExpressionBox.update(msg.msg, this.state.xAxis)[0];
-        this.state.plot = this.updatePlot();
+      case "ANTHRO_FILTER_MSG":
+        this.state.anthroFilter.handleDispatch(msg.msg);
         break;
-      case "Y_AXIS_MSG":
-        this.state.yAxis = MeasureExpressionBox.update(msg.msg, this.state.yAxis)[0];
-        this.state.plot = this.updatePlot();
-        break;
+
       default:
-        assertUnreachable(msg);
+        assertUnreachable(msg.type);
     }
   }
+}
 
-  private updatePlot(): Result<Plot.Model> {
-    const xAxisValid = this.state.xAxis.evalResult.status == "success";
-    const yAxisValid = this.state.yAxis.evalResult.status == "success";
+export class PlotWithControlsView extends DCGView.View<{
+  controller: () => PlotWithControlsController;
+  anthroFacets: () => Record<FacetString, number>; // TODO: Replace with actual facet fetching
+}> {
+  template() {
+    const controller = () => this.props.controller();
+    const state = () => controller().state;
 
-    const mapSnapshot = (s: HydratedSnapshot) => {
-      const idValues: EvalPoint = {};
-      for (const id in this.state.filterMapping) {
-        const filter = this.state.filterMapping[id as Identifier];
-
-        idValues[id as Identifier] = {
-          unit: filter.unit,
-          value: convertToTargetUnit(
-            s.normalizedMeasures[filter.measureId],
-            filter.unit,
-          ),
-        };
-      }
-      return { userId: s.userId, idValues, lastUpdated: new Date(s.lastUpdated) };
-    };
-    const snapshotDataById = this.state.snapshots.map(mapSnapshot);
-
-    const myLatestSnapshot = this.state.mySnapshot
-      ? mapSnapshot(this.state.mySnapshot)
-      : undefined;
-
-    if (xAxisValid) {
-      const evalX = this.state.xAxis.evalResult.value;
-      const xResult = evalX(snapshotDataById.map(({ idValues }) => idValues));
-      if (xResult.status == "fail") {
-        return xResult;
-      }
-      const xData = xResult.value;
-
-      const myXResult = myLatestSnapshot
-        ? evalX([myLatestSnapshot.idValues])
-        : undefined;
-
-      if (yAxisValid) {
-        const evalY = this.state.yAxis.evalResult.value;
-        const yResult = evalY(snapshotDataById.map(({ idValues }) => idValues));
-        if (yResult.status == "fail") {
-          return yResult;
-        }
-        const yData = yResult.value;
-
-        const myYResult = myLatestSnapshot
-          ? evalY([myLatestSnapshot.idValues])
-          : undefined;
-
-        const data: { x: number; y: number }[] = [];
-        for (let i = 0; i < xData.values.length; i += 1) {
-          data.push({
-            x: xData.values[i],
-            y: yData.values[i],
-          });
-        }
-
-        let myData: { x: number; y: number } | undefined;
-        if (
-          myXResult &&
-          myXResult.status == "success" &&
-          myXResult.value.values.length &&
-          myYResult &&
-          myYResult.status == "success" &&
-          myYResult.value.values.length
-        ) {
-          myData = {
-            x: myXResult.value.values[0],
-            y: myYResult.value.values[0],
-          };
-        }
-
-        if (data.length < 20) {
-          return {
-            status: "success",
-            value: {
-              style: "dotplot",
-              data,
-              myData,
-              xLabel: this.state.xAxis.expression,
-              xUnit: xData.unit,
-              yLabel: this.state.yAxis.expression,
-              yUnit: yData.unit,
-            },
-          };
-        } else {
-          return {
-            status: "success",
-            value: {
-              style: "heatmap",
-              data,
-              myData,
-              xLabel: this.state.xAxis.expression,
-              xUnit: xData.unit,
-              yLabel: this.state.yAxis.expression,
-              yUnit: yData.unit,
-            },
-          };
-        }
-      } else {
-        return {
-          status: "success",
-          value: {
-            style: "histogram",
-            data: xData.values,
-            myData:
-              myXResult && myXResult.status == "success"
-                ? myXResult.value.values[0]
-                : undefined,
-            xLabel: this.state.xAxis.expression,
-            xUnit: xData.unit,
-          },
-        };
-      }
-    } else {
-      return { status: "fail", error: `x expression is not valid` };
-    }
-  }
-
-  view() {
     return (
-      <div>
-        <div
-          className="plot-container"
-          style={{
-            height: "400px",
-            width: "600px",
-          }}
-        >
-          {this.state.plot.status == "success" ? (
-            <Plot.view model={this.state.plot.value} dispatch={this.context.myDispatch} />
-          ) : (
-            <div>Error: {this.state.plot.error}</div>
-          )}
-        </div>
-        <div>
-          xAxis:{" "}
-          <MeasureExpressionBox.view
-            model={this.state.xAxis}
-            dispatch={(msg) => this.context.myDispatch({ type: "X_AXIS_MSG", msg })}
+      <div class={DCGView.const(styles.plotWithControlsContainer)}>
+        <div class={DCGView.const(styles.controlsPanel)}>
+          <AnthroFilterView
+            controller={() => state().anthroFilter}
+            anthroFacets={() => this.props.anthroFacets()}
           />
+
+          {/* TODO: Add output measure selector */}
+          <div class={DCGView.const(styles.placeholder)}>
+            <h4 class={DCGView.const(styles.sectionHeader)}>Output Measure</h4>
+            <div>TODO: Output measure selector</div>
+          </div>
+
+          {/* TODO: Add input measure selector */}
+          <div class={DCGView.const(styles.placeholder)}>
+            <h4 class={DCGView.const(styles.sectionHeader)}>Input Measure</h4>
+            <div>TODO: Input measure selector</div>
+          </div>
         </div>
-        <div>
-          yAxis:{" "}
-          <MeasureExpressionBox.view
-            model={this.state.yAxis}
-            dispatch={(msg) => this.context.myDispatch({ type: "Y_AXIS_MSG", msg })}
-          />
+
+        <div class={DCGView.const(styles.plotArea)}>
+          {/* TODO: Add actual plot/chart component */}
+          <div class={DCGView.const(styles.placeholder)}>
+            <h4>Plot Area</h4>
+            <div>TODO: Implement chart/graph visualization</div>
+          </div>
         </div>
       </div>
     );
   }
 }
-*/
+
+const styles = typestyle.stylesheet({
+  plotWithControlsContainer: {
+    display: "flex",
+    height: "100vh",
+    backgroundColor: "#f9f9f9",
+  },
+
+  controlsPanel: {
+    width: "350px",
+    borderRight: "1px solid #e0e0e0",
+    backgroundColor: "white",
+    overflowY: "auto",
+    padding: "16px",
+    $nest: {
+      "@media (max-width: 1200px)": {
+        width: "300px",
+      },
+      "@media (max-width: 800px)": {
+        width: "100%",
+        height: "50vh",
+        borderRight: "none",
+        borderBottom: "1px solid #e0e0e0",
+      },
+    },
+  },
+
+  plotArea: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    margin: "16px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  },
+
+  sectionHeader: {
+    margin: "0 0 12px 0",
+    fontSize: "16px",
+    fontWeight: "bold",
+    color: "#333",
+    borderBottom: "2px solid #4CAF50",
+    paddingBottom: "4px",
+  },
+
+  placeholder: {
+    padding: "16px",
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+    backgroundColor: "#f5f5f5",
+    border: "1px dashed #ccc",
+    borderRadius: "4px",
+    margin: "8px 0",
+  },
+});

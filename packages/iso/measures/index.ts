@@ -192,7 +192,7 @@ MEASURES.push(...generateMeasureSpecs(ForceMeter.rfdClass));
 MEASURES.push(...generateMeasureSpecs(ForceMeter.criticalForceClass));
 
 export const WEIGHT_MEASURE_ID = "weight" as MeasureId;
-const ANTHRO_MEASURES: MeasureSpec[] = [
+export const ANTHRO_MEASURES: MeasureSpec[] = [
   {
     id: "height" as MeasureId,
     type: "anthro",

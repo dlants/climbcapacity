@@ -2,115 +2,72 @@ import * as DCGView from "dcgview";
 import { Dispatch } from "../types";
 import { assertUnreachable } from "../util/utils";
 import {
-  ReportCardMainController,
-  ReportCardMainView,
-  Msg as ReportCardMsg,
-} from "../views/reportcard/main";
+  PlotWithControlsController,
+  PlotWithControlsView,
+  PlotWithControlsMsg,
+} from "../views/plot-with-controls";
 
-import { InitialFilters } from "../views/edit-query";
-import { MEASURES } from "../../iso/measures";
 import { Locale } from "../../iso/locale";
-import { selectInitialFilter } from "../../iso/units";
-import { Snapshot } from "../types";
-import { hydrateSnapshot } from "../util/snapshot";
+import { FacetString } from "../../iso/units";
 
 export type Model = {
-  reportCardMain: ReportCardMainController;
+  plotWithControls: PlotWithControlsController;
+  anthroFacets: Record<FacetString, number>; // TODO: Replace with actual facet data
 };
 
 export type Msg = {
-  type: "REPORT_CARD_MSG";
-  msg: ReportCardMsg;
+  type: "PLOT_WITH_CONTROLS_MSG";
+  msg: PlotWithControlsMsg;
 };
 
 export class DataController {
   state: Model;
 
   constructor(
-    userId: string | undefined,
+    _userId: string | undefined,
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
-    const initialFilters: InitialFilters = {};
-    for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
-      initialFilters[measure.id] = selectInitialFilter(
-        measure.initialFilter,
-        context.locale(),
-      );
-    }
-
-    // Initialize with undefined snapshot for now - will be loaded if userId is provided
-    const reportCardMain = new ReportCardMainController(
-      {
-        initialFilters,
-        mySnapshot: undefined,
-      },
-      {
-        locale: this.context.locale,
-        myDispatch: (msg: ReportCardMsg) =>
-          this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-      },
-    );
+    const plotWithControls = new PlotWithControlsController({
+      locale: this.context.locale,
+      myDispatch: (msg: PlotWithControlsMsg) =>
+        this.context.myDispatch({ type: "PLOT_WITH_CONTROLS_MSG", msg }),
+    });
 
     this.state = {
-      reportCardMain,
+      plotWithControls,
+      anthroFacets: {}, // TODO: Load actual facet data from API
     };
 
-    // Load user snapshot if userId is provided
-    if (userId) {
-      this.loadUserSnapshot(userId);
-    }
+    // TODO: Load initial anthro facets
+    this.loadAnthroFacets();
   }
 
-  private async loadUserSnapshot(_userId: string) {
+  private async loadAnthroFacets() {
     try {
-      const response = await fetch("/api/my-snapshots", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // TODO: Replace with actual API endpoint for anthro facets
+      // For now, using placeholder data
+      const placeholderFacets: Record<FacetString, number> = {
+        "height;cm;170-175" as FacetString: 25,
+        "height;cm;175-180" as FacetString: 42,
+        "height;cm;180-185" as FacetString: 38,
+        "weight;kg;60-70" as FacetString: 18,
+        "weight;kg;70-80" as FacetString: 35,
+        "weight;kg;80-90" as FacetString: 28,
+        "years_climbing;years;1" as FacetString: 12,
+        "years_climbing;years;2" as FacetString: 24,
+        "years_climbing;years;3" as FacetString: 31,
+      };
 
-      if (response.ok) {
-        const snapshots = (await response.json()) as Snapshot[];
-        const latestSnapshot = snapshots.length > 0 ? snapshots[0] : undefined;
-
-        // Recreate the ReportCardMainController with the user's snapshot
-        if (latestSnapshot) {
-          const initialFilters: InitialFilters = {};
-          for (const measure of MEASURES.filter((s) => s.type == "anthro")) {
-            const count = this.state.measureStats[measure.id] || 0;
-            if (count < 100) {
-              continue;
-            }
-            initialFilters[measure.id] = selectInitialFilter(
-              measure.initialFilter,
-              this.context.locale(),
-            );
-          }
-
-          this.state.reportCardMain = new ReportCardMainController(
-            {
-              initialFilters,
-              measureStats: this.state.measureStats,
-              mySnapshot: hydrateSnapshot(latestSnapshot),
-            },
-            {
-              locale: this.context.locale,
-              myDispatch: (msg: ReportCardMsg) =>
-                this.context.myDispatch({ type: "REPORT_CARD_MSG", msg }),
-            },
-          );
-        }
-      }
+      this.state.anthroFacets = placeholderFacets;
     } catch (error) {
-      console.error("Failed to load user snapshot:", error);
+      console.error("Failed to load anthro facets:", error);
     }
   }
 
   handleDispatch(msg: Msg) {
     switch (msg.type) {
-      case "REPORT_CARD_MSG": {
-        this.state.reportCardMain.handleDispatch(msg.msg);
+      case "PLOT_WITH_CONTROLS_MSG": {
+        this.state.plotWithControls.handleDispatch(msg.msg);
         break;
       }
 
@@ -126,6 +83,11 @@ export class DataView extends DCGView.View<{
   template() {
     const stateProp = () => this.props.controller().state;
 
-    return <ReportCardMainView controller={() => stateProp().reportCardMain} />;
+    return (
+      <PlotWithControlsView
+        controller={() => stateProp().plotWithControls}
+        anthroFacets={() => stateProp().anthroFacets}
+      />
+    );
   }
 }

@@ -96,6 +96,14 @@ yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 cd projects/backend && npx vitest run
 ```
 
+or
+
+```
+yarn workspace backend exec vitest run
+```
+
+Make sure you use vitest and not npm test, etc...
+
 ### Frontend E2E Tests
 
 ```bash
