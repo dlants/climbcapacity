@@ -273,8 +273,8 @@ export function getAllItems(): Item[] {
       measureClasses: [maxhangClass, unilateralMaxhangClass],
       items: MEASURES.filter(
         (s) =>
-          s.spec?.className === maxhangClass.className ||
-          s.spec?.className === unilateralMaxhangClass.className,
+          s.classSpec?.className === maxhangClass.className ||
+          s.classSpec?.className === unilateralMaxhangClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -282,7 +282,7 @@ export function getAllItems(): Item[] {
       name: "block pulls",
       measureClasses: [blockPullClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === blockPullClass.className,
+        (s) => s.classSpec?.className === blockPullClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -290,7 +290,7 @@ export function getAllItems(): Item[] {
       name: "minimum edge",
       measureClasses: [minEdgeClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === minEdgeClass.className,
+        (s) => s.classSpec?.className === minEdgeClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -298,7 +298,7 @@ export function getAllItems(): Item[] {
       name: "repeaters",
       measureClasses: [repeatersClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === repeatersClass.className,
+        (s) => s.classSpec?.className === repeatersClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -306,7 +306,7 @@ export function getAllItems(): Item[] {
       name: "minimum edge pullups",
       measureClasses: [minEdgePullupsClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === minEdgePullupsClass.className,
+        (s) => s.classSpec?.className === minEdgePullupsClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -315,8 +315,8 @@ export function getAllItems(): Item[] {
       measureClasses: [weightedClass, unilateralWeightedClass],
       items: MEASURES.filter(
         (s) =>
-          s.spec?.className === weightedClass.className ||
-          s.spec?.className === unilateralWeightedClass.className,
+          s.classSpec?.className === weightedClass.className ||
+          s.classSpec?.className === unilateralWeightedClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -325,8 +325,8 @@ export function getAllItems(): Item[] {
       measureClasses: [maxRepsClass, unilateralMaxRepsClass],
       items: MEASURES.filter(
         (s) =>
-          s.spec?.className === maxRepsClass.className ||
-          s.spec?.className === unilateralMaxRepsClass.className,
+          s.classSpec?.className === maxRepsClass.className ||
+          s.classSpec?.className === unilateralMaxRepsClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -335,8 +335,8 @@ export function getAllItems(): Item[] {
       measureClasses: [isometricClass, unilateralIsometricClass],
       items: MEASURES.filter(
         (s) =>
-          s.spec?.className === isometricClass.className ||
-          s.spec?.className === unilateralIsometricClass.className,
+          s.classSpec?.className === isometricClass.className ||
+          s.classSpec?.className === unilateralIsometricClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -344,7 +344,7 @@ export function getAllItems(): Item[] {
       name: "power",
       measureClasses: [powerClass, unilateralPowerClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === powerClass.className,
+        (s) => s.classSpec?.className === powerClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -352,7 +352,7 @@ export function getAllItems(): Item[] {
       name: "continuous hang",
       measureClasses: [continuousHangClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === continuousHangClass.className,
+        (s) => s.classSpec?.className === continuousHangClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -360,7 +360,7 @@ export function getAllItems(): Item[] {
       name: "endurance",
       measureClasses: [enduranceClass],
       items: MEASURES.filter(
-        (s) => s.spec?.className === enduranceClass.className,
+        (s) => s.classSpec?.className === enduranceClass.className,
       ).map(mapSpecToItem),
     },
     {
@@ -374,10 +374,10 @@ export function getAllItems(): Item[] {
       ],
       items: MEASURES.filter(
         (s) =>
-          s.spec?.className === peakloadClass.className ||
-          s.spec?.className === avgLoadClass.className ||
-          s.spec?.className === rfdClass.className ||
-          s.spec?.className === criticalForceClass.className,
+          s.classSpec?.className === peakloadClass.className ||
+          s.classSpec?.className === avgLoadClass.className ||
+          s.classSpec?.className === rfdClass.className ||
+          s.classSpec?.className === criticalForceClass.className,
       ).map(mapSpecToItem),
     },
   ];

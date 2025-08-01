@@ -16,7 +16,7 @@ import {
   InputMeasureClassFacetsQuery,
   InputMeasureClassFacetsResult,
   InputMeasureFacetsForClassQuery,
-  InputMeasureFacetsResult,
+  InputMeasureFacetsForClassResult,
 } from "../../iso/protocol.js";
 import { User } from "lucia";
 import { MeasureId } from "../../iso/measures/index.js";
@@ -480,7 +480,7 @@ export class SnapshotsMeiliSearch {
    */
   async getInputMeasureFacetsForClass(
     query: InputMeasureFacetsForClassQuery,
-  ): Promise<Backend<InputMeasureFacetsResult>> {
+  ): Promise<Backend<InputMeasureFacetsForClassResult>> {
     const filters: string[] = [];
 
     // Add anthro filters

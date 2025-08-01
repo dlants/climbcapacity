@@ -113,7 +113,7 @@ export function parseId(id: MeasureId, spec: MeasureClassSpec): ParamMap {
 export type MeasureSpec = {
   id: MeasureId;
   type: MeasureType;
-  spec?: MeasureClassSpec;
+  classSpec?: MeasureClassSpec;
   name: string;
   description: string;
   /** units[0] is the default
@@ -152,7 +152,7 @@ export function generateMeasureSpecs(
     result.push({
       id,
       type: measureClass.measureType,
-      spec: measureClass,
+      classSpec: measureClass,
       name: id,
       description: measureClass.generateDescription(combo),
       units: measureClass.units,
@@ -699,3 +699,11 @@ export function getSpec(measureId: MeasureId) {
 
   return spec;
 }
+
+export const INPUT_CLASSES = new Set<MeasureClassName>();
+
+MEASURES.filter((measure) => measure.type === "input").forEach((measure) => {
+  if (measure.classSpec) {
+    INPUT_CLASSES.add(measure.classSpec.className);
+  }
+});

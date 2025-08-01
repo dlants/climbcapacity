@@ -142,7 +142,7 @@ export type InputMeasureClassFacetsResult = {
   measureClassDistribution: MeasureClassDistribution;
 };
 
-export type InputMeasureFacetsResult = {
+export type InputMeasureFacetsForClassResult = {
   inputMeasureDistribution: MeasureIdDistribution;
 };
 

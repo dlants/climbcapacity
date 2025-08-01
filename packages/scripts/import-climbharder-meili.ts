@@ -5,7 +5,7 @@ import {
   convertToStandardUnit,
   encodeMeasureValue,
   UnitValue,
-  createMeasureFacets,
+  createFacetsForMeasures,
 } from "../iso/units.js";
 import * as Fingers from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade, VGRADE } from "../iso/grade.js";
@@ -663,6 +663,8 @@ table.slice(1).forEach((row, idx) => {
     }
   }
 
+  const facets = createFacetsForMeasures(measures);
+
   const document: SnapshotMeiliDoc = {
     id: `climbharder-v3-row-${idx}`,
     userId: `climbharder-v3-row-${idx}`,
@@ -671,7 +673,7 @@ table.slice(1).forEach((row, idx) => {
     createdAt: Date.now(),
     lastUpdated: Date.now(),
     importSource: "climbharder",
-    facets: createMeasureFacets(measures),
+    ...facets,
   };
 
   documents.push(document);
@@ -735,3 +737,4 @@ run().then(
     process.exit(1);
   },
 );
+

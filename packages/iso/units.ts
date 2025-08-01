@@ -763,8 +763,8 @@ export function createFacetsForMeasures(
       input_measure_ids.add(measureIdTyped);
 
       // Add measure class if it exists, otherwise add the measure ID itself
-      if (measureSpec.spec?.className) {
-        input_measure_classes.add(measureSpec.spec.className);
+      if (measureSpec.classSpec?.className) {
+        input_measure_classes.add(measureSpec.classSpec.className);
       } else {
         input_measure_classes.add(measureIdTyped);
       }

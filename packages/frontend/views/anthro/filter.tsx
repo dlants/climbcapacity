@@ -5,9 +5,10 @@ import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
 import {
   FacetString,
-  UnitValue,
+  UnitType,
   createAllBinsForMeasure,
   createBinFacetString,
+  createCategoryFacetString,
 } from "../../../iso/units";
 import { getFacetConfigForLocale } from "../../../iso/measures";
 import { AnthroMeasureFilterView } from "./measure-filter";
@@ -32,8 +33,10 @@ export type AnthroFilterState =
   | {
       type: "range";
       enabled: boolean;
-      min?: UnitValue;
-      max?: UnitValue;
+      unitType: UnitType;
+      bins: { binLabel: string; min: number; max: number }[];
+      selectedMinIdx?: number;
+      selectedMaxIdx?: number;
     };
 
 export type AnthroFilterMsg =
@@ -49,8 +52,8 @@ export type AnthroFilterMsg =
   | {
       type: "UPDATE_RANGE";
       measureId: MeasureId;
-      min?: UnitValue;
-      max?: UnitValue;
+      selectedMinIdx?: number;
+      selectedMaxIdx?: number;
     }
   | {
       type: "UPDATE_ANTHRO_FACETS";
@@ -85,11 +88,15 @@ export class AnthroFilterController {
           selectedValues: new Set(),
         };
       } else {
+        // Generate bins for this range measure
+        const bins = createAllBinsForMeasure(measureId, locale);
         filterStates[measureId] = {
           type: "range",
           enabled: false,
-          min: undefined,
-          max: undefined,
+          unitType: facetConfig.unit,
+          bins,
+          selectedMinIdx: undefined,
+          selectedMaxIdx: undefined,
         };
       }
     }
@@ -154,10 +161,18 @@ export class AnthroFilterController {
     }
   }
 
-  getSelectedRange(measureId: MeasureId): { min?: UnitValue; max?: UnitValue } {
+  getSelectedRange(measureId: MeasureId): {
+    selectedMinIdx?: number;
+    selectedMaxIdx?: number;
+    bins: { binLabel: string; min: number; max: number }[];
+  } {
     const filter = this.state.filterStates[measureId];
     if (filter?.type === "range") {
-      return { min: filter.min, max: filter.max };
+      return {
+        selectedMinIdx: filter.selectedMinIdx,
+        selectedMaxIdx: filter.selectedMaxIdx,
+        bins: filter.bins,
+      };
     } else {
       throw new Error(`${measureId} is not of type range`);
     }
@@ -211,6 +226,81 @@ export class AnthroFilterController {
     return facetConfig.strategy.type === "bin";
   }
 
+  generateCacheKey(): string {
+    // Create a key based on enabled anthro filters and their values
+    return Object.entries(this.state.filterStates)
+      .filter(([_, filter]) => filter.enabled)
+      .map(([measureId, filter]) => {
+        if (filter.type === "categorical") {
+          const values = Array.from(filter.selectedValues).sort().join(",");
+          return `${measureId}:cat:${values}`;
+        } else {
+          return `${measureId}:range:${filter.selectedMinIdx || ""}:${filter.selectedMaxIdx || ""}`;
+        }
+      })
+      .sort()
+      .join("|");
+  }
+
+  getQueryFilters(locale: Locale): FacetString[][] {
+    const anthroFilters: FacetString[][] = [];
+
+    for (const [measureId, filter] of Object.entries(this.state.filterStates)) {
+      if (!filter.enabled) continue;
+
+      if (filter.type === "categorical") {
+        // For categorical, each selected value becomes a separate OR group
+        const filterStrings = Array.from(filter.selectedValues).map((value) => {
+          // Format: measureId;unit;value - need to get the unit from facet config
+          const facetConfig = getFacetConfigForLocale(
+            measureId as MeasureId,
+            locale,
+          );
+
+          return createCategoryFacetString(
+            measureId as MeasureId,
+            facetConfig.unit,
+            value,
+          );
+        });
+
+        if (filterStrings.length > 0) {
+          anthroFilters.push(filterStrings);
+        }
+      } else if (filter.type === "range") {
+        // For range, create bin filters based on selected bin indices
+        if (
+          filter.selectedMinIdx !== undefined ||
+          filter.selectedMaxIdx !== undefined
+        ) {
+          const startIdx = filter.selectedMinIdx ?? 0;
+          const endIdx = filter.selectedMaxIdx ?? filter.bins.length - 1;
+
+          // Create facet strings for all selected bins
+          const rangeFacets: FacetString[] = [];
+          for (let i = startIdx; i <= endIdx; i++) {
+            const bin = filter.bins[i];
+            if (bin) {
+              rangeFacets.push(
+                createBinFacetString(
+                  measureId as MeasureId,
+                  filter.unitType,
+                  bin.binLabel,
+                ),
+              );
+            }
+          }
+
+          if (rangeFacets.length > 0) {
+            anthroFilters.push(rangeFacets);
+          }
+        }
+      }
+    }
+
+    return anthroFilters;
+  }
+
   handleDispatch(msg: AnthroFilterMsg) {
     switch (msg.type) {
       case "TOGGLE_FILTER_ENABLED": {
@@ -242,8 +332,8 @@ export class AnthroFilterController {
         if (existingFilter && existingFilter.type === "range") {
           this.state.filterStates[msg.measureId] = {
             ...existingFilter,
-            min: msg.min,
-            max: msg.max,
+            selectedMinIdx: msg.selectedMinIdx,
+            selectedMaxIdx: msg.selectedMaxIdx,
           };
         }
         break;

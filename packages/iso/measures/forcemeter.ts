@@ -1,17 +1,18 @@
+import { MeasureClassName } from "../protocol.js";
 import { MeasureClassSpec, MeasureSpec } from "./index.js";
-import { 
-  AVG_LOAD_DURATIONS, 
-  avgLoadDuration, 
-  BASIC_GRIP_TYPES, 
-  DOMINANT_SIDES, 
-  EDGE_SIZES, 
-  ParamValue 
+import {
+  AVG_LOAD_DURATIONS,
+  avgLoadDuration,
+  BASIC_GRIP_TYPES,
+  DOMINANT_SIDES,
+  EDGE_SIZES,
+  ParamValue,
 } from "./params.js";
 
 // Type definitions for parameters
-export type GripType = typeof BASIC_GRIP_TYPES[number];
-export type EdgeSize = typeof EDGE_SIZES[number];
-export type DominantSide = typeof DOMINANT_SIDES[number];
+export type GripType = (typeof BASIC_GRIP_TYPES)[number];
+export type EdgeSize = (typeof EDGE_SIZES)[number];
+export type DominantSide = (typeof DOMINANT_SIDES)[number];
 
 // Helper functions for parameter descriptions
 const getGripTypeDescription = (gripType: GripType): string => {
@@ -19,7 +20,7 @@ const getGripTypeDescription = (gripType: GripType): string => {
     "half-crimp": `\
 use a half crimp grip (90° at index, middle and ring pip joints).
 consider the test a technical failure if your hand starts to open up.`,
-    "open": `\
+    open: `\
 use an open hand grip.`,
     "full-crimp": `\
 use a full crimp grip (closed position with thumb wrap).
@@ -35,7 +36,7 @@ const getDominantSideDescription = (side: DominantSide): string => {
 export const MEASURES: MeasureSpec[] = [];
 
 export const peakloadClass: MeasureClassSpec = {
-  className: "peakload",
+  className: "peakload" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -45,7 +46,7 @@ export const peakloadClass: MeasureClassSpec = {
     {
       name: "edgeSize",
       values: EDGE_SIZES,
-      suffix: 'mm'
+      suffix: "mm",
     },
     {
       name: "dominantSide",
@@ -94,16 +95,20 @@ export const peakloadClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    gripType: GripType;
+    edgeSize: EdgeSize;
+    dominantSide: DominantSide;
+  }) => {
     return `\
 Peak load measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge on a block, on your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.gripType)}.`
-  }
+${getGripTypeDescription(params.gripType)}.`;
+  },
 };
 
 export const avgLoadClass: MeasureClassSpec = {
-  className: "avgload",
+  className: "avgload" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -113,12 +118,12 @@ export const avgLoadClass: MeasureClassSpec = {
     {
       name: "edgeSize",
       values: EDGE_SIZES,
-      suffix: 'mm'
+      suffix: "mm",
     },
     {
       name: "avgLoadDuration",
       values: AVG_LOAD_DURATIONS,
-      suffix: 's'
+      suffix: "s",
     },
     {
       name: "dominantSide",
@@ -167,16 +172,21 @@ export const avgLoadClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { basicGripType: ParamValue<"basicGripType">; edgeSize: EdgeSize; avgLoadDuration: avgLoadDuration; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    basicGripType: ParamValue<"basicGripType">;
+    edgeSize: EdgeSize;
+    avgLoadDuration: avgLoadDuration;
+    dominantSide: DominantSide;
+  }) => {
     return `\
 Avg load measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge block pull, over a duration of ${params.avgLoadDuration}s on your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.basicGripType)}.`
-  }
+${getGripTypeDescription(params.basicGripType)}.`;
+  },
 };
 
 export const rfdClass: MeasureClassSpec = {
-  className: "rfd",
+  className: "rfd" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -186,7 +196,7 @@ export const rfdClass: MeasureClassSpec = {
     {
       name: "edgeSize",
       values: EDGE_SIZES,
-      suffix: 'mm'
+      suffix: "mm",
     },
     {
       name: "dominantSide",
@@ -235,16 +245,20 @@ export const rfdClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    gripType: GripType;
+    edgeSize: EdgeSize;
+    dominantSide: DominantSide;
+  }) => {
     return `\
 RFD measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge on a block on your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.gripType)}.`
-  }
+${getGripTypeDescription(params.gripType)}.`;
+  },
 };
 
 export const criticalForceClass: MeasureClassSpec = {
-  className: "criticalforce",
+  className: "criticalforce" as MeasureClassName,
   params: [
     {
       name: "basicGripType",
@@ -254,7 +268,7 @@ export const criticalForceClass: MeasureClassSpec = {
     {
       name: "edgeSize",
       values: EDGE_SIZES,
-      suffix: 'mm'
+      suffix: "mm",
     },
     {
       name: "dominantSide",
@@ -303,10 +317,14 @@ export const criticalForceClass: MeasureClassSpec = {
       },
     },
   },
-  generateDescription: (params: { gripType: GripType; edgeSize: EdgeSize; dominantSide: DominantSide }) => {
+  generateDescription: (params: {
+    gripType: GripType;
+    edgeSize: EdgeSize;
+    dominantSide: DominantSide;
+  }) => {
     return `\
 Critical force as measured by a force gauge like a tindeq. Use a ${params.edgeSize}mm edge on a block on your ${getDominantSideDescription(params.dominantSide)}.
 
-${getGripTypeDescription(params.gripType)}.`
-  }
+${getGripTypeDescription(params.gripType)}.`;
+  },
 };

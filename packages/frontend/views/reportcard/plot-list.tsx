@@ -144,10 +144,12 @@ export class PlotListController {
 
   private getBaseMeasureId(measureId: MeasureId): MeasureId {
     const spec = getSpec(measureId);
-    if (spec.type === "input" && spec.spec) {
-      const params = parseId(measureId, spec.spec);
-      const hasRepMax = spec.spec.params.some((p) => p.name === "repMax");
-      const hasEdgeSize = spec.spec.params.some((p) => p.name === "edgeSize");
+    if (spec.type === "input" && spec.classSpec) {
+      const params = parseId(measureId, spec.classSpec);
+      const hasRepMax = spec.classSpec.params.some((p) => p.name === "repMax");
+      const hasEdgeSize = spec.classSpec.params.some(
+        (p) => p.name === "edgeSize",
+      );
 
       if (hasRepMax || hasEdgeSize) {
         // For parameterized measures, use a simplified base key instead of generating an invalid measure ID
@@ -167,7 +169,7 @@ export class PlotListController {
           .map(([key, value]) => `${key}:${value}`)
           .join("-");
 
-        return `${spec.spec.className}-base-${baseKey}` as MeasureId;
+        return `${spec.classSpec.className}-base-${baseKey}` as MeasureId;
       }
     }
     return measureId;
@@ -309,7 +311,7 @@ export class PlotListController {
     interpolate: Interpolate.InterpolateController,
   ): InterpolationOption<ParamName>[] {
     const currentMeasureId = interpolate.getCurrentMeasureId();
-    const measureClassSpec = getSpec(currentMeasureId).spec;
+    const measureClassSpec = getSpec(currentMeasureId).classSpec;
     const output: InterpolationOption<ParamName>[] = [];
     if (!measureClassSpec) {
       return output;

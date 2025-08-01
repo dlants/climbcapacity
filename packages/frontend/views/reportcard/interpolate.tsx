@@ -89,7 +89,7 @@ export class InterpolateController {
   ) {
     const { baseMeasureId, facetDistribution } = initialParams;
     const measureSpec = getSpec(baseMeasureId);
-    const measureClass = measureSpec.spec;
+    const measureClass = measureSpec.classSpec;
 
     let interpolationOption: Model;
 

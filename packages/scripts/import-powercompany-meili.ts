@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import {
   encodeMeasureValue,
   UnitValue,
-  createMeasureFacets,
+  createFacetsForMeasures,
   FacetString,
 } from "../iso/units.js";
 import { VGrade, YDS, VGRADE } from "../iso/grade.js";
@@ -474,6 +474,8 @@ table.slice(1).forEach((row, idx) => {
     );
   }
 
+  const facets = createFacetsForMeasures(measures);
+
   const document: SnapshotMeiliDoc = {
     id: `powercompany-row-${idx}`,
     userId: `powercompany-row-${idx}`,
@@ -482,7 +484,7 @@ table.slice(1).forEach((row, idx) => {
     createdAt: Date.now(),
     lastUpdated: Date.now(),
     importSource: "powercompany",
-    facets: createMeasureFacets(measures),
+    ...facets,
   };
 
   documents.push(document);

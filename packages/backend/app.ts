@@ -24,7 +24,7 @@ import {
   AnthroFacetsResult,
   OutputMeasureFacetsResult,
   InputMeasureClassFacetsResult,
-  InputMeasureFacetsResult,
+  InputMeasureFacetsForClassResult,
 } from "../iso/protocol.js";
 import { HandledError } from "./utils.js";
 import { UnitValue } from "../iso/units.js";
@@ -286,7 +286,7 @@ async function run() {
 
   app.post(
     "/api/snapshots/facets/input_measure_for_class",
-    apiRoute<Backend<InputMeasureFacetsResult>>(async (req) => {
+    apiRoute<Backend<InputMeasureFacetsForClassResult>>(async (req) => {
       const query: InputMeasureFacetsForClassQuery = req.body.query;
 
       // Validate query structure
