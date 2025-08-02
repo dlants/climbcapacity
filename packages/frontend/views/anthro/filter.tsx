@@ -398,7 +398,16 @@ export class AnthroFilterView extends DCGView.View<{
           }
         </h4>
 
-        <For.Simple each={DCGView.const(ANTHRO_MEASURE_IDS)}>
+        <For.Simple
+          each={() => {
+            // Sort measures by total count (descending), with 0's at the bottom
+            return ANTHRO_MEASURE_IDS.slice().sort((a, b) => {
+              const countA = controller().getTotalCount(a);
+              const countB = controller().getTotalCount(b);
+              return countB - countA;
+            });
+          }}
+        >
           {(measureId: MeasureId, _getIndex) => (
             <AnthroMeasureFilterView
               measureId={DCGView.const(measureId as MeasureId)}

@@ -17,22 +17,46 @@ export class AnthroMeasureFilterView extends DCGView.View<{
     const isLoading = () => this.props.isLoading();
 
     return (
-      <div class={DCGView.const(styles.measureGroup)}>
-        <div class={DCGView.const(styles.measureHeader)}>
+      <div
+        class={() => ({
+          ...styles.measureGroup,
+          ...(controller().getTotalCount(measureId()) === 0
+            ? styles.measureGroupDisabled
+            : {}),
+        })}
+      >
+        <div
+          class={() => ({
+            ...styles.measureHeader,
+            ...(controller().getTotalCount(measureId()) === 0
+              ? styles.measureHeaderDisabled
+              : {}),
+          })}
+        >
           <label class={DCGView.const(styles.measureToggle)}>
             <input
               type="checkbox"
               checked={() => controller().isFilterEnabled(measureId())}
-              disabled={() => isLoading()}
+              disabled={() =>
+                isLoading() || controller().getTotalCount(measureId()) === 0
+              }
               onChange={() =>
                 !isLoading() &&
+                controller().getTotalCount(measureId()) > 0 &&
                 controller().context.myDispatch({
                   type: "TOGGLE_FILTER_ENABLED",
                   measureId: measureId(),
                 })
               }
             />
-            <span class={DCGView.const(styles.measureName)}>
+            <span
+              class={() => ({
+                ...styles.measureName,
+                ...(controller().getTotalCount(measureId()) === 0
+                  ? styles.measureNameDisabled
+                  : {}),
+              })}
+            >
               {() => measureId()} (
               {() => controller().getTotalCount(measureId())})
             </span>
@@ -147,5 +171,19 @@ const styles = typestyle.stylesheet({
 
   rangeOptions: {
     padding: "8px 12px",
+  },
+
+  measureGroupDisabled: {
+    opacity: 0.5,
+    backgroundColor: "#f8f8f8",
+  },
+
+  measureHeaderDisabled: {
+    backgroundColor: "#eeeeee",
+    color: "#999",
+  },
+
+  measureNameDisabled: {
+    color: "#aaa",
   },
 });

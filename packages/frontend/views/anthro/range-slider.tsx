@@ -1,6 +1,6 @@
 import * as DCGView from "dcgview";
 import { MeasureId } from "../../../iso/measures";
-import { UnitType } from "../../../iso/units";
+import { UnitType, inchesToFeetAndInches } from "../../../iso/units";
 import * as typestyle from "typestyle";
 
 export class AnthroRangeSliderView extends DCGView.View<{
@@ -54,6 +54,14 @@ export class AnthroRangeSliderView extends DCGView.View<{
     return (
       binIndex >= selectedRange.startBin && binIndex <= selectedRange.endBin
     );
+  }
+
+  formatValue(value: number, unit: UnitType): string {
+    if (unit === "inch") {
+      const { feet, inches } = inchesToFeetAndInches(value);
+      return `${feet}'${inches}"`;
+    }
+    return `${value} ${unit}`;
   }
 
   template() {
@@ -115,9 +123,23 @@ export class AnthroRangeSliderView extends DCGView.View<{
 
         {/* Range labels */}
         <div class={DCGView.const(styles.rangeLabels)}>
-          <For.Simple each={() => histogram().map((bin) => bin.binLabel)}>
-            {(binLabel: string) => (
-              <div class={DCGView.const(styles.rangeLabel)}>{binLabel}</div>
+          <For.Simple each={() => histogram()}>
+            {(bin: {
+              binLabel: string;
+              count: number;
+              min: number;
+              max: number;
+            }) => (
+              <div class={DCGView.const(styles.rangeLabel)}>
+                {() => {
+                  const unit = this.props.unit();
+                  if (unit === "inch") {
+                    const { feet, inches } = inchesToFeetAndInches(bin.min);
+                    return `${feet}'${inches}"`;
+                  }
+                  return bin.binLabel;
+                }}
+              </div>
             )}
           </For.Simple>
         </div>
@@ -134,9 +156,12 @@ export class AnthroRangeSliderView extends DCGView.View<{
             const range = selectedRange();
             const startBin = histogramData[range.startBin!];
             const endBin = histogramData[range.endBin!];
+            const unit = this.props.unit();
+
             return (
               <div class={DCGView.const(styles.selectedRange)}>
-                Selected: {startBin.min} - {endBin.max} {this.props.unit()}
+                Selected: {this.formatValue(startBin.min, unit)} -{" "}
+                {this.formatValue(endBin.max, unit)}
               </div>
             );
           }}
