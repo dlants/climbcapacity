@@ -6,11 +6,13 @@ import * as typestyle from "typestyle";
 export class AnthroCategoricalOptionsView extends DCGView.View<{
   measureId: () => MeasureId;
   controller: () => AnthroFilterController;
+  isLoading: () => boolean;
 }> {
   template() {
     const { For } = DCGView.Components;
     const controller = () => this.props.controller();
     const measureId = () => this.props.measureId();
+    const isLoading = () => this.props.isLoading();
 
     return (
       <div class={DCGView.const(styles.categoricalOptions)}>
@@ -28,12 +30,21 @@ export class AnthroCategoricalOptionsView extends DCGView.View<{
             const selectedValues =
               controller().getSelectedCategoricalValues(measureId());
             return (
-              <div class={DCGView.const(styles.categoricalOption)}>
+              <div
+                class={() =>
+                  typestyle.classes(
+                    styles.categoricalOption,
+                    isLoading() && styles.disabledOption,
+                  )
+                }
+              >
                 <label>
                   <input
                     type="checkbox"
                     checked={() => selectedValues.has(option.value)}
+                    disabled={() => isLoading()}
                     onChange={() =>
+                      !isLoading() &&
                       controller().context.myDispatch({
                         type: "TOGGLE_CATEGORICAL_VALUE",
                         measureId: measureId(),
@@ -66,6 +77,15 @@ const styles = typestyle.stylesheet({
         gap: "4px",
         fontSize: "13px",
         cursor: "pointer",
+      },
+    },
+  },
+
+  disabledOption: {
+    opacity: 0.5,
+    $nest: {
+      "& label": {
+        cursor: "not-allowed",
       },
     },
   },

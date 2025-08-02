@@ -1,6 +1,5 @@
 import * as DCGView from "dcgview";
 import { MeasureId, getFacetConfigForLocale } from "../../../iso/measures";
-import { UnitValue } from "../../../iso/units";
 import { AnthroFilterController } from "./filter";
 import { AnthroCategoricalOptionsView } from "./categorical-options";
 import { AnthroRangeSliderView } from "./range-slider";
@@ -9,11 +8,13 @@ import * as typestyle from "typestyle";
 export class AnthroMeasureFilterView extends DCGView.View<{
   measureId: () => MeasureId;
   controller: () => AnthroFilterController;
+  isLoading: () => boolean;
 }> {
   template() {
     const { If } = DCGView.Components;
     const controller = () => this.props.controller();
     const measureId = () => this.props.measureId();
+    const isLoading = () => this.props.isLoading();
 
     return (
       <div class={DCGView.const(styles.measureGroup)}>
@@ -22,7 +23,9 @@ export class AnthroMeasureFilterView extends DCGView.View<{
             <input
               type="checkbox"
               checked={() => controller().isFilterEnabled(measureId())}
+              disabled={() => isLoading()}
               onChange={() =>
+                !isLoading() &&
                 controller().context.myDispatch({
                   type: "TOGGLE_FILTER_ENABLED",
                   measureId: measureId(),
@@ -30,7 +33,8 @@ export class AnthroMeasureFilterView extends DCGView.View<{
               }
             />
             <span class={DCGView.const(styles.measureName)}>
-              {() => measureId()}
+              {() => measureId()} (
+              {() => controller().getTotalCount(measureId())})
             </span>
           </label>
         </div>
@@ -47,6 +51,7 @@ export class AnthroMeasureFilterView extends DCGView.View<{
                   <AnthroCategoricalOptionsView
                     measureId={() => measureId()}
                     controller={() => controller()}
+                    isLoading={() => isLoading()}
                   />
                 )}
               </If>
@@ -68,15 +73,22 @@ export class AnthroMeasureFilterView extends DCGView.View<{
                       histogram={() =>
                         controller().getRangeHistogram(measureId())
                       }
-                      selectedRange={() =>
-                        controller().getSelectedRange(measureId())
-                      }
-                      myDispatch={(min?: UnitValue, max?: UnitValue) =>
+                      selectedRange={() => {
+                        const range =
+                          controller().getSelectedRange(measureId());
+                        return {
+                          startBin: range.selectedMinIdx,
+                          endBin: range.selectedMaxIdx,
+                        };
+                      }}
+                      isLoading={() => isLoading()}
+                      myDispatch={(startBin?: number, endBin?: number) =>
+                        !isLoading() &&
                         controller().context.myDispatch({
                           type: "UPDATE_RANGE",
                           measureId: measureId(),
-                          min,
-                          max,
+                          selectedMinIdx: startBin,
+                          selectedMaxIdx: endBin,
                         })
                       }
                     />

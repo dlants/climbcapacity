@@ -1,6 +1,6 @@
 import * as DCGView from "dcgview";
 import { MeasureId } from "../../../iso/measures";
-import { UnitType, UnitValue } from "../../../iso/units";
+import { UnitType } from "../../../iso/units";
 import * as typestyle from "typestyle";
 
 export class AnthroRangeSliderView extends DCGView.View<{
@@ -12,9 +12,50 @@ export class AnthroRangeSliderView extends DCGView.View<{
     min: number;
     max: number;
   }>;
-  selectedRange: () => { min?: UnitValue; max?: UnitValue };
-  myDispatch: (min?: UnitValue, max?: UnitValue) => void;
+  selectedRange: () => { startBin?: number; endBin?: number };
+  isLoading: () => boolean;
+  myDispatch: (startBin?: number, endBin?: number) => void;
 }> {
+  private firstSelectedBin: number | null = null;
+
+  init() {
+    this.firstSelectedBin = null;
+  }
+
+  handleBarClick(binIndex: number) {
+    // Prevent interactions when loading
+    if (this.props.isLoading()) {
+      return;
+    }
+
+    if (this.firstSelectedBin === null) {
+      // First click - select starting bin
+      this.firstSelectedBin = binIndex;
+      this.update();
+    } else {
+      // Second click - complete the range selection
+      const startBin = Math.min(this.firstSelectedBin, binIndex);
+      const endBin = Math.max(this.firstSelectedBin, binIndex);
+
+      this.props.myDispatch(startBin, endBin);
+      this.firstSelectedBin = null;
+      this.update();
+    }
+  }
+
+  isInSelectedRange(binIndex: number): boolean {
+    const selectedRange = this.props.selectedRange();
+    if (
+      selectedRange.startBin === undefined ||
+      selectedRange.endBin === undefined
+    )
+      return false;
+
+    return (
+      binIndex >= selectedRange.startBin && binIndex <= selectedRange.endBin
+    );
+  }
+
   template() {
     const { For, If } = DCGView.Components;
     const histogram = () => this.props.histogram();
@@ -29,21 +70,47 @@ export class AnthroRangeSliderView extends DCGView.View<{
               const histogramData = histogram();
               if (histogramData.length === 0) return [];
               const maxCount = Math.max(...histogramData.map((b) => b.count));
-              return histogramData.map((bin) => ({
+              return histogramData.map((bin, index) => ({
                 ...bin,
+                index,
                 height: Math.max(2, (bin.count / maxCount) * 40),
+                maxCount,
               }));
             }}
             key={(bin) => bin.binLabel}
           >
             {(bin) => (
               <div
-                class={DCGView.const(styles.histogramBar)}
+                class={() => {
+                  const isFirstSelected = this.firstSelectedBin === bin().index;
+                  const isInSelectedRange = this.isInSelectedRange(bin().index);
+                  const isLoading = this.props.isLoading();
+                  return typestyle.classes(
+                    styles.histogramBar,
+                    isFirstSelected && styles.firstSelectedBar,
+                    isInSelectedRange && styles.selectedRangeBar,
+                    isLoading && styles.disabledBar,
+                  );
+                }}
                 style={() => ({ height: `${bin().height}px` })}
                 title={() => `${bin().binLabel}: ${bin().count} snapshots`}
+                onClick={() => this.handleBarClick(bin().index)}
               />
             )}
           </For>
+
+          {/* Frequency indicator */}
+          <If predicate={() => histogram().length > 0}>
+            {() => {
+              const histogramData = histogram();
+              const maxCount = Math.max(...histogramData.map((b) => b.count));
+              return (
+                <div class={DCGView.const(styles.frequencyIndicator)}>
+                  {maxCount}
+                </div>
+              );
+            }}
+          </If>
         </div>
 
         {/* Range labels */}
@@ -58,59 +125,30 @@ export class AnthroRangeSliderView extends DCGView.View<{
         {/* Selected range indicator */}
         <If
           predicate={() =>
-            selectedRange().min !== undefined ||
-            selectedRange().max !== undefined
+            selectedRange().startBin !== undefined &&
+            selectedRange().endBin !== undefined
           }
         >
-          {() => (
-            <div class={DCGView.const(styles.selectedRange)}>
-              Selected: {() => selectedRange().min?.value || "min"} -{" "}
-              {() => selectedRange().max?.value || "max"}{" "}
-              {() =>
-                selectedRange().min?.unit ||
-                selectedRange().max?.unit ||
-                this.props.unit()
-              }
-            </div>
-          )}
+          {() => {
+            const histogramData = histogram();
+            const range = selectedRange();
+            const startBin = histogramData[range.startBin!];
+            const endBin = histogramData[range.endBin!];
+            return (
+              <div class={DCGView.const(styles.selectedRange)}>
+                Selected: {startBin.min} - {endBin.max} {this.props.unit()}
+              </div>
+            );
+          }}
         </If>
 
-        {/* Range inputs */}
-        <div class={DCGView.const(styles.rangeInputs)}>
-          <input
-            type="number"
-            placeholder="Min"
-            value={() => selectedRange().min?.value?.toString() || ""}
-            onInput={(e) => {
-              const value = parseFloat((e.target as HTMLInputElement).value);
-              if (!isNaN(value)) {
-                const min = {
-                  value,
-                  unit: selectedRange().min?.unit || this.props.unit(),
-                } as UnitValue;
-                this.props.myDispatch(min, selectedRange().max);
-              } else {
-                this.props.myDispatch(undefined, selectedRange().max);
-              }
-            }}
-          />
-          <input
-            type="number"
-            placeholder="Max"
-            value={() => selectedRange().max?.value?.toString() || ""}
-            onInput={(e) => {
-              const value = parseFloat((e.target as HTMLInputElement).value);
-              if (!isNaN(value)) {
-                const max = {
-                  value,
-                  unit: selectedRange().max?.unit || this.props.unit(),
-                } as UnitValue;
-                this.props.myDispatch(selectedRange().min, max);
-              } else {
-                this.props.myDispatch(selectedRange().min, undefined);
-              }
-            }}
-          />
+        {/* Instructions */}
+        <div class={DCGView.const(styles.instructions)}>
+          {() =>
+            this.firstSelectedBin !== null
+              ? "Click another bar to complete range selection"
+              : "Click a bar to start range selection"
+          }
         </div>
       </div>
     );
@@ -128,6 +166,16 @@ const styles = typestyle.stylesheet({
     gap: "1px",
     marginBottom: "8px",
     height: "50px",
+    position: "relative",
+  },
+
+  frequencyIndicator: {
+    position: "absolute",
+    top: "-16px",
+    right: "0",
+    fontSize: "10px",
+    color: "#666",
+    fontWeight: "500",
   },
 
   histogramBar: {
@@ -136,8 +184,36 @@ const styles = typestyle.stylesheet({
     minWidth: "4px",
     cursor: "pointer",
     $nest: {
-      "&:hover": {
+      "&:hover:not(.disabled)": {
         backgroundColor: "#45a049",
+      },
+    },
+  },
+
+  firstSelectedBar: {
+    backgroundColor: "#FF9800",
+    $nest: {
+      "&:hover:not(.disabled)": {
+        backgroundColor: "#F57C00",
+      },
+    },
+  },
+
+  selectedRangeBar: {
+    backgroundColor: "#2196F3",
+    $nest: {
+      "&:hover:not(.disabled)": {
+        backgroundColor: "#1976D2",
+      },
+    },
+  },
+
+  disabledBar: {
+    opacity: 0.5,
+    cursor: "not-allowed",
+    $nest: {
+      "&:hover": {
+        backgroundColor: "inherit",
       },
     },
   },
@@ -160,17 +236,10 @@ const styles = typestyle.stylesheet({
     marginBottom: "8px",
   },
 
-  rangeInputs: {
-    display: "flex",
-    gap: "8px",
-    $nest: {
-      "& input": {
-        flex: 1,
-        padding: "4px",
-        border: "1px solid #ccc",
-        borderRadius: "2px",
-        fontSize: "12px",
-      },
-    },
+  instructions: {
+    fontSize: "12px",
+    color: "#666",
+    textAlign: "center",
+    fontStyle: "italic",
   },
 });

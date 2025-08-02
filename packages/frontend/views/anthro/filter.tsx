@@ -22,6 +22,7 @@ export type AnthroFilterModel = {
     [measureId: MeasureId]: AnthroFilterState;
   };
   anthroFacets: Record<FacetString, number>;
+  totalCounts: Record<MeasureId, number>;
 };
 
 export type AnthroFilterState =
@@ -104,16 +105,30 @@ export class AnthroFilterController {
     this.state = {
       filterStates,
       anthroFacets: initialAnthroFacets,
+      totalCounts: {},
     };
-    this.recomputeHistograms();
+    this.recomputeStats();
   }
 
-  recomputeHistograms() {
+  recomputeStats() {
     this.histogramCache.clear();
 
     const locale = this.context.locale();
     const processedMeasures = new Set<string>();
     const anthroFacets = this.state.anthroFacets;
+
+    // Compute total count by summing all facet counts
+    this.state.totalCounts = {};
+
+    for (const [facetString] of Object.entries(anthroFacets)) {
+      const measureId = facetString.split(";")[0] as MeasureId;
+      if (!this.state.totalCounts[measureId]) {
+        this.state.totalCounts[measureId] = 0;
+      }
+
+      this.state.totalCounts[measureId] +=
+        anthroFacets[facetString as FacetString] || 0;
+    }
 
     for (const [facetString] of Object.entries(anthroFacets)) {
       const measureId = facetString.split(";")[0] as MeasureId;
@@ -242,6 +257,16 @@ export class AnthroFilterController {
       .join("|");
   }
 
+  hasAnyFiltersEnabled(): boolean {
+    return Object.values(this.state.filterStates).some(
+      (filter) => filter.enabled,
+    );
+  }
+
+  getTotalCount(measureId: MeasureId): number {
+    return this.state.totalCounts[measureId] || 0;
+  }
+
   getQueryFilters(locale: Locale): FacetString[][] {
     const anthroFilters: FacetString[][] = [];
 
@@ -341,7 +366,7 @@ export class AnthroFilterController {
 
       case "UPDATE_ANTHRO_FACETS":
         this.state.anthroFacets = msg.anthroFacets;
-        this.recomputeHistograms();
+        this.recomputeStats();
         break;
 
       default:
@@ -352,15 +377,25 @@ export class AnthroFilterController {
 
 export class AnthroFilterView extends DCGView.View<{
   controller: () => AnthroFilterController;
+  isLoading: () => boolean;
 }> {
   template() {
-    const { For } = DCGView.Components;
+    const { For, If } = DCGView.Components;
     const controller = () => this.props.controller();
+    const isLoading = () => this.props.isLoading();
 
     return (
       <div class={DCGView.const(styles.anthroFilterContainer)}>
         <h4 class={DCGView.const(styles.sectionHeader)}>
           Anthropometric Filters
+          {() =>
+            isLoading() && (
+              <span class={DCGView.const(styles.loadingIndicator)}>
+                {" "}
+                loading...
+              </span>
+            )
+          }
         </h4>
 
         <For.Simple each={DCGView.const(ANTHRO_MEASURE_IDS)}>
@@ -368,6 +403,7 @@ export class AnthroFilterView extends DCGView.View<{
             <AnthroMeasureFilterView
               measureId={DCGView.const(measureId as MeasureId)}
               controller={() => controller()}
+              isLoading={() => isLoading()}
             />
           )}
         </For.Simple>
@@ -388,5 +424,22 @@ const styles = typestyle.stylesheet({
     color: "#333",
     borderBottom: "2px solid #4CAF50",
     paddingBottom: "4px",
+  },
+
+  loadingIndicator: {
+    fontSize: "12px",
+    fontWeight: "normal",
+    color: "#666",
+    fontStyle: "italic",
+  },
+
+  totalCount: {
+    fontSize: "12px",
+    color: "#666",
+    marginBottom: "16px",
+    padding: "8px 12px",
+    backgroundColor: "#f5f5f5",
+    borderRadius: "4px",
+    border: "1px solid #ddd",
   },
 });

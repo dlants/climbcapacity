@@ -435,15 +435,10 @@ export class PlotWithControlsView extends DCGView.View<{
     return (
       <div class={DCGView.const(styles.plotWithControlsContainer)}>
         <div class={DCGView.const(styles.controlsPanel)}>
-          <If predicate={() => state().isLoadingAnthroFacets}>
-            {() => (
-              <div class={DCGView.const(styles.loadingMessage)}>
-                Loading facets...
-              </div>
-            )}
-          </If>
-
-          <AnthroFilterView controller={() => state().anthroFilter} />
+          <AnthroFilterView
+            controller={() => state().anthroFilter}
+            isLoading={() => state().isLoadingAnthroFacets}
+          />
 
           <OutputMeasureSelectorView
             controller={() => state().outputMeasureSelector}
