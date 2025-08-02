@@ -49,6 +49,10 @@ export type InputMeasureSelectorMsg =
     }
   | {
       type: "DEPENDENCIES_CHANGED";
+    }
+  | {
+      type: "MEASURE_DISTRIBUTION_FETCHED";
+      distribution: Record<MeasureId, number>;
     };
 
 export class InputMeasureSelectorController {
@@ -177,14 +181,11 @@ export class InputMeasureSelectorController {
 
       const result: InputMeasureFacetsForClassResult = await response.json();
 
-      // Transition to editing state with the fetched distribution
-      if (this.state.state === "fetching") {
-        this.state = {
-          state: "editing",
-          distribution: result.inputMeasureDistribution,
-          previousMeasureId: this.state.previousMeasureId,
-        };
-      }
+      // Dispatch the result instead of directly updating state
+      this.context.myDispatch({
+        type: "MEASURE_DISTRIBUTION_FETCHED",
+        distribution: result.inputMeasureDistribution,
+      });
     } catch (error) {
       console.error("Error fetching measure distribution:", error);
       // On error, go back to selected state
@@ -263,6 +264,17 @@ export class InputMeasureSelectorController {
         // since it might not be valid anymore
         if (this.state.state === "selected") {
           this.state.measureId = undefined;
+        }
+        break;
+
+      case "MEASURE_DISTRIBUTION_FETCHED":
+        // Transition to editing state with the fetched distribution
+        if (this.state.state === "fetching") {
+          this.state = {
+            state: "editing",
+            distribution: msg.distribution,
+            previousMeasureId: this.state.previousMeasureId,
+          };
         }
         break;
 
@@ -582,4 +594,3 @@ const styles = typestyle.stylesheet({
     fontStyle: "italic",
   },
 });
-

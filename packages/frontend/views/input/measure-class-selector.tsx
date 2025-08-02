@@ -45,6 +45,10 @@ export type InputMeasureClassSelectorMsg =
     }
   | {
       type: "DEPENDENCIES_CHANGED";
+    }
+  | {
+      type: "MEASURE_CLASS_DISTRIBUTION_FETCHED";
+      distribution: MeasureClassDistribution;
     };
 
 export class InputMeasureClassSelectorController {
@@ -166,14 +170,11 @@ export class InputMeasureClassSelectorController {
 
       const result: InputMeasureClassFacetsResult = await response.json();
 
-      // Transition to editing state with the fetched distribution
-      if (this.state.state === "fetching") {
-        this.state = {
-          state: "editing",
-          distribution: result.measureClassDistribution,
-          previousMeasureClassName: this.state.previousMeasureClassName,
-        };
-      }
+      // Dispatch the result instead of directly updating state
+      this.context.myDispatch({
+        type: "MEASURE_CLASS_DISTRIBUTION_FETCHED",
+        distribution: result.measureClassDistribution,
+      });
     } catch (error) {
       console.error("Error fetching measure class distribution:", error);
       // On error, go back to selected state
@@ -238,6 +239,17 @@ export class InputMeasureClassSelectorController {
         // If we're currently editing, re-fetch immediately
         if (this.state.state === "editing") {
           this.fetchMeasureClassDistribution();
+        }
+        break;
+
+      case "MEASURE_CLASS_DISTRIBUTION_FETCHED":
+        // Transition to editing state with the fetched distribution
+        if (this.state.state === "fetching") {
+          this.state = {
+            state: "editing",
+            distribution: msg.distribution,
+            previousMeasureClassName: this.state.previousMeasureClassName,
+          };
         }
         break;
 

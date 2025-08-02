@@ -1,5 +1,5 @@
 import DCGView from "dcgview";
-import { Dispatch } from "../types";
+import { Dispatch, HydratedSnapshot } from "../types";
 import { Locale } from "../../iso/locale";
 import { assertUnreachable } from "../util/utils";
 import * as typestyle from "typestyle";
@@ -40,10 +40,11 @@ import * as Dotplot from "./plots/dotplot";
 import * as Heatmap from "./plots/heatmap";
 import { extractDataPoint } from "../util/units";
 import { filterOutliersX } from "../util/stats";
-import { UnitType } from "../../iso/units";
+import { UnitType, FacetString } from "../../iso/units";
 
 // Main PlotWithControls component
 export type PlotWithControlsModel = {
+  mySnapshot?: HydratedSnapshot;
   anthroFilter: AnthroFilterController;
   outputMeasureSelector: OutputMeasureSelectorController;
   inputMeasureClassSelector: InputMeasureClassSelectorController;
@@ -79,18 +80,28 @@ export type PlotWithControlsMsg =
     }
   | {
       type: "RELOAD_PLOT";
+    }
+  | {
+      type: "ANTHRO_FACETS_FETCHED";
+      anthroFacets: Record<FacetString, number>;
+    }
+  | {
+      type: "PLOT_DATA_FETCHED";
+      result: SnapshotQueryResult;
     };
 
 export class PlotWithControlsController {
   state: PlotWithControlsModel;
 
   constructor(
+    { mySnapshot }: { mySnapshot?: HydratedSnapshot },
     public context: {
       myDispatch: Dispatch<PlotWithControlsMsg>;
       locale: () => Locale;
     },
   ) {
     this.state = {
+      mySnapshot,
       anthroFilter: new AnthroFilterController(
         {
           locale: this.context.locale,
@@ -171,14 +182,13 @@ export class PlotWithControlsController {
 
       const result: AnthroFacetsResult = await response.json();
 
-      // Update the anthro filter with the new facets
-      this.state.anthroFilter.handleDispatch({
-        type: "UPDATE_ANTHRO_FACETS",
+      // Dispatch the result instead of directly updating state
+      this.context.myDispatch({
+        type: "ANTHRO_FACETS_FETCHED",
         anthroFacets: result.anthroDistribution,
       });
     } catch (error) {
       console.error("Error fetching anthro facets:", error);
-    } finally {
       this.state.isLoadingAnthroFacets = false;
     }
   }
@@ -214,17 +224,13 @@ export class PlotWithControlsController {
 
       const result: SnapshotQueryResult = await response.json();
 
-      // Create plot model from the data
-      const plotModel = this.createPlotModel(result);
-
-      // Create new plot controller
-      this.state.plot = new PlotController(plotModel, {
-        myDispatch: (msg: PlotMsg) =>
-          this.context.myDispatch({ type: "PLOT_MSG", msg }),
+      // Dispatch the result instead of directly updating state
+      this.context.myDispatch({
+        type: "PLOT_DATA_FETCHED",
+        result,
       });
     } catch (error) {
       console.error("Error reloading plot:", error);
-    } finally {
       this.state.isLoadingPlot = false;
     }
   }
@@ -241,7 +247,6 @@ export class PlotWithControlsController {
 
     // Determine units for x and y axes
     const inputMeasureSpec = getSpec(inputMeasureId);
-    const outputMeasureSpec = getSpec(outputMeasureId);
 
     const includeStrToWtRatio =
       inputMeasureSpec.units.includes("kg") ||
@@ -275,9 +280,9 @@ export class PlotWithControlsController {
 
     // Extract user's data point if present
     let myData: { x: number; y: number } | undefined;
-    if (result.mySnapshot) {
+    if (this.state.mySnapshot) {
       myData = extractDataPoint({
-        measures: result.mySnapshot.measures,
+        measures: this.state.mySnapshot.measures,
         interpolations: [], // No interpolations for now
         xMeasure,
         yMeasure,
@@ -390,6 +395,27 @@ export class PlotWithControlsController {
 
       case "RELOAD_PLOT":
         this.reloadPlot();
+        break;
+
+      case "ANTHRO_FACETS_FETCHED":
+        // Update the anthro filter with the new facets
+        this.state.anthroFilter.handleDispatch({
+          type: "UPDATE_ANTHRO_FACETS",
+          anthroFacets: msg.anthroFacets,
+        });
+        this.state.isLoadingAnthroFacets = false;
+        break;
+
+      case "PLOT_DATA_FETCHED":
+        // Create plot model from the data
+        const plotModel = this.createPlotModel(msg.result);
+
+        // Create new plot controller
+        this.state.plot = new PlotController(plotModel, {
+          myDispatch: (msg: PlotMsg) =>
+            this.context.myDispatch({ type: "PLOT_MSG", msg }),
+        });
+        this.state.isLoadingPlot = false;
         break;
 
       default:

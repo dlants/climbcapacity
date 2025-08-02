@@ -24,22 +24,26 @@ export class AnthroRangeSliderView extends DCGView.View<{
       <div class={DCGView.const(styles.rangeSlider)}>
         {/* Histogram visualization */}
         <div class={DCGView.const(styles.histogram)}>
-          {() => {
-            const histogramData = histogram();
-            if (histogramData.length === 0) return [];
-
-            const maxCount = Math.max(...histogramData.map((b) => b.count));
-            return histogramData.map((bin, _index) => {
-              const height = Math.max(2, (bin.count / maxCount) * 40); // Scale to max 40px height
-              return (
-                <div
-                  class={DCGView.const(styles.histogramBar)}
-                  style={() => ({ height: `${height}px` })}
-                  title={() => `${bin.binLabel}: ${bin.count} snapshots`}
-                />
-              );
-            });
-          }}
+          <For
+            each={() => {
+              const histogramData = histogram();
+              if (histogramData.length === 0) return [];
+              const maxCount = Math.max(...histogramData.map((b) => b.count));
+              return histogramData.map((bin) => ({
+                ...bin,
+                height: Math.max(2, (bin.count / maxCount) * 40),
+              }));
+            }}
+            key={(bin) => bin.binLabel}
+          >
+            {(bin) => (
+              <div
+                class={DCGView.const(styles.histogramBar)}
+                style={() => ({ height: `${bin().height}px` })}
+                title={() => `${bin().binLabel}: ${bin().count} snapshots`}
+              />
+            )}
+          </For>
         </div>
 
         {/* Range labels */}
@@ -170,4 +174,3 @@ const styles = typestyle.stylesheet({
     },
   },
 });
-

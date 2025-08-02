@@ -25,11 +25,14 @@ export class DataController {
     _userId: string | undefined,
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
-    const plotWithControls = new PlotWithControlsController({
-      locale: this.context.locale,
-      myDispatch: (msg: PlotWithControlsMsg) =>
-        this.context.myDispatch({ type: "PLOT_WITH_CONTROLS_MSG", msg }),
-    });
+    const plotWithControls = new PlotWithControlsController(
+      {},
+      {
+        locale: this.context.locale,
+        myDispatch: (msg: PlotWithControlsMsg) =>
+          this.context.myDispatch({ type: "PLOT_WITH_CONTROLS_MSG", msg }),
+      },
+    );
 
     this.state = {
       plotWithControls,
