@@ -160,6 +160,9 @@ export class PlotWithControlsController {
       this.state.isLoadingAnthroFacets = true;
 
       const query: AnthroFacetsQuery = {
+        anthro_filters: this.state.anthroFilter.getQueryFilters(
+          this.context.locale(),
+        ),
         output_measure_id: this.state.outputMeasureId,
         input_measure_id: this.state.inputMeasureId,
         // Note: AnthroFacetsQuery doesn't include input_measure_class yet,
@@ -397,7 +400,7 @@ export class PlotWithControlsController {
         this.reloadPlot();
         break;
 
-      case "ANTHRO_FACETS_FETCHED":
+      case "ANTHRO_FACETS_FETCHED": {
         // Update the anthro filter with the new facets
         this.state.anthroFilter.handleDispatch({
           type: "UPDATE_ANTHRO_FACETS",
@@ -405,8 +408,9 @@ export class PlotWithControlsController {
         });
         this.state.isLoadingAnthroFacets = false;
         break;
+      }
 
-      case "PLOT_DATA_FETCHED":
+      case "PLOT_DATA_FETCHED": {
         // Create plot model from the data
         const plotModel = this.createPlotModel(msg.result);
 
@@ -417,6 +421,7 @@ export class PlotWithControlsController {
         });
         this.state.isLoadingPlot = false;
         break;
+      }
 
       default:
         assertUnreachable(msg);

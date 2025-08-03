@@ -81,6 +81,7 @@ export type SnapshotQuery = {
 };
 
 export type AnthroFacetsQuery = {
+  anthro_filters: FacetString[][];
   output_measure_id?: MeasureId;
   input_measure_id?: MeasureId;
 };

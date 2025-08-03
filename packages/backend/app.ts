@@ -178,6 +178,27 @@ async function run() {
       // Validate query structure
       assert.equal(typeof query, "object", "query must be an object");
 
+      assert.ok(
+        Array.isArray(query.anthro_filters),
+        "query must contain anthro_filters array",
+      );
+
+      // Validate anthro filters structure
+      for (const filterGroup of query.anthro_filters) {
+        assert.ok(
+          Array.isArray(filterGroup),
+          "each anthro filter group must be an array",
+        );
+
+        for (const filter of filterGroup) {
+          assert.equal(typeof filter, "string", "each filter must be a string");
+          assert.ok(
+            filter.includes(";"),
+            `filter "${filter}" must be in format 'category;value' or 'category;unit;value'`,
+          );
+        }
+      }
+
       // Validate optional measure IDs
       if (query.output_measure_id) {
         assert.equal(

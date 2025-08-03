@@ -346,6 +346,19 @@ export class SnapshotsMeiliSearch {
   ): Promise<Backend<AnthroFacetsResult>> {
     const filters: string[] = [];
 
+    // Add anthro filters
+    for (const filterGroup of query.anthro_filters) {
+      if (filterGroup.length === 0) continue;
+
+      const groupFilters = filterGroup.map(
+        (filterStr) => `anthro_facets = "${filterStr}"`,
+      );
+      if (groupFilters.length > 0) {
+        const groupFilter = groupFilters.join(" OR ");
+        filters.push(`(${groupFilter})`);
+      }
+    }
+
     // Add output measure filter
     if (query.output_measure_id) {
       filters.push(`output_measure_ids = "${query.output_measure_id}"`);

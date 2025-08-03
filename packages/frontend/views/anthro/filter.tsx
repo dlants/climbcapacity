@@ -330,7 +330,27 @@ export class AnthroFilterController {
     switch (msg.type) {
       case "TOGGLE_FILTER_ENABLED": {
         const currentFilter = this.state.filterStates[msg.measureId];
-        currentFilter.enabled = !currentFilter.enabled;
+        const newEnabled = !currentFilter.enabled;
+
+        // Reset filter state when disabling
+        if (!newEnabled) {
+          if (currentFilter.type === "categorical") {
+            this.state.filterStates[msg.measureId] = {
+              ...currentFilter,
+              enabled: false,
+              selectedValues: new Set(),
+            };
+          } else if (currentFilter.type === "range") {
+            this.state.filterStates[msg.measureId] = {
+              ...currentFilter,
+              enabled: false,
+              selectedMinIdx: undefined,
+              selectedMaxIdx: undefined,
+            };
+          }
+        } else {
+          currentFilter.enabled = true;
+        }
         break;
       }
 
@@ -388,14 +408,14 @@ export class AnthroFilterView extends DCGView.View<{
       <div class={DCGView.const(styles.anthroFilterContainer)}>
         <h4 class={DCGView.const(styles.sectionHeader)}>
           Anthropometric Filters
-          {() =>
-            isLoading() && (
+          <If predicate={isLoading}>
+            {() => (
               <span class={DCGView.const(styles.loadingIndicator)}>
                 {" "}
                 loading...
               </span>
-            )
-          }
+            )}
+          </If>
         </h4>
 
         <For.Simple
