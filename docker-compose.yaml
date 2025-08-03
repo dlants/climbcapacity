@@ -7,17 +7,17 @@ services:
       - mongodb_data:/data/db
     command: mongod --noauth
 
-  meilisearch:
-    image: getmeili/meilisearch:v1.5
+  typesense:
+    image: typesense/typesense:0.25.2
     ports:
-      - "7700:7700"
+      - "8108:8108"
     volumes:
-      - meilisearch_data:/meili_data
+      - typesense_data:/data
     environment:
-      - MEILI_ENV=development
-      - MEILI_MASTER_KEY=development-master-key
-      - MEILI_NO_ANALYTICS=true
+      - TYPESENSE_DATA_DIR=/data
+      - TYPESENSE_API_KEY=development-api-key
+      - TYPESENSE_ENABLE_CORS=true
 
 volumes:
   mongodb_data:
-  meilisearch_data:
+  typesense_data:

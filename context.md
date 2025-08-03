@@ -76,7 +76,7 @@ VITE_API_BASE_URL=http://localhost:3000
 ### Database Setup
 
 ```bash
-# Start both MongoDB and MeiliSearch
+# Start both MongoDB and Typesense
 docker-compose up -d
 
 # Update measure statistics (MongoDB)
@@ -86,23 +86,17 @@ yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 **Services:**
 
 - **MongoDB**: `http://localhost:27018` (mapped from container port 27017)
-- **MeiliSearch**: `http://localhost:7700` (development environment with master key: `development-master-key`)
+- **Typesense**: `http://localhost:8108` (development environment with API key: `development-api-key`)
 
 ## Testing
 
 ### Backend Tests
 
-```bash
-cd projects/backend && npx vitest run
+```
+yarn workspace @climbcapacity/backend exec vitest run
 ```
 
-or
-
-```
-yarn workspace backend exec vitest run
-```
-
-Make sure you use vitest and not npm test, etc...
+Make sure you use vitest and not npm test, etc... You do not need to cd anywhere first. Just run it from the project root.
 
 ### Frontend E2E Tests
 
@@ -196,7 +190,7 @@ yarn workspace @climbcapacity/iso exec tsc --noEmit
 MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts
 
 # Import new datasets
-yarn workspace @climbcapacity/scripts exec tsx import-[dataset].ts
+yarn workspace @climbcapacity/scripts exec tsx import-[dataset]-typesense.ts
 
 # Update statistics after data changes
 yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
@@ -207,8 +201,8 @@ yarn workspace @climbcapacity/scripts exec tsx update-measure-stats.ts
 ### Core Endpoints
 
 - **Authentication**: `/api/auth`, `/api/send-login-link`, `/api/login`, `/api/logout`
-- **Snapshots**: `/api/my-snapshots`, `/api/meili/snapshot`, `/api/meili/snapshots/new`, `/api/meili/snapshots/update`
-- **Queries**: `/api/meili/snapshots/query`, `/api/measure-stats`
+- **Snapshots**: `/api/my-snapshots`, `/api/snapshot`, `/api/snapshots/new`, `/api/snapshots/update`
+- **Queries**: `/api/snapshots/query`, `/api/snapshots/facets/*`
 
 ### Route Patterns
 
@@ -576,14 +570,16 @@ docker logs climbcapacity-prod
 ### Common Issues
 
 1. **MongoDB Connection**: Ensure Docker is running and port 27018 is available
-2. **Authentication**: Verify `RESEND_API_KEY` is set and valid
-3. **Port Conflicts**: Frontend (5173) and backend (3000) ports must be available
-4. **Environment Variables**: Check both backend and frontend `.env` files
+2. **Typesense Connection**: Ensure Docker is running and port 8108 is available
+3. **Authentication**: Verify `RESEND_API_KEY` is set and valid
+4. **Port Conflicts**: Frontend (5173), backend (3000), and Typesense (8108) ports must be available
+5. **Environment Variables**: Check both backend and frontend `.env` files
 
 ### Database Issues
 
 - Reset database: `MONGODB_URL="mongodb://localhost:27018/climbcapacity" yarn workspace @climbcapacity/scripts exec tsx refresh-db.ts`
-- Check connection: `docker-compose logs mongodb`
+- Check MongoDB connection: `docker-compose logs mongodb`
+- Check Typesense connection: `docker-compose logs typesense`
 - Verify indexes: `yarn workspace @climbcapacity/scripts exec tsx create-indexes.ts`
 
 ### Type Errors

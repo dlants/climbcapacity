@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { withMeiliClient } from "../test/preamble.js";
-import { SnapshotsMeiliSearch } from "./snapshots-meilisearch.js";
+import { withTypesenseClient } from "../test/preamble.js";
+import { SnapshotsTypesense } from "./snapshots-typesense.js";
 import { MeasureId } from "../../iso/measures/index.js";
 import {
   SnapshotId,
@@ -13,14 +13,14 @@ import {
 } from "../../iso/protocol.js";
 import { FacetString } from "../../iso/units.js";
 
-describe("SnapshotsMeiliSearch", () => {
+describe("SnapshotsTypesense", () => {
   const mockUser = {
     id: "test-user-id",
   };
 
   it("should create and retrieve a snapshot", async () => {
-    await withMeiliClient(async (client, indexName) => {
-      const model = new SnapshotsMeiliSearch(client, indexName);
+    await withTypesenseClient(async (client, collectionName) => {
+      const model = new SnapshotsTypesense(client, collectionName);
 
       await model.newSnapshot(mockUser);
       const snapshots = await model.getUsersSnapshots(mockUser.id);
@@ -31,8 +31,8 @@ describe("SnapshotsMeiliSearch", () => {
   });
 
   it("should delete a snapshot", async () => {
-    await withMeiliClient(async (client, indexName) => {
-      const model = new SnapshotsMeiliSearch(client, indexName);
+    await withTypesenseClient(async (client, collectionName) => {
+      const model = new SnapshotsTypesense(client, collectionName);
 
       await model.newSnapshot(mockUser);
       const snapshots = await model.getUsersSnapshots(mockUser.id);
@@ -50,30 +50,30 @@ describe("SnapshotsMeiliSearch", () => {
   });
 
   it("should not delete snapshot of another user", async () => {
-    await withMeiliClient(async (client, indexName) => {
-      const model = new SnapshotsMeiliSearch(client, indexName);
+    await withTypesenseClient(async (client, collectionName) => {
+      const model = new SnapshotsTypesense(client, collectionName);
 
       await model.newSnapshot(mockUser);
       const snapshots = await model.getUsersSnapshots(mockUser.id);
 
-      const deleteCount = await model.deleteSnapshot({
-        userId: "otherUser",
-        snapshotId: snapshots[0].id,
-      });
-
-      expect(deleteCount).toBe(0);
+      await expect(
+        model.deleteSnapshot({
+          userId: "otherUser",
+          snapshotId: snapshots[0].id,
+        }),
+      ).rejects.toThrow("No permission to delete this snapshot");
     });
   });
 
   describe("updateMeasure", () => {
     it("should update a measure", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
 
-        const updated = await model.updateMeasure({
+        await model.updateMeasure({
           userId: mockUser.id,
           requestParams: {
             snapshotId: snapshot.id as SnapshotId,
@@ -82,8 +82,6 @@ describe("SnapshotsMeiliSearch", () => {
             },
           },
         });
-
-        expect(updated).toBe(true);
 
         const updatedSnapshot = await model.getSnapshot(snapshot.id);
         expect(updatedSnapshot?.measures["weight" as MeasureId]).toEqual({
@@ -94,8 +92,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should handle deleting measures", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
@@ -123,15 +121,16 @@ describe("SnapshotsMeiliSearch", () => {
         });
 
         const updated = await model.getSnapshot(snapshot.id);
+        console.log("Updated snapshot measures:", updated?.measures);
         expect(updated?.measures["weight" as MeasureId]).toBeUndefined();
       });
     });
   });
 
-  describe("querySnapshotsWithFilters", () => {
+  describe("querySnapshots", () => {
     it("should query snapshots with filter format", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         // Create test snapshots
         await model.newSnapshot(mockUser);
@@ -175,13 +174,13 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should filter by dataset", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser, "powercompany");
         await model.newSnapshot(mockUser, "climbharder");
 
-        // Test dataset filtering using direct search since querySnapshotsWithFilters needs fixing
+        // Test dataset filtering using direct search
         const results = await model.getUsersSnapshots(mockUser.id);
         const powercompanySnapshots = results.filter(
           (s) => s.importSource === "powercompany",
@@ -199,8 +198,8 @@ describe("SnapshotsMeiliSearch", () => {
 
   describe("New faceted search methods", () => {
     it("should query snapshots with new faceted format", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         // Create test snapshots with different measures
         await model.newSnapshot(mockUser);
@@ -251,8 +250,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should get anthro facets", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
@@ -272,7 +271,9 @@ describe("SnapshotsMeiliSearch", () => {
           },
         });
 
-        const query: AnthroFacetsQuery = {};
+        const query: AnthroFacetsQuery = {
+          anthro_filters: [],
+        };
         const results = await model.getAnthroFacets(query);
 
         expect(results.anthroDistribution).toBeDefined();
@@ -280,8 +281,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should get output measure facets", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
@@ -314,8 +315,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should get input measure class facets", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
@@ -348,8 +349,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should get input measure facets for a specific class", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         await model.newSnapshot(mockUser);
         const [snapshot] = await model.getUsersSnapshots(mockUser.id);
@@ -390,8 +391,8 @@ describe("SnapshotsMeiliSearch", () => {
     });
 
     it("should handle filtering combinations correctly", async () => {
-      await withMeiliClient(async (client, indexName) => {
-        const model = new SnapshotsMeiliSearch(client, indexName);
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
 
         // Create multiple snapshots with different characteristics
         await model.newSnapshot(mockUser);
@@ -446,6 +447,140 @@ describe("SnapshotsMeiliSearch", () => {
 
         expect(results.snapshots).toHaveLength(1);
         expect(results.snapshots[0].id).toBe(snapshot1.id);
+      });
+    });
+
+    it("should return correct facet counts for height and gender distribution", async () => {
+      await withTypesenseClient(async (client, collectionName) => {
+        const model = new SnapshotsTypesense(client, collectionName);
+
+        // Create 30 women
+        for (let i = 0; i < 30; i++) {
+          await model.newSnapshot(mockUser);
+        }
+
+        // Create 70 men
+        for (let i = 0; i < 70; i++) {
+          await model.newSnapshot(mockUser);
+        }
+
+        const allSnapshots = await model.getUsersSnapshots(mockUser.id);
+        expect(allSnapshots).toHaveLength(100);
+
+        // Update first 30 snapshots to be women with 5'4" height
+        for (let i = 0; i < 30; i++) {
+          const snapshot = allSnapshots[i];
+          await model.updateMeasure({
+            userId: mockUser.id,
+            requestParams: {
+              snapshotId: snapshot.id as SnapshotId,
+              updates: {
+                ["sex-at-birth" as MeasureId]: {
+                  value: "female",
+                  unit: "sex-at-birth",
+                },
+                ["height" as MeasureId]: {
+                  value: 64,
+                  unit: "inch",
+                },
+              },
+            },
+          });
+        }
+
+        // Update remaining 70 snapshots to be men with 6' height
+        for (let i = 30; i < 100; i++) {
+          const snapshot = allSnapshots[i];
+          await model.updateMeasure({
+            userId: mockUser.id,
+            requestParams: {
+              snapshotId: snapshot.id as SnapshotId,
+              updates: {
+                ["sex-at-birth" as MeasureId]: {
+                  value: "male",
+                  unit: "sex-at-birth",
+                },
+                ["height" as MeasureId]: {
+                  value: 72,
+                  unit: "inch",
+                },
+              },
+            },
+          });
+        }
+
+        // Test 1: Get all anthro facets (should show 30 females + 70 males)
+        const allFacetsQuery: AnthroFacetsQuery = {
+          anthro_filters: [],
+        };
+        const allFacetsResult = await model.getAnthroFacets(allFacetsQuery);
+
+        expect(
+          allFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;female" as FacetString
+          ],
+        ).toBe(30);
+        expect(
+          allFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;male" as FacetString
+          ],
+        ).toBe(70);
+
+        // Test 2: Get anthro facets filtered by women only
+        const womenFacetsQuery: AnthroFacetsQuery = {
+          anthro_filters: [["sex-at-birth;sex-at-birth;female" as FacetString]],
+        };
+        const womenFacetsResult = await model.getAnthroFacets(womenFacetsQuery);
+
+        // Should only show women (30) and their height distribution
+        expect(
+          womenFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;female" as FacetString
+          ],
+        ).toBe(30);
+        expect(
+          womenFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;male" as FacetString
+          ],
+        ).toBeUndefined();
+
+        // Should show height facet for 64 inches (women's height) with count 30
+        const womenHeightFacetKey = Object.keys(
+          womenFacetsResult.anthroDistribution,
+        ).find((key) => key.includes("height") && key.includes("64"));
+        expect(womenHeightFacetKey).toBeDefined();
+        expect(
+          womenFacetsResult.anthroDistribution[
+            womenHeightFacetKey as FacetString
+          ],
+        ).toBe(30);
+
+        // Test 3: Get anthro facets filtered by men only
+        const menFacetsQuery: AnthroFacetsQuery = {
+          anthro_filters: [["sex-at-birth;sex-at-birth;male" as FacetString]],
+        };
+        const menFacetsResult = await model.getAnthroFacets(menFacetsQuery);
+
+        // Should only show men (70) and their height distribution
+        expect(
+          menFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;male" as FacetString
+          ],
+        ).toBe(70);
+        expect(
+          menFacetsResult.anthroDistribution[
+            "sex-at-birth;sex-at-birth;female" as FacetString
+          ],
+        ).toBeUndefined();
+
+        // Should show height facet for 72 inches (men's height) with count 70
+        const menHeightFacetKey = Object.keys(
+          menFacetsResult.anthroDistribution,
+        ).find((key) => key.includes("height") && key.includes("72"));
+        expect(menHeightFacetKey).toBeDefined();
+        expect(
+          menFacetsResult.anthroDistribution[menHeightFacetKey as FacetString],
+        ).toBe(70);
       });
     });
   });

@@ -1,54 +1,46 @@
-import { MeiliSearch } from "meilisearch";
-import { SNAPSHOTS_INDEX_CONFIG } from "../db/meilisearch-types.js";
+import { Client } from "typesense";
+import { SNAPSHOTS_COLLECTION_SCHEMA } from "../db/typesense-types.js";
 
 /**
- * Test helper that sets up a fresh MeiliSearch index for testing
+ * Test helper that sets up a fresh Typesense collection for testing
  * and cleans it up afterward
  */
-export async function withMeiliClient(
-  testFn: (client: MeiliSearch, indexName: string) => Promise<void>,
+export async function withTypesenseClient(
+  testFn: (client: Client, collectionName: string) => Promise<void>,
 ): Promise<void> {
-  // Connect to test MeiliSearch instance
-  const client = new MeiliSearch({
-    host: "http://localhost:7700",
-    apiKey: "development-master-key",
+  // Connect to test Typesense instance
+  const client = new Client({
+    nodes: [
+      {
+        host: "localhost",
+        port: 8108,
+        protocol: "http",
+      },
+    ],
+    apiKey: "development-api-key",
+    connectionTimeoutSeconds: 2,
   });
 
-  // Create a unique test index name
-  const testIndexName = `test_${SNAPSHOTS_INDEX_CONFIG.indexName}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  // Create a unique test collection name
+  const testCollectionName = `test_${SNAPSHOTS_COLLECTION_SCHEMA.name}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
   try {
-    // Create the test index
-    await client.createIndex(testIndexName, {
-      primaryKey: SNAPSHOTS_INDEX_CONFIG.primaryKey,
-    });
-
-    // Wait for index creation to complete
-    const index = client.index(testIndexName);
-    await index.tasks.waitForTasks(
-      (await index.tasks.getTasks()).results.map((r) => r.uid),
-    );
-
-    // Configure the index with proper settings
-    await index.updateSettings({
-      searchableAttributes: [...SNAPSHOTS_INDEX_CONFIG.searchableAttributes],
-      filterableAttributes: [...SNAPSHOTS_INDEX_CONFIG.filterableAttributes],
-      sortableAttributes: [...SNAPSHOTS_INDEX_CONFIG.sortableAttributes],
-    });
-
-    // Wait for settings update to complete
-    await index.tasks.waitForTasks(
-      (await index.tasks.getTasks()).results.map((r) => r.uid),
-    );
+    // Create the test collection with updated schema
+    const testSchema = {
+      ...SNAPSHOTS_COLLECTION_SCHEMA,
+      name: testCollectionName,
+    };
+    
+    await client.collections().create(testSchema);
 
     // Run the test function
-    await testFn(client, testIndexName);
+    await testFn(client, testCollectionName);
   } finally {
-    // Clean up: delete the test index
+    // Clean up: delete the test collection
     try {
-      await client.deleteIndex(testIndexName);
+      await client.collections(testCollectionName).delete();
     } catch (error) {
-      console.warn(`Failed to clean up test index ${testIndexName}:`, error);
+      console.warn(`Failed to clean up test collection ${testCollectionName}:`, error);
     }
   }
 }

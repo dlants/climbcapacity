@@ -1,6 +1,7 @@
 {
   "commandAllowlist": [
     "^(cd [^;&|()<>]+ && )?npx tsc --noEmit$",
-    "^(cd [^;&|()<>]+ && )?npx vitest run( [^;&|()<>]*)?$"
+    "^(cd [^;&|()<>]+ && )?npx vitest run( [^;&|()<>]*)?$",
+    "^yarn workspace [^;&|()<>]+ exec vitest run( [^;&|()<>]*)?$"
   ]
 }

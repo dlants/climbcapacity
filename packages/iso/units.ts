@@ -778,3 +778,79 @@ export function createFacetsForMeasures(
     input_measure_ids: Array.from(input_measure_ids),
   };
 }
+
+export type ParsedFacetString =
+  | {
+      type: "range";
+      measureId: MeasureId;
+      unit: UnitType;
+      min?: number;
+      max?: number;
+    }
+  | {
+      type: "category";
+      measureId: MeasureId;
+      unit: UnitType;
+      value: string | number;
+    };
+
+/**
+ * Parse a bin label into its range components
+ * Handles formats like: "1.60-1.65", "<5", ">10", "female", "3"
+ */
+export function parseFacetString(facetString: FacetString): ParsedFacetString {
+  const parts = facetString.split(";");
+  if (parts.length !== 3) {
+    throw new Error(`Invalid facet string format: ${facetString}`);
+  }
+
+  const [measureId, unit, binLabel] = parts;
+
+  // Handle below threshold: "<5"
+  if (binLabel.startsWith("<")) {
+    const threshold = parseFloat(binLabel.substring(1));
+    return {
+      type: "range",
+      measureId: measureId as MeasureId,
+      unit: unit as UnitType,
+      max: threshold,
+    };
+  }
+
+  // Handle above threshold: ">10"
+  if (binLabel.startsWith(">")) {
+    const threshold = parseFloat(binLabel.substring(1));
+    return {
+      type: "range",
+      measureId: measureId as MeasureId,
+      unit: unit as UnitType,
+      min: threshold,
+    };
+  }
+
+  if (binLabel.includes("-")) {
+    const parts = binLabel.split("-");
+    if (parts.length === 2) {
+      const min = parseFloat(parts[0]);
+      const max = parseFloat(parts[1]);
+      if (!isNaN(min) && !isNaN(max)) {
+        return {
+          type: "range",
+          measureId: measureId as MeasureId,
+          unit: unit as UnitType,
+          min,
+          max,
+        };
+      }
+    }
+  }
+
+  // Handle exact value (categorical or numeric)
+  const numericValue = parseFloat(binLabel);
+  return {
+    type: "category",
+    measureId: measureId as MeasureId,
+    unit: unit as UnitType,
+    value: isNaN(numericValue) ? binLabel : numericValue,
+  };
+}

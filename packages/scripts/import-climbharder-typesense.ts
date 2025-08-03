@@ -17,10 +17,10 @@ import {
 import * as Grades from "../iso/measures/grades.js";
 import * as Movement from "../iso/measures/movement.js";
 import {
-  SnapshotMeiliDoc,
-  SNAPSHOTS_INDEX_CONFIG,
-} from "../backend/db/meilisearch-types.js";
-import { MeiliSearch } from "meilisearch";
+  SnapshotTypesenseDoc,
+  SNAPSHOTS_COLLECTION_SCHEMA,
+} from "../backend/db/typesense-types.js";
+import { Client } from "typesense";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileContent = fs.readFileSync(
@@ -34,7 +34,7 @@ const table = fileContent
   .map((line) => line.split("\t"))
   .filter((row) => row.length > 1);
 
-const documents: SnapshotMeiliDoc[] = [];
+const documents: SnapshotTypesenseDoc[] = [];
 
 // starting at row 1 since row 0 is the column headers
 table.slice(1).forEach((row, idx) => {
@@ -665,7 +665,7 @@ table.slice(1).forEach((row, idx) => {
 
   const facets = createFacetsForMeasures(measures);
 
-  const document: SnapshotMeiliDoc = {
+  const document: SnapshotTypesenseDoc = {
     id: `climbharder-v3-row-${idx}`,
     userId: `climbharder-v3-row-${idx}`,
     measures,
@@ -680,39 +680,36 @@ table.slice(1).forEach((row, idx) => {
 });
 
 async function run() {
-  const client = new MeiliSearch({
-    host: "http://localhost:7700",
-    apiKey: "development-master-key",
+  const client = new Client({
+    nodes: [
+      {
+        host: "localhost",
+        port: 8108,
+        protocol: "http",
+      },
+    ],
+    apiKey: "development-api-key",
+    connectionTimeoutSeconds: 2,
   });
 
-  // Get or create the snapshots index
-  const index = client.index(SNAPSHOTS_INDEX_CONFIG.indexName);
+  // Get or create the snapshots collection
+  const collectionName = SNAPSHOTS_COLLECTION_SCHEMA.name;
 
   try {
-    // Try to get index stats first
-    await index.getStats();
-    console.log("Index already exists");
+    // Try to get collection first
+    await client.collections(collectionName).retrieve();
+    console.log("Collection already exists");
   } catch {
-    // Index doesn't exist, create it
-    console.log("Creating snapshots index...");
-    await client.createIndex(SNAPSHOTS_INDEX_CONFIG.indexName, {
-      primaryKey: SNAPSHOTS_INDEX_CONFIG.primaryKey,
-    });
+    // Collection doesn't exist, create it
+    console.log("Creating snapshots collection...");
+    await client.collections().create(SNAPSHOTS_COLLECTION_SCHEMA);
   }
-
-  // Configure index settings
-  console.log("Configuring index settings...");
-  await index.updateSettings({
-    searchableAttributes: SNAPSHOTS_INDEX_CONFIG.searchableAttributes,
-    filterableAttributes: SNAPSHOTS_INDEX_CONFIG.filterableAttributes,
-    sortableAttributes: SNAPSHOTS_INDEX_CONFIG.sortableAttributes,
-  });
 
   // Delete existing ClimbHarder documents
   console.log("Deleting existing ClimbHarder documents...");
   try {
-    await index.deleteDocuments({
-      filter: 'importSource = "climbharder"',
+    await client.collections(collectionName).documents().delete({
+      filter_by: "importSource:=climbharder",
     });
   } catch (error) {
     console.log("No existing documents to delete (or error):", error);
@@ -720,16 +717,19 @@ async function run() {
 
   // Add new documents
   console.log(`Importing ${documents.length} ClimbHarder documents...`);
-  const task = await index.addDocuments(documents);
+  const result = await client
+    .collections(collectionName)
+    .documents()
+    .import(documents);
 
-  console.log(`Task UID: ${task.taskUid} - Import initiated successfully`);
+  console.log(`Import completed: ${result.length} documents processed`);
 
   return documents.length;
 }
 
 run().then(
   (nSnapshots) => {
-    console.log(`Success: ${nSnapshots} snapshots imported to MeiliSearch`);
+    console.log(`Success: ${nSnapshots} snapshots imported to Typesense`);
     process.exit(0);
   },
   (err) => {
@@ -737,4 +737,3 @@ run().then(
     process.exit(1);
   },
 );
-

@@ -1,11 +1,12 @@
 import { MeasureId } from "../../iso/measures/index.js";
 import { UnitValue, FacetString } from "../../iso/units.js";
 import { Dataset, MeasureClassName } from "../../iso/protocol.js";
+import { CollectionCreateSchema } from "typesense/lib/Typesense/Collections.js";
 
 /**
- * MeiliSearch document representing a climbing performance snapshot
+ * Typesense document representing a climbing performance snapshot
  */
-export interface SnapshotMeiliDoc {
+export interface SnapshotTypesenseDoc {
   /** Primary key - string version of MongoDB ObjectId */
   id: string;
 
@@ -36,21 +37,22 @@ export interface SnapshotMeiliDoc {
 }
 
 /**
- * Index configuration for snapshots
+ * Collection schema for snapshots in Typesense
  */
-export const SNAPSHOTS_INDEX_CONFIG = {
-  indexName: "snapshots",
-  primaryKey: "id",
-  searchableAttributes: ["userId", "importSource"],
-  filterableAttributes: [
-    "userId",
-    "importSource",
-    "createdAt",
-    "lastUpdated",
-    "anthro_facets",
-    "output_measure_ids",
-    "input_measure_classes",
-    "input_measure_ids",
+export const SNAPSHOTS_COLLECTION_SCHEMA: CollectionCreateSchema = {
+  name: "snapshots",
+  enable_nested_fields: true,
+  fields: [
+    { name: "id", type: "string" },
+    { name: "userId", type: "string", facet: true },
+    { name: "measures", type: "object" },
+    { name: "normedMeasures", type: "object" },
+    { name: "anthro_facets", type: "string[]", facet: true },
+    { name: "output_measure_ids", type: "string[]", facet: true },
+    { name: "input_measure_classes", type: "string[]", facet: true },
+    { name: "input_measure_ids", type: "string[]", facet: true },
+    { name: "createdAt", type: "int64", sort: true },
+    { name: "lastUpdated", type: "int64", sort: true },
+    { name: "importSource", type: "string", facet: true, optional: true },
   ],
-  sortableAttributes: ["createdAt", "lastUpdated"],
-} as const;
+};

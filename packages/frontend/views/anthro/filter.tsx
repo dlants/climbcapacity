@@ -9,6 +9,7 @@ import {
   createAllBinsForMeasure,
   createBinFacetString,
   createCategoryFacetString,
+  parseFacetString,
 } from "../../../iso/units";
 import { getFacetConfigForLocale } from "../../../iso/measures";
 import { AnthroMeasureFilterView } from "./measure-filter";
@@ -121,13 +122,17 @@ export class AnthroFilterController {
     this.state.totalCounts = {};
 
     for (const [facetString] of Object.entries(anthroFacets)) {
-      const measureId = facetString.split(";")[0] as MeasureId;
+      const { measureId, unit } = parseFacetString(facetString as FacetString);
+
+      const facetConfig = getFacetConfigForLocale(measureId, locale);
       if (!this.state.totalCounts[measureId]) {
         this.state.totalCounts[measureId] = 0;
       }
 
-      this.state.totalCounts[measureId] +=
-        anthroFacets[facetString as FacetString] || 0;
+      if (facetConfig.unit == unit) {
+        this.state.totalCounts[measureId] +=
+          anthroFacets[facetString as FacetString] || 0;
+      }
     }
 
     for (const [facetString] of Object.entries(anthroFacets)) {
