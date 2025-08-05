@@ -319,6 +319,7 @@ export class SnapshotsTypesense {
       filter_by,
       per_page: 0, // We only want facets, not results
       facet_by: "anthro_facets",
+      max_facet_values: 100, // Get all facet values
     };
 
     const searchResult = await this.client
@@ -373,6 +374,7 @@ export class SnapshotsTypesense {
       filter_by,
       per_page: 0, // We only want facets, not results
       facet_by: "output_measure_ids",
+      max_facet_values: 100, // Get all facet values
     };
 
     const searchResult = await this.client
@@ -428,6 +430,7 @@ export class SnapshotsTypesense {
       filter_by,
       per_page: 0, // We only want facets, not results
       facet_by: "input_measure_classes",
+      max_facet_values: 100, // Get all facet values
     };
 
     const searchResult = await this.client
@@ -486,6 +489,7 @@ export class SnapshotsTypesense {
       filter_by,
       per_page: 0, // We only want facets, not results
       facet_by: "input_measure_ids",
+      max_facet_values: 100, // Get all facet values
     };
 
     const searchResult = await this.client

@@ -13,7 +13,6 @@ import {
   Msg as EditMeasureMsg,
 } from "./edit-measure";
 import { Locale } from "../../../iso/locale";
-import { FacetDistribution } from "../../../iso/protocol";
 
 export type Model = {
   selectMeasurePage: SelectMeasureClassController;
@@ -36,7 +35,6 @@ export class EditMeasureClassController {
 
   constructor(
     measureClasses: MeasureClassSpec[],
-    facetDistribution: FacetDistribution,
     snapshot: HydratedSnapshot,
     measureId: MeasureId | undefined,
     public context: {
@@ -47,7 +45,6 @@ export class EditMeasureClassController {
     const selectMeasurePage = new SelectMeasureClassController(
       {
         measureClasses,
-        facetDistribution,
         measureId,
       },
       {
@@ -60,7 +57,6 @@ export class EditMeasureClassController {
     const editMeasurePage = new EditMeasureController(
       {
         measureId: selectMeasurePage.state.selectedMeasureId,
-        facetDistribution,
         snapshot,
       },
       {
@@ -95,8 +91,6 @@ export class EditMeasureClassController {
           this.state.editMeasurePage = new EditMeasureController(
             {
               measureId: this.state.selectMeasurePage.state.selectedMeasureId,
-              facetDistribution:
-                this.state.selectMeasurePage.state.facetDistribution,
               snapshot: this.state.snapshot,
             },
             {

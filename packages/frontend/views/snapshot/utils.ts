@@ -1,28 +1,27 @@
 import { MeasureId, ParamMap } from "../../../iso/measures";
 import { ParamName } from "../../../iso/measures/params";
-import { MeasureStats } from "../../../iso/protocol";
 
 export type CountTree = {
   count: number;
   children: { [key: string]: CountTree };
 };
 
-/** bins the stats into a descending tree of counts.
+/** bins the measure distribution into a descending tree of counts.
  * at each leaf, we maintain a count of the subtree
  *
- * @param measureStats
+ * @param measureDistribution
  * @param parseMeasureId
  * @param params
  * @returns
  */
-export function measureStatsToCountTree(
-  measureStats: MeasureStats,
+export function measureDistributionToCountTree(
+  measureDistribution: Record<MeasureId, number>,
   parseMeasureId: (measureId: MeasureId) => ParamMap,
   params: ParamName[],
 ): CountTree {
   const root: CountTree = { count: 0, children: {} };
 
-  for (const [measureId, count] of Object.entries(measureStats)) {
+  for (const [measureId, count] of Object.entries(measureDistribution)) {
     let currentNode = root;
     try {
       const parsed = parseMeasureId(measureId as MeasureId);

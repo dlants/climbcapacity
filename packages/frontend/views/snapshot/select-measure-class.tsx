@@ -17,20 +17,13 @@ type MeasureCombination = {
 
 export type Model = {
   measureCombinations: MeasureCombination[];
-  sortedCombinations: (MeasureCombination & { count: number })[];
   selectedMeasureId: MeasureId;
-  facetDistribution: Record<FacetString, number>;
-  countCache: Map<MeasureId, number>;
 };
 
 export type Msg =
   | {
       type: "SELECT_MEASURE_ID";
       measureId: MeasureId;
-    }
-  | {
-      type: "UPDATE_FACET_DISTRIBUTION";
-      facetDistribution: Record<FacetString, number>;
     };
 
 export class SelectMeasureClassController {

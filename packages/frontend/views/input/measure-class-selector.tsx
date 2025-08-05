@@ -33,7 +33,7 @@ export type InputMeasureClassSelectorModel =
 export type InputMeasureClassSelectorMsg =
   | {
       type: "SET_SELECTED_MEASURE_CLASS";
-      measureClassName: MeasureClassName;
+      measureClassName: MeasureClassName | undefined;
     }
   | {
       type: "SET_EDITING";
@@ -262,6 +262,34 @@ export class InputMeasureClassSelectorController {
 export class InputMeasureClassSelectorView extends DCGView.View<{
   controller: () => InputMeasureClassSelectorController;
 }> {
+  private editingElement: HTMLElement | undefined;
+
+  private documentClickHandler = (e: MouseEvent) => {
+    const controller = this.props.controller();
+    if (controller.state.state === "editing") {
+      // Check if click is outside the editing display
+      if (
+        this.editingElement &&
+        !this.editingElement.contains(e.target as Node)
+      ) {
+        controller.context.myDispatch({
+          type: "SET_EDITING",
+          isEditing: false,
+        });
+      }
+    }
+  };
+
+  editingViewDidMount(el: HTMLElement) {
+    this.editingElement = el;
+    document.addEventListener("click", this.documentClickHandler);
+  }
+
+  editingViewWillUnmount() {
+    this.editingElement = undefined;
+    document.removeEventListener("click", this.documentClickHandler);
+  }
+
   template() {
     const controller = () => this.props.controller();
     const state = () => controller().state;
@@ -269,38 +297,17 @@ export class InputMeasureClassSelectorView extends DCGView.View<{
 
     return (
       <div class={DCGView.const(styles.container)}>
-        <div class={DCGView.const(styles.header)}>
-          <h4 class={DCGView.const(styles.sectionHeader)}>
-            Input Measure Class
-          </h4>
-
-          <If predicate={() => state().state !== "editing"}>
-            {() => (
-              <button
-                class={DCGView.const(styles.editButton)}
-                onClick={() =>
-                  controller().context.myDispatch({
-                    type: "SET_EDITING",
-                    isEditing: true,
-                  })
-                }
-              >
-                {() => {
-                  const currState = state();
-                  const measureClassName =
-                    currState.state === "selected"
-                      ? currState.measureClassName
-                      : undefined;
-                  return measureClassName ? "Change" : "Select";
-                }}
-              </button>
-            )}
-          </If>
-        </div>
-
         <If predicate={() => state().state === "selected"}>
           {() => (
-            <div class={DCGView.const(styles.selectedDisplay)}>
+            <div
+              class={DCGView.const(styles.selectedDisplay)}
+              onClick={() =>
+                controller().context.myDispatch({
+                  type: "SET_EDITING",
+                  isEditing: true,
+                })
+              }
+            >
               {IfElse(
                 () => {
                   const currState = state();
@@ -368,23 +375,34 @@ export class InputMeasureClassSelectorView extends DCGView.View<{
 
         <If predicate={() => state().state === "editing"}>
           {() => (
-            <div class={DCGView.const(styles.editingDisplay)}>
-              <div class={DCGView.const(styles.editingHeader)}>
-                <span>Select an input measure class:</span>
-                <button
-                  class={DCGView.const(styles.cancelButton)}
+            <div
+              didMount={this.bindFn(this.editingViewDidMount)}
+              willUnmount={this.bindFn(this.editingViewWillUnmount)}
+              class={DCGView.const(styles.editingDisplay)}
+            >
+              <div class={DCGView.const(styles.measureList)}>
+                <div
+                  class={() => ({
+                    [styles.measureItem]: true,
+                    [styles.selectedMeasureItem]:
+                      !controller().state.measureClassName,
+                  })}
                   onClick={() =>
                     controller().context.myDispatch({
-                      type: "SET_EDITING",
-                      isEditing: false,
+                      type: "SET_SELECTED_MEASURE_CLASS",
+                      measureClassName: undefined,
                     })
                   }
                 >
-                  Cancel
-                </button>
-              </div>
-
-              <div class={DCGView.const(styles.measureList)}>
+                  <div class={DCGView.const(styles.measureLine)}>
+                    <span class={DCGView.const(styles.measureClassName)}>
+                      none
+                    </span>
+                    <span class={DCGView.const(styles.measureCount)}>
+                      (no input measure class)
+                    </span>
+                  </div>
+                </div>
                 <For
                   each={() => sortedMeasureClasses()}
                   key={(m) => m.measureClassName}
@@ -396,19 +414,23 @@ export class InputMeasureClassSelectorView extends DCGView.View<{
                         [styles.selectedMeasureItem]: controller().isSelected(
                           item().measureClassName,
                         ),
+                        [styles.disabledMeasureItem]: item().count === 0,
                       })}
                       onClick={() =>
+                        item().count > 0 &&
                         controller().context.myDispatch({
                           type: "SET_SELECTED_MEASURE_CLASS",
                           measureClassName: item().measureClassName,
                         })
                       }
                     >
-                      <div class={DCGView.const(styles.measureClassName)}>
-                        {() => item().description}
-                      </div>
-                      <div class={DCGView.const(styles.measureCount)}>
-                        {() => `${item().count} data points`}
+                      <div class={DCGView.const(styles.measureLine)}>
+                        <span class={DCGView.const(styles.measureClassName)}>
+                          {() => item().measureClassName}
+                        </span>
+                        <span class={DCGView.const(styles.measureCount)}>
+                          {() => ` (${item().count})`}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -432,6 +454,15 @@ const styles = typestyle.stylesheet({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "12px",
+    cursor: "pointer",
+    padding: "4px",
+    borderRadius: "4px",
+    transition: "background-color 0.2s",
+    $nest: {
+      "&:hover": {
+        backgroundColor: "#f8f8f8",
+      },
+    },
   },
 
   sectionHeader: {
@@ -443,27 +474,18 @@ const styles = typestyle.stylesheet({
     paddingBottom: "4px",
   },
 
-  editButton: {
-    background: "#4CAF50",
-    color: "white",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "500",
-    $nest: {
-      "&:hover": {
-        background: "#45a049",
-      },
-    },
-  },
-
   selectedDisplay: {
     padding: "12px",
     backgroundColor: "#f9f9f9",
     borderRadius: "4px",
     border: "1px solid #e0e0e0",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+    $nest: {
+      "&:hover": {
+        backgroundColor: "#f0f0f0",
+      },
+    },
   },
 
   selectedMeasureClass: {
@@ -479,31 +501,6 @@ const styles = typestyle.stylesheet({
     border: "1px solid #e0e0e0",
     borderRadius: "4px",
     backgroundColor: "white",
-  },
-
-  editingHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "12px",
-    borderBottom: "1px solid #e0e0e0",
-    backgroundColor: "#f5f5f5",
-    fontWeight: "500",
-  },
-
-  cancelButton: {
-    background: "#666",
-    color: "white",
-    border: "none",
-    padding: "4px 8px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "12px",
-    $nest: {
-      "&:hover": {
-        background: "#555",
-      },
-    },
   },
 
   measureList: {
@@ -526,6 +523,19 @@ const styles = typestyle.stylesheet({
     },
   },
 
+  disabledMeasureItem: {
+    color: "#999 !important",
+    cursor: "not-allowed",
+    $nest: {
+      "&:hover": {
+        backgroundColor: "transparent !important",
+      },
+      "& *": {
+        color: "#999 !important",
+      },
+    },
+  },
+
   selectedMeasureItem: {
     backgroundColor: "#e8f5e8",
     $nest: {
@@ -535,14 +545,18 @@ const styles = typestyle.stylesheet({
     },
   },
 
+  measureLine: {
+    display: "flex",
+    alignItems: "center",
+  },
+
   measureClassName: {
-    fontWeight: "500",
+    fontWeight: "bold",
     color: "#333",
-    marginBottom: "4px",
   },
 
   measureCount: {
-    fontSize: "12px",
+    fontSize: "14px",
     color: "#666",
   },
 
