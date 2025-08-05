@@ -219,46 +219,27 @@ export class AnthroRangeSliderView extends DCGView.View<{
       .attr("font-weight", "500")
       .text(maxCount);
 
-    // Add x-axis ticks between bars
-    const tickData: Array<{
-      position: number;
-      value: number;
-      isStart?: boolean;
-      isEnd?: boolean;
-    }> = [];
+    // Use d3's intelligent tick generation
+    const valueScale = d3
+      .scaleLinear()
+      .domain([histogram[0].min, histogram[histogram.length - 1].max])
+      .range([margin.left, width - margin.right]);
 
-    // Add tick at start of first bar (min of first bin)
-    tickData.push({
-      position: x("0") || 0,
-      value: histogram[0].min,
-      isStart: true,
-    });
+    // Generate optimal tick values based on available space
+    const tickCount = Math.max(2, Math.floor(width / 50)); // ~50px per tick
+    const tickValues = valueScale.ticks(tickCount);
 
-    // Add ticks between bars (max of each bin, except the last one)
-    for (let i = 0; i < histogram.length - 1; i++) {
-      tickData.push({
-        position: x((i + 1).toString()) || 0,
-        value: histogram[i].max,
-      });
-    }
-
-    // Add tick at end of last bar (max of last bin)
-    tickData.push({
-      position: (x((histogram.length - 1).toString()) || 0) + x.bandwidth(),
-      value: histogram[histogram.length - 1].max,
-      isEnd: true,
-    });
-
-    // Filter ticks to avoid overcrowding
-    const filteredTicks =
-      histogram.length <= 5
-        ? tickData
-        : tickData.filter(
-            (_, i) =>
-              i === 0 ||
-              i === Math.floor(tickData.length / 2) ||
-              i === tickData.length - 1,
-          );
+    // Map tick values to positions and filter to those within our data range
+    const filteredTicks = tickValues
+      .filter(
+        (value) =>
+          value >= histogram[0].min &&
+          value <= histogram[histogram.length - 1].max,
+      )
+      .map((value) => ({
+        position: valueScale(value),
+        value: value,
+      }));
 
     svg
       .selectAll("text.x-label")

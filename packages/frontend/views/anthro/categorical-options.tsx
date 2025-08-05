@@ -43,14 +43,23 @@ export class AnthroCategoricalOptionsView extends DCGView.View<{
                     type="checkbox"
                     checked={() => selectedValues.has(option.value)}
                     disabled={() => isLoading()}
-                    onChange={() =>
-                      !isLoading() &&
-                      controller().context.myDispatch({
-                        type: "TOGGLE_CATEGORICAL_VALUE",
-                        measureId: measureId(),
-                        value: option.value,
-                      })
-                    }
+                    onChange={() => {
+                      if (!isLoading()) {
+                        // Enable the filter when user makes a selection
+                        if (!controller().isFilterEnabled(measureId())) {
+                          controller().context.myDispatch({
+                            type: "TOGGLE_FILTER_ENABLED",
+                            measureId: measureId(),
+                          });
+                        }
+                        
+                        controller().context.myDispatch({
+                          type: "TOGGLE_CATEGORICAL_VALUE",
+                          measureId: measureId(),
+                          value: option.value,
+                        });
+                      }
+                    }}
                   />
                   {String(option.value)} ({option.count})
                 </label>
