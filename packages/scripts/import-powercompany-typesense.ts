@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  encodeMeasureValue,
   UnitValue,
   createFacetsForMeasures,
   FacetString,
@@ -71,12 +70,9 @@ const TSV_COLS = [
 // starting at row 1 since row 0 is the column headers
 table.slice(1).forEach((row, idx) => {
   const measures: Record<MeasureId, UnitValue> = {};
-  const normedMeasures: Record<MeasureId, number> = {};
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
     measures[measureId] = value;
-    const encoded = encodeMeasureValue({ id: measureId, value });
-    normedMeasures[measureId] = encoded.value;
   }
 
   const ageStr = row[TSV_COLS.findIndex((c) => c == "age")];
@@ -474,13 +470,21 @@ table.slice(1).forEach((row, idx) => {
     );
   }
 
+  // Convert measures to string values for Typesense compatibility
+  const stringifiedMeasures: SnapshotTypesenseDoc["measures"] = {};
+  for (const [measureId, unitValue] of Object.entries(measures)) {
+    stringifiedMeasures[measureId as MeasureId] = {
+      unit: unitValue.unit,
+      value: unitValue.value.toString(),
+    };
+  }
+
   const facets = createFacetsForMeasures(measures);
 
   const document: SnapshotTypesenseDoc = {
     id: `powercompany-row-${idx}`,
     userId: `powercompany-row-${idx}`,
-    measures,
-    normedMeasures,
+    measures: stringifiedMeasures,
     createdAt: Date.now(),
     lastUpdated: Date.now(),
     importSource: "powercompany",

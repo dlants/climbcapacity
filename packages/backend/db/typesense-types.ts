@@ -13,14 +13,12 @@ export interface SnapshotTypesenseDoc {
   /** User ID who owns this snapshot */
   userId: string;
 
-  /** Raw measures as entered by user */
+  /** Raw measures with values converted to strings for Typesense compatibility */
   measures: {
-    [measureId: MeasureId]: UnitValue;
-  };
-
-  /** Normalized measures for filtering/comparison */
-  normedMeasures: {
-    [measureId: MeasureId]: number;
+    [measureId: MeasureId]: {
+      unit: string;
+      value: string; // All values stored as strings to avoid type conflicts
+    };
   };
 
   /** Timestamp fields */
@@ -46,7 +44,6 @@ export const SNAPSHOTS_COLLECTION_SCHEMA: CollectionCreateSchema = {
     { name: "id", type: "string" },
     { name: "userId", type: "string", facet: true },
     { name: "measures", type: "object" },
-    { name: "normedMeasures", type: "object" },
     { name: "anthro_facets", type: "string[]", facet: true },
     { name: "output_measure_ids", type: "string[]", facet: true },
     { name: "input_measure_classes", type: "string[]", facet: true },

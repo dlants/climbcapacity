@@ -2,10 +2,9 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  convertToStandardUnit,
-  encodeMeasureValue,
   UnitValue,
   createFacetsForMeasures,
+  convertToStandardUnit,
 } from "../iso/units.js";
 import * as Fingers from "../iso/measures/fingers.js";
 import { VGrade, EWBANK, EwbankGrade, VGRADE } from "../iso/grade.js";
@@ -39,12 +38,9 @@ const documents: SnapshotTypesenseDoc[] = [];
 // starting at row 1 since row 0 is the column headers
 table.slice(1).forEach((row, idx) => {
   const measures: Record<MeasureId, UnitValue> = {};
-  const normedMeasures: Record<MeasureId, number> = {};
 
   function addMeasure(measureId: MeasureId, value: UnitValue) {
     measures[measureId] = value;
-    const encoded = encodeMeasureValue({ id: measureId, value });
-    normedMeasures[measureId] = encoded.value;
   }
 
   const sexStr = row[1];
@@ -663,13 +659,21 @@ table.slice(1).forEach((row, idx) => {
     }
   }
 
+  // Convert measures to string values for Typesense compatibility
+  const stringifiedMeasures: SnapshotTypesenseDoc["measures"] = {};
+  for (const [measureId, unitValue] of Object.entries(measures)) {
+    stringifiedMeasures[measureId as MeasureId] = {
+      unit: unitValue.unit,
+      value: unitValue.value.toString(),
+    };
+  }
+
   const facets = createFacetsForMeasures(measures);
 
   const document: SnapshotTypesenseDoc = {
     id: `climbharder-v3-row-${idx}`,
     userId: `climbharder-v3-row-${idx}`,
-    measures,
-    normedMeasures,
+    measures: stringifiedMeasures,
     createdAt: Date.now(),
     lastUpdated: Date.now(),
     importSource: "climbharder",

@@ -4,11 +4,7 @@ import type { HydratedSnapshot } from "../types";
 import { Dispatch } from "../types";
 import { convertToStandardUnit } from "../../iso/units";
 import { RequestStatus } from "../util/utils";
-import {
-  MeasureStats,
-  SnapshotId,
-  SnapshotUpdateRequest,
-} from "../../iso/protocol";
+import { SnapshotId, SnapshotUpdateRequest } from "../../iso/protocol";
 import {
   generateTrainingMeasureId,
   getSpec,
@@ -46,7 +42,6 @@ type EditingState =
 
 export type Model = {
   snapshot: HydratedSnapshot;
-  measureStats: MeasureStats;
   measureSelector: MeasureSelectorController;
   editingState: EditingState;
 };
@@ -75,20 +70,13 @@ export class SnapshotController {
   state: Model;
 
   constructor(
-    {
-      snapshot,
-      measureStats,
-    }: { snapshot: HydratedSnapshot; measureStats: MeasureStats },
+    { snapshot }: { snapshot: HydratedSnapshot },
     public context: { myDispatch: Dispatch<Msg>; locale: () => Locale },
   ) {
     this.state = {
       snapshot,
-      measureStats,
       measureSelector: new MeasureSelectorController(
-        {
-          snapshot,
-          measureStats,
-        },
+        { snapshot },
         {
           myDispatch: (msg: MeasureSelectorMsg) =>
             this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),
@@ -110,7 +98,6 @@ export class SnapshotController {
               {
                 init: msg.msg.update,
                 snapshot: this.state.snapshot,
-                measureStats: this.state.measureStats,
               },
               {
                 myDispatch: (msg: EditMeasureOrClassMsg) =>
@@ -185,29 +172,22 @@ export class SnapshotController {
           const nextSnapshot: HydratedSnapshot = {
             ...this.state.snapshot,
             measures: { ...this.state.snapshot.measures },
-            normalizedMeasures: { ...this.state.snapshot.normalizedMeasures },
           };
 
           for (const measureIdStr in editingState.requestParams.updates || {}) {
             const measureId = measureIdStr as MeasureId;
             const value = editingState.requestParams.updates![measureId];
             nextSnapshot.measures[measureId] = value;
-            nextSnapshot.normalizedMeasures[measureId] =
-              convertToStandardUnit(value);
           }
           for (const measureIdStr in editingState.requestParams.deletes || {}) {
             const measureId = measureIdStr as MeasureId;
             delete nextSnapshot.measures[measureId];
-            delete nextSnapshot.normalizedMeasures[measureId];
           }
 
           this.state.snapshot = nextSnapshot;
           this.state.editingState = { state: "not-editing" };
           this.state.measureSelector = new MeasureSelectorController(
-            {
-              snapshot: nextSnapshot,
-              measureStats: this.state.measureStats,
-            },
+            { snapshot: nextSnapshot },
             {
               myDispatch: (msg: MeasureSelectorMsg) =>
                 this.context.myDispatch({ type: "MEASURE_SELECTOR_MSG", msg }),

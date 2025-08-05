@@ -6,13 +6,12 @@ import {
   Msg as LoadedSnapshotMsg,
 } from "../views/snapshot";
 import { assertUnreachable, RequestStatus } from "../util/utils";
-import { MeasureStats, SnapshotId } from "../../iso/protocol";
+import { SnapshotId } from "../../iso/protocol";
 import { hydrateSnapshot } from "../util/snapshot";
 import { Locale } from "../../iso/locale";
 
 export type Model = {
   snapshotId: SnapshotId;
-  measureStats: MeasureStats;
   snapshotRequest: RequestStatus<SnapshotController>;
 };
 
@@ -31,7 +30,6 @@ export class SnapshotPageController {
 
   constructor(
     snapshotId: SnapshotId,
-    measureStats: MeasureStats,
     public context: {
       myDispatch: Dispatch<Msg>;
       locale: () => Locale;
@@ -39,7 +37,6 @@ export class SnapshotPageController {
   ) {
     this.state = {
       snapshotId,
-      measureStats,
       snapshotRequest: { status: "loading" },
     };
 
@@ -60,10 +57,7 @@ export class SnapshotPageController {
     if (response.ok) {
       const snapshot = (await response.json()) as Snapshot;
       const loadedSnapshot = new SnapshotController(
-        {
-          measureStats: this.state.measureStats,
-          snapshot: hydrateSnapshot(snapshot),
-        },
+        { snapshot: hydrateSnapshot(snapshot) },
         {
           myDispatch: (msg: LoadedSnapshotMsg) =>
             this.context.myDispatch({ type: "LOADED_SNAPSHOT_MSG", msg }),

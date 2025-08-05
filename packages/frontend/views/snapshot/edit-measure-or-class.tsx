@@ -8,21 +8,18 @@ import { MeasureClassSpec, MeasureId } from "../../../iso/measures";
 import { HydratedSnapshot } from "../../types";
 import { Dispatch } from "../../types";
 import { assertUnreachable } from "../../util/utils";
-import { MeasureStats } from "../../../iso/protocol";
 import { Locale } from "../../../iso/locale";
 
 export type Model =
   | {
       type: "measure";
       editMeasure: EditMeasureController;
-      measureStats: MeasureStats;
       measureId: MeasureId;
       trainingMeasureId?: MeasureId;
     }
   | {
       type: "measureClass";
       editMeasureClass: EditMeasureClassController;
-      measureStats: MeasureStats;
       measureId: MeasureId;
       trainingMeasureId?: MeasureId;
     };
@@ -54,11 +51,9 @@ export class EditMeasureOrClassController {
     {
       init,
       snapshot,
-      measureStats,
     }: {
       init: InitOptions;
       snapshot: HydratedSnapshot;
-      measureStats: MeasureStats;
     },
     public context: {
       myDispatch: Dispatch<Msg>;
@@ -71,7 +66,6 @@ export class EditMeasureOrClassController {
         const editMeasure = new EditMeasureController(
           {
             measureId: init.measureId,
-            measureStats: measureStats,
             snapshot: snapshot,
           },
           {
@@ -83,7 +77,6 @@ export class EditMeasureOrClassController {
         this.state = {
           type: "measure",
           editMeasure,
-          measureStats: measureStats,
           measureId: editMeasure.state.unitInputController.state.measureId,
           trainingMeasureId: editMeasure.state.trainingMeasure?.measureId,
         };
@@ -93,7 +86,6 @@ export class EditMeasureOrClassController {
       case "measureClasses": {
         const editMeasureClass = new EditMeasureClassController(
           init.measureClasses,
-          measureStats,
           snapshot,
           undefined,
           {
@@ -105,7 +97,6 @@ export class EditMeasureOrClassController {
         this.state = {
           type: "measureClass",
           editMeasureClass,
-          measureStats: measureStats,
           measureId:
             editMeasureClass.state.editMeasurePage.state.unitInputController
               .state.measureId,

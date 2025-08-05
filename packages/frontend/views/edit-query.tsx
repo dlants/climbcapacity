@@ -209,8 +209,7 @@ export class EditQueryView extends DCGView.View<{
             return (
               <div class={DCGView.const(styles.container)}>
                 <div class={DCGView.const(styles.item)}>
-                  <strong>{measureId}</strong>(
-                  {() => state().measureStats[measureId] || 0} snapshots)
+                  <strong>{measureId}</strong>
                 </div>
                 <div class={DCGView.const(styles.item)}>
                   <FilterView controller={getFilter} />
@@ -232,7 +231,6 @@ export class EditQueryView extends DCGView.View<{
           }}
         </For>
         <MeasureSelectionBox
-          measureStats={() => state().measureStats}
           myDispatch={(msg: MeasureSelectionMsg) =>
             controller().context.myDispatch({
               type: "MEASURE_SELECTOR_MSG",
