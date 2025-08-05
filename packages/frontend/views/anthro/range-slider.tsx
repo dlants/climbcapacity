@@ -4,6 +4,9 @@ import { UnitType, inchesToFeetAndInches } from "../../../iso/units";
 import * as typestyle from "typestyle";
 import * as d3 from "d3";
 
+const SVG_WIDTH = 300;
+const SVG_HEIGHT = 100;
+
 export class AnthroRangeSliderView extends DCGView.View<{
   measureId: () => MeasureId;
   unit: () => UnitType;
@@ -82,7 +85,7 @@ export class AnthroRangeSliderView extends DCGView.View<{
     );
     this.svgElement.setAttribute("width", "100%");
     this.svgElement.setAttribute("height", "100%");
-    this.svgElement.setAttribute("viewBox", "0 0 300 60");
+    this.svgElement.setAttribute("viewBox", `0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`);
     this.svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
     el.appendChild(this.svgElement);
@@ -117,22 +120,20 @@ export class AnthroRangeSliderView extends DCGView.View<{
     if (histogram.length === 0) return;
 
     // SVG dimensions
-    const width = 300;
-    const height = 60;
     const margin = { top: 5, right: 5, bottom: 20, left: 5 };
 
     // Scales
     const x = d3
       .scaleBand()
       .domain(histogram.map((_, i) => i.toString()))
-      .range([margin.left, width - margin.right])
+      .range([margin.left, SVG_WIDTH - margin.right])
       .padding(0.1);
 
     const maxCount = Math.max(...histogram.map((b) => b.count));
     const y = d3
       .scaleLinear()
       .domain([0, maxCount])
-      .range([height - margin.bottom, margin.top]);
+      .range([SVG_HEIGHT - margin.bottom, margin.top]);
 
     // Create tooltip if it doesn't exist
     if (!this.tooltip) {
@@ -211,7 +212,7 @@ export class AnthroRangeSliderView extends DCGView.View<{
     // Add frequency indicator
     svg
       .append("text")
-      .attr("x", width - margin.right)
+      .attr("x", SVG_WIDTH - margin.right)
       .attr("y", margin.top + 10)
       .attr("text-anchor", "end")
       .attr("font-size", "10px")
@@ -223,10 +224,10 @@ export class AnthroRangeSliderView extends DCGView.View<{
     const valueScale = d3
       .scaleLinear()
       .domain([histogram[0].min, histogram[histogram.length - 1].max])
-      .range([margin.left, width - margin.right]);
+      .range([margin.left, SVG_WIDTH - margin.right]);
 
     // Generate optimal tick values based on available space
-    const tickCount = Math.max(2, Math.floor(width / 50)); // ~50px per tick
+    const tickCount = Math.max(2, Math.floor(SVG_WIDTH / 50)); // ~50px per tick
     const tickValues = valueScale.ticks(tickCount);
 
     // Map tick values to positions and filter to those within our data range
@@ -247,7 +248,7 @@ export class AnthroRangeSliderView extends DCGView.View<{
       .join("text")
       .attr("class", "x-label")
       .attr("x", (d) => d.position)
-      .attr("y", height - 5)
+      .attr("y", SVG_HEIGHT - 5)
       .attr("text-anchor", "middle")
       .attr("font-size", "10px")
       .attr("fill", "#666")
@@ -296,15 +297,6 @@ export class AnthroRangeSliderView extends DCGView.View<{
             );
           }}
         </If>
-
-        {/* Instructions */}
-        <div class={DCGView.const(styles.instructions)}>
-          {() =>
-            this.firstSelectedBin !== null
-              ? "Click another bar to complete range selection"
-              : "Click a bar to start range selection"
-          }
-        </div>
       </div>
     );
   }
